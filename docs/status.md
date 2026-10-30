@@ -3,7 +3,7 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 0 (in progress)
-**Last updated:** 2026-10-29 by the orchestrator (WS00 dispatched)
+**Last updated:** 2026-10-29 by the orchestrator (remote set, WS00 running)
 
 ## Workstreams
 
@@ -36,7 +36,7 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 | Submit Instacart Developer Platform application | Miguel | open | Needed before WS08 production; dev key works without approval. Marketing page said "not accepting" on 2026-10-29; docs still say apply |
 | Trademark, domain, and App Store name checks for the shortlist | Miguel | done 2026-10-29 | Sous and Larder checked per docs/08-brand.md §1.3. Outcome recorded at checkpoint 6 |
 | Create the Supabase project | Miguel | done 2026-10-29 | Credentials in `.env.local` at the primary checkout root. WS00 verifies against local Supabase only |
-| Create the GitHub repository for `main` | Miguel | open | Orchestrator adds the remote and pushes `main` once it has the URL |
+| Create the GitHub repository for `main` | Miguel | done 2026-10-29 | https://github.com/miguelsolorio/souvie (public). Miguel added `origin` and pushed `main` from the primary checkout |
 | Create accounts: Expo/EAS, Fly.io or Railway, Cloudflare Pages, Sentry, PostHog | Miguel | open | `ANTHROPIC_API_KEY` needed before WS02; the rest before WS13, WS14, WS15 |
 | Install Docker Desktop or OrbStack, and Xcode | Miguel | open | Needed for WS00 criteria 7, 9, 10, 11 and every later local Supabase or iOS check |
 
@@ -48,6 +48,7 @@ _None yet._
 
 - 2026-10-29: Stack: Expo + React Native (TypeScript), Supabase, separate Node worker. Audience v1: household first. Checkout tiers 1, 2, and 3 all allowed; Tier 3 is on-device assisted mode first. (Planning session.)
 - 2026-10-29: `main` lives on GitHub in a repository Miguel creates. Merges go through PRs and GitHub Actions. The orchestrator session runs in an app-made worktree on branch `claude/repo-orchestration-setup-4365a5`, which mirrors `origin/main`. Ledger and contract commits are made there and pushed with `git push origin HEAD:main`. The primary checkout's local `main` is refreshed by Miguel with `git pull`. (Orchestrator, confirmed with Miguel.)
+- 2026-10-29: `main` is at https://github.com/miguelsolorio/souvie, default branch `main`, public. PRs from `ws/*` branches target it; GitHub Actions runs CI. (Miguel created and pushed; orchestrator recorded.)
 - 2026-10-29: Wave 0 gate met. The Supabase project exists and its credentials are in `.env.local` at the primary checkout root. WS00 verifies against local Supabase and never needs the hosted project. (Orchestrator.)
 - 2026-10-29: WS00 dispatched before Docker and Xcode were installed. The builder self-installs pnpm, the Supabase CLI, and Node 22. Criteria 7, 9, 10, 11 are verified once Docker and Xcode exist, with one evidence round to the same builder if the report lands first. (Orchestrator, confirmed with Miguel.)
 - 2026-10-29: Kroger developer app registered and name checks for Sous and Larder done. Instacart application and the hosting and analytics accounts remain open. (Miguel.)

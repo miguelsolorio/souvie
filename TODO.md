@@ -12,7 +12,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [ ] Submit the Instacart Developer Platform application at company.instacart.com/business/developers. Record the response in `docs/status.md` under External tasks. (Gates WS08 production; a dev key works without approval.)
 - [ ] Create accounts: Expo/EAS, Fly.io or Railway (worker), Cloudflare Pages (web and marketing), Sentry, PostHog. Put `ANTHROPIC_API_KEY`, `SENTRY_DSN`, `EXPO_PUBLIC_POSTHOG_KEY` in `.env.local`.
 - [x] Optional now, required before WS14 finishes: run the name checks in `docs/08-brand.md` §1.3 for Sous and Larder.
-- [ ] Decide where `main` lives. Either create a GitHub repository and push `main` (enables PRs and GitHub Actions as the docs assume), or tell the orchestrator you're staying local (then CI is the same commands run locally and merges are local squash merges; no PRs).
+- [x] Decide where `main` lives. Either create a GitHub repository and push `main` (enables PRs and GitHub Actions as the docs assume), or tell the orchestrator you're staying local (then CI is the same commands run locally and merges are local squash merges; no PRs).
 - [x] Open a Claude Code session in this folder with Fable as the model and paste the kickoff prompt at the bottom of this file.
 
 ## 1. Wave 0: scaffold

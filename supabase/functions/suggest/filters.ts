@@ -471,6 +471,7 @@ select
   r.title,
   r.description,
   r.image_url,
+  r.source_url,
   r.cuisine,
   r.tags,
   r.servings,

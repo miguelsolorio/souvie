@@ -6,6 +6,7 @@ What lands here (`docs/01-architecture.md` §Monorepo layout):
 
 - Ingredient ontology and aliases (WS03, below)
 - Sample recipes (WS02)
+- Washington stores for onboarding (WS06, below)
 - Test households and members for local development and the RLS tests (WS01)
 
 Rules:
@@ -63,3 +64,18 @@ pnpm supabase db push --include-seed
 ```
 
 `--include-seed` runs every file matched by `sql_paths`. Today that is only this file. When WS01 and WS02 add seed files for test households and sample recipes, run `psql "$WORKER_DATABASE_URL" -f supabase/seed/10_ingredients.sql` instead so test data stays out of the hosted project.
+
+## Washington stores (WS06)
+
+`stores_wa.csv` is a stopgap list of Washington stores for the onboarding "stores" step: QFC, Fred Meyer, Safeway, Albertsons, Haggen, and Costco, 90 rows. The app bundles it as `apps/mobile/src/features/onboarding/storesWa.generated.ts`, so the step works before a household exists and needs no table.
+
+| Column | Meaning |
+|---|---|
+| `banner` | `qfc`, `fredmeyer`, `safeway`, `albertsons`, `haggen`, or `costco` |
+| `name`, `address`, `zip` | As a store directory lists them. No commas in a field |
+| `lat`, `lng` | Approximate: the middle of the store's neighborhood or city. They exist to sort by distance, nothing finer |
+| `kroger_location_id` | Kroger's 8 digit location id when known, else empty. Empty on every row today |
+
+Addresses and ZIPs were read from the retailers' own Washington pages and public store directories on 2026-10-30. Stores close and move; the live Kroger lookup (WS07) is the source for QFC and Fred Meyer, and the app uses these rows for them only when it is unreachable. Verify before launch.
+
+A store's id is the Kroger location id when there is one, else `<banner>-<zip>-<street slug>`. That id is what `preferences.primary_store_id` holds. After editing the CSV run `node supabase/seed/stores.ts` to rewrite the module; `node supabase/seed/stores.ts --check` fails when it is stale, and `pnpm test` runs the same check.

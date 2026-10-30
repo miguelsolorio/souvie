@@ -165,6 +165,7 @@ describe("toCalibrationCard", () => {
       title: "Sheet pan chicken",
       description: "Easy.",
       imageUrl: "recipe-images/x.jpg",
+      sourceUrl: "https://example.com/recipe",
       cuisine: "american",
       tags: ["a", "b", "c", "d", "e", "f", "g", "h"],
       servings: 4,
@@ -179,6 +180,7 @@ describe("toCalibrationCard", () => {
       title: "Sheet pan chicken",
       description: "Easy.",
       imageUrl: "https://signed.example/x.jpg",
+      sourceUrl: "https://example.com/recipe",
       cuisine: "american",
       totalMin: 35,
     });

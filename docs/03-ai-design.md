@@ -38,6 +38,23 @@ Hybrid: structured screens, which are reliable and designable, plus one free-tex
 
 Output: a complete `profiles.preferences`, feedback seeds, and a first draft `meal_plans` row for the coming week. The `ProfilePreferences` zod schema and the `DIETS` and `ALLERGENS` enums (the nine FDA major allergens) defined in WS06 are canonical.
 
+### Onboarding fields (as built, WS06)
+
+Eight screens in `apps/mobile/app/(onboarding)/`. Each one saves its own keys when the person taps Continue, and sets `profiles.onboarding_step` to its number (never lower than it already was). Quitting on screen 5 leaves the step at 4 and the app reopens on screen 5. The free-text step 9 above is a single optional "anything else?" box at the bottom of screen 6, written to `preferences.notes`; there is no chat.
+
+| # | Route | Field | Type and limits | Stored in |
+|---|---|---|---|---|
+| 1 | `01-household` | household name or invite | name 2 to 40 characters | `households`, `household_members` |
+| 2 | `02-eaters` | adults, kids, dinners per week | adults 1 to 12, kids 0 to 12, dinners 1 to 7 | `preferences.household_size`, `dinners_per_week`, and `portions` (adults plus kids) |
+| 3 | `03-diets-allergies` | diets, allergies | `DIETS`, `ALLERGENS`; an allergen or "No allergies" is required | `preferences.diets`, `allergies` |
+| 4 | `04-dislikes-cuisines` | never-foods, cuisines | up to 20 never-foods of 60 characters, lowercased | `preferences.dislikes`, `cuisines` |
+| 5 | `05-time-skill` | weeknight minutes, skill, equipment | 10 to 120; beginner, comfortable, confident | `preferences.weeknight_minutes`, `skill`, `equipment` |
+| 6 | `06-budget-leftovers` | weekly budget, leftovers, note | budget empty or 20 to 1000 (empty removes the key); avoid, ok, prefer; note up to 500 characters | `preferences.budget_per_week_usd`, `leftovers`, `notes` |
+| 7 | `07-stores` | ZIP, primary store, Costco membership | 5 digits; a store or "not listed"; yes or no | `preferences.primary_store_id`, `profiles.costco_member`, `households.zip` (owner only) |
+| 8 | `08-calibrate` | twelve swipes | like or skip; "Skip the rest" ends early | `recipe_feedback` (`like`, `skipped`), `profiles.taste_embedding`, first plan |
+
+An `allergies` key in `profiles.preferences` means the person answered the allergy question, and an empty list means "none". The `suggest` function refuses to plan for someone whose key is absent, so nothing writes the form's defaults to the database. A CHECK constraint on `profiles.preferences` refuses an allergen or diet outside the lists.
+
 ## 3. Recommendation pipeline (`suggest` Edge Function, WS06)
 
 Retrieve → filter → compose → learn.
@@ -47,6 +64,15 @@ Retrieve → filter → compose → learn.
 3. **Compose with Sonnet.** Input: the filtered candidates (id, title, tags, time, main ingredients), the profile, the week's constraints (which nights are busy, how many dinners), and last week's plan. Output (structured): N entries with `recipe_id`, `date`, `slot`, `servings`, one-line `why`, plus a `shopping_overlap_note`. Objectives in the prompt: variety across proteins and cuisines, ingredient overlap to cut waste and cost, leftovers where the household wants them, time budget per night.
 4. **Validate.** Code checks every returned `recipe_id` is in the candidate set (no hallucinated recipes), no duplicates, dates inside the week. Invalid output is retried once, then falls back to top-N by score.
 5. **Learn.** Like, skip, cooked, swapped, and saved write `recipe_feedback`. A weekly job re-embeds the taste profile.
+
+**As built (WS06).** The function is `supabase/functions/suggest/`; its README has the request, the errors, and the ranking formula. Where it differs from the steps above:
+
+- **Allergen data.** The ontology has no `allergen_tags`. Allergens are matched by term lists against ingredient names and raw ingredient text, plus category rules, in SQL and again in TypeScript on the final candidates. Lists exclude when in doubt and can miss a food they do not name.
+- **Diets.** Seven diets are enforced from ingredients. low carb, keto, and paleo only steer the composer.
+- **Households.** Everyone's allergies and diets apply to a shared plan; the requester's never-foods and weeknight minutes steer it.
+- **Fallback.** After two invalid answers, or with no model key or no budget, the plan is the best-ranked candidates spread over cuisines, with reasons built from facts, not from a model. The response says `composedBy: "fallback"`.
+- **Embeddings.** Voyage `voyage-3`. The taste vector is rebuilt on every plan (once a week in practice) rather than by a separate weekly job. Without `VOYAGE_API_KEY` ranking uses cuisine and popularity.
+- **Logging.** `suggest.compose` and `suggest.embed` rows in `ai_runs`; a plan with no possible model call writes one failed `suggest.compose` row with the reason.
 
 ## 4. Recipe import (`packages/recipe-import`, WS02)
 

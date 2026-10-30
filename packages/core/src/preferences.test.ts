@@ -291,13 +291,20 @@ describe("screen 6: budget and leftovers", () => {
     );
   });
 
-  it("omits the budget key when the person skips it", () => {
+  it("leaves the budget out when the person skips it, and clears an earlier amount", () => {
     const skipped = budgetLeftoversToPreferences({
       budget_per_week_usd: null,
       leftovers: "prefer",
     });
     expect(skipped).toEqual({ leftovers: "prefer" });
-    expect("budget_per_week_usd" in skipped).toBe(false);
+    expect(skipped.budget_per_week_usd).toBeUndefined();
+    // Merged over an earlier answer, the skipped budget and note are removed, not kept.
+    const merged = mergePreferences(
+      { budget_per_week_usd: 120, notes: "old", leftovers: "ok" },
+      skipped,
+    );
+    expect(merged).toEqual({ leftovers: "prefer" });
+    expect("budget_per_week_usd" in merged).toBe(false);
     const set = budgetLeftoversToPreferences({
       budget_per_week_usd: 150,
       leftovers: "ok",
@@ -431,6 +438,7 @@ describe("suggest contract", () => {
       title: "Sheet pan chicken",
       description: null,
       imageUrl: null,
+      sourceUrl: null,
       cuisine: null,
       totalMin: 35,
       tags: [],

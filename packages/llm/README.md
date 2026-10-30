@@ -4,7 +4,7 @@ The Anthropic client wrapper, the versioned prompt registry, structured-output h
 
 ## Status
 
-WS02 created the package: `extract`, the prompt registry, `logAiRun`, and the daily cost cap. `recipe-extract.v1` is the first prompt; `ingredient-parse.v1` (WS03's) moved in unchanged. WS06 and WS09 add theirs.
+WS02 created the package: `extract`, the prompt registry, `logAiRun`, and the daily cost cap. `recipe-extract.v1` is the first prompt; `ingredient-parse.v1` (WS03's) moved in unchanged. WS06 added `embed` and the `suggest-compose.v1` and `suggest-taste-summary.v1` prompts (readable copies in `prompts/suggest/`, kept identical to the modules by a test). WS09 adds its own.
 
 ## `extract`
 
@@ -54,3 +54,23 @@ pnpm --filter @mp/llm typecheck
 pnpm --filter @mp/llm lint
 pnpm --filter @mp/llm test
 ```
+
+## `embed`
+
+```ts
+import { embed, formatVector } from "@mp/llm";
+
+const [vector] = await embed(["Sheet pan lemon chicken | cuisine: mediterranean"], {
+  inputType: "document", // "query" for a taste profile used to search recipes
+  kind: "suggest.embed",
+  householdId,
+  log: (run) => logAiRun(serviceDb.from("ai_runs"), run),
+});
+// formatVector(vector) is pgvector text, for `update recipes set embedding = $1::vector`
+```
+
+Voyage AI `voyage-3`, 1024 dimensions, the size of `recipes.embedding` and `profiles.taste_embedding`. The key is `VOYAGE_API_KEY` (read from `options.apiKey`, else the environment); without it `embed` throws `LlmError("not_configured")`, the same error the Anthropic path throws, and callers fall back to ranking by popularity and cuisine. One `ai_runs` row per request, failures included, at $0.06 per million tokens. Batches of 64, one retry on a 429 or 5xx, and a wrong vector size is `invalid`. The key never appears in an error or a log.
+
+## Evals
+
+`evals/suggest/` holds the `pnpm eval suggest` eval for WS06: ten household fixtures run against a shared recipe corpus, judged by hand-written labels. It prints `hard-filter violations: 0`. See the header of `evals/suggest/run.ts`.

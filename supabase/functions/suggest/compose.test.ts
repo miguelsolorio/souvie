@@ -28,6 +28,7 @@ function candidate(i: number, overrides: Partial<Candidate> = {}): Candidate {
     title: `Recipe ${i}`,
     description: null,
     imageUrl: null,
+    sourceUrl: null,
     cuisine: ["italian", "mexican", "thai", "indian"][i % 4] ?? null,
     tags: ["dinner"],
     servings: 4,

@@ -18,6 +18,7 @@ import { TextField } from "../../../src/components/TextField";
 import { CREATE_HOUSEHOLD_ROUTE, HOME_ROUTE } from "../../../src/features/auth/routes";
 import { InviteSection } from "../../../src/features/household/InviteSection";
 import { MemberRow } from "../../../src/features/household/MemberRow";
+import { KrogerSettingsSection } from "../../../src/features/onboarding/KrogerSettingsSection";
 import { confirmAction } from "../../../src/lib/confirm";
 
 export default function HouseholdSettingsScreen() {
@@ -150,6 +151,10 @@ export default function HouseholdSettingsScreen() {
       </Section>
 
       {isOwner ? <InviteSection householdId={current.id} /> : null}
+
+      <Section title="Kroger (QFC and Fred Meyer)">
+        <KrogerSettingsSection householdId={current.id} isOwner={isOwner} zip={current.zip} />
+      </Section>
 
       <ErrorText>{error}</ErrorText>
 

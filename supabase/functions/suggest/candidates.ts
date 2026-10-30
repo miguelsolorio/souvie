@@ -42,6 +42,7 @@ interface CandidateRow {
   title: string;
   description: string | null;
   image_url: string | null;
+  source_url: string | null;
   cuisine: string | null;
   tags: string[] | null;
   servings: number | string | null;
@@ -79,6 +80,8 @@ export interface Candidate {
   title: string;
   description: string | null;
   imageUrl: string | null;
+  /** Where an imported recipe came from. Shown with the recipe as attribution. */
+  sourceUrl: string | null;
   cuisine: string | null;
   tags: string[];
   servings: number | null;
@@ -316,6 +319,7 @@ export async function fetchCandidates(
         title: row.title,
         description: row.description,
         imageUrl: row.image_url,
+        sourceUrl: row.source_url,
         cuisine: row.cuisine,
         tags: row.tags ?? [],
         servings: num(row.servings),
@@ -406,6 +410,7 @@ export function toCalibrationCard(candidate: Candidate, imageUrl: string | null)
     title: candidate.title,
     description: candidate.description,
     imageUrl,
+    sourceUrl: candidate.sourceUrl,
     cuisine: candidate.cuisine,
     totalMin: candidate.totalMin,
     tags: candidate.tags.slice(0, 6),

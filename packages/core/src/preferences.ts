@@ -305,12 +305,12 @@ export function timeSkillToPreferences(input: TimeSkillInput): ProfilePreference
 
 /** The budget key is left out entirely when the person skips it. */
 export function budgetLeftoversToPreferences(input: BudgetLeftoversInput): ProfilePreferences {
+  // undefined, not absent: `mergePreferences` removes a key set to undefined, so skipping the
+  // budget on a second pass clears the amount the person entered on the first.
   return {
     leftovers: input.leftovers,
-    ...(input.budget_per_week_usd === null
-      ? {}
-      : { budget_per_week_usd: input.budget_per_week_usd }),
-    ...(input.notes ? { notes: input.notes } : {}),
+    budget_per_week_usd: input.budget_per_week_usd ?? undefined,
+    notes: input.notes ? input.notes : undefined,
   };
 }
 
@@ -412,6 +412,8 @@ export const CalibrationCard = z.object({
   description: z.string().nullable(),
   /** An http(s) URL. Storage paths are turned into short-lived signed URLs by the function. */
   imageUrl: z.string().nullable(),
+  /** Where an imported recipe came from, for the attribution line. Null for the catalog. */
+  sourceUrl: z.string().nullable(),
   cuisine: z.string().nullable(),
   totalMin: z.number().nullable(),
   tags: z.array(z.string()),

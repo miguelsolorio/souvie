@@ -36,6 +36,7 @@ If you are a **builder agent**, you were given one brief in `docs/workstreams/`.
 - Branches: `ws/NN-slug`, one per workstream. No direct commits to `main` except the orchestrator's contract changes and ledger updates.
 - Shared contracts live in `packages/core` (zod schemas and types) and `packages/retailers` (`RetailerAdapter`). Only the orchestrator edits them.
 - Secrets never enter the repo. `.env.example` lists every variable; `.env.local` is gitignored.
+- Git identity: every commit in this repo is authored and committed as `miguel.solorio07@gmail.com`, never a work address. `scripts/setup-git-identity.sh` pins the repo-local config, turns off the global signing key, and installs `.githooks/pre-commit`, which rejects any other identity. Run it once per fresh clone; worktrees inherit it. Never change the global git config from this repo.
 - Retailer data rules are product rules: display Kroger product data exactly as returned, never cache catalog data past its cache headers, never show prices from different retailers on one screen, never store search-derived data. See `docs/04-integrations.md` and `docs/02-data-model.md`.
 - Allergies are enforced in SQL and deterministic code, never by a model alone.
 - The app name must not contain "Kroger" or any retailer mark.

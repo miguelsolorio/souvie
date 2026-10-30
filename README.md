@@ -40,6 +40,10 @@ See `docs/status.md` for the live ledger.
 
 Expo SDK 58 · React Native 0.88 · Expo Router · NativeWind · TanStack Query · Supabase (Postgres, RLS, Auth, Storage, Edge Functions, Realtime, pgvector, Vault, Cron, Queues) · Node worker on Fly.io or Railway · Anthropic Claude (Haiku 5.5, Sonnet 5.5, Opus 5.5) · Tauri 2 for desktop · pnpm + Turborepo · Biome · Vitest · pgTAP
 
+## Git identity
+
+This repo commits only as the personal Gmail account. After cloning, run `scripts/setup-git-identity.sh` once; it pins the local config and installs a pre-commit hook that rejects any other author or committer.
+
 ## Working name
 
 "Meal planner" until the name is chosen (see `docs/08-brand.md`).

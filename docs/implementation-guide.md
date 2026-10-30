@@ -209,6 +209,7 @@ Wave summary:
 - CI must be green before merge: `pnpm typecheck`, `pnpm lint`, `pnpm test`; `supabase test db` from WS01 onward; `pnpm eval` thresholds from WS15 onward; web export from WS13 onward.
 - No direct commits to `main` except the orchestrator's contract changes, doc updates, and ledger updates. Each is its own small commit.
 - Builders commit on their branch as they go. The orchestrator never rewrites a builder's history.
+- Identity: the repo-local config and `.githooks/pre-commit` make every commit, in every worktree, author and commit as `miguel.solorio07@gmail.com`. If a builder reports a rejected commit from the hook, the fix is `scripts/setup-git-identity.sh`, never a change to global git config.
 - Commit messages end with the attribution line the session's system reminder specifies.
 
 ## 8. Context hygiene

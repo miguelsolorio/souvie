@@ -6,6 +6,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 ## 0. Before the first orchestrator session (human)
 
+- [x] Git identity pinned to the Gmail account for this clone (`scripts/setup-git-identity.sh`). Run it again on any fresh clone before the first commit.
 - [ ] Create the Supabase project. Put `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `WORKER_DATABASE_URL` in a local `.env.local`. Never commit it.
 - [ ] Register the Kroger developer app at developer.kroger.com with redirect URI `mealplanner://oauth/kroger`. Put `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` in `.env.local`. (Gates wave 2.)
 - [ ] Submit the Instacart Developer Platform application at company.instacart.com/business/developers. Record the response in `docs/status.md` under External tasks. (Gates WS08 production; a dev key works without approval.)

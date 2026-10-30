@@ -1,0 +1,26 @@
+#!/bin/sh
+# Refuse any commit in this repo that is not authored and committed as the personal Gmail identity.
+# Installed by scripts/setup-git-identity.sh (sets core.hooksPath=.githooks). Applies to every worktree.
+
+ALLOWED="miguel.solorio07@gmail.com"
+
+author="${GIT_AUTHOR_EMAIL:-$(git config user.email)}"
+committer="${GIT_COMMITTER_EMAIL:-$(git config user.email)}"
+
+fail() {
+  echo "pre-commit: refusing to commit as '$1'." >&2
+  echo "pre-commit: this repo only commits as $ALLOWED." >&2
+  echo "pre-commit: run scripts/setup-git-identity.sh, or check GIT_AUTHOR_EMAIL / GIT_COMMITTER_EMAIL." >&2
+  exit 1
+}
+
+[ "$author" = "$ALLOWED" ] || fail "$author"
+[ "$committer" = "$ALLOWED" ] || fail "$committer"
+
+if [ "$(git config --get commit.gpgsign)" = "true" ]; then
+  echo "pre-commit: commit.gpgsign is on. The global signing key may belong to a work account." >&2
+  echo "pre-commit: run scripts/setup-git-identity.sh to turn it off for this repo, or set a personal key locally." >&2
+  exit 1
+fi
+
+exit 0

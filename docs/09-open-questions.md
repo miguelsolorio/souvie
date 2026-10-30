@@ -50,3 +50,10 @@ Facts the research could not confirm as of 2026-10-29, who can resolve each, and
 |---|---|---|---|
 | Name | Branding, domains, store listing | Human picks after checks (checkpoint 6) | WS14 |
 | Tier 3 deployment: Mode A only, or also Mode B on a home server | Unattended scheduled checkout | Human decides during WS10 | WS10 |
+
+## Recipe import
+
+| Question | Why it matters | How to resolve | When |
+|---|---|---|---|
+| Do the recipe sites that return 403 to a Node fetch (allrecipes, seriouseats, simplyrecipes, budgetbytes, cookieandkate, sallysbakingaddiction; foodnetwork also under Deno) block Supabase Edge egress too? Deno read most of them from the development machine during WS02 | Decides how often URL import for popular sites falls to the model path or fails outright | Orchestrator probes from the hosted `recipe-import` function once the release lands and records per-domain results in the decisions log | After the hosted release |
+| Does the Sonnet 5.5 structured-output request `@mp/llm` sends work against the live API? It was checked against the SDK types and a local stand-in only | Text, photo and caption import and the parser fallback all go through it | Run `pnpm --filter @mp/recipe-import eval:live` once `ANTHROPIC_API_KEY` exists; one successful `ai_runs` row settles it | Before WS02 merges |

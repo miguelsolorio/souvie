@@ -12,6 +12,7 @@ Everything the model does is bounded by code. Hard constraints (allergies, budge
 
 Plumbing rules:
 - Every call declares a zod schema and uses structured outputs (`output_config` with a JSON schema; `messages.parse()` in the SDK). Agent tools are declared with `strict: true`.
+- Request shape for Sonnet 5.5 and Haiku 5.5 (confirmed 2026-10-30): omit `thinking`, which runs adaptive thinking; `thinking: {type: "disabled"}`, `budget_tokens`, and non-default `temperature`, `top_p` or `top_k` return 400. Depth is set with `output_config.effort`. On Sonnet 5.5 a forced `tool_choice` (`any` or `tool`) also returns 400, so agent tools use `auto` with `strict: true` and the prompt names the tool. `@mp/llm` sends `output_config: { effort, format }` and nothing else; the server-side refusal fallback (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`) is opt-in and off by default.
 - Prompts live in `packages/llm/prompts/<name>/<version>.ts` with a registry; every `ai_runs` row records `prompt_version`.
 - Prompt caching for stable blocks: the ingredient ontology excerpt, the household profile, the adapter's product schema.
 - Every call writes an `ai_runs` row (model, tokens, cache reads, cost, latency, ok). `packages/llm` enforces a per-household daily cost cap read from a config table or env; over cap it throws a typed error the UI explains.

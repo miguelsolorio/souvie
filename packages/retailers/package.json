@@ -5,7 +5,10 @@
   "type": "module",
   "description": "RetailerAdapter interface and one folder per adapter.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./kroger": "./src/kroger/index.ts",
+    "./kroger/terms": "./src/kroger/terms.ts",
+    "./mock": "./src/mock/index.ts"
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",

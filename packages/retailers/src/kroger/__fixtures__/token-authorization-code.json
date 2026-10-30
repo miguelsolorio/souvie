@@ -1,0 +1,14 @@
+{
+  "request": { "method": "POST", "path": "/v1/connect/oauth2/token" },
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "date": "Fri, 30 Oct 2026 19:30:02 GMT"
+  },
+  "body": {
+    "expires_in": 1800,
+    "access_token": "fixture-customer-access-token-1",
+    "refresh_token": "fixture-customer-refresh-token-1",
+    "token_type": "bearer"
+  }
+}

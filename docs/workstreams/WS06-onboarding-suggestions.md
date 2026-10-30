@@ -146,6 +146,7 @@ pnpm --filter mobile start                      # manual: run the 8 screens on i
 ```
 
 ## Risks and notes
+- From the WS01 review (2026-10-30): `profiles` still has table-level `grant select, insert, update` for `authenticated` (own row only through RLS). When you add `taste_embedding`, `onboarding_step` and `costco_member`, narrow the grant to column level so a user cannot overwrite the server-built embedding: grant update on `display_name`, `avatar_url`, `preferences`, `onboarding_step`, `costco_member` only. Add a `column_privs_are(...)` pgTAP assertion for `profiles`, and one for `households` (`name`, `zip`) so a later migration cannot widen either silently. Also reconcile `ProfilePreferences` (docs/02 shape, implemented by WS01) with the camelCase `Preferences` this brief plans; the orchestrator decides before dispatch.
 - R4 (allergen exposure): allergies are hard SQL filters; the model only sees pre-filtered candidates. Add a final assertion in `compose.ts` that every returned recipe is in the candidate set, as defense in depth.
 - R3 (LLM cost): one composition call per week per household with `claude-sonnet-5-5`; taste summary with `claude-haiku-5-5`. Cache the ontology excerpt and the preference block with prompt caching. Log everything to `ai_runs`.
 - R8 (scope creep): do not build a conversational onboarding. The single `freeText` field is folded into the taste summary and that is all.

@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "typecheck": "turbo run typecheck",
-    "lint": "biome check .",
+    "lint": "biome check . && node apps/marketing/scripts/check-copy.mjs",
     "format": "biome check --write .",
     "test": "vitest run --project unit",
     "eval": "vitest run --project evals --passWithNoTests"

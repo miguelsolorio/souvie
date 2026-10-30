@@ -1,0 +1,66 @@
+---
+const items = [
+  {
+    lead: "We never see your card.",
+    body: "You pay in the store's own app or checkout.",
+  },
+  {
+    lead: "Your store login stays with the store.",
+    body: "Sign-in happens on the store's page, not ours.",
+  },
+  {
+    lead: "Nothing gets bought without you.",
+    body: "The cart waits for your tap.",
+  },
+  {
+    lead: "You can export or delete everything, any time.",
+    body: "Your plans, lists, and history are yours.",
+  },
+];
+---
+
+<section id="trust" class="band band-sunken" data-section="trust" aria-labelledby="trust-title">
+  <div class="container">
+    <h2 id="trust-title">Your money and your data stay yours</h2>
+    <ul class="trust-list">
+      {
+        items.map((item) => (
+          <li>
+            <strong>{item.lead}</strong>
+            <span>{item.body}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .trust-list {
+    display: grid;
+    gap: var(--space-4);
+    margin: var(--space-8) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .trust-list li {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-5) var(--space-6);
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-primary);
+    border-radius: var(--radius-md);
+  }
+
+  .trust-list span {
+    color: var(--color-text-muted);
+  }
+
+  @media (min-width: 48rem) {
+    .trust-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

@@ -1,0 +1,30 @@
+{
+  "name": "@mp/marketing",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Astro landing page with a waitlist form. See README.md.",
+  "scripts": {
+    "tokens": "node scripts/sync-brand.mjs",
+    "predev": "node scripts/sync-brand.mjs",
+    "dev": "astro dev",
+    "prebuild": "node scripts/sync-brand.mjs",
+    "build": "astro build",
+    "preview": "astro preview",
+    "typecheck": "astro check",
+    "lint": "biome check . && node scripts/check-copy.mjs",
+    "test": "vitest run",
+    "test:sections": "node tests/sections.test.mjs"
+  },
+  "dependencies": {
+    "@mp/ui": "workspace:*",
+    "@supabase/supabase-js": "^2.118.0",
+    "astro": "^7.4.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@types/node": "^22.20.5",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

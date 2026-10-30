@@ -1,0 +1,67 @@
+---
+import { site } from "../config";
+---
+
+<section class="hero band" data-section="hero" aria-labelledby="hero-title">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <h1 id="hero-title">
+        <span class="line">Dinner, decided.</span>
+        <span class="line">Groceries, done.</span>
+      </h1>
+      <p class="lead">
+        {site.name} plans your household's week, builds one list, and fills your carts across stores on a
+        schedule you pick. You tap pay.
+      </p>
+      <p><a class="button" href="#waitlist">Join the waitlist</a></p>
+      <p class="fine">Coming to iOS and web. Starting in Washington.</p>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <img src="/logo-mark.svg" alt="" width="176" height="176" />
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding-top: var(--space-8);
+  }
+
+  .hero-grid {
+    display: grid;
+    gap: var(--space-10);
+    align-items: center;
+  }
+
+  .hero-copy > * + * {
+    margin-top: var(--space-6);
+  }
+
+  .line {
+    display: block;
+  }
+
+  .hero-art {
+    display: none;
+  }
+
+  @media (min-width: 48rem) {
+    .hero-grid {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .hero-art {
+      display: grid;
+      place-items: center;
+      width: 16rem;
+      height: 16rem;
+      border-radius: var(--radius-full);
+      background: var(--color-surface-brand);
+    }
+
+    .hero-art img {
+      width: 11rem;
+      height: auto;
+    }
+  }
+</style>

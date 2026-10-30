@@ -1,0 +1,3 @@
+# Astro writes generated types and the preview server's state here.
+.astro/
+dist/

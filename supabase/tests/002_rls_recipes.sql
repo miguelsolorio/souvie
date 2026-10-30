@@ -173,7 +173,11 @@ select throws_ok($$update public.ai_runs set cost_usd = 0$$, '42501', 'permissio
 select lives_ok($$insert into storage.objects (bucket_id, name) values ('recipe-images', '0a000000-0000-4000-8000-00000000000a/new-card.jpg')$$, 'alice can upload into her household folder');
 select throws_ok($$insert into storage.objects (bucket_id, name) values ('recipe-images', '0b000000-0000-4000-8000-00000000000b/planted.jpg')$$, '42501', 'new row violates row-level security policy for table "objects"', 'alice cannot upload into household B''s folder');
 select throws_ok($$insert into storage.objects (bucket_id, name) values ('recipe-images', 'loose-file.jpg')$$, '42501', 'new row violates row-level security policy for table "objects"', 'alice cannot upload outside a household folder');
+-- Storage refuses direct DELETEs (storage.protect_delete) unless the Storage API's own switch is on.
+-- The switch only lets the statement reach RLS; the policy still decides. Same pattern as 001.
+set local storage.allow_delete_query = 'true';
 select is(public.__t_affected($$delete from storage.objects where name = '0b000000-0000-4000-8000-00000000000b/card-b.jpg'$$), 0::bigint, 'alice cannot delete household B''s image');
+set local storage.allow_delete_query = 'false';
 
 reset role;
 

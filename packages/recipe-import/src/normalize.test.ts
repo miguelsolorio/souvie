@@ -247,6 +247,27 @@ describe("helpers", () => {
     expect(cleanStep("350 degrees for an hour")).toBe("350 degrees for an hour");
   });
 
+  it("strips a step label but keeps a number that is part of the sentence", () => {
+    // Labels.
+    expect(cleanStep("1. Preheat the oven.")).toBe("Preheat the oven.");
+    expect(cleanStep("10. Cool on a rack.")).toBe("Cool on a rack.");
+    expect(cleanStep("3: Fold in the eggs.")).toBe("Fold in the eggs.");
+    expect(cleanStep("- 4) Serve warm.")).toBe("Serve warm.");
+    expect(cleanStep("Step 2 - Whisk.")).toBe("Whisk.");
+    expect(cleanStep("step 7. Rest.")).toBe("Rest.");
+    expect(cleanStep("Step 1 Mix everything.")).toBe("Mix everything.");
+    // Numbers that are not labels: a spaced range, a bare quantity, a decimal, a temperature.
+    expect(cleanStep("30 - 40 minutes in the oven until golden.")).toBe(
+      "30 - 40 minutes in the oven until golden.",
+    );
+    expect(cleanStep("30 – 40 minutes in the oven.")).toBe("30 – 40 minutes in the oven.");
+    expect(cleanStep("30-40 minutes in the oven.")).toBe("30-40 minutes in the oven.");
+    expect(cleanStep("2 : 1 ratio of water to rice.")).toBe("2 : 1 ratio of water to rice.");
+    expect(cleanStep("1.5 cups of stock go in next.")).toBe("1.5 cups of stock go in next.");
+    expect(cleanStep("350. Bake until set.")).toBe("350. Bake until set.");
+    expect(cleanStep("Step up the heat to high.")).toBe("Step up the heat to high.");
+  });
+
   it("decodes numeric and named entities", () => {
     expect(decodeEntities("a &amp; b &#8211; c &#x2019;s &quot;d&quot; &nope;")).toBe(
       'a & b – c ’s "d" &nope;',

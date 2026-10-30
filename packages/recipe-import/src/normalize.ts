@@ -62,11 +62,17 @@ export function cleanIngredientLine(text: string): string {
   return collapse(text.replace(LEADING_LIST_MARKS, ""));
 }
 
+/**
+ * A step label at the start of a line: "Step 3", "Step 3:", "Step 3 -", or a bare number followed
+ * directly by `.`, `)` or `:` ("1.", "2)", "3:"). A bare number with a space before the
+ * punctuation is part of the sentence, as in "30 - 40 minutes in the oven", and so are decimals
+ * and quantities ("1.5 cups", "350 degrees").
+ */
+const STEP_LABEL = /^(?:step\s*\d{1,2}\s*[.):-]?|\d{1,2}[.):])\s+/i;
+
 /** A step without its number ("1.", "1)", "Step 1:") or bullet. */
 export function cleanStep(text: string): string {
-  return collapse(
-    text.replace(LEADING_BULLETS, "").replace(/^(?:step\s*)?\d{1,2}\s*[.):-]\s+/i, ""),
-  );
+  return collapse(text.replace(LEADING_BULLETS, "").replace(STEP_LABEL, ""));
 }
 
 /** The first number in a yield such as "4 servings", "4-6 servings", or "Makes 12 cookies". */

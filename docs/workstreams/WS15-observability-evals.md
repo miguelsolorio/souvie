@@ -35,7 +35,7 @@ When this is done, we can see what the product and the models are doing and we c
 - **Eval harness** `pnpm eval` (root script running `packages/evals`):
   - Import: 50 golden URLs from WS02 fixtures (recorded HTML, no live fetch in CI) → normalized recipes; pass if ≥45 match the expected normalized output on title, servings, ingredient count, and instruction count.
   - Parser: 500 golden lines from WS03 → ≥95% exact on quantity and unit, ≥90% on canonical ingredient id. Haiku calls are replayed from a recorded cache in CI; a `--live` flag re-records.
-  - Line items: 100 cases per retailer (`kroger`, `instacart`) against `MockRetailer` fixtures → ≥90% choose the expected product or an accepted alternative.
+  - Line items: 100 cases per retailer (`kroger`, `safeway`) against `MockRetailer` fixtures → ≥90% choose the expected product or an accepted alternative.
   - Agent replays: every recorded run under `packages/agent/fixtures/runs/*.json` replays against `MockRetailer` and must reach the same terminal status with the same ledger deltas; model calls are replayed from the recording.
   - Output: a JSON report at `packages/evals/report.json` and a Markdown summary printed to the console; CI uploads the report as an artifact and posts the summary as a PR comment.
 - **Thresholds gate merges:** `eval.yml` workflow runs `pnpm eval` on every PR touching `packages/{recipe-import,ingredient-parser,retailers,agent,llm}` or `supabase/seed`, and fails if any suite is below threshold or any suite regresses by more than 2 points versus the `main` baseline stored in `packages/evals/baseline.json`.

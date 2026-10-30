@@ -152,7 +152,7 @@ pnpm --filter mobile start                      # manual: run the 8 screens on i
 - R8 (scope creep): do not build a conversational onboarding. The single `freeText` field is folded into the taste summary and that is all.
 - Candidate retrieval uses `recipes.embedding <=> profiles.taste_embedding` with HNSW (`vector_cosine_ops`). On a cold profile with no likes, fall back to catalog popularity plus cuisine match.
 - `stores_wa.csv` is a stopgap. WS07 replaces Kroger entries with live Locations API results; keep the CSV columns so both sources map to one `Store` shape.
-- Costco membership matters because Costco on Instacart is members-only via sameday.costco.com; non-members pay higher prices on instacart.com. Record it now so WS08 and WS10 can route correctly.
+- Costco membership matters because costco.com is members-only and there is no non-member route. Record it now so WS10's Costco adapter can refuse early with a clear message, and so suggestions never assign items to Costco for a non-member household.
 - Prompt files are versioned (`compose.v1.md`). Changing a prompt means a new version file and a registry entry, not an edit in place.
 
 ## Completion report

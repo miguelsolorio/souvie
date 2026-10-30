@@ -3,7 +3,7 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 1 (in progress)
-**Last updated:** 2026-10-30 by the orchestrator (WS01 ready to squash, checkpoint 2 due)
+**Last updated:** 2026-10-30 by the planning session (Instacart retired, WS08 re-scoped to the assisted-checkout host)
 
 ## Workstreams
 
@@ -17,9 +17,9 @@ The orchestrator updates this file after every dispatch, report, review, merge, 
 | 05 | Grocery list & in-store mode | 4 | not started | | | | | |
 | 06 | Onboarding & suggestions | 3 | not started | | | | | |
 | 07 | Retailer framework + Kroger | 2 | not started | | | | | Human checkpoint 3 before start (Kroger app registered) |
-| 08 | Instacart adapter | 3 | not started | | | | | Human checkpoint 4 before start (IDP application status) |
+| 08 | Assisted-checkout host (WebView, sessions, consent, gating, llm-proxy) | 3 | not started | | | | | Replaced the Instacart adapter on 2026-10-30. Human checkpoint 4 before start (Tier 3 consent copy approved; retailer list) |
 | 09 | Shopping agent + worker + review UI | 5 | not started | | | | | |
-| 10 | Browser adapters | 6 | not started | | | | | Human checkpoint 5 before start (Tier 3 consent copy) |
+| 10 | Browser adapters (Safeway, Costco, Kroger pay) | 6 | not started | | | | | Depends on WS08 and WS09. Human checkpoint 5 before start (WS08 host demo accepted) |
 | 11 | Scheduling & notifications | 6 | not started | | | | | |
 | 12 | History & spend | 6 | not started | | | | | |
 | 13 | Web & desktop packaging | 6 | not started | | | | | |
@@ -33,7 +33,8 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 | Task | Owner | Status | Notes |
 |---|---|---|---|
 | Register Kroger developer app at developer.kroger.com | Miguel | done 2026-10-29 | Credentials in `.env.local`, never the repo. Checkpoint 3 prerequisite met |
-| Submit Instacart Developer Platform application | Miguel | open | Needed before WS08 production; dev key works without approval. Marketing page said "not accepting" on 2026-10-29; docs still say apply |
+| Submit Instacart Developer Platform application | Miguel | closed 2026-10-30 | Developer page: "We are currently not accepting new applications. There is no waitlist available at this time." Instacart retired; see the decisions log |
+| Draft the Tier 3 consent copy for checkpoint 4 | Orchestrator, then Miguel approves | open | Names each retailer, the terms-of-service risk, the account exposure, and that the agent stops at pay. Lives in `apps/mobile/features/tier3/consent.ts` (WS08) |
 | Trademark, domain, and App Store name checks for the shortlist | WS14 builder, then Miguel | evidence gathered 2026-10-30 | docs/08-brand.md §1.4 has 18 names across USPTO, both app stores, domains, npm, GitHub. SOUS (classes 9, 42), LARDER (9, 42, 44) and MISE (pending) are taken for apps. Souvie recommended conditionally: ESSENTIAL SOUVIE pending (Cuisine Solutions), sound-alike Suvie appliance brand, souvie.com/.app/.co registered, getsouvie.com and others free. Needs counsel and Miguel's choice at checkpoint 6 |
 | Create the Supabase project | Miguel | done 2026-10-29 | Credentials in `.env.local` at the primary checkout root. WS00 verifies against local Supabase only |
 | Create the GitHub repository for `main` | Miguel | done 2026-10-29 | https://github.com/miguelsolorio/souvie (public). Miguel added `origin` and pushed `main` from the primary checkout |
@@ -52,10 +53,11 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 - Deferred: criterion 7 (iOS Simulator; Xcode license not accepted) and the hosted halves of 9 to 11 (`SUPABASE_ACCESS_TOKEN` missing). The hosted project has not received `db push` or `functions deploy` yet. Both are verified at checkpoint 1 once Miguel unblocks them.
 - Contracts changed: none. `.env.example` grew to thirteen variables with `SUPABASE_ACCESS_TOKEN` (CLI only). Root `.npmrc` pins the public npm registry.
 - Next wave needs: checkpoint 1 approval. WS01 re-enables `gotrue` and `postgrest` in the CI stack, extends `db lint --schema`, and adds `supabase test db`. Builders verify against the hosted project; container-only checks run in CI.
-- Human: accept the Xcode license, add `SUPABASE_ACCESS_TOKEN` to `.env.local`, approve the checkpoint 1 items, and `git pull` in the primary checkout. Instacart application and the hosting and analytics accounts remain open.
+- Human: accept the Xcode license, add `SUPABASE_ACCESS_TOKEN` to `.env.local`, approve the checkpoint 1 items, and `git pull` in the primary checkout. The hosting and analytics accounts remain open.
 
 ## Decisions log
 
+- 2026-10-30: Instacart retired; the browser shopping agent is the main path. Instacart's developer page reads "not accepting new applications, no waitlist," so Tier 2 cannot ship. Decisions: (1) Tier 3 (agent drives the retailer site in the app's WebView, Mode A) is the main path for Safeway, Albertsons, Haggen and Costco; Kroger stays on the API. (2) WS10 is split: a new WS08 "Assisted-checkout host" in wave 3 builds the WebView host, DOM bridge, session capture, consent, gating, `llm-proxy`, the `tier3` migration and the snapshot dev tool; WS10 in wave 6 builds the Safeway, Costco and Kroger adapters and the run screen on top of WS08 and WS09. (3) Mode B stays document-only; Mode C stays forbidden. (4) Consent is shown once at connect per retailer; `tier3_browser_checkout` defaults on and is a per-retailer kill switch; `auto_checkout` stays off by default. (5) The marketing site's Stores copy now names the agent path and the Instacart-derived copy rules were removed from `check-copy.mjs`. (6) `enum retailer` drops `instacart`; `INSTACART_*` variables removed from `.env.example`. Checkpoint 4 now approves the consent copy and the retailer list; checkpoint 5 accepts the WS08 host demo. Risks R14 and R18 retired; R16, R17, R20 reworded. Merged briefs WS00 and WS14 keep their historical Instacart text. (Miguel, with the planning session.)
 - 2026-10-29: Stack: Expo + React Native (TypeScript), Supabase, separate Node worker. Audience v1: household first. Checkout tiers 1, 2, and 3 all allowed; Tier 3 is on-device assisted mode first. (Planning session.)
 - 2026-10-29: `main` lives on GitHub in a repository Miguel creates. Merges go through PRs and GitHub Actions. The orchestrator session runs in an app-made worktree on branch `claude/repo-orchestration-setup-4365a5`, which mirrors `origin/main`. Ledger and contract commits are made there and pushed with `git push origin HEAD:main`. The primary checkout's local `main` is refreshed by Miguel with `git pull`. (Orchestrator, confirmed with Miguel.)
 - 2026-10-29: `main` is at https://github.com/miguelsolorio/souvie, default branch `main`, public. PRs from `ws/*` branches target it; GitHub Actions runs CI. (Miguel created and pushed; orchestrator recorded.)

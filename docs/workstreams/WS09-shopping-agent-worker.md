@@ -8,7 +8,7 @@ When this is done, a household can press "Shop this list" (or a scheduled job ca
 ## Depends on
 - WS05 (Grocery list): `grocery_lists`, `grocery_list_items` with aggregated quantities and `excluded_reason`.
 - WS07 (Retailer framework + Kroger): `RetailerAdapter`, `MockRetailer`, `KrogerAdapter`, `retailer_connections`, `product_matches`, `retailer_quota_usage`, typed errors.
-- WS08 (Instacart adapter) should be merged so the agent can route hand-off stores, but the agent must work with Kroger and Mock alone if WS08 slips. Guard on `isAdapterAvailable('instacart')`.
+- WS08 (Assisted-checkout host) should be merged so `packages/agent` can be checked against the `BrowserHost` interface, but the agent must work with Kroger and Mock alone if WS08 slips. Browser adapters themselves arrive in WS10.
 - WS00 (scaffold) reserves the `services/shopper-worker` path, the `WORKER_DATABASE_URL` variable, and CI wiring for services. This WS creates the worker itself.
 
 ## Read first
@@ -51,7 +51,7 @@ When this is done, a household can press "Shop this list" (or a scheduled job ca
 | `checkout` | `checkout = browser` and review approved | retailer write, `checking_out` | cart_ready |
 | `finish` | none | transitions to `cart_ready` or `checked_out` | running, checking_out |
 
-For `cartAdd = handoff` (Instacart) the push phase calls the adapter once to obtain the URL and finishes with `cart_ready`; no item-level tools run.
+For Kroger (`slots = handoff`, `checkout = handoff`) the push phase ends with `cart_ready` and a deep link from `handoffUrl`; `get_slots`, `select_slot` and `checkout` do not run.
 
 ### Run lifecycle walkthrough
 
@@ -105,13 +105,13 @@ For `cartAdd = handoff` (Instacart) the push phase calls the adapter once to obt
 - This WS does not create the `orders` table; WS12 owns it.
 
 **Consumes**
-- `RetailerAdapter` and `MockRetailer` (WS07), `InstacartAdapter` (WS08, optional).
+- `RetailerAdapter` and `MockRetailer` (WS07), `BrowserHost` interface (WS08, for type-checking the host-agnostic loop).
 - `packages/llm`: `createClient()`, tool-runner helper, `logAiRun()`. Model: `claude-sonnet-5-5` for the loop, `claude-haiku-5-5` for the review summary text.
 - `grocery_list_items`, `ingredients`, `product_matches`, `retailer_connections`, `profiles.preferences.allergies`.
 - Supabase Queues (`pgmq.send`, `pgmq.read`, `pgmq.archive`, `pgmq.delete`), Supabase Vault via WS07's token helpers.
 
-**Hand-off adapters**
-- When `capabilities.cartAdd === 'handoff'` (Instacart), the planner groups that store's items, calls `addToCart` once to obtain the hand-off URL, stores it in `cart_snapshot.handoffUrl`, and moves straight to `cart_ready` with a push that deep-links to the URL. No review of product choices is possible because Instacart does the matching.
+**Hand-off at pay (Tier 1)**
+- When `capabilities.checkout === 'handoff'` (Kroger), after the approved cart is pushed the agent calls `handoffUrl`, stores it in `cart_snapshot.handoffUrl`, and moves to `cart_ready` with a push that deep-links to the retailer checkout. Browser adapters (WS10) continue through slots and pay instead.
 
 ## Acceptance criteria
 1. `pnpm typecheck && pnpm lint` pass. `grep -rn "from 'fs'\|from 'node:\|playwright" packages/agent/src` returns nothing.

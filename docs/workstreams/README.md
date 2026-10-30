@@ -14,7 +14,7 @@ Each `WSxx-*.md` file is a self-contained hand-off for one **builder agent**. A 
 | 05 | `WS05-grocery-list.md` | 4 | Sonnet |
 | 06 | `WS06-onboarding-suggestions.md` | 3 | Sonnet |
 | 07 | `WS07-retailer-framework-kroger.md` | 2 | Opus |
-| 08 | `WS08-instacart-adapter.md` | 3 | Sonnet |
+| 08 | `WS08-assisted-checkout-host.md` | 3 | Opus |
 | 09 | `WS09-shopping-agent-worker.md` | 5 | Opus |
 | 10 | `WS10-browser-adapters.md` | 6 | Opus |
 | 11 | `WS11-scheduling-notifications.md` | 6 | Sonnet |

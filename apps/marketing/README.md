@@ -57,7 +57,7 @@ When the name is chosen, change it in three places: `src/config.ts`, the `<text>
 
 ## Copy rules
 
-`scripts/check-copy.mjs` fails the lint run on: "partner" within 80 characters of "Instacart", "Free Delivery", "Kroger" in a title, heading, name, or logo text, em dashes, prices, "Pro" or subscription language, retailer logo images, and retailer logo files under `public/` or `src/assets/`. It also scans the blocks between `copy:start` and `copy:end` markers in `docs/08-brand.md`, and fails if it finds none. Pass `--file path` to check one file.
+`scripts/check-copy.mjs` fails the lint run on: "Kroger" in a title, heading, name, or logo text, em dashes, prices, "Pro" or subscription language, retailer logo images, and retailer logo files under `public/` or `src/assets/`. It also scans the blocks between `copy:start` and `copy:end` markers in `docs/08-brand.md`, and fails if it finds none. Pass `--file path` to check one file.
 
 ## Deploy
 

@@ -21,9 +21,8 @@
 │  Claude tool-use agent loop · Retailer adapters · Playwright (Tier 3 Mode B only) · run progress   │
 └───────┬──────────────────┬──────────────────────┬─────────────────────────────────────────────────┘
         ▼                  ▼                      ▼
-  Kroger Public API   Instacart Developer     Retailer websites (browser adapters, flagged)
-  (QFC, Fred Meyer)   Platform (Costco,        safeway.com · costco.com
-                      Safeway, QFC, …)
+  Kroger Public API   Retailer websites (browser adapters, driven in the app's WebView)
+  (QFC, Fred Meyer)   safeway.com · costco.com · kroger.com checkout
         ▲
    Anthropic API (Haiku / Sonnet / Opus) · USDA FoodData Central (nutrition, optional) · Open Food Facts (UPC facts)
 ```
@@ -62,7 +61,7 @@ meal-planner/
 │   ├── llm/                    # Anthropic client wrapper, prompt registry, structured-output helpers, cost logging
 │   ├── recipe-import/          # URL → recipe-scrapers → normalized Recipe; text, photo, caption fallbacks
 │   ├── ingredient-parser/      # "2 cups diced yellow onion" → {qty, unit, ingredient, prep}
-│   ├── retailers/              # RetailerAdapter interface + kroger/, instacart/, browser/, mock/
+│   ├── retailers/              # RetailerAdapter interface + kroger/, browser/, mock/
 │   └── agent/                  # Shopping agent: tools, policies, run state machine, review gates
 ├── services/
 │   └── shopper-worker/         # Node worker: pgmq consumer, agent runner, Playwright host (Mode B)
@@ -123,17 +122,16 @@ meal-planner/
 | `list-build` | WS05 | Aggregate a plan into a grocery list |
 | `suggest` | WS06 | Weekly plan composition |
 | `retailer-oauth` | WS07 | Kroger OAuth callback; tokens into Vault |
-| `instacart-link` | WS08 | Create a shopping-list link for one store |
+| `llm-proxy` | WS08 | Server-side model calls for the on-device agent (Tier 3 Mode A), with cost caps and `ai_runs` logging |
 | `run-approve` | WS09 | Record review decisions and resume a run |
-| `llm-proxy` | WS10 | Server-side model calls for the on-device agent (Tier 3 Mode A), with cost caps and `ai_runs` logging |
 | `send-push` | WS11 | Fan out one notification to a household's devices, honoring quiet hours |
 | `export-data` | WS01, extended by WS12 | Export everything a user owns |
 
 ## Deep links and storage buckets
 
-Scheme `mealplanner://`, registered in WS01. Routes: `join/<token>` (invites, WS01), `oauth/kroger` (Kroger redirect URI, WS07), `instacart/return?runId=` (Instacart linkback, WS08), `runs/<id>` (push notifications, WS09 and WS11). The web build serves the same paths.
+Scheme `mealplanner://`, registered in WS01. Routes: `join/<token>` (invites, WS01), `oauth/kroger` (Kroger redirect URI, WS07), `runs/<id>` (push notifications, WS09 and WS11). The web build serves the same paths.
 
-Storage buckets: `avatars` (WS01), `recipe-images` (WS02), `run-screenshots` (WS10, 30-day retention).
+Storage buckets: `avatars` (WS01), `recipe-images` (WS02), `run-screenshots` (WS08, 30-day retention).
 
 ## Environment variables
 
@@ -147,7 +145,6 @@ Storage buckets: `avatars` (WS01), `recipe-images` (WS02), `run-screenshots` (WS
 | `WORKER_DATABASE_URL` | worker | Direct Postgres connection for pgmq |
 | `ANTHROPIC_API_KEY` | Edge Functions, worker | Secret |
 | `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET`, `KROGER_REDIRECT_URI` | worker, auth callback | Registered at developer.kroger.com by the human |
-| `INSTACART_API_KEY`, `INSTACART_ENV` | worker | `dev` uses connect.dev.instacart.tools; `prod` uses connect.instacart.com |
 | `EXPO_PUBLIC_POSTHOG_KEY` | app | Public |
 | `SENTRY_DSN` | app, worker | Public-ish; still keep out of docs |
 
@@ -172,7 +169,7 @@ Shared lists and run progress use Supabase Realtime on `grocery_list_items` and 
 
 | Env | Supabase | Worker | Retailers |
 |---|---|---|---|
-| Local | Hosted project via `supabase link`, `db push`, `functions deploy --use-api`. `supabase start` runs only in CI, since the development Mac has no container runtime (WS00 amendment, 2026-10-29) | `pnpm --filter shopper-worker dev` against the hosted database | MockRetailer; Instacart dev key; Kroger certification env for Products/Locations only |
-| Household (prod) | Supabase Pro project | Fly.io or Railway | Kroger production (Cart only works here); Instacart prod key once approved |
+| Local | Hosted project via `supabase link`, `db push`, `functions deploy --use-api`. `supabase start` runs only in CI, since the development Mac has no container runtime (WS00 amendment, 2026-10-29) | `pnpm --filter shopper-worker dev` against the hosted database | MockRetailer; Kroger certification env for Products/Locations only; browser adapters against saved snapshots |
+| Household (prod) | Supabase Pro project | Fly.io or Railway | Kroger production (Cart only works here); browser adapters against live sites in the WebView |
 
 There is no separate staging in v1. The household project is production. Public launch (v2) adds staging.

@@ -13,19 +13,19 @@ The app holds retailer credentials by proxy, moves money by handing off to retai
 ## Retailer credentials and sessions
 
 - Kroger OAuth refresh tokens live in Supabase Vault; `retailer_connections.vault_secret_id` points at them. Tokens are rotated on every refresh (Kroger reissues refresh tokens) and the old secret version is deleted.
-- Tier 3 browser sessions store cookies and local storage state only, encrypted in Vault, scoped to one connection. Retailer passwords are never stored, logged, or transmitted to our servers. Sign-in happens in the retailer's own page inside the WebView.
-- A "Disconnect" action revokes the Kroger token where the API allows, deletes the Vault secret, and sets `status = 'revoked'`. For browser sessions it deletes the stored state and clears the WebView cookie store.
+- Tier 3 browser sessions store cookies and local storage state only, encrypted on the device (`expo-secure-store`) with a per-connection key held in Vault, scoped to one connection. The encrypted blob never leaves the device. Retailer passwords are never stored, logged, or transmitted to our servers. Sign-in happens in the retailer's own page inside the WebView.
+- A "Disconnect" action revokes the Kroger token where the API allows, deletes the Vault secret, and sets `status = 'revoked'`. For browser sessions it deletes the Vault key, the secure-store entry, and clears the WebView cookie store.
 - Connections flip to `needs_reauth` on a 401 and the app prompts the owning user; the agent never retries auth in a loop.
 
 ## Money
 
-- No card number, CVV, or bank detail ever touches our systems. Payment happens inside the retailer (Tiers 1 and 2) or inside the retailer's own checkout page driven in the WebView (Tier 3).
+- No card number, CVV, or bank detail ever touches our systems. Payment happens inside the retailer's app (Tier 1) or inside the retailer's own checkout page driven in the WebView (Tier 3).
 - Spending controls enforced in code: `budget_cap_usd` per run, `item_ceiling_usd` per item, a daily maximum number of runs per household, and `auto_checkout` off by default. The agent cannot change policy; only a household owner can, in settings, and the change is logged.
 - Tier 3 checkout requires an approved review or an owner-set `auto_checkout_cap_usd`. The confirmation page total is captured into `orders.total_usd` and shown in the run summary.
 
 ## Audit
 
-- `shopping_runs.transcript` records every tool call with timestamp, tool, input, output summary, and screenshot path for browser steps. The review screen can show it. Transcripts are retained 90 days, then screenshots are deleted and the transcript summarized.
+- `shopping_runs.transcript` records every tool call with timestamp, tool, input, output summary, and screenshot path for browser steps. The review screen can show it. Screenshots are deleted after 30 days by a Storage lifecycle rule. Transcripts are retained 90 days, then summarized.
 - `ai_runs` records every model call. A per-household daily cost cap is enforced in `packages/llm`.
 - Policy changes, connection changes, and household membership changes write an `audit_events` row (WS01 adds the table; other WS write to it).
 
@@ -52,7 +52,7 @@ The app holds retailer credentials by proxy, moves money by handing off to retai
 
 - No cached catalog data beyond cache headers; no stored search results. This limits what a breach could expose and keeps Kroger access alive.
 - `cart_snapshot` cleared 24 hours after a run closes.
-- Browser automation is opt-in per household with consent copy approved by the human, feature-flagged, and never run from cloud IPs.
+- Browser automation runs only after the household accepts consent copy approved by the human, shown once at connect per retailer. The flag `tier3_browser_checkout` is a per-retailer kill switch. It never runs from cloud IPs.
 
 ## Secrets handling in the repo
 

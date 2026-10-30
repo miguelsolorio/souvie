@@ -21,7 +21,7 @@ Also considered: Provision, Simmer, Marketday, Stocked, Ladle, Hearth, Tablewise
 
 ### 1.2 Rules the name must follow
 
-- Must not contain "Kroger," "QFC," "Fred Meyer," "Safeway," "Albertsons," "Costco," or "Instacart." Kroger's developer terms forbid "Kroger" anywhere in the app name, and the rest invite trademark trouble.
+- Must not contain "Kroger," "QFC," "Fred Meyer," "Safeway," "Albertsons," or "Costco." Kroger's developer terms forbid "Kroger" anywhere in the app name, and the rest invite trademark trouble.
 - Must work as an iOS app name under 30 characters and as a bare word on a home screen icon.
 - Should survive being said out loud once with no spelling.
 
@@ -99,7 +99,7 @@ Lead candidates:
 - Your week of meals, shopped by Saturday.
 - A sous-chef for the whole week.
 
-Rules: never promise the app pays for you unless the household has opted into Tier 3. "We fill the cart" is accurate for Tier 1. "Done" is fine when the next step is one tap.
+Rules: never promise the app pays for you. At Tier 3 stores the agent stops at the pay button. "We fill the cart" is accurate for Tier 1. "Done" is fine when the next step is one tap.
 
 ## 3. Positioning
 
@@ -107,7 +107,7 @@ Rules: never promise the app pays for you unless the household has opted into Ti
 
 **What we say about competitors.** Nothing by name. The contrast is "recipe apps stop at a list."
 
-**What we don't claim.** Price comparison across stores (Kroger and Instacart terms forbid showing it). Unattended checkout, except in the opt-in assisted mode, described plainly as "the agent fills the cart and stops at the pay button."
+**What we don't claim.** Price comparison across stores (Kroger's terms forbid showing it). Unattended checkout. The agent path is described plainly as "the agent fills the cart and stops at the pay button."
 
 ### 3.1 Personas
 
@@ -127,7 +127,7 @@ Rules: never promise the app pays for you unless the household has opted into Ti
 
 This is the copy as shipped by WS14. Source files: `apps/marketing/src/components/` (Hero, HowItWorks, Stores, Trust, Waitlist, Footer) and `src/pages/privacy.astro`. The name is the placeholder "Meal Planner", read from `apps/marketing/src/config.ts`. Sentence case. No retailer logos anywhere on marketing pages. "Works with" is text. No pricing, "Pro," or subscription language (v1 is non-commercial, `06-risks.md` R22).
 
-`apps/marketing/scripts/check-copy.mjs` scans the blocks between the `copy:start` and `copy:end` markers below, plus the site source. It fails on "partner" near "Instacart," "Free Delivery," "Kroger" in a title or heading, em dashes, and prices.
+`apps/marketing/scripts/check-copy.mjs` scans the blocks between the `copy:start` and `copy:end` markers below, plus the site source. It fails on "Kroger" in a title or heading, retailer logos, em dashes, and prices.
 
 <!-- copy:start -->
 **Hero**
@@ -148,7 +148,7 @@ This is the copy as shipped by WS14. Source files: `apps/marketing/src/component
 
 **Works with your stores** (text only)
 Works with QFC, Fred Meyer, Safeway, Albertsons, and Costco in Washington.
-QFC and Fred Meyer carts fill automatically. Safeway, Albertsons, and Costco lists open ready to shop on Instacart.
+QFC and Fred Meyer carts fill automatically. At Safeway, Albertsons, and Costco, the agent fills the cart on the store's own site and stops at the pay button for your tap.
 
 **Your money and your data stay yours**
 - We never see your card. You pay in the store's own app or checkout.
@@ -165,13 +165,13 @@ Fine print: We use your email and zip only to tell you when [Name] opens. Coming
 
 **Footer**
 [Name]. Built in Washington. Coming to iOS and web. Privacy policy (placeholder page).
-QFC, Fred Meyer, Safeway, Albertsons, Costco, and Instacart are trademarks of their owners. [Name] isn't affiliated with or endorsed by them.
+QFC, Fred Meyer, Safeway, Albertsons, and Costco are trademarks of their owners. [Name] isn't affiliated with or endorsed by them.
 <!-- copy:end -->
 
 Changes from the earlier draft, and why:
 
 - **Hero sub** now sells the household loop (one plan, one list, carts across stores, a schedule) instead of "recipe to cart," which Kroger and Instacart now ship for free (`00-overview.md` §Landscape, R12).
-- **Stores** dropped the line about assisted checkout for Safeway and Costco. That is Tier 3, behind a flag, with consent copy still waiting on human checkpoint 5, and Costco's terms prohibit agents. Add it back only after that checkpoint.
+- **Stores** names the agent path for Safeway, Albertsons, and Costco (added 2026-10-30 when Instacart was retired and Tier 3 became the main path). It says "stops at the pay button for your tap" so it never promises unattended checkout.
 - **Zip code** stays, optional, because `02-data-model.md` lists a `zip` column on `waitlist`.
 - **FAQ** is not shipped. Its "Is this a subscription?" answer is pricing language, which v1 avoids. The other answers are covered in the sections above.
 - **"Why it's different"** moved under the three steps rather than getting its own section, so the page keeps the section order in the brief.
@@ -198,7 +198,7 @@ Fill in [Name] once checkpoint 6 picks it. Character counts below are for the te
 
   One list for the whole week, with pantry staples removed and everything grouped by aisle. Shop it in the store, offline, with everyone in the house checking things off.
 
-  Or let [Name] do the shopping. It turns your list into real products at your QFC or Fred Meyer, fills your cart on a schedule you choose, and sends you a note when it's ready. You review it, swap anything, and pay in the store's app. For Safeway, Albertsons, and Costco, your list opens ready to shop on Instacart.
+  Or let [Name] do the shopping. It turns your list into real products at your QFC or Fred Meyer, fills your cart on a schedule you choose, and sends you a note when it's ready. You review it, swap anything, and pay in the store's app. At Safeway, Albertsons, and Costco, it fills the cart on the store's own site while you watch, and stops at the pay button for your tap.
 
   It learns. Pick a brand once and it stays picked. Allergies are enforced in code, not suggested by a model. Nothing is bought without you.
 
@@ -245,13 +245,12 @@ Body: Your first cart was [n] items for about $[total]. If we picked the wrong b
 
 ## 9. Press blurb
 
-[Name] is a meal-planning app that does the shopping. It suggests a week of dinners a household will cook, builds one grocery list, and fills the cart at QFC or Fred Meyer through Kroger's public API, with Safeway and Costco lists handed to Instacart. The person reviews the cart on their phone and pays in the store's app. It launched for Washington households first and is built by Miguel Solorio, a software designer in Duvall, Washington.
+[Name] is a meal-planning app that does the shopping. It suggests a week of dinners a household will cook, builds one grocery list, and fills the cart at QFC or Fred Meyer through Kroger's public API, and drives the Safeway or Costco site inside the app to fill those carts. The person reviews the cart on their phone and pays in the store's app. It launched for Washington households first and is built by Miguel Solorio, a software designer in Duvall, Washington.
 
 ## 10. Copy rules for everything we publish
 
 - No em dashes. Use a period, a colon, or reorder.
 - Sentence case headings. Spell out numbers under ten in prose. Contractions are fine.
 - Say what it does in concrete nouns: cart, list, Saturday, QFC. Skip "seamless," "empower," "effortless," "smart," "AI-powered."
-- Never say the app pays for you unless describing the opt-in assisted mode, and then say it stops at the pay button.
+- Never say the app pays for you. Say the agent stops at the pay button.
 - Never show a retailer's prices next to another retailer's.
-- Never call Instacart a partner. Never write "Free Delivery."

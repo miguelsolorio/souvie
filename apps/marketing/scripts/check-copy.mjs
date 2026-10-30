@@ -7,7 +7,6 @@
 // Exit 0 when clean, 1 when a rule fails. Wired into `pnpm lint`.
 //
 // Why these rules (docs/04-integrations.md compliance checklists, docs/08-brand.md §10):
-//   - Instacart's developer terms ban calling them a partner and the words "Free Delivery".
 //   - Kroger's terms ban "Kroger" in the app name and any implied endorsement, so it must not
 //     appear in a title, heading, or logo text.
 //   - No retailer logos on marketing pages (Kroger allows banner logos only inside the
@@ -40,7 +39,7 @@ const TEXT_EXTENSIONS = new Set([
   ".txt",
   ".json",
 ]);
-const RETAILERS = "kroger|qfc|fred[-_ ]?meyer|safeway|albertsons|haggen|costco|instacart";
+const RETAILERS = "kroger|qfc|fred[-_ ]?meyer|safeway|albertsons|haggen|costco";
 const COPY_BLOCK = /<!--\s*copy:start\s*-->([\s\S]*?)<!--\s*copy:end\s*-->/g;
 
 /** @typedef {{ file: string, line: number, rule: string, message: string }} Problem */
@@ -64,23 +63,6 @@ function checkCopy(text, offsetLine = 0) {
   const problems = [];
   const add = (index, rule, message) =>
     problems.push({ line: lineOf(text, index) + offsetLine, rule, message });
-
-  // Never call Instacart a partner. "Near" means within 80 characters, either order.
-  const instacart = positions(text, /instacart/gi);
-  const partner = positions(text, /partner\w*/gi);
-  for (const a of instacart) {
-    if (partner.some((b) => Math.abs(a - b) <= 80)) {
-      add(
-        a,
-        "instacart-partner",
-        'Never call Instacart a partner ("partner" within 80 characters of "Instacart").',
-      );
-    }
-  }
-
-  for (const index of positions(text, /free[\s_-]*delivery/gi)) {
-    add(index, "free-delivery", 'Never write "Free Delivery" (Instacart terms).');
-  }
 
   for (const index of positions(text, /—/g)) {
     add(index, "em-dash", "No em dashes. Use a period, a colon, or reorder.");

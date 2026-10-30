@@ -16,7 +16,6 @@
         "WORKER_DATABASE_URL",
         "ANTHROPIC_API_KEY",
         "KROGER_*",
-        "INSTACART_*",
         "SENTRY_DSN"
       ]
     }

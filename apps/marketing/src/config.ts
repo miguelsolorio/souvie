@@ -11,5 +11,5 @@ export const site = {
   ogImagePath: "/og.png",
 } as const;
 
-/** Stores named on the page, as text. No logos anywhere (Kroger and Instacart brand rules). */
+/** Stores named on the page, as text. No logos anywhere (Kroger brand rules). */
 export const stores = ["QFC", "Fred Meyer", "Safeway", "Albertsons", "Costco"] as const;

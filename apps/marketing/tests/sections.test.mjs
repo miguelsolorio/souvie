@@ -118,16 +118,11 @@ describe("page-wide rules", () => {
   });
 
   it("shows no retailer logos or prices", () => {
-    assert.ok(
-      !/<img\b[^>]*(qfc|kroger|fred-?meyer|safeway|albertsons|costco|instacart)/i.test(html),
-    );
+    assert.ok(!/<img\b[^>]*(qfc|kroger|fred-?meyer|safeway|albertsons|costco)/i.test(html));
     assert.ok(!/\$\s?\d/.test(text(html)), "no dollar amounts");
   });
 
-  it("never says partner near Instacart, Free Delivery, or Kroger in the title", () => {
-    const page = text(html);
-    assert.ok(!/free[\s-]*delivery/i.test(page));
-    assert.ok(!/partner/i.test(page));
+  it("never puts Kroger in the title", () => {
     const title = /<title>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? "";
     assert.ok(!/kroger/i.test(title));
   });

@@ -3,7 +3,7 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 1 (in progress)
-**Last updated:** 2026-10-30 by the orchestrator (WS01 report received)
+**Last updated:** 2026-10-30 by the orchestrator (WS14 report received)
 
 ## Workstreams
 
@@ -23,7 +23,7 @@ The orchestrator updates this file after every dispatch, report, review, merge, 
 | 11 | Scheduling & notifications | 6 | not started | | | | | |
 | 12 | History & spend | 6 | not started | | | | | |
 | 13 | Web & desktop packaging | 6 | not started | | | | | |
-| 14 | Brand & marketing site | 1 | in progress | ws/14-brand-marketing-site | sonnet | 2026-10-30 | | Human checkpoint 6 before finish (name). Working name Souvie; its §1.3 checks are still open |
+| 14 | Brand & marketing site | 1 | in progress | ws/14-brand-marketing-site | sonnet | 2026-10-30 | | Report received 2026-10-30; branch pushed, PR open for CI. Evidence round: real pgTAP in CI, engines bump, Simulator icon check. Criteria 9-10 wait on a Cloudflare Pages project. Checkpoint 6 (name) pending; site says "Meal Planner" until then |
 | 15 | Observability & AI evals | 6 | not started | | | | | |
 
 States: `not started` · `in progress` · `in review` · `fix round` · `merged` · `blocked`
@@ -34,13 +34,14 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 |---|---|---|---|
 | Register Kroger developer app at developer.kroger.com | Miguel | done 2026-10-29 | Credentials in `.env.local`, never the repo. Checkpoint 3 prerequisite met |
 | Submit Instacart Developer Platform application | Miguel | open | Needed before WS08 production; dev key works without approval. Marketing page said "not accepting" on 2026-10-29; docs still say apply |
-| Trademark, domain, and App Store name checks for the shortlist | Miguel | partly done | Sous and Larder checked per docs/08-brand.md §1.3. Souvie, the working name, still needs the checks before checkpoint 6 |
+| Trademark, domain, and App Store name checks for the shortlist | WS14 builder, then Miguel | evidence gathered 2026-10-30 | docs/08-brand.md §1.4 has 18 names across USPTO, both app stores, domains, npm, GitHub. SOUS (classes 9, 42), LARDER (9, 42, 44) and MISE (pending) are taken for apps. Souvie recommended conditionally: ESSENTIAL SOUVIE pending (Cuisine Solutions), sound-alike Suvie appliance brand, souvie.com/.app/.co registered, getsouvie.com and others free. Needs counsel and Miguel's choice at checkpoint 6 |
 | Create the Supabase project | Miguel | done 2026-10-29 | Credentials in `.env.local` at the primary checkout root. WS00 verifies against local Supabase only |
 | Create the GitHub repository for `main` | Miguel | done 2026-10-29 | https://github.com/miguelsolorio/souvie (public). Miguel added `origin` and pushed `main` from the primary checkout |
 | Create accounts: Expo/EAS, Fly.io or Railway, Cloudflare Pages, Sentry, PostHog | Miguel | open | `ANTHROPIC_API_KEY` needed before WS02; the rest before WS13, WS14, WS15 |
 | Install Xcode and accept its license | Miguel | done 2026-10-30 | Xcode 27.2, iOS runtime present, license accepted |
 | Configure Apple and Google sign-in providers | Miguel | open | Apple App ID, Services ID and secret JWT; Google OAuth client; redirect URLs; magic-link template; confirm bundle id `com.miguelsolorio.mealplanner`. Steps in `supabase/README.md` on `ws/01-auth-households`. Needed for WS01 criterion 3 and real sign-in |
 | Docker | Miguel | not allowed | Security policy on this Mac. Replaced by hosted project plus CI (decisions log). Podman 5.5 is installed but unused |
+| Create the Cloudflare Pages project for the marketing site | Miguel | open | Secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; variables `CF_PAGES_PROJECT_MARKETING`, `MARKETING_SITE_URL`, `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`. Steps in `apps/marketing/README.md` on the WS14 branch. Gates WS14 criteria 9 and 10 |
 | Add `SUPABASE_ACCESS_TOKEN` to `.env.local` | Miguel | open | Personal access token from the Supabase dashboard. Needed for `supabase link`, `db push`, `functions deploy` on the dev machine |
 
 ## Wave summaries
@@ -60,6 +61,7 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 - 2026-10-29: Wave 0 gate met. The Supabase project exists and its credentials are in `.env.local` at the primary checkout root. WS00 verifies against local Supabase and never needs the hosted project. (Orchestrator.)
 - 2026-10-29: WS00 dispatched before Docker and Xcode were installed. The builder self-installs pnpm, the Supabase CLI, and Node 22. Criteria 7, 9, 10, 11 are verified once Docker and Xcode exist, with one evidence round to the same builder if the report lands first. (Orchestrator, confirmed with Miguel.)
 - 2026-10-29: Docker cannot be installed on the development Mac (security policy). Container-only Supabase commands (`start`, `db reset`, `functions serve`, `db lint --local`, `test db`) run in GitHub Actions. Local development uses the hosted project through `supabase link`, `db push`, and `functions deploy --use-api`. WS00 criteria 9 to 12 amended in the brief; docs/01 Environments updated. `.env.example` gains `SUPABASE_ACCESS_TOKEN` as a developer-tool variable, thirteen in total. Podman 5.5 is present but unused pending policy. (Orchestrator, confirmed with Miguel.)
+- 2026-10-30: WS14 report received; branch pushed and PR opened so `marketing.yml` runs its real pgTAP job. Name checks in docs/08-brand.md §1.4 contradict the earlier "done" status: Sous, Larder and Mise are taken by same-name apps with live or pending marks. Souvie is the conditional recommendation, with a pending ESSENTIAL SOUVIE application and the Suvie sound-alike as risks for counsel; Tablewise and Marketday are the fallbacks. Checkpoint 6 waits on Miguel. The site ships as "Meal Planner" until then, and WS14 may merge with the row left `in review` per TODO. Criteria 9 and 10 wait on a Cloudflare Pages project. (Orchestrator.)
 - 2026-10-30: WS01 report received; branch pushed for CI. `packages/core` rule clarified: a builder may add the module its brief lists under Deliverables and the matching export line in `packages/core/src/index.ts`; everything else in core stays orchestrator-only, and the orchestrator resolves `index.ts` conflicts at merge. (Orchestrator.)
 - 2026-10-30: Migrations and Edge Functions reach the hosted project only after merge to `main` and after any checkpoint that gates the workstream. The orchestrator runs `supabase db push` and `functions deploy` from `main` as the release step and records the output here. CI is the pre-merge proof. For later workstreams this supersedes the hosted halves in the WS00 amendment. Still pending for WS00: the extensions migration and `health`, blocked on `SUPABASE_ACCESS_TOKEN`. (Orchestrator.)
 - 2026-10-30: Open contract decision before wave 3: `ProfilePreferences` key naming. WS01 implemented the docs/02 shape (`weeknight_minutes`, `budget_per_week_usd`, `primaryStoreId`); the WS06 brief plans camelCase keys (`householdSize`, `dinnersPerWeek`, `neverFoods`). Reconcile docs/02 and the WS06 brief before WS06 dispatch. (Orchestrator.)

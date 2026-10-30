@@ -185,16 +185,14 @@ jobs:
           fi
           test "$(grep -c "\] idle " worker.log)" -ge 2
 
-      # The committed packages/db/src/types.generated.ts must match the migrated schema. The
-      # first version was written by hand, so a difference is a warning for now. Download the
-      # artifact, commit it, and change `|| echo` to a hard failure.
+      # The committed packages/db/src/types.generated.ts must match the migrated schema. A new
+      # migration that changes a table or function fails here until the regenerated file (the
+      # artifact below, or `pnpm --filter @mp/db gen-types` on a stack) is committed.
       - name: Generate database types
         run: pnpm --filter @mp/db gen-types
 
       - name: Check committed types are current
-        run: |
-          git diff --exit-code packages/db/src/types.generated.ts \
-            || echo "::warning::packages/db/src/types.generated.ts differs from the migrated schema. Commit the types.generated.ts artifact from this run."
+        run: git diff --exit-code packages/db/src/types.generated.ts
 
       - name: Upload generated types
         uses: actions/upload-artifact@v7

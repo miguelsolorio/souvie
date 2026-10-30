@@ -19,7 +19,7 @@ Mount `SupabaseProvider` once, inside the TanStack Query provider. The hooks nee
 
 ## Types
 
-`src/types.generated.ts` is generated, not edited. The first version was written by hand in the generator's format because the build machine had no container runtime or access token. CI uploads a freshly generated copy as the `types.generated.ts` artifact on every run.
+`src/types.generated.ts` is generated, not edited. The committed file is the output of `supabase gen types typescript` from the CI stack, formatted by Biome. CI regenerates it on every run and fails if it differs from the committed file, and uploads the fresh copy as the `types.generated.ts` artifact. A migration that changes a table or function therefore needs the regenerated file in the same branch.
 
 ```bash
 pnpm --filter @mp/db gen-types      # local stack (needs supabase start), or the hosted project

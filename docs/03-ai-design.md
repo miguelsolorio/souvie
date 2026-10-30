@@ -12,6 +12,7 @@ Everything the model does is bounded by code. Hard constraints (allergies, budge
 
 Plumbing rules:
 - Every call declares a zod schema and uses structured outputs (`output_config` with a JSON schema; `messages.parse()` in the SDK). Agent tools are declared with `strict: true`.
+- Request shape for Sonnet 5.5 and Haiku 5.5 (confirmed 2026-10-30): omit `thinking`, which runs adaptive thinking; `thinking: {type: "disabled"}`, `budget_tokens`, and non-default `temperature`, `top_p` or `top_k` return 400. Depth is set with `output_config.effort`. On Sonnet 5.5 a forced `tool_choice` (`any` or `tool`) also returns 400, so agent tools use `auto` with `strict: true` and the prompt names the tool. `@mp/llm` sends `output_config: { effort, format }` and nothing else; the server-side refusal fallback (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`) is opt-in and off by default.
 - Prompts live in `packages/llm/prompts/<name>/<version>.ts` with a registry; every `ai_runs` row records `prompt_version`.
 - Prompt caching for stable blocks: the ingredient ontology excerpt, the household profile, the adapter's product schema.
 - Every call writes an `ai_runs` row (model, tokens, cache reads, cost, latency, ok). `packages/llm` enforces a per-household daily cost cap read from a config table or env; over cap it throws a typed error the UI explains.
@@ -68,7 +69,7 @@ Deterministic first, model second, cache always.
 
 1. **Grammar.** Quantity (integers, fractions, unicode fractions, ranges "2–3", "a"), unit (dictionary with aliases: tbsp, T, tablespoon, tablespoons), preparation phrases ("diced", "finely chopped"), qualifiers ("to taste", "optional", "divided"), and parenthetical sizes ("1 (15 oz) can").
 2. **Ontology lookup.** Match the remaining noun phrase against `ingredients.name` and `ingredient_aliases.alias` with trigram similarity; accept above 0.85.
-3. **Model fallback.** Lines below the confidence threshold go to Haiku in batches of 20 with a strict schema `{qty, unit, ingredient, prep, optional, confidence}`. Results are cached by normalized `raw_text` so the same line is never parsed twice across the household.
+3. **Model fallback.** Lines below the confidence threshold (0.8) go to Haiku in batches of 20 with a strict schema `{qty, unit, ingredient, prep, optional, confidence}`. Results are cached by normalized `raw_text` so the same line is never parsed twice across the household.
 4. **Unknowns.** An ingredient the ontology lacks creates a proposed `ingredient_aliases` row with `source: llm` for review, and the line is kept with `ingredient_id null` so the list can still show it as free text.
 
 Why this path: no actively maintained TypeScript ingredient parser exists. The best open one (`ingredient-parser-nlp`, ~94% sentence accuracy) is Python. Grammar plus Haiku is the pragmatic TypeScript route, and the golden set doubles as the eval set.

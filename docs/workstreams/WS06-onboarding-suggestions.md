@@ -16,11 +16,11 @@ When this is done, a new user can sign in, create or join a household, answer ei
 2. `docs/02-data-model.md` sections Identity, Recipes, Planning (table shapes, RLS pattern).
 3. `docs/05-security-privacy.md` paragraph on allergen safety.
 4. `docs/06-risks.md` rows R3, R4, R8.
-5. `packages/core/src/preferences.ts` if it already exists from WS01; otherwise you create it (see Interfaces).
+5. `packages/core/src/identity.ts`, which already holds `ProfilePreferences` from WS01; you extend it (see Interfaces).
 
 ## In scope
 - Eight onboarding screens in `apps/mobile/app/(onboarding)/` using Expo Router, with progress, back navigation, and resume-where-you-left-off persisted in `profiles.onboarding_step`.
-- The `Preferences` zod schema in `packages/core` and its JSON storage in `profiles.preferences`.
+- The `ProfilePreferences` zod schema in `packages/core` (extended in place, not replaced) and its JSON storage in `profiles.preferences`.
 - A "stores" step that geocodes a ZIP to nearby stores (QFC, Fred Meyer, Safeway, Albertsons, Haggen, Costco) using a static WA store list seed in `supabase/seed/stores_wa.csv` for now, asks "Do you have a Costco membership?", lets the user pick a primary store, and shows "Connect Kroger" when the adapter is available.
 - A twelve-card swipe calibration screen that writes `recipe_feedback` rows with `signal = like | skip`.
 - The `suggest` Edge Function at `supabase/functions/suggest/` and its client hook `useSuggestWeek()` in `apps/mobile`.
@@ -34,12 +34,12 @@ When this is done, a new user can sign in, create or join a household, answer ei
 | # | Route | Captures | Writes | Validation |
 |---|---|---|---|---|
 | 1 | `01-household` | Create household name or paste invite code | `households`, `household_members` (via WS01 hooks) | Name 2–40 chars |
-| 2 | `02-eaters` | Adults, kids, dinners per week | `preferences.householdSize`, `preferences.dinnersPerWeek` | Adults ≥1, dinners 1–7 |
+| 2 | `02-eaters` | Adults, kids, dinners per week | `preferences.household_size`, `preferences.dinners_per_week` | Adults ≥1, dinners 1–7 |
 | 3 | `03-diets-allergies` | Diet chips, allergen chips, explicit "No allergies" | `preferences.diets`, `preferences.allergies` | Cannot continue until an allergen choice or "None" is made |
-| 4 | `04-dislikes-cuisines` | Never-foods (free text with ontology autocomplete), favorite cuisines | `preferences.neverFoods`, `preferences.cuisines` | Up to 20 never-foods |
-| 5 | `05-time-skill` | Weeknight minutes slider, skill, equipment chips | `preferences.weeknightMinutes`, `skill`, `equipment` | Minutes 10–120 |
-| 6 | `06-budget-leftovers` | Weekly budget (optional), leftovers stance | `preferences.budgetPerWeekUsd`, `leftovers` | Budget null or 20–1000 |
-| 7 | `07-stores` | ZIP, nearby stores, primary store, Costco membership, Connect Kroger | `preferences.primaryStoreId`, `profiles.costco_member`, `households.zip` | ZIP 5 digits; at least one store chosen |
+| 4 | `04-dislikes-cuisines` | Never-foods (free text with ontology autocomplete), favorite cuisines | `preferences.dislikes`, `preferences.cuisines` | Up to 20 never-foods |
+| 5 | `05-time-skill` | Weeknight minutes slider, skill, equipment chips | `preferences.weeknight_minutes`, `skill`, `equipment` | Minutes 10–120 |
+| 6 | `06-budget-leftovers` | Weekly budget (optional), leftovers stance | `preferences.budget_per_week_usd`, `leftovers` | Budget null or 20–1000 |
+| 7 | `07-stores` | ZIP, nearby stores, primary store, Costco membership, Connect Kroger | `preferences.primary_store_id`, `profiles.costco_member`, `households.zip` | ZIP 5 digits; at least one store chosen |
 | 8 | `08-calibrate` | Twelve swipes | `recipe_feedback` rows, `profiles.taste_embedding`, first `meal_plans` + `meal_plan_entries` via `suggest` | All twelve cards answered or "Skip the rest" |
 
 Each screen writes its fields immediately on "Continue" so a crash loses at most one screen. `profiles.onboarding_step` is set to the screen number just completed.
@@ -74,10 +74,10 @@ The composer never sees recipes that this query excluded. The twelve calibration
 - Grocery list generation (WS05).
 - Kroger OAuth itself (WS07). You render the button and call `connect()` only if the adapter exists.
 - The in-app chat assistant (WS09).
-- Any change to the `RetailerAdapter` contract or shared zod types other than adding `Preferences` and `profiles.taste_embedding` through a contract change request if `profiles` already has a frozen shape.
+- Any change to the `RetailerAdapter` contract or shared zod types other than extending `ProfilePreferences` as the Interfaces section lists and adding `profiles.taste_embedding` through a contract change request if `profiles` already has a frozen shape.
 
 ## Deliverables
-- `packages/core/src/preferences.ts` (zod schema `Preferences`, type export, defaults, `ALLERGENS` const list, `DIETS` const list).
+- `packages/core/src/preferences.ts` (`DIETS` and `ALLERGENS` const lists, `Diet` and `Allergen` enums, `defaultPreferences()`), plus the edits to `ProfilePreferences` in `packages/core/src/identity.ts` that add the keys below and tighten `diets` and `allergies` to those enums, and the export line in `packages/core/src/index.ts`.
 - `supabase/migrations/<timestamp>_ws06_preferences.sql`: adds `profiles.preferences jsonb not null default '{}'`, `profiles.onboarding_step smallint not null default 0`, `profiles.taste_embedding vector(1024)`, `profiles.costco_member boolean`, and index `recipes_embedding_hnsw` on `recipes.embedding` if not present.
 - `supabase/seed/stores_wa.csv` with at least 60 Washington stores (banner, name, address, zip, lat, lng, kroger_location_id nullable).
 - `apps/mobile/app/(onboarding)/_layout.tsx`, `01-household.tsx`, `02-eaters.tsx`, `03-diets-allergies.tsx`, `04-dislikes-cuisines.tsx`, `05-time-skill.tsx`, `06-budget-leftovers.tsx`, `07-stores.tsx`, `08-calibrate.tsx`.
@@ -90,20 +90,21 @@ The composer never sees recipes that this query excluded. The twelve calibration
 
 ## Interfaces
 **Implements**
-- `Preferences` (zod, `packages/core`):
-  - `householdSize: { adults: number; kids: number }`
-  - `dinnersPerWeek: number` (1–7)
+- `ProfilePreferences` (zod, `packages/core`, snake_case keys as in docs/02; WS01 already defines most of them, every key optional):
+  - `household_size: { adults: number; kids: number }` (adults ≥ 1)
+  - `dinners_per_week: number` (1 to 7)
   - `diets: Diet[]` from `DIETS = ['omnivore','vegetarian','vegan','pescatarian','halal','kosher','gluten_free','dairy_free','low_carb','keto','paleo']`
   - `allergies: Allergen[]` from `ALLERGENS = ['peanut','tree_nut','milk','egg','wheat','soy','fish','shellfish','sesame']` (hard filters)
-  - `neverFoods: string[]` (free text, canonicalized to `ingredients.id` where possible, stored as `{ text, ingredientId? }[]`)
+  - `dislikes: string[]` (free text; `filters.ts` canonicalizes to `ingredients.id` at query time through `ingredient_aliases`, nothing derived is stored)
   - `cuisines: string[]`
-  - `weeknightMinutes: number`
+  - `weeknight_minutes: number`
   - `skill: 'beginner' | 'comfortable' | 'confident'`
   - `equipment: string[]`
-  - `budgetPerWeekUsd: number | null`
-  - `leftovers: 'avoid' | 'some' | 'love'`
-  - `primaryStoreId: string | null`
-  - `freeText: string | null`
+  - `budget_per_week_usd: number` (omit when the user skips the budget)
+  - `portions: number`
+  - `leftovers: 'avoid' | 'ok' | 'prefer'`
+  - `primary_store_id: string`
+  - `notes: string`
 - `profiles.preferences`, `profiles.onboarding_step`, `profiles.taste_embedding`, `profiles.costco_member`.
 - Edge Function `POST /functions/v1/suggest` with body `{ householdId: string; weekStart: string (ISO date); dinners?: number; mode: 'draft' | 'replace' | 'calibration' }` returning `{ planId: string; entries: { date: string; slot: 'dinner'; recipeId: string; servings: number; why: string }[] }`. `mode: 'calibration'` returns twelve recipe IDs without writing a plan.
 - Structured output schema for composition (`ComposedWeek`): `{ entries: { recipeIndex: number; date: string; servings: number; why: string }[]; notes: string }`. The model picks indices into the candidate list. It never emits recipe IDs or ingredient names as identifiers.
@@ -118,13 +119,13 @@ The composer never sees recipes that this query excluded. The twelve calibration
 - The composer receives at most 60 candidates and returns 1 to 7 entries.
 
 ## Acceptance criteria
-1. `pnpm test --filter core` passes `preferences.test.ts`: invalid `dinnersPerWeek: 9` is rejected, unknown allergen string is rejected, defaults produce a valid object.
-2. A new user who completes all eight screens has `profiles.preferences` that parses with the `Preferences` schema and `profiles.onboarding_step = 8`. Verified by the Maestro flow `apps/mobile/e2e/onboarding.yaml` or, until Maestro exists, by the manual script in Verification commands.
+1. `pnpm test --filter core` passes `preferences.test.ts`: invalid `dinners_per_week: 9` is rejected, unknown allergen string is rejected, defaults produce a valid object.
+2. A new user who completes all eight screens has `profiles.preferences` that parses with the `ProfilePreferences` schema and `profiles.onboarding_step = 8`. Verified by the Maestro flow `apps/mobile/e2e/onboarding.yaml` or, until Maestro exists, by the manual script in Verification commands.
 3. Quitting the app on screen 5 and reopening resumes on screen 5 (`onboarding_step = 4` persisted).
 4. The allergies step cannot be skipped. "None" is an explicit choice.
 5. The stores step lists at least three stores for ZIP 98019 from the seed, lets the user choose one, and records `costco_member`.
 6. The calibration screen shows twelve recipes that all pass the hard filters for a fixture household with `allergies: ['shellfish']`; `filters.test.ts` asserts zero shellfish recipes in the candidate set for that fixture.
-7. `POST /suggest` with `mode: 'draft'` for a fixture household returns 5 entries when `dinnersPerWeek = 5`, with distinct `recipeId` values, every entry on a distinct date within the week, and every `why` under 140 characters.
+7. `POST /suggest` with `mode: 'draft'` for a fixture household returns 5 entries when `dinners_per_week = 5`, with distinct `recipeId` values, every entry on a distinct date within the week, and every `why` under 140 characters.
 8. The composer output is validated against `ComposedWeek`; an out-of-range `recipeIndex` is rejected and the call retried once, then fails with a typed error. `compose.test.ts` covers this with a mocked model.
 9. Every `suggest` invocation writes one or more `ai_runs` rows with `kind = 'suggest.compose'` or `'suggest.embed'`, model name, token counts, and `cost_usd`.
 10. `pnpm eval suggest` runs the ten fixtures and reports hard-filter violations; the threshold is zero violations.
@@ -149,7 +150,7 @@ pnpm --filter mobile start                      # manual: run the 8 screens on i
 - From the WS01 review (2026-10-30): `profiles` still has table-level `grant select, insert, update` for `authenticated` (own row only through RLS). When you add `taste_embedding`, `onboarding_step` and `costco_member`, narrow the grant to column level so a user cannot overwrite the server-built embedding: grant update on `display_name`, `avatar_url`, `preferences`, `onboarding_step`, `costco_member` only. Add a `column_privs_are(...)` pgTAP assertion for `profiles`, and one for `households` (`name`, `zip`) so a later migration cannot widen either silently. Also reconcile `ProfilePreferences` (docs/02 shape, implemented by WS01) with the camelCase `Preferences` this brief plans; the orchestrator decides before dispatch.
 - R4 (allergen exposure): allergies are hard SQL filters; the model only sees pre-filtered candidates. Add a final assertion in `compose.ts` that every returned recipe is in the candidate set, as defense in depth.
 - R3 (LLM cost): one composition call per week per household with `claude-sonnet-5-5`; taste summary with `claude-haiku-5-5`. Cache the ontology excerpt and the preference block with prompt caching. Log everything to `ai_runs`.
-- R8 (scope creep): do not build a conversational onboarding. The single `freeText` field is folded into the taste summary and that is all.
+- R8 (scope creep): do not build a conversational onboarding. The single `notes` field is folded into the taste summary and that is all.
 - Candidate retrieval uses `recipes.embedding <=> profiles.taste_embedding` with HNSW (`vector_cosine_ops`). On a cold profile with no likes, fall back to catalog popularity plus cuisine match.
 - `stores_wa.csv` is a stopgap. WS07 replaces Kroger entries with live Locations API results; keep the CSV columns so both sources map to one `Store` shape.
 - Costco membership matters because Costco on Instacart is members-only via sameday.costco.com; non-members pay higher prices on instacart.com. Record it now so WS08 and WS10 can route correctly.

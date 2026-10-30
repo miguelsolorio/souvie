@@ -84,7 +84,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | user_id | uuid pk → auth.users | |
 | display_name | text | |
 | avatar_url | text | |
-| preferences | jsonb | Validated by `core.ProfilePreferences`: diets[], allergies[] (hard), dislikes[], cuisines[], skill (beginner/comfortable/confident), weeknight_minutes, budget_per_week_usd, equipment[], portions, leftovers (avoid/ok/prefer), primaryStoreId, notes. The zod schema and the DIETS and ALLERGENS enums defined in WS06 are canonical |
+| preferences | jsonb | Validated by `core.ProfilePreferences`, keys snake_case like every column: household_size {adults, kids}, dinners_per_week (1 to 7), diets[], allergies[] (hard), dislikes[] (free text; canonicalized to `ingredients.id` at query time, never stored), cuisines[], skill (beginner/comfortable/confident), weeknight_minutes, budget_per_week_usd, equipment[], portions, leftovers (avoid/ok/prefer), primary_store_id, notes. Every key optional; unknown keys pass through. The DIETS and ALLERGENS enums defined in WS06 are canonical |
 | onboarding_step | smallint default 0 | WS06 |
 | taste_embedding | vector(1024) | Rebuilt weekly from feedback; WS06 |
 | costco_member | boolean | Asked in onboarding step 7; WS06 |
@@ -162,7 +162,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | column | type |
 |---|---|
 | normalized_text | text pk |
-| result | jsonb (`core.ParsedIngredient`) |
+| result | jsonb: `{ items: core.ParsedIngredient[] }`; one line can name several ingredients |
 | source | enum ingredient_parse_cache_source: grammar, llm |
 | model, prompt_version | text |
 
@@ -174,6 +174,8 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | proposed_name | text |
 | proposed_category | text |
 | household_id | uuid → households (nullable) |
+| suggested_ingredient_id | uuid → ingredients (nullable); the closest existing ingredient, when the lookup had one |
+| count | integer ≥ 1, default 1; how many lines proposed the same name |
 | status | enum ingredient_alias_proposals_status: pending, accepted, rejected |
 
 ### Planning

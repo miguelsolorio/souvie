@@ -104,6 +104,7 @@ function seedEntry(queryClient: QueryClient, over: Partial<PlanEntry> = {}): Pla
     position: 0,
     created_at: "2026-10-30T12:00:00.000Z",
     updated_at: "2026-10-30T12:00:00.000Z",
+    why: null,
     recipe: lemonChicken,
     ...over,
   };
@@ -239,6 +240,7 @@ describe("reading", () => {
         position: 0,
         created_at: "2026-10-30T12:00:02.000Z",
         updated_at: "2026-10-30T12:00:02.000Z",
+        why: "Uses the leftover lemons",
       },
       {
         id: ENTRY,
@@ -253,11 +255,14 @@ describe("reading", () => {
         position: 0,
         created_at: "2026-10-30T12:00:01.000Z",
         updated_at: "2026-10-30T12:00:01.000Z",
+        why: null,
       },
     );
     const entries = await fetchMealPlanEntries(client, PLAN);
     expect(entries.map((e) => e.id)).toEqual([ENTRY, ENTRY_2]);
     expect(entries[1]?.servings).toBe(2);
+    expect(entries[1]?.why).toBe("Uses the leftover lemons");
+    expect(entries[0]?.why).toBeNull();
     expect(entries[0]?.recipe?.title).toBe("Lemon chicken");
     expect(entries[0]).not.toHaveProperty("recipes");
   });
@@ -313,6 +318,7 @@ describe("writing", () => {
 
   it("inserts an entry as the example payload in the brief", async () => {
     const { client, server } = world();
+    server.tables.meal_plans?.push({ id: PLAN, household_id: HOUSEHOLD, week_start: WEEK });
     await insertEntry(client, {
       id: ENTRY,
       planId: PLAN,
@@ -331,12 +337,14 @@ describe("writing", () => {
       status: "planned",
       notes: null,
       position: 0,
+      why: null,
     });
     expect(request?.options).toEqual({ onConflict: "id", ignoreDuplicates: true });
   });
 
   it("repeating an insert with the same id leaves one row", async () => {
     const { client, server } = world();
+    server.tables.meal_plans?.push({ id: PLAN, household_id: HOUSEHOLD, week_start: WEEK });
     const row = {
       id: ENTRY,
       planId: PLAN,
@@ -408,6 +416,7 @@ describe("cache edits", () => {
     position: 0,
     created_at: "2026-10-30T12:00:00.000Z",
     updated_at: "2026-10-30T12:00:00.000Z",
+    why: null,
     recipe: lemonChicken,
     ...over,
   });
@@ -567,6 +576,160 @@ describe("useUpsertEntry: adding", () => {
     expect(
       queryClient.getQueryData<PlanEntry[]>(mealPlanEntriesKey(HOUSEHOLD, PLAN)),
     ).toBeUndefined();
+  });
+});
+
+describe("useUpsertEntry: a brand-new week opened by two members at once", () => {
+  const remotePlan = {
+    id: REMOTE_PLAN,
+    household_id: HOUSEHOLD,
+    week_start: WEEK,
+    created_at: "2026-10-30T11:00:00.000Z",
+    updated_at: "2026-10-30T11:00:00.000Z",
+  };
+  const lunch = (over: Partial<Extract<UpsertEntryInput, { mode: "add" }>> = {}) =>
+    addInput({
+      id: ENTRY_2,
+      planIsNew: false,
+      entry: { date: TUESDAY, slot: "lunch", recipe_id: RECIPE_2, servings: 2 },
+      ...over,
+    });
+
+  it("moves a queued add onto the plan that won, instead of failing with plan_not_found", async () => {
+    const { client, server, queryClient } = world();
+    server.tables.meal_plans?.push({ ...remotePlan });
+    const add = (input: UpsertEntryInput) =>
+      new MutationObserver(queryClient, upsertEntryOptions(client, queryClient)).mutate(input);
+
+    // The first add made the optimistic plan and will lose the week to the other member. The
+    // second was tapped while the cache already held that optimistic plan, so it carries its id.
+    const first = add(addInput({ id: ENTRY, planIsNew: true }));
+    const second = add(lunch());
+    const [one, two] = await Promise.all([first, second]);
+
+    expect(one.planId).toBe(REMOTE_PLAN);
+    expect(two.planId).toBe(REMOTE_PLAN);
+    expect(server.tables.meal_plans).toHaveLength(1);
+    expect(server.tables.meal_plan_entries?.map((row) => [row.id, row.plan_id])).toEqual([
+      [ENTRY, REMOTE_PLAN],
+      [ENTRY_2, REMOTE_PLAN],
+    ]);
+    const cached = queryClient.getQueryData<PlanEntry[]>(
+      mealPlanEntriesKey(HOUSEHOLD, REMOTE_PLAN),
+    );
+    expect(cached?.map((e) => e.id).sort()).toEqual([ENTRY, ENTRY_2].sort());
+    expect(queryClient.getQueryData(mealPlanEntriesKey(HOUSEHOLD, PLAN))).toBeUndefined();
+  });
+
+  it("creates the plan when the id it carries names one nobody made, and inserts once", async () => {
+    const { client, server, queryClient } = world();
+    const observer = new MutationObserver(queryClient, upsertEntryOptions(client, queryClient));
+    const result = await observer.mutate(lunch());
+    expect(result.planId).toBe(PLAN);
+    expect(result.plan).toMatchObject({ id: PLAN, week_start: WEEK });
+    expect(server.tables.meal_plans).toHaveLength(1);
+    expect(server.tables.meal_plan_entries).toHaveLength(1);
+    expect(server.requests("meal_plan_entries", "upsert")).toHaveLength(2); // refused, then accepted
+  });
+
+  it("does not retry a refusal that is not about the plan", async () => {
+    const { client, server, queryClient } = world();
+    server.tables.meal_plans?.push({ ...remotePlan });
+    server.failures = [{ message: "recipe_not_found", code: "P0001", status: 400 }];
+    const observer = new MutationObserver(queryClient, upsertEntryOptions(client, queryClient));
+    await expect(observer.mutate(lunch({ planId: REMOTE_PLAN }))).rejects.toMatchObject({
+      code: "not_found",
+    });
+    expect(server.requests("meal_plan_entries", "upsert")).toHaveLength(1);
+  });
+});
+
+describe("the why of a suggested meal", () => {
+  const swap = {
+    mode: "edit",
+    id: ENTRY,
+    householdId: HOUSEHOLD,
+    planId: PLAN,
+    patch: { recipe_id: RECIPE_2, status: "planned", why: "Fits a busy Tuesday" },
+    recipe: greenCurry,
+  } as const;
+
+  it("is written with the swap, shows at once, and keeps the entry's servings", async () => {
+    const { client, server, queryClient } = world();
+    seedServer(server, seedEntry(queryClient, { servings: 5 }));
+    server.log.length = 0;
+    const observer = new MutationObserver(queryClient, upsertEntryOptions(client, queryClient));
+    let release: () => void = () => {};
+    server.gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const done = observer.mutate(swap);
+    const current = () =>
+      queryClient.getQueryData<PlanEntry[]>(mealPlanEntriesKey(HOUSEHOLD, PLAN))?.[0];
+    await until(() => current()?.why === "Fits a busy Tuesday", "the optimistic why");
+    expect(current()).toMatchObject({ recipe_id: RECIPE_2, servings: 5 });
+    release();
+    await done;
+    const update = server.requests("meal_plan_entries", "update")[0]?.payload;
+    expect(update).toEqual({ recipe_id: RECIPE_2, status: "planned", why: "Fits a busy Tuesday" });
+    expect(update).not.toHaveProperty("servings");
+    expect(server.tables.meal_plan_entries?.[0]).toMatchObject({
+      why: "Fits a busy Tuesday",
+      servings: 5,
+    });
+  });
+
+  it("goes back to the old reason, or none, if the swap fails", async () => {
+    const { client, server, queryClient } = world();
+    seedServer(server, seedEntry(queryClient, { why: "Uses the leftover lemons" }));
+    server.failures = [{ message: "permission denied", code: "42501", status: 403 }];
+    const observer = new MutationObserver(queryClient, upsertEntryOptions(client, queryClient));
+    await expect(observer.mutate(swap)).rejects.toMatchObject({ code: "forbidden" });
+    expect(
+      queryClient.getQueryData<PlanEntry[]>(mealPlanEntriesKey(HOUSEHOLD, PLAN))?.[0],
+    ).toMatchObject({
+      why: "Uses the leftover lemons",
+      recipe_id: RECIPE,
+    });
+  });
+
+  it("is cleared by a manual swap, so a person's pick carries no reason", async () => {
+    const { client, server, queryClient } = world();
+    seedServer(server, seedEntry(queryClient, { why: "Uses the leftover lemons" }));
+    const observer = new MutationObserver(queryClient, upsertEntryOptions(client, queryClient));
+    await observer.mutate({
+      ...swap,
+      patch: { recipe_id: RECIPE_2, status: "planned", why: null },
+    });
+    expect(server.tables.meal_plan_entries?.[0]).toMatchObject({ why: null, recipe_id: RECIPE_2 });
+  });
+
+  it("can be added with a new entry", async () => {
+    const { client, server, queryClient } = world();
+    const observer = new MutationObserver(queryClient, upsertEntryOptions(client, queryClient));
+    await observer.mutate(
+      addInput({
+        entry: {
+          date: TUESDAY,
+          slot: "dinner",
+          recipe_id: RECIPE,
+          servings: 4,
+          why: "Fits dinner",
+        },
+      }),
+    );
+    expect(server.tables.meal_plan_entries?.[0]).toMatchObject({ why: "Fits dinner" });
+  });
+
+  it("is limited to 200 characters before anything is sent", async () => {
+    const { client, server, queryClient } = world();
+    seedServer(server, seedEntry(queryClient));
+    server.log.length = 0;
+    const observer = new MutationObserver(queryClient, upsertEntryOptions(client, queryClient));
+    await expect(
+      observer.mutate({ ...swap, patch: { why: "x".repeat(201) } }),
+    ).rejects.toMatchObject({ code: "invalid" });
+    expect(server.log).toHaveLength(0);
   });
 });
 

@@ -287,6 +287,7 @@ const entry = (over: Partial<MealPlanEntry> = {}): MealPlanEntry => ({
   position: 0,
   created_at: NOW,
   updated_at: NOW,
+  why: null,
   ...over,
 });
 
@@ -331,6 +332,15 @@ describe("MealPlanEntry", () => {
     expect(parsed.servings).toBe(2.5);
   });
 
+  it("carries the one-line reason for a suggested meal, or null", () => {
+    expect(MealPlanEntry.parse(entry({ why: "Uses the leftover lemons" })).why).toBe(
+      "Uses the leftover lemons",
+    );
+    expect(MealPlanEntry.parse(entry()).why).toBeNull();
+    expect(MealPlanEntry.safeParse(entry({ why: "x".repeat(200) })).success).toBe(true);
+    expect(MealPlanEntry.safeParse(entry({ why: "x".repeat(201) })).success).toBe(false);
+  });
+
   it("rejects values the database would reject", () => {
     expect(MealPlanEntry.safeParse(entry({ servings: 0 })).success).toBe(false);
     expect(MealPlanEntry.safeParse(entry({ servings: 1001 })).success).toBe(false);
@@ -350,7 +360,7 @@ describe("MealPlanEntryInput", () => {
       recipe_id: ID_D,
       servings: 4,
     });
-    expect(parsed).toMatchObject({ status: "planned", notes: null, position: 0 });
+    expect(parsed).toMatchObject({ status: "planned", notes: null, position: 0, why: null });
   });
 
   it("is the example upsert payload from the brief, minus the ids", () => {
@@ -381,6 +391,14 @@ describe("MealPlanEntryPatch", () => {
       status: "cooked",
       notes: null,
     });
+  });
+
+  it("can set and clear the why, and holds it to 200 characters", () => {
+    expect(MealPlanEntryPatch.parse({ why: "Fits a busy Tuesday" })).toEqual({
+      why: "Fits a busy Tuesday",
+    });
+    expect(MealPlanEntryPatch.parse({ why: null })).toEqual({ why: null });
+    expect(MealPlanEntryPatch.safeParse({ why: "x".repeat(201) }).success).toBe(false);
   });
 
   it("validates what it is given", () => {

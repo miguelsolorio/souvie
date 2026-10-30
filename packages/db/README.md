@@ -33,6 +33,8 @@ Mount `SupabaseProvider` once, inside the TanStack Query provider. The hooks nee
 How a write behaves, and why:
 
 - A new entry is `INSERT ... ON CONFLICT (id) DO NOTHING` with an id the device picked. A retry sends the same id, so a dropped connection never makes a duplicate. An edit is an `UPDATE` of only the changed columns (clients hold column-level privileges and two members editing different fields do not overwrite each other).
+- A new week's plan is made with its first entry. If another member made the week first, the insert is refused with `plan_not_found` (the plan id the add carries was never created), and the hook looks the week's plan up again, creating it if nobody did, and retries the insert once.
+- An entry's `why` (the one-line reason for a suggested meal) rides on the same writes: a suggested swap sends `{ recipe_id, status, why }`, and a recipe a person picks sends `why: null`.
 - Every planner write from a device runs in one TanStack mutation scope, so quick taps are saved in the order they were made. Only the last write of a burst refetches, and the Realtime handler waits for pending writes, so the screen never flickers back to the server's older copy.
 - A dropped connection is retried with backoff for about a minute. On the web TanStack pauses the mutation while the browser is offline and resumes it on reconnect. A change is not kept across an app restart; persisting paused mutations needs NetInfo and a mutation persister, which is not wired yet.
 - `saved`, `cooked` and `skipped` feedback is written by a database trigger in the same transaction as the entry change. Nothing here writes those three.

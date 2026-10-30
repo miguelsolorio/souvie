@@ -102,6 +102,7 @@ function optimisticEntry(input: AddEntryInput): PlanEntry {
     status: entry.status,
     notes: entry.notes,
     position: entry.position,
+    why: entry.why,
     created_at: now,
     updated_at: now,
     recipe: input.recipe ?? null,
@@ -136,22 +137,28 @@ export function upsertEntryOptions(
         await patchEntry(client, input.id, input.patch);
         return { planId: input.planId, plan: null };
       }
+      const weekStart = weekStartFor(input.entry.date);
+      const findPlan = (suggested: string) =>
+        ensureMealPlan(client, { householdId: input.householdId, weekStart, planId: suggested });
       let planId = input.planId;
       let plan: MealPlan | null = null;
       if (input.planIsNew) {
-        plan = await ensureMealPlan(client, {
-          householdId: input.householdId,
-          weekStart: weekStartFor(input.entry.date),
-          planId,
-        });
+        plan = await findPlan(planId);
         planId = plan.id;
       }
-      await insertEntry(client, {
-        id: input.id,
-        planId,
-        householdId: input.householdId,
-        entry: input.entry,
-      });
+      const row = { id: input.id, householdId: input.householdId, entry: input.entry };
+      try {
+        await insertEntry(client, { ...row, planId });
+      } catch (error) {
+        // The plan id this add carries can name a plan that was never created. Two members open a
+        // brand-new week at once, the other one's plan wins the unique week, and an add queued
+        // behind ours still holds the optimistic id we made up. Look the week's plan up again
+        // (creating it if nobody did) and retry the insert once with the id the database has.
+        if (!(error instanceof PlanError) || error.message !== "plan_not_found") throw error;
+        plan = await findPlan(planId);
+        planId = plan.id;
+        await insertEntry(client, { ...row, planId });
+      }
       return { planId, plan };
     },
 

@@ -169,7 +169,7 @@ export function planRetryDelay(failureCount: number): number {
 
 const PLAN_COLUMNS = "id, household_id, week_start, created_at, updated_at";
 const RECIPE_EMBED = "recipes(id, title, image_url, servings, prep_min, cook_min, deleted_at)";
-const ENTRY_COLUMNS = `id, plan_id, household_id, date, slot, recipe_id, servings, status, notes, position, created_at, updated_at, ${RECIPE_EMBED}`;
+const ENTRY_COLUMNS = `id, plan_id, household_id, date, slot, recipe_id, servings, status, notes, position, created_at, updated_at, why, ${RECIPE_EMBED}`;
 
 type EntryRow = Omit<MealPlanEntry, "servings"> & {
   servings: number | string;
@@ -295,6 +295,7 @@ export async function insertEntry(client: MpClient, row: NewEntryRow): Promise<v
       status: entry.status,
       notes: entry.notes,
       position: entry.position,
+      why: entry.why,
     },
     { onConflict: "id", ignoreDuplicates: true },
   );

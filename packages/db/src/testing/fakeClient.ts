@@ -61,7 +61,7 @@ export class FakeServer {
 
 const DEFAULTS: Record<string, () => Row> = {
   meal_plans: () => ({}),
-  meal_plan_entries: () => ({ status: "planned", notes: null, position: 0 }),
+  meal_plan_entries: () => ({ status: "planned", notes: null, position: 0, why: null }),
   recipe_feedback: () => ({ rating: null }),
 };
 
@@ -176,6 +176,18 @@ class Query implements PromiseLike<unknown> {
       const incoming = (Array.isArray(this.payload) ? this.payload : [this.payload]) as Row[];
       const keys = (this.options.onConflict ?? "id").split(",").map((k) => k.trim());
       for (const row of incoming) {
+        // The planning migration's BEFORE INSERT trigger looks the plan up first, and runs even
+        // when ON CONFLICT is about to skip the row.
+        if (
+          this.table === "meal_plan_entries" &&
+          !(this.server.tables.meal_plans ?? []).some((plan) => plan.id === row.plan_id)
+        ) {
+          return {
+            data: null,
+            error: { message: "plan_not_found", code: "P0001", details: "", hint: "" },
+            status: 400,
+          };
+        }
         const existing = rows.find((r) => keys.every((k) => r[k] === row[k]));
         if (existing) {
           if (this.op === "insert") {

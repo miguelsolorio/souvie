@@ -48,7 +48,8 @@ export function SwapMenu({
       return { recipe, result };
     },
     onSuccess: ({ recipe, result }) => {
-      actions.swapRecipe(entry, recipe, { servings: result.servings, why: result.why });
+      // The model's servings are ignored on purpose: the sheet promises servings and notes stay.
+      actions.swapRecipe(entry, recipe, { why: result.why });
       onDone();
     },
   });

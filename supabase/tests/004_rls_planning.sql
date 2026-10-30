@@ -9,6 +9,8 @@
 --   * an entry always takes its household from its plan, stays inside the plan's week, and
 --     points at a live recipe of the household
 --   * saved, cooked, and skipped feedback is written with the entry change, once per real change
+--   * a thumb is allowed on a household's live recipe or a catalog recipe, never on a deleted one
+--   * why (the one-line reason for a suggested meal) is client-writable and capped at 200 characters
 --   * the grants are column-level, so a later migration cannot widen them silently
 --   * both plan tables are in the Realtime publication, and entry deletes can be filtered
 --
@@ -18,7 +20,7 @@
 
 begin;
 
-select plan(91);
+select plan(97);
 
 -- ---------------------------------------------------------------------------------------
 -- Fixtures (as the postgres role, which bypasses RLS)
@@ -58,6 +60,11 @@ insert into public.recipes (id, household_id, title, source_type, deleted_at) va
   ('aa000000-0000-4000-8000-000000000003', '0a000000-0000-4000-8000-00000000000a', 'A3 green curry', 'manual', null),
   ('bb000000-0000-4000-8000-000000000001', '0b000000-0000-4000-8000-00000000000b', 'B1 secret stew', 'manual', null);
 
+-- C1 is a catalog recipe (no household). Clients can read it only where main carries the
+-- recipes_catalog_read migration, and the thumbs policy below depends on that read.
+insert into public.recipes (id, household_id, title, source_type, visibility) values
+  ('cc000000-0000-4000-8000-000000000001', null, 'C1 catalog soup', 'manual', 'catalog');
+
 -- Week of Monday 2026-11-02 in both households. As the service role, so no feedback is written.
 insert into public.meal_plans (id, household_id, week_start) values
   ('ca000000-0000-4000-8000-0000000000a1', '0a000000-0000-4000-8000-00000000000a', '2026-11-02'),
@@ -87,8 +94,8 @@ select policies_are('public', 'recipe_feedback', array['recipe_feedback: members
 -- Grants. Column-level, so a later migration that adds a column has to grant it on purpose.
 select ok(
   (select bool_and(has_column_privilege('authenticated', 'public.meal_plan_entries', c, 'UPDATE'))
-   from unnest(array['date', 'slot', 'recipe_id', 'servings', 'status', 'notes', 'position']) c),
-  'clients may update date, slot, recipe_id, servings, status, notes, and position on an entry'
+   from unnest(array['date', 'slot', 'recipe_id', 'servings', 'status', 'notes', 'position', 'why']) c),
+  'clients may update date, slot, recipe_id, servings, status, notes, position, and why on an entry'
 );
 select ok(
   not (select bool_or(has_column_privilege('authenticated', 'public.meal_plan_entries', c, 'UPDATE'))
@@ -97,10 +104,10 @@ select ok(
 );
 select ok(
   (select bool_and(has_column_privilege('authenticated', 'public.meal_plan_entries', c, 'INSERT'))
-   from unnest(array['id', 'plan_id', 'household_id', 'date', 'slot', 'recipe_id', 'servings', 'status', 'notes', 'position']) c)
+   from unnest(array['id', 'plan_id', 'household_id', 'date', 'slot', 'recipe_id', 'servings', 'status', 'notes', 'position', 'why']) c)
   and not (select bool_or(has_column_privilege('authenticated', 'public.meal_plan_entries', c, 'INSERT'))
            from unnest(array['created_at', 'updated_at']) c),
-  'clients insert the ten entry columns and not the timestamps'
+  'clients insert the eleven entry columns, why included, and not the timestamps'
 );
 select ok(
   (select bool_and(has_column_privilege('authenticated', 'public.meal_plans', c, 'INSERT'))
@@ -262,6 +269,12 @@ select throws_ok(
 
 -- Editing: column-level.
 select is(public.__t_affected($$update public.meal_plan_entries set servings = 6, notes = 'double it', position = 1 where id = 'ea000000-0000-4000-8000-0000000000a1'$$), 1::bigint, 'alice changes servings, notes, and position of her entry');
+select is(public.__t_affected($$update public.meal_plan_entries set why = 'Uses the leftover lemons' where id = 'ea000000-0000-4000-8000-0000000000a1'$$), 1::bigint, 'alice sets the why of her entry (the client does this when it applies a suggested swap)');
+select throws_ok(
+  $$update public.meal_plan_entries set why = repeat('x', 201) where id = 'ea000000-0000-4000-8000-0000000000a1'$$,
+  '23514', 'new row for relation "meal_plan_entries" violates check constraint "meal_plan_entries_why_length"',
+  'a why is 200 characters at most'
+);
 select throws_ok($$update public.meal_plan_entries set plan_id = 'ca000000-0000-4000-8000-0000000000a2' where id = 'ea000000-0000-4000-8000-0000000000a1'$$, '42501', 'permission denied for table meal_plan_entries', 'an entry cannot move to another plan');
 select throws_ok($$update public.meal_plan_entries set household_id = '0b000000-0000-4000-8000-00000000000b' where id = 'ea000000-0000-4000-8000-0000000000a1'$$, '42501', 'permission denied for table meal_plan_entries', 'an entry cannot be handed to another household');
 select throws_ok($$update public.meal_plan_entries set date = '2026-11-12' where id = 'ea000000-0000-4000-8000-0000000000a1'$$, 'P0001', 'date_outside_plan_week', 'moving an entry outside its plan''s week is rejected');
@@ -337,6 +350,15 @@ select throws_ok(
   '42501', 'new row violates row-level security policy for table "recipe_feedback"',
   'alice cannot thumb a recipe that is not her household''s'
 );
+select lives_ok(
+  $$insert into public.recipe_feedback (id, household_id, recipe_id, signal) values ('f1000000-0000-4000-8000-0000000000a4', '0a000000-0000-4000-8000-00000000000a', 'cc000000-0000-4000-8000-000000000001', 'like')$$,
+  'alice thumbs a catalog recipe up (the onboarding calibration deck does this)'
+);
+select throws_ok(
+  $$insert into public.recipe_feedback (household_id, recipe_id, signal) values ('0a000000-0000-4000-8000-00000000000a', 'aa000000-0000-4000-8000-000000000002', 'like')$$,
+  '42501', 'new row violates row-level security policy for table "recipe_feedback"',
+  'alice cannot thumb a deleted recipe, even one of her own household'
+);
 select throws_ok(
   $$insert into public.recipe_feedback (household_id, recipe_id, signal, rating) values ('0a000000-0000-4000-8000-00000000000a', 'aa000000-0000-4000-8000-000000000003', 'like', 6)$$,
   '23514', 'new row for relation "recipe_feedback" violates check constraint "recipe_feedback_rating_range"',
@@ -360,6 +382,7 @@ set local request.jwt.claims = '{"sub": "c3333333-3333-4333-8333-333333333333", 
 set local role authenticated;
 
 select is((select count(*)::int from public.meal_plan_entries), 1, 'carol sees the household''s entries (alice''s Thursday dinner)');
+select is((select why from public.meal_plan_entries where id = 'ea000000-0000-4000-8000-0000000000a1'), 'Uses the leftover lemons', 'carol reads the why on the entry alice set');
 select is(public.__t_affected($$update public.meal_plan_entries set servings = 3 where id = 'ea000000-0000-4000-8000-0000000000a1'$$), 1::bigint, 'carol edits an entry alice made');
 select lives_ok(
   $$insert into public.meal_plan_entries (plan_id, household_id, date, slot, recipe_id, servings)
@@ -430,9 +453,14 @@ set local request.jwt.claims = '{"role": "service_role"}';
 set local role service_role;
 
 select lives_ok(
-  $$insert into public.meal_plan_entries (plan_id, household_id, date, slot, recipe_id, servings)
-    values ('ca000000-0000-4000-8000-0000000000a2', '0a000000-0000-4000-8000-00000000000a', '2026-11-10', 'dinner', 'aa000000-0000-4000-8000-000000000003', 4)$$,
-  'the service role drafts an entry'
+  $$insert into public.meal_plan_entries (plan_id, household_id, date, slot, recipe_id, servings, why)
+    values ('ca000000-0000-4000-8000-0000000000a2', '0a000000-0000-4000-8000-00000000000a', '2026-11-10', 'dinner', 'aa000000-0000-4000-8000-000000000003', 4, 'Fits a busy Tuesday')$$,
+  'the service role drafts an entry with a why'
+);
+select is(
+  (select why from public.meal_plan_entries where plan_id = 'ca000000-0000-4000-8000-0000000000a2' and date = '2026-11-10'),
+  'Fits a busy Tuesday',
+  'the draft keeps the reason suggest gave'
 );
 select is(
   (select count(*)::int from public.recipe_feedback where recipe_id = 'aa000000-0000-4000-8000-000000000003' and signal = 'saved'),

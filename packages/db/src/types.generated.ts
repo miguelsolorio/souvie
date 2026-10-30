@@ -440,6 +440,7 @@ export type Database = {
           slot: Database["public"]["Enums"]["meal_plan_entries_slot"];
           status: Database["public"]["Enums"]["meal_plan_entries_status"];
           updated_at: string;
+          why: string | null;
         };
         ComputedFields: never;
         Insert: {
@@ -455,6 +456,7 @@ export type Database = {
           slot: Database["public"]["Enums"]["meal_plan_entries_slot"];
           status?: Database["public"]["Enums"]["meal_plan_entries_status"];
           updated_at?: string;
+          why?: string | null;
         };
         Update: {
           created_at?: string;
@@ -469,6 +471,7 @@ export type Database = {
           slot?: Database["public"]["Enums"]["meal_plan_entries_slot"];
           status?: Database["public"]["Enums"]["meal_plan_entries_status"];
           updated_at?: string;
+          why?: string | null;
         };
         Relationships: [
           {

@@ -53,16 +53,17 @@ describe("requestSwapSuggestion", () => {
     });
     const result = await requestSwapSuggestion(client, request);
     expect(invoke).toHaveBeenCalledWith("suggest", { body: { ...request, mode: "swap" } });
-    expect(result).toEqual({ recipeId: RECIPE, servings: 3, why: "Uses the leftover lemons" });
+    // The model said 3 servings. The planner keeps the household's number, so it never passes it on.
+    expect(result).toEqual({ recipeId: RECIPE, why: "Uses the leftover lemons" });
+    expect(result).not.toHaveProperty("servings");
   });
 
-  it("tolerates a suggestion without servings or a reason", async () => {
+  it("tolerates a suggestion without a reason", async () => {
     const { client } = clientReturning({
       data: { entries: [{ date: "2026-11-03", slot: "dinner", recipeId: RECIPE }] },
     });
     expect(await requestSwapSuggestion(client, request)).toEqual({
       recipeId: RECIPE,
-      servings: null,
       why: null,
     });
   });
@@ -99,14 +100,16 @@ describe("parseSwapSuggestion", () => {
   it("trims the reason to a short line", () => {
     expect(
       parseSwapSuggestion({ entries: [{ ...entry, why: "x".repeat(400) }] })?.why,
-    ).toHaveLength(280);
+    ).toHaveLength(200);
     expect(parseSwapSuggestion({ entries: [{ ...entry, why: "   " }] })?.why).toBeUndefined();
   });
 
-  it("rejects a bad slot, a missing date, and non-positive servings", () => {
+  it("rejects a bad slot and a missing date, and does not read servings at all", () => {
     expect(parseSwapSuggestion({ entries: [{ ...entry, slot: "brunch" }] })).toBeNull();
     expect(parseSwapSuggestion({ entries: [{ slot: "dinner", recipeId: RECIPE }] })).toBeNull();
-    expect(parseSwapSuggestion({ entries: [{ ...entry, servings: 0 }] })?.servings).toBeUndefined();
+    expect(parseSwapSuggestion({ entries: [{ ...entry, servings: 9 }] })).not.toHaveProperty(
+      "servings",
+    );
   });
 
   it("rejects anything that is not an entries list", () => {

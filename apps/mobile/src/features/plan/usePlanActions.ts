@@ -19,8 +19,8 @@ import {
 } from "@mp/db";
 import { useCallback, useMemo } from "react";
 import { showPlanNotice } from "./notice";
-import { setEntryWhy } from "./why";
 import "./ids";
+import { swapPatch } from "./swap";
 
 /** The slice of a recipe an entry shows, from the row the recipe list already holds. */
 export function toPlannedRecipe(recipe: RecipeSummary): PlannedRecipe {
@@ -79,10 +79,10 @@ export function usePlanActions(householdId: string | null | undefined) {
           recipe_id: args.recipe.id,
           servings: args.servings,
           position: nextPosition(args.entries, args.date, args.slot),
+          why: args.why?.trim() ? args.why.trim() : null,
         },
         recipe: toPlannedRecipe(args.recipe),
       });
-      if (args.why) setEntryWhy(id, args.why);
       return id;
     },
     [householdId, upsertMutate],
@@ -115,23 +115,17 @@ export function usePlanActions(householdId: string | null | undefined) {
       setStatus: (entry: PlanEntry, status: MealEntryStatus) => {
         if (status !== entry.status) edit(entry, { status });
       },
-      /** Swaps the recipe and keeps everything else about the entry. */
+      /**
+       * Swaps the recipe and keeps everything else about the entry, servings and notes included.
+       * `why` is the suggestion's one-line reason, written with the swap; leave it out for a
+       * recipe a person picked and the entry's reason is cleared (see swap.ts).
+       */
       swapRecipe: (
         entry: PlanEntry,
         recipe: RecipeSummary,
-        options: { servings?: number | null | undefined; why?: string | null | undefined } = {},
+        options: { why?: string | null | undefined } = {},
       ) => {
-        edit(
-          entry,
-          {
-            recipe_id: recipe.id,
-            // A swapped-in recipe starts planned again; a cooked meal is not "cooked" with a new dish.
-            status: "planned",
-            ...(options.servings ? { servings: options.servings } : {}),
-          },
-          toPlannedRecipe(recipe),
-        );
-        setEntryWhy(entry.id, options.why ?? null);
+        edit(entry, swapPatch(recipe.id, options.why), toPlannedRecipe(recipe));
       },
       moveEntry: (
         entry: PlanEntry,
@@ -152,7 +146,6 @@ export function usePlanActions(householdId: string | null | undefined) {
       deleteEntry: (entry: PlanEntry) => {
         if (!householdId) return;
         removeMutate({ id: entry.id, householdId, planId: entry.plan_id });
-        setEntryWhy(entry.id, null);
       },
     }),
     [addRecipe, edit, householdId, removeMutate],

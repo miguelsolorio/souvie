@@ -21,7 +21,6 @@ import { pickRoute, recipeRoute } from "./routes";
 import { EntryServingsStepper } from "./ServingsStepper";
 import { SwapMenu } from "./SwapMenu";
 import type { usePlanActions } from "./usePlanActions";
-import { useEntryWhy } from "./why";
 
 type Panel = "main" | "swap" | "move";
 
@@ -94,7 +93,6 @@ function EntryBody({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const why = useEntryWhy(entry.id);
   const recipeGone = !entry.recipe || entry.recipe.deleted_at !== null;
 
   if (panel === "swap") {
@@ -175,12 +173,12 @@ function EntryBody({
         )}
       </View>
 
-      {why ? (
+      {entry.why ? (
         <View testID="entry-why" className="gap-1 rounded-xl bg-green-50 p-3">
           <Text className="text-xs font-semibold uppercase tracking-wide text-green-800">
             Why this
           </Text>
-          <Text className="text-sm text-neutral-800">{why}</Text>
+          <Text className="text-sm text-neutral-800">{entry.why}</Text>
         </View>
       ) : null}
 

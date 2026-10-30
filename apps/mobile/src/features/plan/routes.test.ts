@@ -8,7 +8,6 @@ import {
   planRoute,
   recipeRoute,
 } from "./routes";
-import { getEntryWhy, setEntryWhy } from "./why";
 
 describe("routes", () => {
   it("builds the week, day, picker and recipe routes from the brief", () => {
@@ -63,17 +62,5 @@ describe("plan notice", () => {
     showPlanNotice("x");
     clearPlanNotice();
     expect(getPlanNotice().message).toBeNull();
-  });
-});
-
-describe("why this", () => {
-  it("keeps a trimmed reason per entry and drops it when emptied", () => {
-    setEntryWhy("e1", "  Uses the leftover lemons  ");
-    expect(getEntryWhy("e1")).toBe("Uses the leftover lemons");
-    setEntryWhy("e1", "   ");
-    expect(getEntryWhy("e1")).toBeUndefined();
-    setEntryWhy("e2", "a reason");
-    setEntryWhy("e2", null);
-    expect(getEntryWhy("e2")).toBeUndefined();
   });
 });

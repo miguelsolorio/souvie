@@ -37,6 +37,7 @@ const entry = (over: Partial<PlanEntry> = {}): PlanEntry => ({
   position: 0,
   created_at: "2026-10-30T12:00:00.000Z",
   updated_at: "2026-10-30T12:00:00.000Z",
+  why: null,
   recipe,
   ...over,
 });

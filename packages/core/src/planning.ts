@@ -129,6 +129,7 @@ export const PLANNING_LIMITS = {
   servingsMax: 1000,
   notes: 1000,
   position: 1000,
+  why: 200,
 } as const;
 
 /** The servings an entry gets when nothing else says. */
@@ -162,6 +163,8 @@ export const MealPlanEntry = z.object({
   position: z.number().int().min(0).max(PLANNING_LIMITS.position),
   created_at: Timestamp,
   updated_at: Timestamp,
+  /** The one-line reason for a suggested meal. Null when a person picked it. */
+  why: z.string().max(PLANNING_LIMITS.why).nullable(),
 });
 export type MealPlanEntry = z.infer<typeof MealPlanEntry>;
 
@@ -185,12 +188,13 @@ export const MealPlanEntryInput = z.object({
   status: MealEntryStatus.default("planned"),
   notes: z.string().max(PLANNING_LIMITS.notes).nullable().default(null),
   position: z.number().int().min(0).max(PLANNING_LIMITS.position).default(0),
+  why: z.string().max(PLANNING_LIMITS.why).nullable().default(null),
 });
 export type MealPlanEntryInput = z.input<typeof MealPlanEntryInput>;
 
 /**
  * The columns a client may change on an entry that exists (swap, move, servings, status, notes,
- * reorder). A separate schema, not `MealPlanEntryInput.partial()`, because the input's defaults
+ * why, reorder). A separate schema, not `MealPlanEntryInput.partial()`, because the input's defaults
  * would otherwise reset status and position on every edit.
  */
 export const MealPlanEntryPatch = z
@@ -202,6 +206,7 @@ export const MealPlanEntryPatch = z
     status: MealEntryStatus,
     notes: z.string().max(PLANNING_LIMITS.notes).nullable(),
     position: z.number().int().min(0).max(PLANNING_LIMITS.position),
+    why: z.string().max(PLANNING_LIMITS.why).nullable(),
   })
   .partial();
 export type MealPlanEntryPatch = z.infer<typeof MealPlanEntryPatch>;

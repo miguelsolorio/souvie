@@ -71,11 +71,19 @@ create table public.meal_plan_entries (
   position integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  -- The one-line reason for a suggested dinner ("Uses the lemons from Monday"). The suggest
+  -- Edge Function writes it as the service role; the client writes it when it applies a swap.
+  -- Null for a meal a person picked.
+  why text,
 
   constraint meal_plan_entries_servings_range check (servings > 0 and servings <= 1000),
   constraint meal_plan_entries_notes_length check (notes is null or char_length(notes) <= 1000),
-  constraint meal_plan_entries_position_range check (position between 0 and 1000)
+  constraint meal_plan_entries_position_range check (position between 0 and 1000),
+  constraint meal_plan_entries_why_length check (why is null or char_length(why) <= 200)
 );
+
+comment on column public.meal_plan_entries.why is
+  'One-line reason the suggestion engine gave for this meal, 200 characters at most. Null when a person picked it.';
 
 comment on table public.meal_plan_entries is
   'A recipe in a slot on a day (WS04). household_id is kept in step with the plan by a trigger.';
@@ -249,14 +257,14 @@ grant insert (id, household_id, week_start) on public.meal_plans to authenticate
 
 -- meal_plan_entries: plan_id, household_id, and id are fixed once the row exists. An entry never
 -- moves to another plan, and its household follows the plan. Everything the person edits in the
--- app is updatable: servings, status, notes, position, and (for swap and move) recipe_id, date,
--- slot. The upsert in @mp/db inserts with ON CONFLICT DO NOTHING and then updates these columns,
--- so it never needs update privilege on the key columns.
+-- app is updatable: servings, status, notes, position, why, and (for swap and move) recipe_id,
+-- date, slot. The upsert in @mp/db inserts with ON CONFLICT DO NOTHING and then updates these
+-- columns, so it never needs update privilege on the key columns.
 grant select, delete on public.meal_plan_entries to authenticated;
 grant insert (
-  id, plan_id, household_id, date, slot, recipe_id, servings, status, notes, position
+  id, plan_id, household_id, date, slot, recipe_id, servings, status, notes, position, why
 ) on public.meal_plan_entries to authenticated;
-grant update (date, slot, recipe_id, servings, status, notes, position)
+grant update (date, slot, recipe_id, servings, status, notes, position, why)
   on public.meal_plan_entries to authenticated;
 
 -- recipe_feedback: user_id and created_at come from defaults, so a client cannot write feedback
@@ -294,7 +302,10 @@ create policy "meal_plan_entries: members delete" on public.meal_plan_entries
   using (household_id in (select public.current_household_ids()));
 
 -- recipe_feedback: members read the household's log (WS06 learns from all of it). A person writes
--- and removes only their own thumbs, for a recipe their household owns.
+-- and removes only their own thumbs, for a live recipe of their household or a catalog recipe.
+-- The subquery runs under the caller's RLS on recipes, so a catalog recipe passes only where
+-- clients can read catalog rows (the recipes_catalog_read migration); a deleted recipe is refused
+-- even though its own household can still read it.
 create policy "recipe_feedback: members read" on public.recipe_feedback
   for select to authenticated
   using (household_id in (select public.current_household_ids()));
@@ -309,7 +320,8 @@ create policy "recipe_feedback: own thumbs insert" on public.recipe_feedback
       select 1
       from public.recipes r
       where r.id = recipe_feedback.recipe_id
-        and r.household_id = recipe_feedback.household_id
+        and (r.household_id = recipe_feedback.household_id or r.visibility = 'catalog')
+        and r.deleted_at is null
     )
   );
 

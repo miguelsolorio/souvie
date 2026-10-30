@@ -15,7 +15,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "kroger:login": "node scripts/kroger-live-login.ts"
   },
   "dependencies": {
     "@mp/core": "workspace:*"

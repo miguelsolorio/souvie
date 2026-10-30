@@ -150,6 +150,158 @@ export type Database = {
         };
         Relationships: [];
       };
+      ingredient_alias_proposals: {
+        Row: {
+          count: number;
+          created_at: string;
+          household_id: string | null;
+          id: string;
+          proposed_category: string | null;
+          proposed_name: string;
+          raw_text: string;
+          status: Database["public"]["Enums"]["ingredient_alias_proposals_status"];
+          suggested_ingredient_id: string | null;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          count?: number;
+          created_at?: string;
+          household_id?: string | null;
+          id?: string;
+          proposed_category?: string | null;
+          proposed_name: string;
+          raw_text: string;
+          status?: Database["public"]["Enums"]["ingredient_alias_proposals_status"];
+          suggested_ingredient_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          count?: number;
+          created_at?: string;
+          household_id?: string | null;
+          id?: string;
+          proposed_category?: string | null;
+          proposed_name?: string;
+          raw_text?: string;
+          status?: Database["public"]["Enums"]["ingredient_alias_proposals_status"];
+          suggested_ingredient_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ingredient_alias_proposals_suggested_ingredient_id_fkey";
+            columns: ["suggested_ingredient_id"];
+            isOneToOne: false;
+            referencedRelation: "ingredients";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ingredient_aliases: {
+        Row: {
+          alias: string;
+          created_at: string;
+          id: string;
+          ingredient_id: string;
+          source: Database["public"]["Enums"]["ingredient_aliases_source"];
+        };
+        ComputedFields: never;
+        Insert: {
+          alias: string;
+          created_at?: string;
+          id?: string;
+          ingredient_id: string;
+          source?: Database["public"]["Enums"]["ingredient_aliases_source"];
+        };
+        Update: {
+          alias?: string;
+          created_at?: string;
+          id?: string;
+          ingredient_id?: string;
+          source?: Database["public"]["Enums"]["ingredient_aliases_source"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ingredient_aliases_ingredient_id_fkey";
+            columns: ["ingredient_id"];
+            isOneToOne: false;
+            referencedRelation: "ingredients";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ingredient_parse_cache: {
+        Row: {
+          created_at: string;
+          model: string | null;
+          normalized_text: string;
+          prompt_version: string | null;
+          result: NonNullable<Json>;
+          source: Database["public"]["Enums"]["ingredient_parse_cache_source"];
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          model?: string | null;
+          normalized_text: string;
+          prompt_version?: string | null;
+          result: NonNullable<Json>;
+          source: Database["public"]["Enums"]["ingredient_parse_cache_source"];
+        };
+        Update: {
+          created_at?: string;
+          model?: string | null;
+          normalized_text?: string;
+          prompt_version?: string | null;
+          result?: NonNullable<Json>;
+          source?: Database["public"]["Enums"]["ingredient_parse_cache_source"];
+        };
+        Relationships: [];
+      };
+      ingredients: {
+        Row: {
+          category: string;
+          created_at: string;
+          default_unit: string;
+          density_g_per_ml: number | null;
+          id: string;
+          is_staple_default: boolean;
+          name: string;
+          plural: string | null;
+          typical_unit_weight_g: number | null;
+          updated_at: string;
+          usda_fdc_id: number | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          category: string;
+          created_at?: string;
+          default_unit: string;
+          density_g_per_ml?: number | null;
+          id?: string;
+          is_staple_default?: boolean;
+          name: string;
+          plural?: string | null;
+          typical_unit_weight_g?: number | null;
+          updated_at?: string;
+          usda_fdc_id?: number | null;
+        };
+        Update: {
+          category?: string;
+          created_at?: string;
+          default_unit?: string;
+          density_g_per_ml?: number | null;
+          id?: string;
+          is_staple_default?: boolean;
+          name?: string;
+          plural?: string | null;
+          typical_unit_weight_g?: number | null;
+          updated_at?: string;
+          usda_fdc_id?: number | null;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -178,6 +330,31 @@ export type Database = {
         };
         Relationships: [];
       };
+      waitlist: {
+        Row: {
+          created_at: string;
+          email: string;
+          id: string;
+          source: string;
+          zip: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          email: string;
+          id?: string;
+          source?: string;
+          zip?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          email?: string;
+          id?: string;
+          source?: string;
+          zip?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -198,11 +375,31 @@ export type Database = {
           user_id: string;
         }[];
       };
+      match_ingredient_alias: {
+        Args: { max_results?: number; min_similarity?: number; query: string };
+        Returns: {
+          alias: string;
+          ingredient_id: string;
+          similarity: number;
+        }[];
+      };
       owned_household_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
+      record_ingredient_alias_proposal: {
+        Args: {
+          p_household_id?: string;
+          p_proposed_category?: string;
+          p_proposed_name: string;
+          p_raw_text: string;
+        };
+        Returns: string;
+      };
       redeem_invite: { Args: { token: string }; Returns: string };
     };
     Enums: {
       household_members_role: "owner" | "member";
+      ingredient_alias_proposals_status: "pending" | "accepted" | "rejected";
+      ingredient_aliases_source: "seed" | "llm" | "user";
+      ingredient_parse_cache_source: "grammar" | "llm";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -319,6 +516,9 @@ export const Constants = {
   public: {
     Enums: {
       household_members_role: ["owner", "member"],
+      ingredient_alias_proposals_status: ["pending", "accepted", "rejected"],
+      ingredient_aliases_source: ["seed", "llm", "user"],
+      ingredient_parse_cache_source: ["grammar", "llm"],
     },
   },
 } as const;

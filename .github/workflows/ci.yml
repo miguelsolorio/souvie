@@ -218,15 +218,16 @@ jobs:
 
       # The committed packages/db/src/types.generated.ts must match the migrated schema. A new
       # migration that changes a table or function fails here until the regenerated file (the
-      # artifact below, or `pnpm --filter @mp/db gen-types` on a stack) is committed.
+      # artifact below, or `pnpm --filter @mp/db gen-types` on a stack) is committed. The upload
+      # comes first so the fresh file is there to download when the check fails.
       - name: Generate database types
         run: pnpm --filter @mp/db gen-types
-
-      - name: Check committed types are current
-        run: git diff --exit-code packages/db/src/types.generated.ts
 
       - name: Upload generated types
         uses: actions/upload-artifact@v7
         with:
           name: types.generated.ts
           path: packages/db/src/types.generated.ts
+
+      - name: Check committed types are current
+        run: git diff --exit-code packages/db/src/types.generated.ts

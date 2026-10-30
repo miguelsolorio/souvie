@@ -2,8 +2,8 @@
 
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
-**Current wave:** 2 (WS02 eval gate met, merging after CI; WS07 held at checkpoint 3)
-**Last updated:** 2026-10-30 by the orchestrator (keyed eval 50/50, recordings committed)
+**Current wave:** 2 (WS02 merged; WS07 in progress; WS14 name-swap round in progress)
+**Last updated:** 2026-10-30 by the orchestrator (WS02 merged, Souvie confirmed, WS07 and WS14 swap dispatched)
 
 ## Workstreams
 
@@ -11,19 +11,19 @@ The orchestrator updates this file after every dispatch, report, review, merge, 
 |---|---|---|---|---|---|---|---|---|
 | 00 | Repo & infra scaffold | 0 | merged | ws/00-scaffold | opus | 2026-10-29 | 2026-10-30 | Squash 7713b7f, PR #1. Checkpoint 1 approved 2026-10-30. Still to verify once Miguel unblocks: criterion 7 (Xcode license) and the hosted halves of 9-11 (`SUPABASE_ACCESS_TOKEN`) |
 | 01 | Auth & households | 1 | merged | ws/01-auth-households | sonnet | 2026-10-30 | 2026-10-30 | Squash bdd23f3, PR #4. Checkpoint 2 approved 2026-10-30. Criterion 3 partial until Apple and Google providers exist. Hosted `db push` pending `SUPABASE_ACCESS_TOKEN` |
-| 02 | Recipe domain & import | 2 | in review | ws/02-recipes-import | sonnet | 2026-10-30 | | Review and re-review: merge. Keyed `eval:live` 2026-10-30: 50/50 (jsonld 44, llm 6), first live contact with Sonnet 5.5 succeeded; recordings committed and CI now sets `EVAL_REQUIRE_RECORDINGS=1`. Squash merge once CI is green on the tip (PR #5) |
+| 02 | Recipe domain & import | 2 | merged | ws/02-recipes-import | sonnet | 2026-10-30 | 2026-10-30 | Squash d1084b1 (PR #5). Golden set 50/50 with recordings; CI requires recordings. Follow-ups: query-token stripping in `import_jobs.input`, device smoke test of share sheet and recipe screens, production egress probe (docs/09) |
 | 03 | Ingredient ontology & parser | 1 | merged | ws/03-ingredient-ontology-parser | sonnet | 2026-10-30 | 2026-10-30 | Squash 4270dac, PR #3. Reviewer: merge after one fix round. Hosted `db push` pending `SUPABASE_ACCESS_TOKEN`. Follow-ups in the WS02, WS05 and WS15 briefs; FK to `households` landed on main 2026-10-30 |
 | 04 | Planner UI | 3 | not started | | | | | |
 | 05 | Grocery list & in-store mode | 4 | not started | | | | | |
 | 06 | Onboarding & suggestions | 3 | not started | | | | | |
-| 07 | Retailer framework + Kroger | 2 | not started | | | | | Held: checkpoint 3 unmet. `.env.local` has no `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET`, `KROGER_REDIRECT_URI`. Dispatch (opus) as soon as they exist |
+| 07 | Retailer framework + Kroger | 2 | in progress | ws/07-retailer-framework-kroger | opus | 2026-10-30 | | Checkpoint 3 met: Kroger keys in `.env.local`, redirect `souvie://oauth/kroger` registered and matching the renamed scheme. Builder defines `RetailerAdapter` from docs/04; after merge only the orchestrator edits it |
 | 08 | Instacart adapter | 3 | not started | | | | | Human checkpoint 4 before start (IDP application status) |
 | 09 | Shopping agent + worker + review UI | 5 | not started | | | | | |
 | 10 | Browser adapters | 6 | not started | | | | | Human checkpoint 5 before start (Tier 3 consent copy) |
 | 11 | Scheduling & notifications | 6 | not started | | | | | |
 | 12 | History & spend | 6 | not started | | | | | |
 | 13 | Web & desktop packaging | 6 | not started | | | | | |
-| 14 | Brand & marketing site | 1 | in review | ws/14-brand-marketing-site | sonnet | 2026-10-30 | | Code merged as 88b3b19 (PR #2) on a merge verdict; row stays in review until checkpoint 6 names the product and the swap lands. Deploy gates: privacy contact route, recheck Trust and Stores copy claims, rate-limit plan for the waitlist insert, `db push` of the waitlist migration (needs token). Criteria 8-10 deferred: Xcode first launch, Cloudflare Pages project |
+| 14 | Brand & marketing site | 1 | in progress | ws/14-brand-marketing-site | sonnet | 2026-10-30 | | Code merged as 88b3b19 (PR #2). Name-swap round dispatched 2026-10-30 after checkpoint 6 chose Souvie: wordmark and site copy, docs/08 placeholders, wordmark clipping, `gen-tokens.mjs` comment, two copy claims. Deploy gates still open: privacy contact route, waitlist rate limit, waitlist `db push` (token), Cloudflare Pages project |
 | 15 | Observability & AI evals | 6 | not started | | | | | |
 
 States: `not started` · `in progress` · `in review` · `fix round` · `merged` · `blocked`
@@ -64,6 +64,9 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 
 ## Decisions log
 
+- 2026-10-30: WS07 (opus) and the WS14 name-swap round (sonnet) dispatched after the Souvie rename landed on main. WS07's dispatch message adds one line to the §6.1 template: where `.env.local` lives, since the Kroger OAuth checks need the keys. (Orchestrator.)
+- 2026-10-30: Checkpoint 6: Miguel confirmed Souvie. The orchestrator renamed the deep-link scheme to `souvie://`, the Expo name and slug, the iOS bundle id and Android package to `com.miguelsolorio.souvie` (nothing is registered with Apple or Google yet, so this is the cheap moment), the Kroger redirect in briefs, env example and docs, the app's display strings, the magic-link template and the CI check that reads it (commit on main after d1084b1). Checkpoint 3 is therefore met: the registered redirect `souvie://oauth/kroger` matches the app. Trademark caveats (ESSENTIAL SOUVIE pending, Suvie sound-alike) and domains (getsouvie.com, souvieapp.com) are recorded in docs/08 §1 as pre-beta follow-ups. (Miguel, orchestrator.)
+- 2026-10-30: WS02 merged as d1084b1 by local squash after CI went green on cc6ee42; PR #5 closed through the commit message, branch deleted, builder and reviewer worktrees removed. Why PRs show as closed rather than merged: every commit on main must be authored and committed as the Gmail identity (CLAUDE.md), and a GitHub-side squash or rebase merge stamps GitHub as the committer, so merges are done locally and the PR is the review and CI record only. (Orchestrator.)
 - 2026-10-30: `ANTHROPIC_API_KEY` landed in `.env.local` (a Console workspace key; a Claude subscription does not cover API calls, and identity federation does not apply to the Supabase Edge runtime or local scripts). The orchestrator ran `eval:live` once from the WS02 branch: 50/50 pass, the six Wikibooks model-path cases all extracted correctly on Sonnet 5.5, so the `@mp/llm` request shape is confirmed against the live API (docs/09 question closed). Recordings committed under `fixtures/llm` with the prompt hash; `.github/workflows/ci.yml` now sets `EVAL_REQUIRE_RECORDINGS=1` on the eval step, so a pending case fails CI from here on. WS02 row moves to in review; merge follows CI on the tip. (Orchestrator.)
 - 2026-10-30: WS02 re-review of 17521a8 returned merge: findings 3 to 7 fixed with tests and verified independently (the gate's 39 pass + 5 fail + 6 pending case is red; the range step text survives; one warning without a resolver; cleaned links in `import_jobs.input`, caption `source_url` and the draft; heading rule and step round trip). Two nits accepted as follow-ups: `storedLink`'s 500-character slice also serves as a rare `source_url` fallback, and arbitrary `?token=` parameters still persist because only known tracking parameters are stripped (closure, if wanted: store origin plus path in `import_jobs.input`). The orchestrator softened the README's unverified claim that the Edge runtime has no route to private networks (doc-only commit on the branch). Merge now waits on the keyed eval and CI on the tip. (Orchestrator.)
 - 2026-10-30: WS02 fix round received (four commits on 01e24c1, 886 tests, lint and typecheck clean). The eval gate is a pure `gate()` function with its own tests: while cases are pending, any FAIL is red and pending cannot cover for it; with nothing pending the 45 threshold on real passes applies; `EVAL_REQUIRE_RECORDINGS=1` counts pending as failures. Confirmed as the intended semantics. `cleanStep` strips only step labels now; the function warns once when the DNS resolver is absent and the README documents rebinding as a limitation; `import_jobs.input` and a caption's `source_url` store the cleaned link; `#` is a heading only as a bare `#` or `# name`; a step's inner line breaks fold to spaces so the editor round trip is stable. Branch pushed for CI; re-review sent to the same reviewer. Still blocked on `ANTHROPIC_API_KEY`. (Orchestrator.)

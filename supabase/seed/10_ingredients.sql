@@ -2409,8 +2409,6 @@ from (values
   ('veal', 'veal shank', 'seed'),
   ('veal', 'veal shanks', 'seed'),
   ('veal', 'veal cutlet', 'seed'),
-  ('duck breast', 'duck legs', 'seed'),
-  ('duck breast', 'duck leg', 'seed'),
   ('duck breast', 'whole duck', 'seed'),
   ('duck breast', 'duck', 'seed'),
   ('ground bison', 'bison', 'seed'),
@@ -2823,7 +2821,9 @@ from (values
   ('hamburger bun', 'sandwich buns', 'seed'),
   ('hamburger bun', 'bun', 'seed'),
   ('hamburger bun', 'buns', 'seed'),
-  ('hamburger bun', 'hamburger roll', 'seed')
+  ('hamburger bun', 'hamburger roll', 'seed'),
+  ('hamburger bun', 'hamburger rolls', 'seed'),
+  ('hamburger bun', 'burger roll', 'seed')
 ) as v (ingredient_name, alias, source)
 join public.ingredients as i on i.name = v.ingredient_name
 on conflict (alias) do update set ingredient_id = excluded.ingredient_id
@@ -2832,8 +2832,6 @@ on conflict (alias) do update set ingredient_id = excluded.ingredient_id
 insert into public.ingredient_aliases (ingredient_id, alias, source)
 select i.id, v.alias, v.source::public.ingredient_aliases_source
 from (values
-  ('hamburger bun', 'hamburger rolls', 'seed'),
-  ('hamburger bun', 'burger roll', 'seed'),
   ('hamburger bun', 'burger rolls', 'seed'),
   ('hamburger bun', 'potato bun', 'seed'),
   ('hamburger bun', 'potato buns', 'seed'),
@@ -3331,7 +3329,9 @@ from (values
   ('penne', 'penne noodles', 'seed'),
   ('rotini', 'dried rotini', 'seed'),
   ('rotini', 'dried fusilli', 'seed'),
-  ('rotini', 'fusilli', 'seed')
+  ('rotini', 'fusilli', 'seed'),
+  ('rotini', 'rotini pasta', 'seed'),
+  ('rotini', 'fusilli pasta', 'seed')
 ) as v (ingredient_name, alias, source)
 join public.ingredients as i on i.name = v.ingredient_name
 on conflict (alias) do update set ingredient_id = excluded.ingredient_id
@@ -3340,8 +3340,6 @@ on conflict (alias) do update set ingredient_id = excluded.ingredient_id
 insert into public.ingredient_aliases (ingredient_id, alias, source)
 select i.id, v.alias, v.source::public.ingredient_aliases_source
 from (values
-  ('rotini', 'rotini pasta', 'seed'),
-  ('rotini', 'fusilli pasta', 'seed'),
   ('rotini', 'corkscrew pasta', 'seed'),
   ('elbow macaroni', 'macaroni', 'seed'),
   ('elbow macaroni', 'elbow pasta', 'seed'),
@@ -3422,8 +3420,8 @@ from (values
   ('dried kidney beans', 'dried red kidney beans', 'seed'),
   ('dried kidney beans', 'dried pinto beans', 'seed'),
   ('dried kidney beans', 'dry pinto beans', 'seed'),
-  ('dried kidney beans', 'dried navy beans', 'seed'),
-  ('dried kidney beans', 'dry navy beans', 'seed'),
+  ('dried kidney beans', 'dried white beans', 'seed'),
+  ('dried kidney beans', 'dry white beans', 'seed'),
   ('almonds', 'marcona almonds', 'seed'),
   ('almonds', 'almond', 'seed'),
   ('almonds', 'slivered almonds', 'seed'),
@@ -3530,10 +3528,10 @@ from (values
   ('raisins', 'thompson raisins', 'seed'),
   ('dried cranberries', 'craisins', 'seed'),
   ('dried cranberries', 'dried cranberry', 'seed'),
-  ('dried cranberries', 'dried cherries', 'seed'),
-  ('dried cranberries', 'dried cherry', 'seed'),
   ('dried cranberries', 'tart dried cherries', 'seed'),
-  ('dried cranberries', 'dried sour cherries', 'seed'),
+  ('dried cranberries', 'dried strawberries', 'seed'),
+  ('dried cranberries', 'dried mixed berries', 'seed'),
+  ('dried cranberries', 'dried berries', 'seed'),
   ('dates', 'date', 'seed'),
   ('dates', 'medjool dates', 'seed'),
   ('dates', 'medjool date', 'seed'),
@@ -3586,9 +3584,9 @@ from (values
   ('alfredo sauce', 'jarred alfredo sauce', 'seed'),
   ('alfredo sauce', 'garlic alfredo sauce', 'seed'),
   ('alfredo sauce', 'creamy alfredo sauce', 'seed'),
-  ('alfredo sauce', 'bechamel', 'seed'),
-  ('alfredo sauce', 'bechamel sauce', 'seed'),
-  ('alfredo sauce', 'white sauce', 'seed'),
+  ('alfredo sauce', 'cream sauce', 'seed'),
+  ('alfredo sauce', 'carbonara sauce', 'seed'),
+  ('alfredo sauce', 'parmesan cream sauce', 'seed'),
   ('pesto', 'basil pesto', 'seed'),
   ('pesto', 'jarred pesto', 'seed'),
   ('pesto', 'pesto sauce', 'seed'),
@@ -3839,7 +3837,9 @@ from (values
   ('vanilla ice cream', 'strawberry ice cream', 'seed'),
   ('frozen chopped onions', 'frozen onions', 'seed'),
   ('frozen chopped onions', 'frozen onion', 'seed'),
-  ('frozen chopped onions', 'frozen pepper and onion blend', 'seed')
+  ('frozen chopped onions', 'frozen pepper and onion blend', 'seed'),
+  ('frozen chopped onions', 'frozen pepper strips', 'seed'),
+  ('frozen pie crust', 'frozen pastry shell', 'seed')
 ) as v (ingredient_name, alias, source)
 join public.ingredients as i on i.name = v.ingredient_name
 on conflict (alias) do update set ingredient_id = excluded.ingredient_id
@@ -3848,8 +3848,6 @@ on conflict (alias) do update set ingredient_id = excluded.ingredient_id
 insert into public.ingredient_aliases (ingredient_id, alias, source)
 select i.id, v.alias, v.source::public.ingredient_aliases_source
 from (values
-  ('frozen chopped onions', 'frozen pepper strips', 'seed'),
-  ('frozen pie crust', 'frozen pastry shell', 'seed'),
   ('frozen pie crust', 'frozen deep dish pie crust', 'seed'),
   ('frozen cookie dough', 'cookie dough', 'seed'),
   ('frozen cookie dough', 'refrigerated cookie dough', 'seed'),
@@ -3927,7 +3925,6 @@ from (values
   ('apple juice', 'apple cider', 'seed'),
   ('apple juice', 'sparkling apple cider', 'seed'),
   ('apple juice', 'sparkling cider', 'seed'),
-  ('apple juice', 'hard cider', 'seed'),
   ('apple juice', 'cider', 'seed'),
   ('cranberry juice', 'cranberry juice cocktail', 'seed'),
   ('cranberry juice', 'cran-grape juice', 'seed'),
@@ -4347,7 +4344,10 @@ from (values
   ('chipotle powder', 'ground chipotle', 'seed'),
   ('chipotle powder', 'chipotle chili powder', 'seed'),
   ('chipotle powder', 'chipotle chile powder', 'seed'),
-  ('chipotle powder', 'ground chipotle pepper', 'seed')
+  ('chipotle powder', 'ground chipotle pepper', 'seed'),
+  ('chipotle powder', 'chipotle pepper powder', 'seed'),
+  ('cumin', 'cumin seeds', 'seed'),
+  ('coriander', 'coriander seeds', 'seed')
 ) as v (ingredient_name, alias, source)
 join public.ingredients as i on i.name = v.ingredient_name
 on conflict (alias) do update set ingredient_id = excluded.ingredient_id
@@ -4356,9 +4356,6 @@ on conflict (alias) do update set ingredient_id = excluded.ingredient_id
 insert into public.ingredient_aliases (ingredient_id, alias, source)
 select i.id, v.alias, v.source::public.ingredient_aliases_source
 from (values
-  ('chipotle powder', 'chipotle pepper powder', 'seed'),
-  ('cumin', 'cumin seeds', 'seed'),
-  ('coriander', 'coriander seeds', 'seed'),
   ('coriander', 'coriander seed', 'seed'),
   ('turmeric', 'haldi', 'seed'),
   ('curry powder', 'madras curry powder', 'seed'),
@@ -4440,9 +4437,6 @@ from (values
   ('dried parsley', 'dry parsley', 'seed'),
   ('dried dill', 'dried dill weed', 'seed'),
   ('dried dill', 'dry dill', 'seed'),
-  ('dried marjoram', 'summer savory', 'seed'),
-  ('dried marjoram', 'winter savory', 'seed'),
-  ('dried marjoram', 'savory', 'seed'),
   ('bay leaf', 'dried bay leaf', 'seed'),
   ('bay leaf', 'laurel leaf', 'seed'),
   ('bay leaf', 'turkish bay leaf', 'seed'),
@@ -4478,11 +4472,11 @@ from (values
   ('za''atar', 'zatar', 'seed'),
   ('za''atar', 'sumac powder', 'seed'),
   ('ras el hanout', 'baharat', 'seed'),
-  ('ras el hanout', 'berbere', 'seed'),
-  ('ras el hanout', 'berbere spice', 'seed'),
   ('ras el hanout', 'moroccan seasoning', 'seed'),
   ('ras el hanout', 'tagine spice', 'seed'),
   ('ras el hanout', 'tandoori masala', 'seed'),
+  ('ras el hanout', 'tandoori seasoning', 'seed'),
+  ('ras el hanout', 'chaat masala', 'seed'),
   ('saffron', 'saffron threads', 'seed'),
   ('saffron', 'pinch of saffron', 'seed'),
   ('saffron', 'spanish saffron', 'seed'),
@@ -4688,9 +4682,6 @@ from (values
   ('sofrito', 'recaito', 'seed'),
   ('sofrito', 'goya sofrito', 'seed'),
   ('sofrito', 'sazon con culantro y achiote', 'seed'),
-  ('sofrito', 'achiote paste', 'seed'),
-  ('sofrito', 'achiote', 'seed'),
-  ('sofrito', 'annatto', 'seed'),
   ('mole sauce', 'mole paste', 'seed'),
   ('mole sauce', 'mole poblano', 'seed'),
   ('mole sauce', 'mole negro', 'seed'),
@@ -4762,7 +4753,6 @@ from (values
   ('beef jerky', 'jerky', 'seed'),
   ('beef jerky', 'turkey jerky', 'seed'),
   ('beef jerky', 'meat sticks', 'seed'),
-  ('beef jerky', 'slim jim', 'seed'),
   ('beef jerky', 'biltong', 'seed'),
   ('seaweed snack', 'seaweed chips', 'seed'),
   ('fruit snacks', 'fruit leather', 'seed'),
@@ -4841,10 +4831,6 @@ from (values
   ('charcoal', 'mesquite chips', 'seed'),
   ('charcoal', 'wood pellets', 'seed'),
   ('charcoal', 'smoking chips', 'seed'),
-  ('dish soap', 'paper plates', 'seed'),
-  ('dish soap', 'plastic cups', 'seed'),
-  ('dish soap', 'plastic forks', 'seed'),
-  ('dish soap', 'plastic utensils', 'seed'),
   ('protein powder', 'whey protein powder', 'seed'),
   ('protein powder', 'vanilla protein powder', 'seed'),
   ('protein powder', 'chocolate protein powder', 'seed'),
@@ -4855,21 +4841,12 @@ from (values
   ('baby food', 'infant cereal', 'seed'),
   ('baby food', 'baby puffs', 'seed'),
   ('baby food', 'infant formula', 'seed'),
-  ('baby food', 'pedialyte', 'seed')
-) as v (ingredient_name, alias, source)
-join public.ingredients as i on i.name = v.ingredient_name
-on conflict (alias) do update set ingredient_id = excluded.ingredient_id
-  where public.ingredient_aliases.source = 'seed';
-
-insert into public.ingredient_aliases (ingredient_id, alias, source)
-select i.id, v.alias, v.source::public.ingredient_aliases_source
-from (values
+  ('baby food', 'pedialyte', 'seed'),
   ('pet food', 'dog food', 'seed'),
   ('pet food', 'cat food', 'seed'),
   ('pet food', 'dog treats', 'seed'),
   ('pet food', 'cat treats', 'seed'),
   ('pet food', 'pet treats', 'seed'),
-  ('vitamins', 'acetaminophen', 'seed'),
   ('pasta', 'dried pasta', 'seed'),
   ('pasta', 'pasta shape of choice', 'seed'),
   ('pasta', 'any short pasta shape', 'seed'),
@@ -4878,7 +4855,15 @@ from (values
   ('rigatoni', 'rigatoni pasta', 'seed'),
   ('rigatoni', 'mezze rigatoni', 'seed'),
   ('rigatoni', 'tortiglioni', 'seed'),
-  ('ziti', 'ziti pasta', 'seed'),
+  ('ziti', 'ziti pasta', 'seed')
+) as v (ingredient_name, alias, source)
+join public.ingredients as i on i.name = v.ingredient_name
+on conflict (alias) do update set ingredient_id = excluded.ingredient_id
+  where public.ingredient_aliases.source = 'seed';
+
+insert into public.ingredient_aliases (ingredient_id, alias, source)
+select i.id, v.alias, v.source::public.ingredient_aliases_source
+from (values
   ('ziti', 'baked ziti', 'seed'),
   ('ziti', 'mostaccioli', 'seed'),
   ('ziti', 'penne ziti', 'seed'),

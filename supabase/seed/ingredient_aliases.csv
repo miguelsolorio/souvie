@@ -1584,8 +1584,6 @@ veal,veal scallopini,seed
 veal,veal shank,seed
 veal,veal shanks,seed
 veal,veal cutlet,seed
-duck breast,duck legs,seed
-duck breast,duck leg,seed
 duck breast,whole duck,seed
 duck breast,duck,seed
 ground bison,bison,seed
@@ -2581,8 +2579,8 @@ dried kidney beans,dry kidney beans,seed
 dried kidney beans,dried red kidney beans,seed
 dried kidney beans,dried pinto beans,seed
 dried kidney beans,dry pinto beans,seed
-dried kidney beans,dried navy beans,seed
-dried kidney beans,dry navy beans,seed
+dried kidney beans,dried white beans,seed
+dried kidney beans,dry white beans,seed
 almonds,marcona almonds,seed
 almonds,almond,seed
 almonds,slivered almonds,seed
@@ -2689,10 +2687,10 @@ raisins,sultana,seed
 raisins,thompson raisins,seed
 dried cranberries,craisins,seed
 dried cranberries,dried cranberry,seed
-dried cranberries,dried cherries,seed
-dried cranberries,dried cherry,seed
 dried cranberries,tart dried cherries,seed
-dried cranberries,dried sour cherries,seed
+dried cranberries,dried strawberries,seed
+dried cranberries,dried mixed berries,seed
+dried cranberries,dried berries,seed
 dates,date,seed
 dates,medjool dates,seed
 dates,medjool date,seed
@@ -2745,9 +2743,9 @@ marinara sauce,tomato basil sauce,seed
 alfredo sauce,jarred alfredo sauce,seed
 alfredo sauce,garlic alfredo sauce,seed
 alfredo sauce,creamy alfredo sauce,seed
-alfredo sauce,bechamel,seed
-alfredo sauce,bechamel sauce,seed
-alfredo sauce,white sauce,seed
+alfredo sauce,cream sauce,seed
+alfredo sauce,carbonara sauce,seed
+alfredo sauce,parmesan cream sauce,seed
 pesto,basil pesto,seed
 pesto,jarred pesto,seed
 pesto,pesto sauce,seed
@@ -3078,7 +3076,6 @@ lime juice,lime juice concentrate,seed
 apple juice,apple cider,seed
 apple juice,sparkling apple cider,seed
 apple juice,sparkling cider,seed
-apple juice,hard cider,seed
 apple juice,cider,seed
 cranberry juice,cranberry juice cocktail,seed
 cranberry juice,cran-grape juice,seed
@@ -3583,9 +3580,6 @@ dried parsley,parsley flakes,seed
 dried parsley,dry parsley,seed
 dried dill,dried dill weed,seed
 dried dill,dry dill,seed
-dried marjoram,summer savory,seed
-dried marjoram,winter savory,seed
-dried marjoram,savory,seed
 bay leaf,dried bay leaf,seed
 bay leaf,laurel leaf,seed
 bay leaf,turkish bay leaf,seed
@@ -3621,11 +3615,11 @@ za'atar,za’atar,seed
 za'atar,zatar,seed
 za'atar,sumac powder,seed
 ras el hanout,baharat,seed
-ras el hanout,berbere,seed
-ras el hanout,berbere spice,seed
 ras el hanout,moroccan seasoning,seed
 ras el hanout,tagine spice,seed
 ras el hanout,tandoori masala,seed
+ras el hanout,tandoori seasoning,seed
+ras el hanout,chaat masala,seed
 saffron,saffron threads,seed
 saffron,pinch of saffron,seed
 saffron,spanish saffron,seed
@@ -3831,9 +3825,6 @@ jerk marinade,caribbean jerk sauce,seed
 sofrito,recaito,seed
 sofrito,goya sofrito,seed
 sofrito,sazon con culantro y achiote,seed
-sofrito,achiote paste,seed
-sofrito,achiote,seed
-sofrito,annatto,seed
 mole sauce,mole paste,seed
 mole sauce,mole poblano,seed
 mole sauce,mole negro,seed
@@ -3905,7 +3896,6 @@ rice cakes,puffed rice,seed
 beef jerky,jerky,seed
 beef jerky,turkey jerky,seed
 beef jerky,meat sticks,seed
-beef jerky,slim jim,seed
 beef jerky,biltong,seed
 seaweed snack,seaweed chips,seed
 fruit snacks,fruit leather,seed
@@ -3984,10 +3974,6 @@ charcoal,briquettes,seed
 charcoal,mesquite chips,seed
 charcoal,wood pellets,seed
 charcoal,smoking chips,seed
-dish soap,paper plates,seed
-dish soap,plastic cups,seed
-dish soap,plastic forks,seed
-dish soap,plastic utensils,seed
 protein powder,whey protein powder,seed
 protein powder,vanilla protein powder,seed
 protein powder,chocolate protein powder,seed
@@ -4004,7 +3990,6 @@ pet food,cat food,seed
 pet food,dog treats,seed
 pet food,cat treats,seed
 pet food,pet treats,seed
-vitamins,acetaminophen,seed
 pasta,dried pasta,seed
 pasta,pasta shape of choice,seed
 pasta,any short pasta shape,seed

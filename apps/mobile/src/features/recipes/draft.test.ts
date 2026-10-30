@@ -10,6 +10,7 @@ import {
   formFromDraft,
   hasErrors,
   ingredientsToText,
+  isSectionHeading,
   parseAmount,
   parseMinutes,
   stepsToText,
@@ -93,6 +94,35 @@ describe("ingredient text", () => {
     expect(textToIngredients(ingredientsToText(items))).toEqual(items);
   });
 
+  it("reads a # as a heading only when a space and a name follow it", () => {
+    expect(isSectionHeading("# For the sauce")).toBe(true);
+    expect(isSectionHeading("## For the sauce")).toBe(true);
+    expect(isSectionHeading("#")).toBe(true);
+    expect(isSectionHeading("#10 can tomato paste")).toBe(false);
+    expect(isSectionHeading("#2 can crushed tomatoes")).toBe(false);
+    expect(isSectionHeading("#sauce")).toBe(false);
+  });
+
+  it("keeps a line that starts with # but is not a heading, such as a can size", () => {
+    expect(textToIngredients("#10 can tomato paste\n#2 can beans\n# For the pan\n#sauce")).toEqual([
+      { rawText: "#10 can tomato paste" },
+      { rawText: "#2 can beans" },
+      { rawText: "#sauce", groupName: "For the pan" },
+    ]);
+  });
+
+  it("round-trips a can-size line and a section that starts with a digit", () => {
+    const items = [
+      { rawText: "#10 can tomato paste" },
+      { rawText: "1 tsp five-spice", groupName: "5-Spice marinade" },
+      { rawText: "#2 can beans", groupName: "5-Spice marinade" },
+      { rawText: "salt" },
+    ];
+    const text = ingredientsToText(items);
+    expect(textToIngredients(text)).toEqual(items);
+    expect(ingredientsToText(textToIngredients(text))).toBe(text);
+  });
+
   it("keeps the id of a line left alone and gives a changed line none", () => {
     const previous = existingLines(RECIPE);
     const edited = textToIngredients(
@@ -126,6 +156,26 @@ describe("steps and tags", () => {
   it("writes steps as paragraphs and reads any newline as a step break", () => {
     expect(stepsToText(["Heat.", "Roast."])).toBe("Heat.\n\nRoast.");
     expect(textToSteps("Heat.\n\n  Roast.  \r\nServe.\n")).toEqual(["Heat.", "Roast.", "Serve."]);
+  });
+
+  it("round-trips steps, including one with a line break inside, without splitting it", () => {
+    const steps = ["Heat the oven.", "Mix the batter.\n\nLet it rest for ten minutes.", "Serve."];
+    const once = textToSteps(stepsToText(steps));
+    // The break inside the second step becomes a space; the step count does not change.
+    expect(once).toEqual([
+      "Heat the oven.",
+      "Mix the batter. Let it rest for ten minutes.",
+      "Serve.",
+    ]);
+    // From then on the round trip is stable, in both directions.
+    expect(textToSteps(stepsToText(once))).toEqual(once);
+    expect(stepsToText(textToSteps(stepsToText(once)))).toBe(stepsToText(once));
+  });
+
+  it("leaves single-paragraph steps exactly as they were", () => {
+    const steps = ["Heat.", "Roast for 30 - 40 minutes.", "Serve."];
+    expect(textToSteps(stepsToText(steps))).toEqual(steps);
+    expect(stepsToText(["a\r\nb  \n  c"])).toBe("a b c");
   });
 
   it("lowercases, trims, and dedupes tags", () => {

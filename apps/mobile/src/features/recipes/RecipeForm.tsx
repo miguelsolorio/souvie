@@ -100,7 +100,7 @@ export function RecipeForm({
         lines={8}
         error={errors.ingredients}
         helper={
-          'One per line, as written ("2 cups flour"). Start a line with # for a heading such as "# For the sauce".'
+          'One per line, as written ("2 cups flour"). Start a line with "# " (a hash and a space) for a heading such as "# For the sauce".'
         }
         testID="recipe-ingredients-input"
       />

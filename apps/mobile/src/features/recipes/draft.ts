@@ -1,8 +1,10 @@
 // Turns a recipe into the text the edit form shows and back (WS02). Pure, so it is unit-tested.
 //
-// The form keeps ingredients as one text box, one line per ingredient. A line that starts with
-// "#" is a section heading ("# For the sauce") and applies to the lines under it. Steps are one
-// per line. Everything else (title, times, tags) is a plain field.
+// The form keeps ingredients as one text box, one line per ingredient. A line is a section heading
+// ("# For the sauce") when "#" is followed by a space and a name, or is a bare "#" that ends the
+// section; it applies to the lines under it. "#10 can tomato paste" and "#sauce" have no space
+// after the "#", so they are ingredients. Steps are one per line. Everything else (title, times,
+// tags) is a plain field.
 
 import {
   instructionsToSteps,
@@ -54,6 +56,15 @@ export function emptyForm(): FormState {
 // Lines of text
 // ---------------------------------------------------------------------------------------
 
+/**
+ * "# For the sauce" or a bare "#" (back to no section). The "#" must be followed by a space, so
+ * "#10 can tomato paste" and "#sauce" are ingredient lines. The name may start with any character,
+ * so a section such as "5-Spice marinade" survives being written out and read back.
+ */
+export function isSectionHeading(line: string): boolean {
+  return /^#+$/.test(line) || /^#+\s+\S/.test(line);
+}
+
 export function ingredientsToText(
   ingredients: ReadonlyArray<{ rawText: string; groupName?: string | undefined }>,
 ): string {
@@ -85,7 +96,7 @@ export function textToIngredients(
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line) continue;
-    if (line.startsWith("#")) {
+    if (isSectionHeading(line)) {
       group = line.replace(/^#+\s*/, "").trim() || undefined;
       continue;
     }
@@ -102,10 +113,15 @@ export function textToIngredients(
   return out;
 }
 
+/**
+ * One step per paragraph. A line break inside a step becomes a space, because textToSteps starts a
+ * new step at every line break: without this a multi-paragraph step would split on the next edit.
+ */
 export function stepsToText(steps: readonly string[]): string {
-  return steps.join("\n\n");
+  return steps.map((step) => step.replace(/\s*\r?\n\s*/g, " ").trim()).join("\n\n");
 }
 
+/** Every line break starts a new step ("One step per line"); blank lines are skipped. */
 export function textToSteps(text: string): string[] {
   return text
     .split(/\r?\n/)

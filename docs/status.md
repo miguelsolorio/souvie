@@ -3,7 +3,7 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 2 (WS02 and WS14 merged; WS07 in progress)
-**Last updated:** 2026-10-30 by the orchestrator (WS14 name swap merged through GitHub)
+**Last updated:** 2026-10-30 by the orchestrator (WS07 report received, PR #7 open, reviewer dispatched)
 
 ## Workstreams
 
@@ -16,7 +16,7 @@ The orchestrator updates this file after every dispatch, report, review, merge, 
 | 04 | Planner UI | 3 | not started | | | | | |
 | 05 | Grocery list & in-store mode | 4 | not started | | | | | |
 | 06 | Onboarding & suggestions | 3 | not started | | | | | |
-| 07 | Retailer framework + Kroger | 2 | in progress | ws/07-retailer-framework-kroger | opus | 2026-10-30 | | Checkpoint 3 met: Kroger keys in `.env.local`, redirect `souvie://oauth/kroger` registered and matching the renamed scheme. Builder defines `RetailerAdapter` from docs/04; after merge only the orchestrator edits it |
+| 07 | Retailer framework + Kroger | 2 | in review | ws/07-retailer-framework-kroger | opus | 2026-10-30 | | Report accepted 2026-10-30: 991 tests, 93 RLS assertions in a stand-in, live catalog test against Kroger (4 stores near 98019, priced search, batch lookup). PR #7 for CI; reviewer (sonnet) dispatched. CCR1 (retail enums in core) applied on main; CCR2 (revoke a leaver's connections) follows the merge. Cart step needs Miguel's Kroger sign-in; screenshot needs the hosted release and a dev build |
 | 08 | Instacart adapter | 3 | not started | | | | | Human checkpoint 4 before start (IDP application status) |
 | 09 | Shopping agent + worker + review UI | 5 | not started | | | | | |
 | 10 | Browser adapters | 6 | not started | | | | | Human checkpoint 5 before start (Tier 3 consent copy) |
@@ -64,6 +64,7 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 
 ## Decisions log
 
+- 2026-10-30: WS07 completion report received and verified in the repo (four Gmail commits, disclosed files outside Deliverables only, `.env.*.local` ignored, synthetic fixtures). CCR1 applied on main: `packages/core/src/retail.ts` with `RetailerId`, `Modality` (lowercase, the stored enum per docs/02) and `AdapterModality` (uppercase, the contract and Kroger's cart API per docs/04) plus converters; the two spellings are deliberate and converted at the boundary. CCR2 (an after-delete trigger on `household_members` revoking the leaver's retailer connections) is approved and lands as an orchestrator migration after WS07 merges, since it references `retailer_connections`. Open human items from the report: Miguel runs `pnpm --filter @mp/retailers kroger:login` and signs in to Kroger for the live cart step; the device screenshot waits on the hosted release and a development build. Kroger questions for the portal: which Locations quota binds (1,600 published, 5,000 in headers), whether cache headers will ever appear, the R21 clarification. (Orchestrator.)
 - 2026-10-30: WS14 name-swap review (Sonnet) returned merge: all five items verified, including the wordmark fit rendered in five bold serifs (worst slack 12.3 units) and the recounted listing fields. Merged as 0fd014f through `gh pr merge --squash --delete-branch`, the first GitHub-side merge: author `Miguel Solorio <miguel.solorio07@gmail.com>`, committer `GitHub <noreply@github.com>`, so no GitHub email setting needs changing. PR #6 shows as merged. Findings batched into a deploy-gates round recorded at the end of the WS14 brief: the brief-mandated "Works with ... Safeway, Albertsons, and Costco" lead contradicted the new "are next" sentence, so the brief's line is amended; the store listing should not promise unreleased Instacart lists; README wordmark numbers were advance ends, not ink edges (safe direction); the old name is spelled literally in one test. Undisclosed: the report's pasted grep output omitted two hits and was annotated rather than verbatim. (Orchestrator.)
 - 2026-10-30: Merges move to GitHub (Miguel). PRs #1 to #5 were merged by local squash so every commit on main was committed as the Gmail identity, which left them closed rather than merged on GitHub and made the history look abandoned. From WS07 on: `gh pr merge --squash --delete-branch` with the orchestrator's title and body, after CI is green. GitHub is the committer of such a commit and the PR author's GitHub commit email is the author, so the Gmail address must be the account's primary, non-private email; the orchestrator verifies the author line on the first GitHub merge. The pre-commit hook still guards local commits. CLAUDE.md and the guide updated. (Miguel, orchestrator.)
 - 2026-10-30: WS07 (opus) and the WS14 name-swap round (sonnet) dispatched after the Souvie rename landed on main. WS07's dispatch message adds one line to the §6.1 template: where `.env.local` lives, since the Kroger OAuth checks need the keys. (Orchestrator.)

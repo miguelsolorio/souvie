@@ -1,12 +1,13 @@
-// Site-wide copy that more than one component needs. Change the name here (and in the two
-// logo SVGs) when the name is chosen at human checkpoint 6. docs/08-brand.md §1.
+// Site-wide copy that more than one component needs. The name is chosen (Souvie, said
+// "SOO-vee", human checkpoint 6, docs/08-brand.md §1). To change it, edit it here, in the two
+// logo SVGs, and in src/assets/og.svg. See README.md.
 
 export const site = {
-  // Working name until checkpoint 6. Every place the page says the name reads it from here.
-  name: "Meal Planner",
+  // Every place the page says the name reads it from here.
+  name: "Souvie",
   headline: "Dinner, decided. Groceries, done.",
   description:
-    "Meal Planner plans your household's week, builds one grocery list, and fills your carts on a schedule you pick. You review them and tap pay. Starting in Washington.",
+    "Souvie plans your household's week, builds one grocery list, and fills your carts on a schedule you pick. You review them and tap pay. Starting in Washington.",
   // Absolute URLs need MARKETING_SITE_URL at build time; see astro.config.mjs.
   ogImagePath: "/og.png",
 } as const;

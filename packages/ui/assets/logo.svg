@@ -1,8 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 292 64" width="292" height="64" role="img" aria-labelledby="title">
-  <title id="title">Meal Planner</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 206 64" width="206" height="64" role="img" aria-labelledby="title">
+  <title id="title">Souvie</title>
   <!-- Lockup: logo-mark.svg plus logo-wordmark.svg. The name is the text inside
-       <text id="wordmark"> and the <title> above. Swap both when the name is chosen. Widen the
-       viewBox if the new name is longer (about 17 units per letter). -->
+       <text id="wordmark"> and the <title> above. Change both to rename it, then size the
+       viewBox to the new name (see "Wordmark fit" in packages/ui/README.md). The text is live,
+       so the font is the reader's, and the box has to leave room for the widest serif the stack
+       can fall back to. At this size "Souvie" is about 99 units wide in Charter, 113 in Georgia,
+       and 122 in DejaVu Serif Bold. The text starts at x=76 and the box is 206 wide. -->
   <style>
     .mark { fill: #2F6B4F; }
     .word { fill: #1A1814; }
@@ -16,5 +19,5 @@
     <path d="M33 31C33 19 40 11 53 9c0 12.5-7.6 21.2-20 22z"/>
     <path d="M31 31C31 23 26 17 15 15c0 8.5 5.5 14.5 16 16z"/>
   </g>
-  <text id="wordmark" class="word" x="76" y="43" font-family="Charter, 'Bitstream Charter', 'Sitka Text', Cambria, 'Iowan Old Style', Georgia, serif" font-size="34" font-weight="700" letter-spacing="-0.6">Meal Planner</text>
+  <text id="wordmark" class="word" x="76" y="43" font-family="Charter, 'Bitstream Charter', 'Sitka Text', Cambria, 'Iowan Old Style', Georgia, serif" font-size="34" font-weight="700" letter-spacing="-0.6">Souvie</text>
 </svg>

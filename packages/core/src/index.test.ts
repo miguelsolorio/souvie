@@ -27,4 +27,11 @@ describe("@mp/core", () => {
       expect(mod).toHaveProperty(name);
     }
   });
+
+  it("exports the retail enums added for WS07", async () => {
+    const mod = await import("./index");
+    for (const name of ["RetailerId", "Modality", "AdapterModality", "toAdapterModality"]) {
+      expect(mod).toHaveProperty(name);
+    }
+  });
 });

@@ -53,7 +53,7 @@ rsvg-convert -w 180 -h 180 ../../packages/ui/assets/app-icon.svg -o public/apple
 rsvg-convert -w 48 -h 48 ../../packages/ui/assets/favicon.svg -o public/favicon.png
 ```
 
-When the name is chosen, change it in three places: `src/config.ts`, the `<text>` and `<title>` in `packages/ui/assets/logo.svg` and `logo-wordmark.svg`, and the lines marked `NAME` in `src/assets/og.svg`. Then run `pnpm --filter marketing tokens` and re-render the PNG.
+The name is Souvie (said "SOO-vee"). If it ever changes, change it in three places: `src/config.ts`, the `<text>` and `<title>` in `packages/ui/assets/logo.svg` and `logo-wordmark.svg`, and the title and the lines marked `NAME` in `src/assets/og.svg`. A longer or shorter name also needs a new `viewBox` so the wordmark cannot clip in a fallback font, and a new `width` and `height` on the logo `<img>` in `src/layouts/Base.astro`. `packages/ui/README.md` ("Wordmark fit") has the steps and `packages/ui/src/assets.test.ts` is the gate. Then run `pnpm --filter marketing tokens` and re-render `og.png`. `tests/brand-sync.test.ts` fails if the name differs between these files.
 
 ## Copy rules
 

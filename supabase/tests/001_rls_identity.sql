@@ -189,7 +189,11 @@ select throws_ok($$select * from public.list_household_members('0b000000-0000-40
 
 -- Avatars between housemates.
 select is((select count(*)::int from storage.objects where bucket_id = 'avatars'), 1, 'carol can read the avatar of a housemate');
+-- Storage refuses direct DELETEs (storage.protect_delete) unless the Storage API's own switch is on.
+-- Turn it on for the one statement, so the test exercises our policy and not the guard.
+set local storage.allow_delete_query = 'true';
 select is(public.__t_affected($$delete from storage.objects where bucket_id = 'avatars' and name like 'a1111111%'$$), 0::bigint, 'carol cannot delete a housemate''s avatar');
+set local storage.allow_delete_query = 'false';
 select is(public.__t_affected($$update storage.objects set name = 'c3333333-3333-4333-8333-333333333333/stolen.png' where name like 'a1111111%'$$), 0::bigint, 'carol cannot move a housemate''s avatar');
 
 -- Audit events cannot be changed from the client.
@@ -243,7 +247,9 @@ select is(public.__t_affected($$delete from public.household_members where house
 select is((select count(*)::int from public.household_members), 1, 'the roster is back to one');
 select is(public.__t_affected($$delete from public.household_invites where household_id = '0a000000-0000-4000-8000-00000000000a' and used_at is null$$), 2::bigint, 'an owner can revoke unused invites');
 select is((select count(*)::int from storage.objects where bucket_id = 'avatars'), 1, 'alice still sees her own avatar');
+set local storage.allow_delete_query = 'true';
 select is(public.__t_affected($$delete from storage.objects where bucket_id = 'avatars' and name like 'a1111111%'$$), 1::bigint, 'alice can delete her own avatar');
+set local storage.allow_delete_query = 'false';
 
 reset role;
 

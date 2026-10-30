@@ -28,11 +28,13 @@ function clientFor(token: string) {
 function sourceFor(token: string): ExportSource {
   const client = clientFor(token);
   return {
-    async select(table, eq) {
+    async select(table, eq, order) {
       const rows: Row[] = [];
       for (let from = 0; ; from += PAGE_SIZE) {
         let query = client.from(table).select("*");
         for (const [column, value] of Object.entries(eq)) query = query.eq(column, value);
+        // Without a total order, Postgres may return rows in a different order per page.
+        for (const column of order) query = query.order(column, { ascending: true });
         const { data, error } = await query.range(from, from + PAGE_SIZE - 1);
         if (error) throw new Error(`select ${table}: ${error.message}`);
         rows.push(...(data as Row[]));

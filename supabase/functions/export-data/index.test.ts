@@ -4,6 +4,7 @@ import {
   type ExportDeps,
   type ExportSection,
   type ExportSource,
+  ORDER,
   type Row,
 } from "./handler.ts";
 
@@ -11,12 +12,12 @@ const url = "http://localhost:54321/functions/v1/export-data";
 const ALICE = "a1111111-1111-4111-8111-111111111111";
 const HOUSEHOLD = "0a000000-0000-4000-8000-00000000000a";
 
-/** An in-memory source that records which filters each query used. */
+/** An in-memory source that records which filters and sort order each query used. */
 function fakeSource(tables: Record<string, Row[]>) {
   const calls: string[] = [];
   const source: ExportSource = {
-    async select(table, eq) {
-      calls.push(`select ${table} ${JSON.stringify(eq)}`);
+    async select(table, eq, order) {
+      calls.push(`select ${table} ${JSON.stringify(eq)} order ${order.join(",")}`);
       return (tables[table] ?? []).filter((row) =>
         Object.entries(eq).every(([column, value]) => row[column] === value),
       );
@@ -38,7 +39,7 @@ const tables: Record<string, Row[]> = {
     { household_id: "other", user_id: "someone-else", role: "owner", created_at: "2026-10-02" },
   ],
   households: [{ id: HOUSEHOLD, name: "Alice Home" }],
-  household_invites: [{ household_id: HOUSEHOLD, token: "t" }],
+  household_invites: [{ household_id: HOUSEHOLD, token: "secret-invite-token", used_at: null }],
   audit_events: [{ household_id: HOUSEHOLD, kind: "member_added" }],
 };
 
@@ -89,16 +90,40 @@ describe("export-data", () => {
       household: { name: "Alice Home" },
       members: [{ user_id: ALICE }],
       roster: [{ display_name: "Alice" }],
-      invites: [{ token: "t" }],
+      invites: [{ token: "[redacted]", used_at: null }],
       audit_events: [{ kind: "member_added" }],
     });
+  });
+
+  it("never puts an invite token in the file", async () => {
+    const res = await createHandler(deps().deps)(authed());
+    expect(JSON.stringify(await res.json())).not.toContain("secret-invite-token");
+  });
+
+  it("asks for every table in a total order so pages are stable", async () => {
+    const { deps: d, calls } = deps();
+    await createHandler(d)(authed());
+    expect(calls).toContain(
+      `select profiles {"user_id":"${ALICE}"} order ${ORDER.profiles.join(",")}`,
+    );
+    expect(calls).toContain(
+      `select household_invites {"household_id":"${HOUSEHOLD}"} order created_at,id`,
+    );
+    expect(calls).toContain(
+      `select audit_events {"household_id":"${HOUSEHOLD}"} order created_at,id`,
+    );
+    for (const call of calls.filter((c) => c.startsWith("select "))) {
+      expect(call, call).toMatch(/ order \S+/);
+    }
   });
 
   it("queries only the caller's own rows and households", async () => {
     const { deps: d, calls } = deps();
     await createHandler(d)(authed("GET"));
-    expect(calls).toContain(`select profiles {"user_id":"${ALICE}"}`);
-    expect(calls).toContain(`select household_members {"user_id":"${ALICE}"}`);
+    expect(calls.some((c) => c.startsWith(`select profiles {"user_id":"${ALICE}"}`))).toBe(true);
+    expect(calls.some((c) => c.startsWith(`select household_members {"user_id":"${ALICE}"}`))).toBe(
+      true,
+    );
     expect(calls.every((c) => !c.includes('"other"'))).toBe(true);
   });
 

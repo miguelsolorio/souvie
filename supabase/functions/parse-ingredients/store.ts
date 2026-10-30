@@ -220,7 +220,10 @@ export interface RecipeIngredientRow {
 }
 
 export interface RowValues {
+  /** The amount; the lower bound of a range. */
   qty: number | null;
+  /** The upper bound of a range, else null. */
+  qty_max: number | null;
   unit: string | null;
   ingredient_id: string | null;
   prep_note: string | null;

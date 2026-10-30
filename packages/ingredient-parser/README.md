@@ -57,7 +57,7 @@ Everything outside the package arrives through `ParserDeps`:
 |---|---|---|
 | `ontology: OntologyStore` | `supabase/functions/parse-ingredients/store.ts` (`ingredient_aliases`, `match_ingredient_alias`) | `InMemoryOntology` built from the seed CSVs |
 | `cache: ParseCache` | `ingredient_parse_cache` | `InMemoryParseCache` |
-| `llm: LlmParseClient` | `createAnthropicParseClient()` | a scripted fake |
+| `llm: LlmParseClient` | `createAnthropicParseClient()` (over `@mp/llm`) | a scripted fake |
 | `proposals: ProposalSink` | `record_ingredient_alias_proposal` | an array |
 
 `InMemoryOntology` uses the same trigram arithmetic as pg_trgm. A script run during the build compared it with the SQL function on 816 lookups and found no difference.
@@ -66,7 +66,11 @@ The package has no Node APIs in `src/`, so Supabase Edge Functions (Deno) import
 
 ### The model client
 
-`createAnthropicParseClient()` calls the Messages API through `@anthropic-ai/sdk` with `claude-haiku-5-5`, `output_config.effort: "low"`, a JSON schema from `zodOutputFormat`, and a cached system prompt. It sends no sampling parameters, which Haiku 5.5 rejects. `@mp/llm` does not have `extract` yet (WS02). When it lands, write an adapter that implements `LlmParseClient` over it and drop this file's factory. The prompt is in `prompt.ts` and moves to `packages/llm/src/prompts/ingredient-parse.v1.ts` with the registry.
+`createAnthropicParseClient()` is a thin adapter over `@mp/llm`'s `extract` (WS02): `claude-haiku-5-5`, `output_config.effort: "low"`, a JSON schema from the `IngredientParseOutput` zod schema, a cached system prompt, and no sampling parameters (Haiku 5.5 rejects them). The prompt and the output schema are in the `@mp/llm` registry as `ingredient-parse.v1` (`packages/llm/src/prompts/ingredient-parse.v1.ts`). `extract` retries once when the answer fails the schema, and the adapter reports the tokens of every billed call, retries and failures included. Logging to `ai_runs` stays with the caller (`onLlmRun`); the adapter passes no log sink to `extract`, so a call is never recorded twice.
+
+Whatever client produces model items, the pipeline runs `sanitizeItem` on every one before using it, so a replacement `LlmParseClient` cannot slip a negative quantity, an unknown unit, or an unnormalized name through.
+
+A cached answer is used only when its `prompt_version` is the current prompt or newer (`isCurrentPromptVersion`). Bumping the prompt to `v2` makes every older answer a miss, including the empty answers for lines the old prompt rejected, and the line is written back under `v2`.
 
 `estimateCostUsd` prices a call at Haiku 5.5 list rates for the `ai_runs` row.
 

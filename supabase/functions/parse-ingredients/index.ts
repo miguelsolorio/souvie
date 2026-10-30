@@ -141,9 +141,9 @@ export function readBody(input: unknown): Body {
 
 export function rowValues(p: ParsedIngredient): RowValues {
   return {
-    // A range is stored as its upper bound until recipe_ingredients gains qty_max, so a shopping
-    // list never comes up short.
-    qty: p.qtyMax ?? p.qty,
+    // docs/02: `qty` is the lower bound of a range and `qty_max` the upper bound (null otherwise).
+    qty: p.qty,
+    qty_max: p.qtyMax ?? null,
     unit: p.unit,
     ingredient_id: p.ingredientId,
     prep_note: p.prepNote ?? null,

@@ -3,7 +3,7 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 1 (in progress)
-**Last updated:** 2026-10-30 by the orchestrator (WS14 report received)
+**Last updated:** 2026-10-30 by the orchestrator (WS14 in review)
 
 ## Workstreams
 
@@ -23,7 +23,7 @@ The orchestrator updates this file after every dispatch, report, review, merge, 
 | 11 | Scheduling & notifications | 6 | not started | | | | | |
 | 12 | History & spend | 6 | not started | | | | | |
 | 13 | Web & desktop packaging | 6 | not started | | | | | |
-| 14 | Brand & marketing site | 1 | in progress | ws/14-brand-marketing-site | sonnet | 2026-10-30 | | Report received 2026-10-30; branch pushed, PR open for CI. Evidence round: real pgTAP in CI, engines bump, Simulator icon check. Criteria 9-10 wait on a Cloudflare Pages project. Checkpoint 6 (name) pending; site says "Meal Planner" until then |
+| 14 | Brand & marketing site | 1 | in review | ws/14-brand-marketing-site | sonnet | 2026-10-30 | | Head d40b877, PR #2 green on CI and Marketing site (real pgTAP 19/19). Reviewer running. Deferred on human blockers: 8 (needs `sudo xcodebuild -runFirstLaunch`), 9 and 10 (Cloudflare Pages project). Checkpoint 6 (name) pending; site says "Meal Planner" |
 | 15 | Observability & AI evals | 6 | not started | | | | | |
 
 States: `not started` · `in progress` · `in review` · `fix round` · `merged` · `blocked`
@@ -38,7 +38,7 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 | Create the Supabase project | Miguel | done 2026-10-29 | Credentials in `.env.local` at the primary checkout root. WS00 verifies against local Supabase only |
 | Create the GitHub repository for `main` | Miguel | done 2026-10-29 | https://github.com/miguelsolorio/souvie (public). Miguel added `origin` and pushed `main` from the primary checkout |
 | Create accounts: Expo/EAS, Fly.io or Railway, Cloudflare Pages, Sentry, PostHog | Miguel | open | `ANTHROPIC_API_KEY` needed before WS02; the rest before WS13, WS14, WS15 |
-| Install Xcode and accept its license | Miguel | done 2026-10-30 | Xcode 27.2, iOS runtime present, license accepted |
+| Install Xcode, accept its license, run first launch | Miguel | partly done | Xcode 27.2 and the iOS runtime are present and the license is accepted. `xcodebuild -checkFirstLaunchStatus` still fails: run `sudo xcodebuild -runFirstLaunch` once. Blocks every Simulator check (WS01 criterion 3, WS14 criterion 8) |
 | Configure Apple and Google sign-in providers | Miguel | open | Apple App ID, Services ID and secret JWT; Google OAuth client; redirect URLs; magic-link template; confirm bundle id `com.miguelsolorio.mealplanner`. Steps in `supabase/README.md` on `ws/01-auth-households`. Needed for WS01 criterion 3 and real sign-in |
 | Docker | Miguel | not allowed | Security policy on this Mac. Replaced by hosted project plus CI (decisions log). Podman 5.5 is installed but unused |
 | Create the Cloudflare Pages project for the marketing site | Miguel | open | Secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; variables `CF_PAGES_PROJECT_MARKETING`, `MARKETING_SITE_URL`, `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`. Steps in `apps/marketing/README.md` on the WS14 branch. Gates WS14 criteria 9 and 10 |

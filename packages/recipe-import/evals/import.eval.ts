@@ -6,9 +6,11 @@
 //                                               ANTHROPIC_API_KEY) re-run and re-record Sonnet
 //
 // Offline, the model path replays recorded answers (fixtures/llm). A page that needs the Sonnet
-// fallback and has no recording shows as PEND, not PASS: the threshold below then only checks that
-// the pending cases could still bring the total to 45, and the report says so. It becomes a hard
-// check of the real pass count once every model case has a recording.
+// fallback and has no recording shows as PEND, not PASS. The gate (`gate` in score.ts):
+//   * any FAIL turns the run red while a case is pending, so pending cannot hide a regression
+//   * once nothing is pending, the run needs 45 real passes
+//   * EVAL_REQUIRE_RECORDINGS=1 counts a pending case as a failure (CI sets it once the
+//     recordings are committed)
 //
 // Also proven here, offline, with a mocked fetch: video platform links and captions never make a
 // network request (R11, acceptance criterion 7).
@@ -47,6 +49,7 @@ import {
   type Case,
   domainOf,
   formatLine,
+  gate,
   type Outcome,
   pageTextCarriesRecipe,
   scoreRecipe,
@@ -77,6 +80,8 @@ function readApiKey(): string | undefined {
 }
 const API_KEY = LIVE ? readApiKey() : undefined;
 const THRESHOLD = 45;
+/** CI sets this once the Sonnet recordings are committed: a pending case is then a failure. */
+const REQUIRE_RECORDINGS = process.env.EVAL_REQUIRE_RECORDINGS === "1";
 const MIN_DOMAINS = 20;
 const MIN_MODEL_CASES = 5;
 
@@ -284,19 +289,19 @@ describe(`recipe import golden set (${LIVE ? "live" : "offline"})`, () => {
           `With them, at most ${summary.pass + summary.pending}/${summary.total} could pass (threshold ${THRESHOLD}). ` +
           "Run eval:live with ANTHROPIC_API_KEY to record them.",
       );
+      emit(
+        REQUIRE_RECORDINGS
+          ? "GATE EVAL_REQUIRE_RECORDINGS=1: pending cases count as failures, so this run is red."
+          : "GATE pending cases do not cover for failures: any FAIL turns this run red. Set EVAL_REQUIRE_RECORDINGS=1 to count pending cases as failures.",
+      );
     }
     emit("");
 
     expect(outcomes).toHaveLength(cases.length);
-    // Nothing fails except sites that refuse non-browser clients.
-    const unexpected = outcomes.filter((o) => o.status === "FAIL" && o.path !== "blocked");
-    expect(unexpected.map((o) => `${o.id}: ${o.detail}`)).toEqual([]);
-
-    if (summary.pending === 0) {
-      expect(summary.pass).toBeGreaterThanOrEqual(THRESHOLD);
-    } else {
-      expect(summary.pass + summary.pending).toBeGreaterThanOrEqual(THRESHOLD);
-    }
+    // A pending case never covers for a failure, and the threshold applies to real passes
+    // (the rule is `gate` in score.ts, tested in score.test.ts).
+    const verdict = gate(outcomes, { threshold: THRESHOLD, requireRecordings: REQUIRE_RECORDINGS });
+    expect(verdict.problems).toEqual([]);
   });
 });
 

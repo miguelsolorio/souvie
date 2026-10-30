@@ -151,3 +151,61 @@ export function summarize(outcomes: readonly Outcome[]): Summary {
     line: `SUMMARY ${pass}/${outcomes.length} pass  (${parts.join(", ")})`,
   };
 }
+
+export interface GateOptions {
+  /** Passes needed once nothing is pending (docs/03-ai-design.md §10: 45 of 50). */
+  threshold: number;
+  /** Count a pending case as a failure. CI sets this once the Sonnet recordings are committed. */
+  requireRecordings: boolean;
+}
+
+export interface GateResult {
+  ok: boolean;
+  /** Why the gate is red; empty when it is green. */
+  problems: string[];
+}
+
+/**
+ * The pass/fail rule for the whole run.
+ *
+ *   * A pending case (a model answer that is not recorded) never covers for a failure. While any
+ *     case is pending, one FAIL fails the run, because pending + pass >= threshold would otherwise
+ *     stay green after the JSON-LD path regressed.
+ *   * Once nothing is pending, the run needs `threshold` real passes. Failures up to the margin
+ *     are allowed, as the brief says.
+ *   * With `requireRecordings`, a pending case is a failure, so the run needs real passes.
+ */
+export function gate(outcomes: readonly Outcome[], options: GateOptions): GateResult {
+  const summary = summarize(outcomes);
+  const total = summary.total;
+  const problems: string[] = [];
+
+  let failures = summary.failed + summary.blocked;
+  let pending = summary.pending;
+  if (options.requireRecordings && pending > 0) {
+    problems.push(
+      `${pending} case(s) have no recorded Sonnet answer and EVAL_REQUIRE_RECORDINGS=1 counts them as failures`,
+    );
+    failures += pending;
+    pending = 0;
+  }
+
+  if (pending > 0) {
+    if (failures > 0) {
+      const names = outcomes.filter((o) => o.status === "FAIL").map((o) => o.id);
+      problems.push(
+        `${failures} case(s) failed while ${pending} are pending, and a pending case cannot cover for a failure: ${names.join(", ")}`,
+      );
+    }
+    // With no failures, every non-pending case passed, so this only trips on a set that is too small.
+    if (summary.pass + pending < options.threshold) {
+      problems.push(
+        `even if every pending case passed, ${summary.pass + pending}/${total} is under the threshold of ${options.threshold}`,
+      );
+    }
+  } else if (summary.pass < options.threshold) {
+    problems.push(`${summary.pass}/${total} passed, under the threshold of ${options.threshold}`);
+  }
+
+  return { ok: problems.length === 0, problems };
+}

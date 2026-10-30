@@ -106,6 +106,7 @@ gh run list --workflow eval.yml --limit 1       # expected: success on a PR touc
 ```
 
 ## Risks and notes
+- From the WS01 report (2026-10-30): the `authenticated` role holds table-level UPDATE on `households`, so any column this workstream adds to `households` becomes client-editable by owners. `revoke update (<column>) on public.households from authenticated` in your migration and route writes through a security-definer function unless direct owner edits are intended. Applies to `ai_daily_cap_usd`.
 - R3: the cap is enforced in code before the API call. Estimate cost from input token count and model price (Haiku 5.5 $0.10/$0.50, Sonnet 5.5 $2/$10, Opus 5.5 $4/$20 per MTok, Oct 2026); reconcile with actual usage after the call.
 - R10: heartbeats and the stalled-run cron are the only defense against a worker that dies mid-run. Keep the threshold at 10 minutes; Tier 3 Mode A runs waiting on a human are `needs_review`, not `running`, so they are not marked stalled.
 - R1 and R13: the line-item suite is where wrong-product regressions show up. Keep the accepted-alternatives list in fixtures small and explicit.

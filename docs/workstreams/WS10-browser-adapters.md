@@ -143,6 +143,7 @@ pnpm --filter mobile start                                    # manual: ConsentS
 ```
 
 ## Risks and notes
+- From the WS01 report (2026-10-30): the `authenticated` role holds table-level UPDATE on `households`, so any column this workstream adds to `households` becomes client-editable by owners. `revoke update (<column>) on public.households from authenticated` in your migration and route writes through a security-definer function unless direct owner edits are intended. Applies to `tier3_consent`.
 - R16: bot detection. Mode A runs in a real WebView on the user's device with the user's cookies and IP, which is the lowest-risk posture available. Still expect challenges; the design pauses and lets the human clear them. Never add evasion.
 - R17: terms. Costco and Albertsons both prohibit this in their terms; the exposure is the user's account. Consent copy must say so plainly, name each retailer, and be versioned. Default off. Per-retailer kill switch.
 - R19: this is the only route to hands-off checkout and the product should say "with your final tap" unless `autoCheckout` is on.

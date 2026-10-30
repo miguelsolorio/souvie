@@ -7,7 +7,10 @@ export * from "./client";
 export * from "./context";
 export * from "./hooks/useHousehold";
 export * from "./hooks/useHouseholdMembers";
+export * from "./hooks/useImportRecipe";
 export * from "./hooks/useProfile";
+export * from "./hooks/useRecipe";
+export * from "./hooks/useRecipes";
 export * from "./hooks/useSession";
 export * from "./identity";
 export type {

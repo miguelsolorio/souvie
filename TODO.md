@@ -29,7 +29,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 ## 2. Wave 1: identity, ontology, brand
 
 - [x] Dispatch WS01 (sonnet), WS03 (sonnet), WS14 (sonnet) in one message, each in its own worktree.
-- [ ] Review each as it finishes. WS03 and WS14 can merge on a pass.
+- [x] Review each as it finishes. WS03 and WS14 can merge on a pass.
 - [ ] **Human checkpoint 2** before WS01 merges: approve the identity migration and RLS policies.
 - [ ] **Human checkpoint 6** before WS14 finishes: the name. If the human isn't ready, let WS14 land everything except the name and leave the row `in review` with a note.
 - [ ] Wave 1 summary in `docs/status.md`.

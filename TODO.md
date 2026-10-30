@@ -24,7 +24,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] Dispatch the WS00 reviewer: `model: "sonnet"`, `isolation: "worktree"`, prompt from guide §6.3. Do not hand it the builder's report.
 - [x] Act on the verdict: merge (squash into `main`, delete branch), or one fix round with the same builder, or escalate.
 - [x] Update `docs/status.md`: row to `merged`, wave 0 summary written.
-- [ ] **Stop. Human checkpoint 1:** approve scaffold choices (package names, lint rules, CI shape, Node and pnpm versions).
+- [x] **Stop. Human checkpoint 1:** approve scaffold choices (package names, lint rules, CI shape, Node and pnpm versions). Approved 2026-10-30.
 
 ## 2. Wave 1: identity, ontology, brand
 

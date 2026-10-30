@@ -1,12 +1,33 @@
-// Haiku prompt for the fallback stage (WS03). Lives here until WS02 creates the prompt registry
-// in packages/llm; then it moves to packages/llm/src/prompts/ingredient-parse.v1.ts unchanged.
+// ingredient-parse.v1 (WS03, moved into the registry by WS02): the Haiku prompt for the parser's
+// fallback stage. The text is unchanged from the copy that lived in packages/ingredient-parser, so
+// parse cache rows written under "ingredient-parse.v1" stay valid.
+//
+// The output schema is versioned with the prompt: the fields below are what the prompt describes.
 
 import { INGREDIENT_CATEGORIES, UNIT_CODES } from "@mp/core";
+import { z } from "zod";
+import { MODELS } from "../client.ts";
+import { definePrompt } from "./registry.ts";
 
-export const INGREDIENT_PARSE_PROMPT_VERSION = "ingredient-parse.v1";
+export const IngredientParseItem = z.object({
+  qty: z.number().nullable(),
+  qty_max: z.number().nullable(),
+  unit: z.string().nullable(),
+  ingredient: z.string().nullable(),
+  category: z.enum(INGREDIENT_CATEGORIES).nullable(),
+  prep: z.string().nullable(),
+  optional: z.boolean(),
+  confidence: z.number(),
+});
+export type IngredientParseItem = z.infer<typeof IngredientParseItem>;
+
+export const IngredientParseOutput = z.object({
+  lines: z.array(z.object({ index: z.number().int(), items: z.array(IngredientParseItem) })),
+});
+export type IngredientParseOutput = z.infer<typeof IngredientParseOutput>;
 
 /** Stable across calls, so it is the cached block. */
-export function buildSystemPrompt(): string {
+function system(): string {
   return [
     "You parse recipe ingredient lines into structured data. Return one result per input line.",
     "",
@@ -32,9 +53,17 @@ export function buildSystemPrompt(): string {
   ].join("\n");
 }
 
-/** Numbered lines, so the model answers by index. */
-export function buildUserPrompt(lines: readonly string[]): string {
-  return ["Parse these ingredient lines.", "", ...lines.map((line, i) => `${i}: ${line}`)].join(
-    "\n",
-  );
+export interface IngredientParseVars {
+  lines: readonly string[];
 }
+
+export const INGREDIENT_PARSE_V1 = definePrompt<IngredientParseVars>({
+  name: "ingredient-parse",
+  version: 1,
+  kind: "parse_ingredients",
+  model: MODELS.haiku,
+  system,
+  /** Numbered lines, so the model answers by index. */
+  user: ({ lines }) =>
+    ["Parse these ingredient lines.", "", ...lines.map((line, i) => `${i}: ${line}`)].join("\n"),
+});

@@ -64,11 +64,13 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      # Postgres, the API gateway, and the Edge runtime are all these checks need.
+      # Postgres, the API gateway, and the Edge runtime, plus what the identity tests (WS01)
+      # need: gotrue (the auth schema and auth.uid()), postgrest (the API roles the policies
+      # are written for), and storage-api (the storage schema behind the avatars policies).
       - name: Start Supabase
         run: >-
           pnpm supabase start
-          -x gotrue,realtime,storage-api,imgproxy,mailpit,postgrest,postgres-meta,studio,logflare,vector,supavisor
+          -x realtime,imgproxy,mailpit,postgres-meta,studio,logflare,vector,supavisor
 
       - name: Reset database from migrations
         run: pnpm supabase db reset
@@ -89,8 +91,14 @@ jobs:
 
       # Lint our own schemas only. The `extensions` schema holds third-party functions
       # (pgTAP) that plpgsql_check flags; add schemas here as migrations create them.
+      # WS01 creates none: its tables and functions are all in `public`.
       - name: Lint schema
         run: pnpm supabase db lint --local --schema public --fail-on error
+
+      # WS01: RLS isolation, the invite and household functions, and the avatars policies.
+      # Every later workstream adds its own file under supabase/tests.
+      - name: Database tests (pgTAP)
+        run: pnpm supabase test db
 
       # Criterion 10 (CI part)
       - name: Health function answers
@@ -123,3 +131,20 @@ jobs:
             echo "worker did not read the real queue"; exit 1
           fi
           test "$(grep -c "\] idle " worker.log)" -ge 2
+
+      # The committed packages/db/src/types.generated.ts must match the migrated schema. The
+      # first version was written by hand, so a difference is a warning for now. Download the
+      # artifact, commit it, and change `|| echo` to a hard failure.
+      - name: Generate database types
+        run: pnpm --filter @mp/db gen-types
+
+      - name: Check committed types are current
+        run: |
+          git diff --exit-code packages/db/src/types.generated.ts \
+            || echo "::warning::packages/db/src/types.generated.ts differs from the migrated schema. Commit the types.generated.ts artifact from this run."
+
+      - name: Upload generated types
+        uses: actions/upload-artifact@v7
+        with:
+          name: types.generated.ts
+          path: packages/db/src/types.generated.ts

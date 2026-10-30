@@ -10,6 +10,7 @@
 // This module is a shared contract. After WS07 merges only the orchestrator edits it.
 export const packageName = "@mp/retailers";
 
+export { BANNER_CHAIN_NAMES, bannerForChain } from "./banners.ts";
 export {
   automates,
   CAPABILITY_NAMES,

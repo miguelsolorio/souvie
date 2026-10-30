@@ -41,6 +41,8 @@ export interface KrogerOps {
     conn: ConnectionHandle,
     items: CartItemDelta[],
   ): Promise<{ accepted: CartItemDelta[]; rejected: { item: CartItemDelta; reason: string }[] }>;
+  /** Where the customer reviews and pays: Kroger checkout. */
+  handoffUrl(conn: ConnectionHandle): Promise<string>;
 }
 
 export interface Runtime {
@@ -198,8 +200,12 @@ function retailerFailure(err: unknown): Response | null {
     if (err.reason === "state_mismatch") return fail("invalid_state");
     if (err.reason === "invalid_grant") return fail("invalid_grant");
     if (err.needsReauth) return fail("reauth_required");
-    console.error("retailer-oauth: Kroger refused the app credentials", err.code);
-    return fail("retailer_error");
+    if (err.reason === "app_credentials") {
+      console.error("retailer-oauth: Kroger refused the app credentials");
+      return fail("retailer_error");
+    }
+    console.error("retailer-oauth: unexpected auth failure", err.code);
+    return fail("internal_error");
   }
   if (err instanceof RetailerRequestError) {
     console.error("retailer-oauth: Kroger request failed", err.status, err.retailerCode);
@@ -329,8 +335,9 @@ async function cartAdd(runtime: Runtime, userId: string, body: Body): Promise<Re
   if (!row || !(await runtime.store.isMember(row.household_id, userId))) return fail("not_found");
   if (row.user_id !== userId) return fail("not_allowed");
   if (row.status !== "active") return fail("reauth_required");
-  const result = await runtime.kroger.addToCart(handleFor(row), items);
-  return json({ ok: true, result });
+  const handle = handleFor(row);
+  const result = await runtime.kroger.addToCart(handle, items);
+  return json({ ok: true, result, checkoutUrl: await runtime.kroger.handoffUrl(handle) });
 }
 
 const ACTIONS = {

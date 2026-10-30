@@ -9,7 +9,7 @@
 //   POST { "action": "stores", "zip", "radiusMiles"? }         -> { ok, stores }
 //   POST { "action": "products", "householdId", "storeId", "q" } -> { ok, products }
 //   POST { "action": "cart_add", "connectionId", "items": [{ productId, upc, quantityDelta }] }
-//     -> { ok, result: { accepted, rejected } }
+//     -> { ok, result: { accepted, rejected }, checkoutUrl }
 //
 // Errors: { ok: false, error, message } with an HTTP status (handler.ts lists them). Needs a
 // signed-in user (verify_jwt stays on). Secrets, set with `supabase secrets set`:

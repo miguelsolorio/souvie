@@ -379,6 +379,7 @@ describe("retailer-oauth: catalog and cart for the app", () => {
       items: [{ productId: "0009990001001", upc: "0009990001001", quantityDelta: 1 }],
     });
     expect(res.status).toBe(200);
+    expect(res.body.checkoutUrl).toBe("https://www.kroger.com/checkout");
     expect(res.body.result).toEqual({
       accepted: [{ productId: "0009990001001", upc: "0009990001001", quantityDelta: 1 }],
       rejected: [],

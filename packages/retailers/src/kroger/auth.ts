@@ -53,13 +53,7 @@ const decoder = new TextDecoder();
 // Banner and PKCE
 // ---------------------------------------------------------------------------------------
 
-/** The consent-screen banner for a Kroger chain code. Undefined for chains we do not brand. */
-export function bannerForChain(chain: string | null | undefined): Banner | undefined {
-  const code = chain?.trim().toUpperCase() ?? "";
-  if (code === "QFC") return "qfc";
-  if (code === "FRED" || code.startsWith("FRED MEYER")) return "fredmeyer";
-  return undefined;
-}
+export { bannerForChain } from "../banners.ts";
 
 export interface PkcePair {
   verifier: string;

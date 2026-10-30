@@ -69,6 +69,9 @@ importers:
       '@mp/recipe-import':
         specifier: workspace:*
         version: link:../../packages/recipe-import
+      '@mp/retailers':
+        specifier: workspace:*
+        version: link:../../packages/retailers
       '@mp/ui':
         specifier: workspace:*
         version: link:../../packages/ui

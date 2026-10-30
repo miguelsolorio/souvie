@@ -1,0 +1,66 @@
+{
+  "model": "claude-sonnet-5-5",
+  "promptVersion": "recipe-extract.v1",
+  "inputHash": "1222a8b353db82476c6887d5718f6e729aac19559a226cc5292ba78ba5d76432",
+  "recordedAt": "2026-10-30T18:27:22.608Z",
+  "output": {
+    "found": true,
+    "title": "Pico de Gallo",
+    "description": "A fresh, uncooked tomato-based salad (ensalada) common in Mexican and Tex-Mex cuisine.",
+    "servings": null,
+    "prep_minutes": null,
+    "cook_minutes": null,
+    "ingredients": [
+      {
+        "text": "2 cups chopped fresh, seeded tomato",
+        "group": null
+      },
+      {
+        "text": "½ cup chopped white or yellow onion",
+        "group": null
+      },
+      {
+        "text": "2 tablespoons chopped cilantro",
+        "group": null
+      },
+      {
+        "text": "½ teaspoon salt",
+        "group": null
+      },
+      {
+        "text": "2 teaspoons freshly squeezed lime juice",
+        "group": null
+      },
+      {
+        "text": "1 teaspoon ground black pepper",
+        "group": null
+      },
+      {
+        "text": "1 ½ tablespoons stemmed, seeded, and minced jalapeño or other chiles",
+        "group": null
+      },
+      {
+        "text": "1 small clove of garlic, minced",
+        "group": null
+      },
+      {
+        "text": "Hot sauce, to taste",
+        "group": null
+      }
+    ],
+    "steps": [
+      "Wash vegetables and cilantro.",
+      "Combine vegetables, mixing well.",
+      "Add salt, pepper, chiles, lime juice, and garlic.",
+      "Add hot sauce as desired.",
+      "Let stand 30 minutes to allow flavors to meld."
+    ],
+    "tags": [
+      "salad",
+      "salsa",
+      "tomato",
+      "sauces"
+    ],
+    "cuisine": "mexican"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "model": "claude-sonnet-5-5",
+  "promptVersion": "recipe-extract.v1",
+  "inputHash": "298944e23445fb72167e6204ffab3ea2fae544104516843908d78bcea1c97a6c",
+  "recordedAt": "2026-10-30T18:27:18.285Z",
+  "output": {
+    "found": true,
+    "title": "Cornbread I",
+    "description": "Cornbread is a type of quick bread made of cornmeal and sometimes supplemented with wheat flour. Some variations may include whole corn kernels.",
+    "servings": 8,
+    "prep_minutes": null,
+    "cook_minutes": null,
+    "ingredients": [
+      {
+        "text": "1 cup (140 g / 4.9 oz) cornmeal",
+        "group": null
+      },
+      {
+        "text": "1 cup (140 g / 4.9 oz) all-purpose flour",
+        "group": null
+      },
+      {
+        "text": "4 tsp baking powder",
+        "group": null
+      },
+      {
+        "text": "½ tsp salt",
+        "group": null
+      },
+      {
+        "text": "1 cup (250 ml / 8.5 fl oz) milk",
+        "group": null
+      },
+      {
+        "text": "1 ea. (50 g) egg",
+        "group": null
+      },
+      {
+        "text": "¼ cup (60 g / 2.1 oz) shortening, melted",
+        "group": null
+      },
+      {
+        "text": "¼ cup (55 g / 1.9 oz) white granulated sugar (optional)",
+        "group": null
+      },
+      {
+        "text": "½ of a 15-ounce (430 g) can whole corn kernels, drained (optional)",
+        "group": null
+      },
+      {
+        "text": "¼ ea. onion, finely chopped (optional)",
+        "group": null
+      }
+    ],
+    "steps": [
+      "Preheat oven to 425 °F (218 °C). Grease an 8-inch (20 cm) baking pan.",
+      "Combine cornmeal, flour, baking powder, salt, and sugar in a large mixing bowl.",
+      "Add egg, milk, and shortening.",
+      "Beat until fairly smooth (about a minute).",
+      "If using corn and/or onion, fold in these ingredients.",
+      "Pour the mixture into the baking pan.",
+      "Bake for 20–25 minutes or until a toothpick inserted in center comes out clean. If corn is added to batter, increase time by ~50%",
+      "Serve hot!"
+    ],
+    "tags": [
+      "bread",
+      "cornbread",
+      "baking",
+      "quick bread",
+      "vegetarian"
+    ],
+    "cuisine": "american"
+  }
+}

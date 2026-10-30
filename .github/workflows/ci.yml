@@ -79,6 +79,17 @@ jobs:
           test -n "$db_url"
           echo "DB_URL=$db_url" >> "$GITHUB_ENV"
 
+      # WS03 criterion 1: the reset applied the ingredients migration and loaded the seed
+      # (supabase/seed/10_ingredients.sql). Bump the numbers when the seed CSVs change.
+      - name: Ontology seed is loaded
+        run: |
+          psql "$DB_URL" -c "select count(*) from public.ingredients" -c "select count(*) from public.ingredient_aliases"
+          ingredients="$(psql "$DB_URL" -Atc "select count(*) from public.ingredients")"
+          aliases="$(psql "$DB_URL" -Atc "select count(*) from public.ingredient_aliases")"
+          echo "ingredients=$ingredients aliases=$aliases"
+          test "$ingredients" = 751 || { echo "expected 751 ingredients"; exit 1; }
+          test "$aliases" = 4103 || { echo "expected 4103 aliases"; exit 1; }
+
       # Criterion 9 (CI part)
       - name: Extensions are installed
         run: |
@@ -86,6 +97,11 @@ jobs:
           for ext in pgmq pg_cron vector pg_trgm pgtap; do
             grep -qw "$ext" extensions.txt || { echo "missing extension: $ext"; exit 1; }
           done
+
+      # pgTAP policy tests in supabase/tests (WS03 adds 003_ingredients_policies.sql). WS01 adds
+      # the same step on its branch; the orchestrator reconciles at merge.
+      - name: Database tests (pgTAP)
+        run: pnpm supabase test db
 
       # Lint our own schemas only. The `extensions` schema holds third-party functions
       # (pgTAP) that plpgsql_check flags; add schemas here as migrations create them.

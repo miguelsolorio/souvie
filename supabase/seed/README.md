@@ -49,10 +49,10 @@ Do not add aliases that only differ by a word the parser already drops ("fresh",
 ### Add or change a row
 
 1. Edit the CSVs.
-2. `node supabase/seed/load.ts` rewrites `10_ingredients.sql`. (Node 22.18 or later runs the TypeScript directly.)
+2. `pnpm seed` (which runs `node supabase/seed/load.ts`) rewrites `10_ingredients.sql`.
 3. `pnpm test` checks the counts, the 16 sections, unit codes, uniqueness, and that the SQL matches the CSVs. `pnpm eval` shows what the change did to the parser.
 
-`node supabase/seed/load.ts --check` fails when the SQL is stale. The SQL is idempotent: it upserts ingredients by name and aliases by alias, and it never touches aliases with `source` other than `seed`.
+`pnpm seed --check` fails when the SQL is stale. The SQL is idempotent: it upserts ingredients by name and aliases by alias, and it never touches aliases with `source` other than `seed`.
 
 ### Loading the hosted project
 

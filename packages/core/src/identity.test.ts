@@ -124,7 +124,9 @@ describe("ProfilePreferences", () => {
     expect(ProfilePreferences.safeParse({ weeknight_minutes: 0 }).success).toBe(false);
     expect(ProfilePreferences.safeParse({ budget_per_week_usd: -1 }).success).toBe(false);
     expect(ProfilePreferences.safeParse({ dinners_per_week: 9 }).success).toBe(false);
-    expect(ProfilePreferences.safeParse({ household_size: { adults: 0, kids: 0 } }).success).toBe(false);
+    expect(ProfilePreferences.safeParse({ household_size: { adults: 0, kids: 0 } }).success).toBe(
+      false,
+    );
   });
 });
 

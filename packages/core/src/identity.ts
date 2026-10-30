@@ -64,7 +64,9 @@ export const LEFTOVER_STANCES = ["avoid", "ok", "prefer"] as const;
  * deterministic code, never by a model alone (CLAUDE.md).
  */
 export const ProfilePreferences = z.looseObject({
-  household_size: z.object({ adults: z.number().int().min(1), kids: z.number().int().min(0) }).optional(),
+  household_size: z
+    .object({ adults: z.number().int().min(1), kids: z.number().int().min(0) })
+    .optional(),
   dinners_per_week: z.number().int().min(1).max(7).optional(),
   diets: z.array(z.string()).optional(),
   allergies: z.array(z.string()).optional(),

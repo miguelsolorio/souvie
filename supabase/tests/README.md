@@ -11,4 +11,6 @@ Conventions:
 - Impersonate users with `set local role authenticated;` and `set local request.jwt.claims = '{"sub": "<uuid>"}';`.
 - Fixtures come from `supabase/seed/` or are created inside the test transaction.
 
-WS00 ships no tests. CI runs `supabase db lint` today. WS01 adds `supabase test db` to `.github/workflows/ci.yml` with the first policies.
+WS01 ships `001_rls_identity.sql`, and the `supabase` job in `.github/workflows/ci.yml` runs `supabase test db` after `db reset`. The development Mac has no container runtime, so these tests run in CI only.
+
+`001_rls_identity.sql` shows the pattern: fixtures inserted as `postgres` (which bypasses RLS), then `set local request.jwt.claims = '{"sub": "<uuid>", "role": "authenticated"}'; set local role authenticated;` to act as a user, `reset role;` to step back. Denied reads show up as empty results and denied updates and deletes as zero rows affected, so the file defines a small `public.__t_affected(sql)` helper inside its transaction to count them. A missing privilege or a failed `with check` raises `42501`, which `throws_ok` asserts.

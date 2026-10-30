@@ -89,6 +89,18 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | taste_embedding | vector(1024) | Rebuilt weekly from feedback; WS06 |
 | costco_member | boolean | Asked in onboarding step 7; WS06 |
 
+**As built (WS01).** Where the migrations differ from the tables above:
+
+- `households` has `created_at`, `updated_at` (trigger), and `deleted_at` (soft delete), plus `zip`, `default_connection_id`, and `created_by` as listed. `default_connection_id` has no foreign key yet; WS07 adds it with `retailer_connections`. `quiet_hours`, `tier3_consent`, and `ai_daily_cap_usd` arrive with WS11, WS10, and WS15. The WS01 brief called the connection column `default_store_connection_id`; the column here follows this document.
+- `household_members` has `created_at`, which is when the person joined. `role` is the enum `household_members_role`.
+- `household_invites` has `created_by`, `created_at`, `used_by`, and also `used_at` (the brief's name). `expires_at` defaults to 7 days. Tokens are 32 random bytes as hex, so 64 characters.
+- `audit_events` has `created_at`. `kind` is plain text. WS01 writes `member_added`, `member_removed`, and the extra kind `owner_transferred`.
+- `profiles` has `created_at` and `updated_at`. `display_name` is capped at 80 characters. `avatar_url` holds the object path inside the private `avatars` bucket (`<user_id>/<file>`), not a URL. A trigger creates the row when a user signs up. `onboarding_step`, `taste_embedding`, and `costco_member` are not here yet; WS06 adds them.
+- `profiles` is readable and writable only by its own user, so `preferences` never reaches housemates. Housemates see display names and avatars through `list_household_members(household_id)`.
+- Clients cannot insert `households`, `household_members`, or `household_invites`, and cannot write `audit_events`. They use `create_household`, `create_invite`, `redeem_invite`, and `leave_household`. Owners can rename the household, remove members, and revoke unused invites directly.
+- `current_household_ids()` lives in the identity migration, not in `identity_functions`, because `CREATE POLICY` needs it to exist. The same migration adds `owned_household_ids()`, `is_household_peer(text)`, and `set_updated_at()`. All security-definer functions use `set search_path = ''`.
+- The RLS conventions these migrations set are written up in `supabase/README.md`.
+
 ### Recipes
 
 **recipes**

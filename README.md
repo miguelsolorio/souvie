@@ -17,6 +17,38 @@ See `docs/status.md` for the live ledger.
 
 3. The orchestrator dispatches one wave at a time, reviews each workstream, merges, and updates `docs/status.md`. It stops at the seven human checkpoints listed in the guide.
 
+## Getting started
+
+You need Node 22 (22.13 or later), pnpm 9 (`corepack enable` picks the version pinned in `package.json`), Docker for the local Supabase stack, and Xcode with an iOS Simulator for iOS.
+
+```bash
+scripts/setup-git-identity.sh       # once per clone
+pnpm install
+cp .env.example .env.local          # one env file for the whole repo; never commit it
+pnpm supabase start                 # local Postgres, Auth, Storage, Edge runtime (Docker)
+pnpm supabase status                # copy the API URL, anon key, and DB URL into .env.local
+```
+
+| Command | What it does |
+|---|---|
+| `pnpm dev` | Expo dev server (web at http://localhost:8081) and the worker together, through Turborepo. Expo's key shortcuts need the next command |
+| `pnpm --filter @mp/mobile start` | Expo only. Press `w` for web at http://localhost:8081, `i` for the iOS Simulator |
+| `pnpm --filter @mp/shopper-worker dev` | Worker only. Logs `connected`, then `idle` every 5 seconds |
+| `pnpm supabase functions serve` | Edge Functions at http://localhost:54321/functions/v1/(name) |
+| `pnpm supabase db reset` | Rebuild the local database from `supabase/migrations` and `supabase/seed` |
+| `pnpm typecheck` | `tsc --noEmit` in every workspace |
+| `pnpm lint` | Biome check of the whole repo. `pnpm format` applies fixes |
+| `pnpm test` | Vitest `unit` project: every `*.test.ts` |
+| `pnpm eval` | Vitest `evals` project: `**/evals/**/*.eval.ts`. Passes with none |
+| `cd apps/mobile && npx expo export --platform web` | Static web build in `apps/mobile/dist` |
+
+Notes:
+
+- Metro (`apps/mobile/metro.config.js`) and the worker's dev script both read the root `.env.local`. Only `EXPO_PUBLIC_*` values reach the app bundle.
+- `.npmrc` pins the public npm registry, so a user-level registry in `~/.npmrc` does not apply here.
+- Expo Go runs the app, but the query cache persists to MMKV only in a development build. Expo Go keeps it in memory.
+- The Supabase CLI is a dev dependency (`pnpm supabase ...`), so everyone and CI use the same version.
+
 ## Documents
 
 | Doc | What it holds |

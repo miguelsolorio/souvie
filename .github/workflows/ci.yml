@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "ws/**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Typecheck, lint, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # Reads the pnpm version from "packageManager" in package.json.
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit tests
+        run: pnpm test
+
+      # Passes with zero eval files. WS15 adds score thresholds.
+      - name: Evals
+        run: pnpm eval
+
+  database:
+    name: Supabase db lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # With no version input, the CLI version comes from pnpm-lock.yaml (the `supabase`
+      # devDependency), so CI and local runs use the same CLI.
+      - uses: supabase/setup-cli@v3
+
+      # Starts only Postgres and applies supabase/migrations.
+      - name: Start database
+        run: supabase db start
+
+      - name: Lint schema
+        run: supabase db lint --local --fail-on error

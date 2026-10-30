@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="title">
+  <title id="title">Meal Planner</title>
+  <!-- A bowl with two leaves rising from it: the meal, and what goes in it.
+       One shape, one color. Change `fill` to place it on any background. -->
+  <style>
+    .mark { fill: #2F6B4F; }
+    @media (prefers-color-scheme: dark) { .mark { fill: #84BC9B; } }
+  </style>
+  <g class="mark">
+    <path d="M6 36h52c0 12.4-11.6 20-26 20S6 48.4 6 36z"/>
+    <path d="M33 31C33 19 40 11 53 9c0 12.5-7.6 21.2-20 22z"/>
+    <path d="M31 31C31 23 26 17 15 15c0 8.5 5.5 14.5 16 16z"/>
+  </g>
+</svg>

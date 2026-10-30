@@ -5,7 +5,11 @@
   "type": "module",
   "description": "Design system: tokens, NativeWind primitives, icons, theming.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./tokens": "./src/tokens.ts",
+    "./css": "./src/css.ts",
+    "./tailwind.preset": "./tailwind.preset.js",
+    "./tailwind.preset.js": "./tailwind.preset.js"
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -18,6 +22,9 @@
     "@mp/core": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^22.20.5",
+    "postcss": "^8.5.0",
+    "tailwindcss": "3.4.19",
     "typescript": "~6.0.3",
     "vitest": "^5.0.5"
   }

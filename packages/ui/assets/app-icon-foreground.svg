@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Meal Planner app icon foreground</title>
+  <!-- Source for apps/mobile/assets/adaptive-icon.png. Transparent; the background color
+       (#2F6B4F) is set in app.json. The mark is scaled 8.5x so it stays inside the 66% safe
+       zone that Android masks to (a circle of about 676 px). -->
+  <g fill="#FAF8F5" transform="translate(240 235.75) scale(8.5)">
+    <path d="M6 36h52c0 12.4-11.6 20-26 20S6 48.4 6 36z"/>
+    <path d="M33 31C33 19 40 11 53 9c0 12.5-7.6 21.2-20 22z"/>
+    <path d="M31 31C31 23 26 17 15 15c0 8.5 5.5 14.5 16 16z"/>
+  </g>
+</svg>

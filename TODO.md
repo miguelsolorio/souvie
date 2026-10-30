@@ -20,8 +20,8 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] Bootstrap per `docs/implementation-guide.md` §1: read `CLAUDE.md`, this file, the guide, `docs/status.md`, `docs/07-roadmap.md` §Waves.
 - [x] Confirm the Supabase credentials exist locally (ask the human; do not look for secrets in the repo).
 - [x] Dispatch the WS00 builder: Agent tool, `isolation: "worktree"`, `model: "opus"`, prompt from guide §6.1 pointing at `docs/workstreams/WS00-scaffold.md`. Set WS00 to `in progress` in `docs/status.md`.
-- [ ] Receive the completion report. Reject it if the Verification output section is missing real command output.
-- [ ] Dispatch the WS00 reviewer: `model: "sonnet"`, `isolation: "worktree"`, prompt from guide §6.3. Do not hand it the builder's report.
+- [x] Receive the completion report. Reject it if the Verification output section is missing real command output.
+- [x] Dispatch the WS00 reviewer: `model: "sonnet"`, `isolation: "worktree"`, prompt from guide §6.3. Do not hand it the builder's report.
 - [ ] Act on the verdict: merge (squash into `main`, delete branch), or one fix round with the same builder, or escalate.
 - [ ] Update `docs/status.md`: row to `merged`, wave 0 summary written.
 - [ ] **Stop. Human checkpoint 1:** approve scaffold choices (package names, lint rules, CI shape, Node and pnpm versions).

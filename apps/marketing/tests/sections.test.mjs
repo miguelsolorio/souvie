@@ -80,11 +80,27 @@ describe("landing page sections", () => {
     assert.ok(!/<img\b/i.test(blocks[2].inner), "no images in the stores section");
   });
 
+  it("stores: Instacart is planned, not working (the Instacart application is still open)", () => {
+    const section = text(blocks[2].inner);
+    assert.match(section, /QFC and Fred Meyer carts fill automatically\./);
+    assert.match(
+      section,
+      /Safeway, Albertsons, and Costco are next\. We plan to open those lists on Instacart\./,
+    );
+    assert.ok(!/ready to shop on Instacart/i.test(section), "no present-tense Instacart claim");
+  });
+
   it("trust: no card data, pay in the store's app, export and delete", () => {
     const section = text(blocks[3].inner);
     assert.match(section, /We never see your card/);
     assert.match(section, /pay in the store's own app/i);
     assert.match(section, /export or delete everything/i);
+  });
+
+  it("trust: the cart tap is the default, not an absolute (opt-in assisted checkout exists)", () => {
+    const section = text(blocks[3].inner);
+    assert.match(section, /By default, the cart waits for your tap\./);
+    assert.ok(!/nothing gets bought without you/i.test(section), "no unscoped promise");
   });
 
   it("waitlist: a labelled form with a honeypot and a live status region", () => {
@@ -106,12 +122,21 @@ describe("landing page sections", () => {
     assert.match(blocks[5].inner, /<a[^>]*href="\/privacy\/"[^>]*>\s*Privacy policy\s*<\/a>/);
     assert.match(
       text(blocks[5].inner),
-      /trademarks of their owners\. Meal Planner isn't affiliated with or endorsed by them\./,
+      /trademarks of their owners\. Souvie isn't affiliated with or endorsed by them\./,
     );
   });
 });
 
 describe("page-wide rules", () => {
+  it("is named Souvie everywhere and carries no trace of the placeholder name", () => {
+    const title = /<title>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? "";
+    assert.equal(title, "Souvie: Dinner, decided. Groceries, done.");
+    assert.match(text(html), /Souvie plans your household's week/);
+    // The name the product had before checkpoint 6, joined from parts so a repo-wide search for
+    // the old name finds only places that still use it.
+    assert.ok(!html.includes(["Meal", "Planner"].join(" ")), "the placeholder name is gone");
+  });
+
   it("has one h1 and a lang attribute", () => {
     assert.equal([...html.matchAll(/<h1\b/gi)].length, 1);
     assert.match(html, /<html[^>]*lang="en"/);

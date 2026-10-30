@@ -30,9 +30,9 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 - [x] Dispatch WS01 (sonnet), WS03 (sonnet), WS14 (sonnet) in one message, each in its own worktree.
 - [x] Review each as it finishes. WS03 and WS14 can merge on a pass.
-- [ ] **Human checkpoint 2** before WS01 merges: approve the identity migration and RLS policies.
+- [x] **Human checkpoint 2** before WS01 merges: approve the identity migration and RLS policies. Approved 2026-10-30.
 - [ ] **Human checkpoint 6** before WS14 finishes: the name. If the human isn't ready, let WS14 land everything except the name and leave the row `in review` with a note.
-- [ ] Wave 1 summary in `docs/status.md`.
+- [x] Wave 1 summary in `docs/status.md`.
 
 ## 3. Wave 2: recipes and Kroger
 

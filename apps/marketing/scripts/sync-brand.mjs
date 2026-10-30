@@ -1,6 +1,9 @@
 // Generates the files that come from packages/ui so nothing is maintained twice:
-//   src/styles/tokens.css   from packages/ui/src/tokens.ts
-//   public/*.svg            from packages/ui/assets
+//   src/styles/tokens.css                   from packages/ui/src/tokens.ts
+//   public/{logo,logo-mark,favicon}.svg     copied from packages/ui/assets
+//
+// Not generated here: src/assets/og.svg (written by hand) and the PNGs in public/, which are
+// rendered with rsvg-convert. The commands are in README.md.
 //
 // node scripts/sync-brand.mjs           write the files
 // node scripts/sync-brand.mjs --check   exit 1 if any file is out of date (CI and tests)

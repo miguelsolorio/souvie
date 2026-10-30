@@ -17,9 +17,9 @@ Names, slogans, positioning, and the marketing materials WS14 turns into a landi
 
 Also considered: Provision, Simmer, Marketday, Stocked, Ladle, Hearth, Tablewise, Platewise, Weeknight. Two-word variants on Sous that add motion: Sous Vive, Sous Vif, Sous Vite, Sous Run, Sous Shift, Sous Avant, Sous Loop, Sous Tempo. Any of these would put "Sous" alone on the home screen icon and the full name in the store.
 
-**Recommendation (updated 2026-10-30):** the checks in §1.4 knocked out Sous and Larder, the earlier fallbacks, along with Mise, Forkcast, and Cartwheel. Souvie stays the working name, conditional on a lawyer's read of one pending mark and a domain plan. Tablewise and Marketday are the next two. Use "meal-planner" as the repo and working name until checkpoint 6, and keep [Name] in the copy below until the name is chosen.
+**Recommendation (updated 2026-10-30):** the checks in §1.4 knocked out Sous and Larder, the earlier fallbacks, along with Mise, Forkcast, and Cartwheel. Souvie stays the working name, conditional on a lawyer's read of one pending mark and a domain plan. Tablewise and Marketday are the next two. The repo and workspace keep the working name "meal-planner".
 
-**Decision (2026-10-30, Miguel): Souvie.** Carried as follow-ups, not blockers: the pending ESSENTIAL SOUVIE application by Cuisine Solutions and the Suvie sound-alike go to a trademark lawyer before public beta; souvie.com, .app and .co are taken, so the domain candidates are getsouvie.com and souvieapp.com. The deep-link scheme is `souvie://`, the iOS bundle id and Android package are `com.miguelsolorio.souvie`, and the Kroger redirect is `souvie://oauth/kroger`. The WS14 name-swap round replaces every [Name] below and the placeholder wordmark.
+**Decision (2026-10-30, Miguel): Souvie.** Carried as follow-ups, not blockers: the pending ESSENTIAL SOUVIE application by Cuisine Solutions and the Suvie sound-alike go to a trademark lawyer before public beta; souvie.com, .app and .co are taken, so the domain candidates are getsouvie.com and souvieapp.com. The deep-link scheme is `souvie://`, the iOS bundle id and Android package are `com.miguelsolorio.souvie`, and the Kroger redirect is `souvie://oauth/kroger`. The WS14 name-swap round replaced every name placeholder in §3 to §9 and the placeholder wordmark with Souvie.
 
 ### 1.2 Rules the name must follow
 
@@ -76,9 +76,9 @@ What the table shows:
 
 - **Souvie.** No same-name app on either store and no live USPTO mark for the word alone. Two things to take to a lawyer. Cuisine Solutions, Inc. has a pending application for ESSENTIAL SOUVIE (classes 29, 30, 35, 39, 42, 43, sous-vide foods) and an earlier ONLY SOUVIE that was abandoned, so the word looks like a house term of theirs. And **Suvie**, a Food & Drink app from Home Tech Innovation Inc. that sells chef-designed meals and a countertop cooking appliance (also `com.suvie.app` on Google Play), sounds the same when said aloud. All three of souvie.com, souvie.app, and souvie.co are registered. souvie.com is a Brazilian cosmetics shop and souvie.co is a Turkish online shop. `getsouvie.com`, `trysouvie.com`, `usesouvie.com`, `hellosouvie.com`, `souvieapp.com`, and `souviehq.com` returned "not registered" at Verisign.
 - **Sous.** Fails. SOUS is a registered mark in classes 9 and 42 for a mobile app (Aurora Technologies), SOUS is pending in 42 for a food-technology institute, and the App Store has five apps called Sous, most of them recipe or meal-plan apps.
-- **Larder.** Fails. LARDER is registered in 9, 42, and 44 for recipe and ingredient mobile apps (Alderwood Limited, UK). Six App Store apps and three Play apps use the name, several of them meal planners or pantry trackers.
+- **Larder.** Fails. LARDER is registered in 9, 42, and 44 for recipe and ingredient mobile apps (Alderwood Limited, UK). Six App Store apps and three Play apps use the name, several of them meal-planning or pantry-tracking apps.
 - **Mise.** Fails. MISE is pending in 35, 42, 43, and 45 for Foodrunner Inc, a Washington company. Four App Store apps and seven Play apps use the name, most for meal planning or recipes.
-- **Forkcast.** Fails. "ForkCast - Meal & Grocery Plan" is on both stores, and `forkcast.app` is an AI meal planner with shopping lists.
+- **Forkcast.** Fails. "ForkCast - Meal & Grocery Plan" is on both stores, and `forkcast.app` is an AI meal-planning site with shopping lists.
 - **Cartwheel.** Fails. Three live CARTWHEEL registrations in class 42 (one for delivery software) and one in 44, plus an App Store app named "Cartwheel - AI Grocery Lists."
 - **Secondary names.** Simmer, Stocked, Ladle, Hearth, and Weeknight each have same-name recipe, meal-plan, or grocery apps. Platewise has nutrition apps. Provision has dozens of registered PROVISION marks in software classes. Marketday and Tablewise have no same-name meal-planning app.
 
@@ -105,11 +105,11 @@ Rules: never promise the app pays for you unless the household has opted into Ti
 
 ## 3. Positioning
 
-**Statement.** For busy households who are tired of the Sunday-night "what are we eating" scramble, [Name] is a meal planner that finishes the job. It suggests dinners you'll like, builds one list for the week, and loads your QFC, Safeway, or Costco cart so pickup is one tap away. Recipe apps stop at a list. [Name] shops.
+**Statement.** For busy households who are tired of the Sunday-night "what are we eating" scramble, Souvie is a meal-planning app that finishes the job. It suggests dinners you'll like, builds one list for the week, and loads your QFC or Fred Meyer cart so pickup is one tap away. Recipe apps stop at a list. Souvie shops.
 
 **What we say about competitors.** Nothing by name. The contrast is "recipe apps stop at a list."
 
-**What we don't claim.** Price comparison across stores (Kroger and Instacart terms forbid showing it). Unattended checkout, except in the opt-in assisted mode, described plainly as "the agent fills the cart and stops at the pay button."
+**What we don't claim.** Price comparison across stores (Kroger and Instacart terms forbid showing it). Unattended checkout, except in the opt-in assisted mode, described plainly as "the agent fills the cart and stops at the pay button." That Safeway, Albertsons, and Costco work today. They are planned through Instacart, and the Instacart developer application is still open.
 
 ### 3.1 Personas
 
@@ -121,41 +121,41 @@ Rules: never promise the app pays for you unless the household has opted into Ti
 
 ## 4. Elevator pitches
 
-**Ten seconds.** [Name] plans your week's dinners and loads your grocery cart. You look it over on your phone and tap pay.
+**Ten seconds.** Souvie plans your week's dinners and loads your grocery cart. You look it over on your phone and tap pay.
 
-**Thirty seconds.** Every week [Name] picks dinners your household will eat, builds one grocery list, and turns it into real products at your store. On Saturday morning the cart's ready: you check it, swap anything, and pay in the store's app. Pickup's on the way home. It learns what you buy, so week two is better than week one.
+**Thirty seconds.** Every week Souvie picks dinners your household will eat, builds one grocery list, and turns it into real products at your store. On Saturday morning the cart's ready: you check it, swap anything, and pay in the store's app. Pickup's on the way home. It learns what you buy, so week two is better than week one.
 
 ## 5. Landing page (apps/marketing)
 
-This is the copy as shipped by WS14. Source files: `apps/marketing/src/components/` (Hero, HowItWorks, Stores, Trust, Waitlist, Footer) and `src/pages/privacy.astro`. The name is the placeholder "Meal Planner", read from `apps/marketing/src/config.ts`. Sentence case. No retailer logos anywhere on marketing pages. "Works with" is text. No pricing, "Pro," or subscription language (v1 is non-commercial, `06-risks.md` R22).
+This is the copy as shipped by WS14. Source files: `apps/marketing/src/components/` (Hero, HowItWorks, Stores, Trust, Waitlist, Footer) and `src/pages/privacy.astro`. The name is Souvie, said "SOO-vee", read from `apps/marketing/src/config.ts`. Sentence case. No retailer logos anywhere on marketing pages. "Works with" is text. No pricing, "Pro," or subscription language (v1 is non-commercial, `06-risks.md` R22).
 
 `apps/marketing/scripts/check-copy.mjs` scans the blocks between the `copy:start` and `copy:end` markers below, plus the site source. It fails on "partner" near "Instacart," "Free Delivery," "Kroger" in a title or heading, em dashes, and prices.
 
 <!-- copy:start -->
 **Hero**
 - Headline: Dinner, decided. Groceries, done.
-- Sub: [Name] plans your household's week, builds one list, and fills your carts across stores on a schedule you pick. You tap pay.
+- Sub: Souvie plans your household's week, builds one list, and fills your carts across stores on a schedule you pick. You tap pay.
 - CTA: Join the waitlist
 - Line under the CTA: Coming to iOS and web. Starting in Washington.
 
 **How it works** (three steps)
 1. Plan. Tell it how your household eats: allergies, budget, how much time you have on a Tuesday. It suggests a week of dinners you'll cook. Swap anything with a tap.
 2. List. One list for the whole week. Pantry staples come off, amounts add up, and everything's grouped by aisle. Shop it in the store, offline, with everyone checking things off.
-3. Cart. Pick a day and [Name] fills your cart. You review it, swap anything, and pay in the store's app. Pickup's on the way home.
+3. Cart. Pick a day and Souvie fills your cart. You review it, swap anything, and pay in the store's app. Pickup's on the way home.
 
 **Why it's different** (under the steps)
-- One list, several stores. Bulk at Costco, produce at QFC, by your rules.
+- One list, several stores. Staples at Fred Meyer, produce at QFC, by your rules.
 - It remembers. Pick a brand once and it stays picked.
 - Allergies are enforced in code, not suggested by a model.
 
 **Works with your stores** (text only)
 Works with QFC, Fred Meyer, Safeway, Albertsons, and Costco in Washington.
-QFC and Fred Meyer carts fill automatically. Safeway, Albertsons, and Costco lists open ready to shop on Instacart.
+QFC and Fred Meyer carts fill automatically. Safeway, Albertsons, and Costco are next. We plan to open those lists on Instacart.
 
 **Your money and your data stay yours**
 - We never see your card. You pay in the store's own app or checkout.
 - Your store login stays with the store. Sign-in happens on the store's page, not ours.
-- Nothing gets bought without you. The cart waits for your tap.
+- You decide what gets bought. By default, the cart waits for your tap.
 - You can export or delete everything, any time. Your plans, lists, and history are yours.
 
 **Join the waitlist**
@@ -163,11 +163,11 @@ We're starting in Washington. Tell us your zip and we'll email you when your sto
 Fields: Email, Zip code (optional).
 Confirmation: You're on the list. We'll email you when your stores are live.
 Already signed up: You're already on the list.
-Fine print: We use your email and zip only to tell you when [Name] opens. Coming to iOS and web.
+Fine print: We use your email and zip only to tell you when Souvie opens. Coming to iOS and web.
 
 **Footer**
-[Name]. Built in Washington. Coming to iOS and web. Privacy policy (placeholder page).
-QFC, Fred Meyer, Safeway, Albertsons, Costco, and Instacart are trademarks of their owners. [Name] isn't affiliated with or endorsed by them.
+Souvie. Built in Washington. Coming to iOS and web. Privacy policy (placeholder page).
+QFC, Fred Meyer, Safeway, Albertsons, Costco, and Instacart are trademarks of their owners. Souvie isn't affiliated with or endorsed by them.
 <!-- copy:end -->
 
 Changes from the earlier draft, and why:
@@ -178,31 +178,34 @@ Changes from the earlier draft, and why:
 - **FAQ** is not shipped. Its "Is this a subscription?" answer is pricing language, which v1 avoids. The other answers are covered in the sections above.
 - **"Why it's different"** moved under the three steps rather than getting its own section, so the page keeps the section order in the brief.
 - The page says "We're starting in Washington" and "Coming to iOS and web." Nothing says when.
+- **Name swap (2026-10-30).** Souvie replaces the placeholder in every block above.
+- **Trust, third item.** It said "Nothing gets bought without you. The cart waits for your tap." The opt-in assisted checkout (`04-integrations.md`, Tier 3) lets a household allow the agent to tap pay under a spending cap, so the absolute was not true for every mode. It now says what the default does. The store description got the same fix. Do not market the opt-in mode until human checkpoint 5 approves its consent copy.
+- **Stores, second line.** It said Safeway, Albertsons, and Costco lists "open ready to shop on Instacart." Nothing is built yet and the Instacart developer application is still open, so it now says planned. The store description, the positioning statement, and the press blurb follow the same rule. Move all four to present tense only after WS08 ships with an approved Instacart production key.
+- **"Why it's different," first bullet.** It named Costco, which falls under the same rule. It now names Fred Meyer and QFC, which the Kroger API covers.
 
 Not yet written: the real privacy policy and a contact address. The placeholder page at `/privacy/` says so.
 
 ## 6. Store listings (ready to paste)
 
-Fill in [Name] once checkpoint 6 picks it. Character counts below are for the text as written, with the name counted as shown. The title leaves 11 characters for the name: Souvie (6), Tablewise (9), and Marketday (9) fit; "Meal Planner" (12) does not, so use "Meal Planner: Plan to cart" (26) if the placeholder ships.
+The name is Souvie (checkpoint 6, 2026-10-30). Character counts below are for the text as written, counted with `[...text].length`. The title is the name plus ": Meal plan to cart", which leaves 11 characters for the name. Souvie is 6.
 
 <!-- copy:start -->
 ### App Store (iOS)
 
-- **Title (30 max):** [Name]: Meal plan to cart
-  - Souvie: Meal plan to cart (25). Tablewise: Meal plan to cart (28). Marketday: Meal plan to cart (28).
+- **Title (30 max):** Souvie: Meal plan to cart (25)
 - **Subtitle (30 max):** Plan the week. Fill the cart. (29)
 - **Promotional text (170 max):** One plan for your household, one list split across your stores, and carts that fill on a schedule you pick. You review, tap pay, pick up. (137)
 - **Description (4,000 max):**
 
-  [Name] is a meal planner that finishes the job.
+  Souvie is a meal-planning app that finishes the job.
 
   Tell it how your household eats: allergies, diets, budget, how much time you have on a weeknight. It suggests a week of dinners you'll cook. Or import your own from a website, a photo, or a pasted caption.
 
   One list for the whole week, with pantry staples removed and everything grouped by aisle. Shop it in the store, offline, with everyone in the house checking things off.
 
-  Or let [Name] do the shopping. It turns your list into real products at your QFC or Fred Meyer, fills your cart on a schedule you choose, and sends you a note when it's ready. You review it, swap anything, and pay in the store's app. For Safeway, Albertsons, and Costco, your list opens ready to shop on Instacart.
+  Or let Souvie do the shopping. It turns your list into real products at your QFC or Fred Meyer, fills your cart on a schedule you choose, and sends you a note when it's ready. You review it, swap anything, and pay in the store's app. Safeway, Albertsons, and Costco are next. We plan to open those lists on Instacart.
 
-  It learns. Pick a brand once and it stays picked. Allergies are enforced in code, not suggested by a model. Nothing is bought without you.
+  It learns. Pick a brand once and it stays picked. Allergies are enforced in code, not suggested by a model. By default, the cart waits for your tap.
 
   Built in Washington, for Washington stores first.
 - **Keywords (100 max):** grocery list,recipes,weekly dinner,pickup,shopping list,meal prep,family,dinner ideas,menu,planner (98)
@@ -211,9 +214,9 @@ Fill in [Name] once checkpoint 6 picks it. Character counts below are for the te
 
 ### Google Play
 
-- **Title (30 max):** [Name]: Meal plan to cart (same as the App Store; the counts above apply)
+- **Title (30 max):** Souvie: Meal plan to cart (25, same as the App Store)
 - **Short description (80 max):** Plan the week's dinners, build one list, and fill your carts. You tap pay. (74)
-- **Full description (4,000 max):** The App Store description above, unchanged. (About 930 characters.)
+- **Full description (4,000 max):** The App Store description above, unchanged. (949 characters.)
 <!-- copy:end -->
 
 Why the keywords differ from the first draft:
@@ -222,6 +225,8 @@ Why the keywords differ from the first draft:
 - Apple indexes the title and subtitle on their own, so the keyword field does not repeat their phrases ("meal plan," "fill the cart").
 
 Compliance notes: no "Kroger" in the title or subtitle. Never "Free Delivery." Never "partner." No prices or plans anywhere (v1 is non-commercial). The retailer names appear only in the description, as compatibility statements. No Kroger or other banner logos in screenshots or the icon.
+
+Two sentences in the description are tied to build status. A store listing should describe what the build does on the day it is submitted. If WS08 has not shipped with an approved Instacart production key by then, keep the "We plan to open those lists on Instacart" sentence as written or drop it. Change it to "Safeway, Albertsons, and Costco lists open ready to shop on Instacart" only once the key is approved and the flow is live. And "By default, the cart waits for your tap" stays true only while the assisted checkout is opt-in and off unless the household turns it on (`04-integrations.md`, Tier 3).
 
 ## 7. Launch channels (Phase 4, when the public beta decision is yes)
 
@@ -235,7 +240,7 @@ Compliance notes: no "Kroger" in the title or subtitle. Never "Free Delivery." N
 
 **Email 1, right after sign-up: "Connect your store"**
 Subject: One tap and your cart fills itself
-Body: Thanks for joining. The fastest way to see what [Name] does is to connect QFC or Fred Meyer. It takes one sign-in and we never see your password. After that, plan a week and we'll fill the cart. [Connect a store]
+Body: Thanks for joining. The fastest way to see what Souvie does is to connect QFC or Fred Meyer. It takes one sign-in and we never see your password. After that, plan a week and we'll fill the cart. [Connect a store]
 
 **Email 2, day two: "Your first week"**
 Subject: Here's a week you'd probably cook
@@ -247,7 +252,7 @@ Body: Your first cart was [n] items for about $[total]. If we picked the wrong b
 
 ## 9. Press blurb
 
-[Name] is a meal-planning app that does the shopping. It suggests a week of dinners a household will cook, builds one grocery list, and fills the cart at QFC or Fred Meyer through Kroger's public API, with Safeway and Costco lists handed to Instacart. The person reviews the cart on their phone and pays in the store's app. It launched for Washington households first and is built by Miguel Solorio, a software designer in Duvall, Washington.
+Souvie is a meal-planning app that does the shopping. It suggests a week of dinners a household will cook, builds one grocery list, and fills the cart at QFC or Fred Meyer through Kroger's public API. Safeway, Albertsons, and Costco are planned next, through Instacart. The person reviews the cart on their phone and pays in the store's app. It launched for Washington households first and is built by Miguel Solorio, a software designer in Duvall, Washington.
 
 ## 10. Copy rules for everything we publish
 

@@ -214,14 +214,6 @@ export default function CalibrateStep() {
                 />
               </View>
             </View>
-            {answered > 0 ? (
-              <Button
-                testID="swipe-undo"
-                label="Undo last"
-                variant="ghost"
-                onPress={() => setDeck(undoAnswer(deck))}
-              />
-            ) : null}
           </>
         ) : (
           <Note>
@@ -230,6 +222,14 @@ export default function CalibrateStep() {
               : "That is all of them. Thank you."}
           </Note>
         )}
+        {answered > 0 ? (
+          <Button
+            testID="swipe-undo"
+            label="Undo last"
+            variant="ghost"
+            onPress={() => setDeck(undoAnswer(deck))}
+          />
+        ) : null}
       </View>
     </OnboardingFrame>
   );

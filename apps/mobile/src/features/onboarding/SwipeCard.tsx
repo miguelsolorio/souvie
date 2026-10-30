@@ -59,27 +59,35 @@ export function SwipeCard({
     .join(" · ");
 
   return (
+    // NativeWind does not style Animated.View, so the animated layer carries only layout and the
+    // transform, and a plain View inside it carries the look.
     <Animated.View
       testID="swipe-card"
       {...responder.panHandlers}
-      style={{ width: cardWidth, transform: [{ translateX: x }, { rotate }] }}
-      className="self-center overflow-hidden rounded-2xl border border-neutral-200 bg-white"
+      style={{ width: cardWidth, alignSelf: "center", transform: [{ translateX: x }, { rotate }] }}
     >
-      <RecipeImage imageUrl={card.imageUrl} title={card.title} width={cardWidth - 2} height={180} />
-      <View className="gap-1.5 p-4">
-        <Text accessibilityRole="header" className="text-xl font-semibold text-neutral-900">
-          {card.title}
-        </Text>
-        {meta ? <Text className="text-sm text-neutral-600">{meta}</Text> : null}
-        {card.description ? (
-          <Text numberOfLines={3} className="text-sm text-neutral-700">
-            {card.description}
+      <View className="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
+        <RecipeImage
+          imageUrl={card.imageUrl}
+          title={card.title}
+          width={cardWidth - 2}
+          height={180}
+        />
+        <View className="gap-1.5 p-4">
+          <Text accessibilityRole="header" className="text-xl font-semibold text-neutral-900">
+            {card.title}
           </Text>
-        ) : null}
-        {card.tags.length > 0 ? (
-          <Text className="text-xs text-neutral-500">{card.tags.join(", ")}</Text>
-        ) : null}
-        {source ? <Text className="text-xs text-neutral-500">From {source}</Text> : null}
+          {meta ? <Text className="text-sm text-neutral-600">{meta}</Text> : null}
+          {card.description ? (
+            <Text numberOfLines={3} className="text-sm text-neutral-700">
+              {card.description}
+            </Text>
+          ) : null}
+          {card.tags.length > 0 ? (
+            <Text className="text-xs text-neutral-500">{card.tags.join(", ")}</Text>
+          ) : null}
+          {source ? <Text className="text-xs text-neutral-500">From {source}</Text> : null}
+        </View>
       </View>
     </Animated.View>
   );

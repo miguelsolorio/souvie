@@ -53,6 +53,7 @@ function StoreRow({
       testID={testID}
       accessibilityRole="radio"
       accessibilityState={{ selected }}
+      aria-checked={selected}
       accessibilityLabel={`${label}, ${detail}`}
       onPress={onPress}
       className={`gap-0.5 rounded-xl border p-3 ${selected ? "border-brand bg-brand/5" : "border-neutral-200"}`}

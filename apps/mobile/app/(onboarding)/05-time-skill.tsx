@@ -16,6 +16,7 @@ import {
   SectionLabel,
 } from "../../src/features/onboarding/components";
 import { titleCase } from "../../src/features/onboarding/labels";
+import { toggleItem } from "../../src/features/onboarding/onboardingState";
 import { useOnboarding } from "../../src/features/onboarding/useOnboarding";
 import { usePreferencesDraft } from "../../src/features/onboarding/usePreferencesDraft";
 import { useStepNav } from "../../src/features/onboarding/useStepNav";
@@ -32,7 +33,7 @@ const SKILL_TEXT: Record<(typeof SKILLS)[number], { label: string; description: 
 /** Screen 5: how long a weeknight dinner may take, cooking skill, and equipment. */
 export default function TimeSkillStep() {
   const { saved, saveStep, saving } = useOnboarding();
-  const { draft, set } = usePreferencesDraft(saved);
+  const { draft, set, update } = usePreferencesDraft(saved);
   const { goNext, goBack } = useStepNav(5);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,10 +42,7 @@ export default function TimeSkillStep() {
   const equipment = draft.equipment ?? [];
 
   function toggleEquipment(item: string) {
-    set(
-      "equipment",
-      equipment.includes(item) ? equipment.filter((e) => e !== item) : [...equipment, item],
-    );
+    update("equipment", (current) => toggleItem(current, item));
   }
 
   async function submit() {

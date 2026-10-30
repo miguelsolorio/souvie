@@ -16,6 +16,7 @@ import {
   SectionLabel,
 } from "../../src/features/onboarding/components";
 import { titleCase } from "../../src/features/onboarding/labels";
+import { toggleItem } from "../../src/features/onboarding/onboardingState";
 import { useIngredientSuggestions } from "../../src/features/onboarding/useIngredientSuggestions";
 import { useOnboarding } from "../../src/features/onboarding/useOnboarding";
 import { usePreferencesDraft } from "../../src/features/onboarding/usePreferencesDraft";
@@ -26,7 +27,7 @@ const MAX = PREFERENCE_LIMITS.dislikes.maxItems;
 /** Screen 4: foods they will not eat (with ingredient autocomplete) and favorite cuisines. */
 export default function DislikesCuisinesStep() {
   const { saved, saveStep, saving } = useOnboarding();
-  const { draft, set } = usePreferencesDraft(saved);
+  const { draft, update } = usePreferencesDraft(saved);
   const { goNext, goBack } = useStepNav(4);
   const [error, setError] = useState<string | null>(null);
   const [typed, setTyped] = useState("");
@@ -39,22 +40,18 @@ export default function DislikesCuisinesStep() {
   function add(text: string) {
     const value = text.trim().toLowerCase().replace(/\s+/g, " ");
     if (value.length < 2 || atLimit) return;
-    if (!dislikes.includes(value)) set("dislikes", [...dislikes, value]);
+    update("dislikes", (current) =>
+      (current ?? []).includes(value) ? (current ?? []) : [...(current ?? []), value],
+    );
     setTyped("");
   }
 
   function remove(item: string) {
-    set(
-      "dislikes",
-      dislikes.filter((d) => d !== item),
-    );
+    update("dislikes", (current) => (current ?? []).filter((d) => d !== item));
   }
 
   function toggleCuisine(cuisine: string) {
-    set(
-      "cuisines",
-      cuisines.includes(cuisine) ? cuisines.filter((c) => c !== cuisine) : [...cuisines, cuisine],
-    );
+    update("cuisines", (current) => toggleItem(current, cuisine));
   }
 
   async function submit() {

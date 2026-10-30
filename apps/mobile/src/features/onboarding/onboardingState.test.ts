@@ -12,6 +12,7 @@ import {
   previousHref,
   resumeHref,
   stepOfSegment,
+  toggleItem,
 } from "./onboardingState";
 
 describe("routes", () => {
@@ -60,7 +61,15 @@ describe("guardOnboardingRoute", () => {
 
   it("sends everyone home once onboarding is done", () => {
     expect(guardOnboardingRoute("03-diets-allergies", 8)).toBe("/");
+    expect(guardOnboardingRoute("07-stores", 8)).toBe("/");
     expect(guardOnboardingRoute(undefined, 8, "/plan")).toBe("/plan");
+  });
+
+  it("leaves the last screen open, so the person sees how the first plan went", () => {
+    // The screen marks onboarding complete and then plans the week. Redirecting on that change
+    // would hide a failed plan.
+    expect(guardOnboardingRoute("08-calibrate", 8)).toBeNull();
+    expect(guardOnboardingRoute("08-calibrate", 7)).toBeNull();
   });
 
   it("stays put for a segment that is not a screen", () => {
@@ -192,5 +201,25 @@ describe("parseBudgetText", () => {
     for (const text of ["abc", "1.234", "1,000", "-5", "12e3", "1.", ".5"]) {
       expect(Number.isNaN(parseBudgetText(text)), text).toBe(true);
     }
+  });
+});
+
+describe("toggleItem", () => {
+  it("adds an item that is missing and removes one that is there", () => {
+    expect(toggleItem(["a"], "b")).toEqual(["a", "b"]);
+    expect(toggleItem(["a", "b"], "a")).toEqual(["b"]);
+    expect(toggleItem(undefined, "a")).toEqual(["a"]);
+    expect(toggleItem(null, "a")).toEqual(["a"]);
+  });
+
+  it("does not change the list it was given", () => {
+    const list = ["a"];
+    toggleItem(list, "b");
+    expect(list).toEqual(["a"]);
+  });
+
+  it("keeps both of two quick toggles when each starts from the latest list", () => {
+    const afterFirst = toggleItem([] as string[], "slow cooker");
+    expect(toggleItem(afterFirst, "oven")).toEqual(["slow cooker", "oven"]);
   });
 });

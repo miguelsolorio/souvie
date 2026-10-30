@@ -41,7 +41,11 @@ export function stepOfSegment(segment: string | undefined): number | null {
 /**
  * Where to redirect from the screen being shown, or null to stay. Nobody may open a screen past
  * the one after their last completed screen (a typed URL cannot skip the allergy question), and
- * once onboarding is complete the whole group sends people home.
+ * once onboarding is complete the group sends people home.
+ *
+ * The last screen is the exception: it marks onboarding complete and then plans the first week,
+ * and the person has to stay to see how that went. Revisiting it later is harmless (it only offers
+ * recipes not yet answered), so it is left open.
  */
 export function guardOnboardingRoute(
   segment: string | undefined,
@@ -49,8 +53,8 @@ export function guardOnboardingRoute(
   home = "/",
 ): string | null {
   const done = Math.min(Math.max(Math.trunc(completedStep ?? 0), 0), ONBOARDING_STEP_COUNT);
-  if (done >= ONBOARDING_STEP_COUNT) return home;
   const shown = stepOfSegment(segment);
+  if (done >= ONBOARDING_STEP_COUNT) return shown === ONBOARDING_STEP_COUNT ? null : home;
   if (shown === null) return null;
   if (shown > done + 1) return resumeHref(done);
   return null;
@@ -143,4 +147,10 @@ export function parseBudgetText(text: string): number | null {
   if (trimmed === "") return null;
   if (!/^\d{1,7}(\.\d{1,2})?$/.test(trimmed)) return Number.NaN;
   return Number(trimmed);
+}
+
+/** The list with `item` added, or removed if it is already there. Returns a new list. */
+export function toggleItem<T>(list: readonly T[] | null | undefined, item: T): T[] {
+  const current = list ?? [];
+  return current.includes(item) ? current.filter((entry) => entry !== item) : [...current, item];
 }

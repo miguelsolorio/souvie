@@ -21,7 +21,7 @@ import {
   DIET_LABEL,
   DIET_NOTE,
 } from "../../src/features/onboarding/labels";
-import { hasAnsweredAllergies } from "../../src/features/onboarding/onboardingState";
+import { hasAnsweredAllergies, toggleItem } from "../../src/features/onboarding/onboardingState";
 import { useOnboarding } from "../../src/features/onboarding/useOnboarding";
 import { usePreferencesDraft } from "../../src/features/onboarding/usePreferencesDraft";
 import { useStepNav } from "../../src/features/onboarding/useStepNav";
@@ -32,7 +32,7 @@ import { useStepNav } from "../../src/features/onboarding/useStepNav";
  */
 export default function DietsAllergiesStep() {
   const { saved, saveStep, saving } = useOnboarding();
-  const { draft, set } = usePreferencesDraft(saved);
+  const { draft, set, update } = usePreferencesDraft(saved);
   const { goNext, goBack } = useStepNav(3);
   const [error, setError] = useState<string | null>(null);
   // Undefined until the person touches the chip; then it is their answer. Before that, the saved answer.
@@ -45,17 +45,12 @@ export default function DietsAllergiesStep() {
   const canContinue = noAllergies || allergies.length > 0;
 
   function toggleDiet(diet: Diet) {
-    set("diets", diets.includes(diet) ? diets.filter((d) => d !== diet) : [...diets, diet]);
+    update("diets", (current) => toggleItem(current, diet));
   }
 
   function toggleAllergen(allergen: Allergen) {
     setNoAllergiesEdit(false);
-    set(
-      "allergies",
-      allergies.includes(allergen)
-        ? allergies.filter((a) => a !== allergen)
-        : [...allergies, allergen],
-    );
+    update("allergies", (current) => toggleItem(current, allergen));
   }
 
   function chooseNone() {

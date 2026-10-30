@@ -122,6 +122,7 @@ export function Chip({
       accessibilityRole="checkbox"
       accessibilityLabel={label}
       accessibilityState={{ checked: selected, disabled }}
+      aria-checked={selected}
       disabled={disabled}
       onPress={onPress}
       className={`min-h-11 justify-center rounded-full border px-4 py-2 ${
@@ -161,6 +162,7 @@ export function OptionRow({
       accessibilityRole="radio"
       accessibilityLabel={description ? `${label}. ${description}` : label}
       accessibilityState={{ selected }}
+      aria-checked={selected}
       onPress={onPress}
       className={`min-h-12 gap-0.5 rounded-xl border p-3 ${
         selected ? "border-brand bg-brand/5" : "border-neutral-200 bg-white"

@@ -2,6 +2,7 @@ import { BANNER_CHAIN_NAMES, type Product } from "@mp/retailers";
 import { assertDisplayUnchanged, formatPrice } from "@mp/retailers/kroger/terms";
 import { Image, Text, View } from "react-native";
 import { Button } from "../../components/Button";
+import { allergenLines, approvedForLabel, STOCK_LABEL } from "./labels";
 
 /**
  * Banner branding (QFC, Fred Meyer) in the Add-to-Cart UI. Kroger's branding terms allow banner
@@ -10,25 +11,7 @@ import { Button } from "../../components/Button";
  * switch: no other screen shows a banner mark, and marketing never does. No logo files ship with
  * the app today, so the banner shows as its name.
  */
-export const SHOW_BANNER_LOGOS = true;
-
-const STOCK_LABEL: Record<Product["stockLevel"], string> = {
-  HIGH: "In stock at this store",
-  LOW: "Low stock at this store",
-  TEMPORARILY_OUT_OF_STOCK: "Temporarily out of stock",
-  UNKNOWN: "Stock not reported",
-};
-
-/** Fulfillment flags mean the store is approved to offer it, not that the item is on the shelf. */
-export function approvedForLabel(fulfillment: Product["fulfillment"]): string {
-  const ways = [
-    fulfillment.curbside ? "pickup" : null,
-    fulfillment.delivery ? "delivery" : null,
-    fulfillment.instore ? "in store" : null,
-    fulfillment.shiptohome ? "ship to home" : null,
-  ].filter((w): w is string => w !== null);
-  return ways.length > 0 ? `Approved for ${ways.join(", ")}` : "No fulfillment reported";
-}
+export const showBannerLogos = true;
 
 /**
  * One Kroger product in the Add-to-Cart UI, rendered exactly as returned: the whole name with no
@@ -61,11 +44,11 @@ export function ProductRow({
     if (__DEV__) console.warn("Kroger terms guard refused a product", (err as Error).message);
     return (
       <Text className="text-sm text-neutral-500">
-        This product could not be shown as the store listed it.
+        This product's details have expired or changed. Search again to see it.
       </Text>
     );
   }
-  const banner = SHOW_BANNER_LOGOS && chain ? BANNER_CHAIN_NAMES[chain.toUpperCase()] : undefined;
+  const banner = showBannerLogos && chain ? BANNER_CHAIN_NAMES[chain.toUpperCase()] : undefined;
 
   return (
     <View className="flex-row gap-3 rounded-xl border border-neutral-200 p-3">
@@ -108,9 +91,11 @@ export function ProductRow({
         </View>
         <Text className="text-xs text-neutral-500">{STOCK_LABEL[product.stockLevel]}</Text>
         <Text className="text-xs text-neutral-500">{approvedForLabel(product.fulfillment)}</Text>
-        {product.allergens.length > 0 ? (
-          <Text className="text-xs text-neutral-600">Contains: {product.allergens.join(", ")}</Text>
-        ) : null}
+        {allergenLines(product).map((line) => (
+          <Text key={line} className="text-xs text-neutral-600">
+            {line}
+          </Text>
+        ))}
         {onAdd ? (
           <View className="mt-1 self-start">
             <Button

@@ -19,8 +19,11 @@ export function ConnectKroger({
   onConnected,
 }: {
   householdId: string | undefined;
-  /** The household's primary store. Its chain picks the banner. */
-  store?: Store | null | undefined;
+  /**
+   * The household's store. Its chain picks the banner. A reconnect knows only the id and name;
+   * the function then looks the chain up from the id.
+   */
+  store?: (Pick<Store, "id" | "name"> & Partial<Pick<Store, "chain">>) | null | undefined;
   modality?: Modality;
   label?: string;
   onConnected?: () => void;

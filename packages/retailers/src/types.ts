@@ -3,16 +3,20 @@
 // contract change request (docs/implementation-guide.md §3.5).
 //
 // Relative imports in this package carry the .ts extension so Supabase Edge Functions (Deno) can
-// load these modules by path.
+// load these modules by path. The retailer and modality vocabularies come from @mp/core
+// (retail.ts), so there is one source for them.
+import { AdapterModality, RetailerId as RetailerIdEnum } from "@mp/core";
 
 /** How a store does one thing: our API call, a driven browser, a hand-off to the user, or not at all. */
 export type Capability = "api" | "browser" | "handoff" | "none";
 
-export const RETAILER_IDS = ["kroger", "instacart", "safeway", "costco"] as const;
-export type RetailerId = (typeof RETAILER_IDS)[number];
+/** Every retailer the app knows, in the order of the Postgres enum `retailer`. */
+export const RETAILER_IDS: readonly RetailerIdEnum[] = RetailerIdEnum.options;
+export type RetailerId = RetailerIdEnum;
 
-export const MODALITIES = ["PICKUP", "DELIVERY"] as const;
-export type Modality = (typeof MODALITIES)[number];
+/** Fulfilment as this contract and Kroger's cart API spell it. Storage uses core.Modality. */
+export const MODALITIES: readonly AdapterModality[] = AdapterModality.options;
+export type Modality = AdapterModality;
 
 export const STOCK_LEVELS = ["HIGH", "LOW", "TEMPORARILY_OUT_OF_STOCK", "UNKNOWN"] as const;
 export type StockLevel = (typeof STOCK_LEVELS)[number];
@@ -71,8 +75,13 @@ export interface Product {
   stockLevel: StockLevel;
   /** "Approved for", not "in stock". Inventory is confirmed only at the retailer's checkout. */
   fulfillment: { instore: boolean; curbside: boolean; delivery: boolean; shiptohome: boolean };
-  /** Allergen names the product declares it contains or may contain. Empty when none listed. */
+  /**
+   * Every allergen the product declares it contains or may contain, as the retailer names them.
+   * Safety checks read this list: it is the conservative one. Empty when none are listed.
+   */
   allergens: string[];
+  /** The subset of `allergens` declared only as "may contain". Shown as "May contain", never as "Contains". */
+  mayContain: string[];
   imageUrl: string | null;
   /** ISO timestamp from the response's cache headers. Past it, fetch again. */
   cacheUntil: string;

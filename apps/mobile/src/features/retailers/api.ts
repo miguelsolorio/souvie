@@ -2,10 +2,11 @@
 // or a customer token: everything that needs them goes through the function.
 //
 // Kroger data that comes back (stores, products) lives in memory only. Products are recorded
-// with the terms guard on arrival so components can prove they render them unchanged.
+// with the terms guard on arrival (as hashes, not values) so components can prove they render
+// them unchanged; the caller releases that record when the results leave the screen.
 import type { MpClient } from "@mp/db";
 import type { Banner, CartItemDelta, CartResult, Modality, Product, Store } from "@mp/retailers";
-import { rememberReturned } from "@mp/retailers/kroger/terms";
+import { type ReturnedSet, rememberReturned } from "@mp/retailers/kroger/terms";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 
 export const RETAILER_FUNCTION = "retailer-oauth";
@@ -66,12 +67,13 @@ async function call<T>(client: MpClient, body: Record<string, unknown>): Promise
 
 export async function startKrogerAuthorization(
   client: MpClient,
-  args: { householdId: string; banner?: Banner | undefined },
+  args: { householdId: string; banner?: Banner | undefined; storeId?: string | null | undefined },
 ): Promise<string> {
+  // A known banner goes as is. Otherwise the store id lets the function look the chain up.
   const { authorizeUrl } = await call<{ authorizeUrl: string }>(client, {
     action: "authorize",
     householdId: args.householdId,
-    ...(args.banner ? { banner: args.banner } : {}),
+    ...(args.banner ? { banner: args.banner } : args.storeId ? { storeId: args.storeId } : {}),
   });
   return authorizeUrl;
 }
@@ -111,16 +113,19 @@ export async function findKrogerStores(client: MpClient, zip: string): Promise<S
   return stores;
 }
 
+/**
+ * Searches one store. The products are recorded with the terms guard until `returned.release()`;
+ * call it when a new search replaces them or the screen unmounts (useKrogerSearch does).
+ */
 export async function searchKrogerProducts(
   client: MpClient,
   args: { householdId: string; storeId: string; q: string },
-): Promise<Product[]> {
+): Promise<{ products: Product[]; returned: ReturnedSet }> {
   const { products } = await call<{ products: Product[] }>(client, {
     action: "products",
     ...args,
   });
-  for (const product of products) rememberReturned(product);
-  return products;
+  return { products, returned: rememberReturned(products) };
 }
 
 export async function addToKrogerCart(

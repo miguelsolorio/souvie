@@ -106,7 +106,7 @@ describe("completeKrogerRedirect", () => {
 });
 
 describe("searchKrogerProducts", () => {
-  it("records returned products with the terms guard so components can check them", async () => {
+  it("records returned products with the terms guard until the set is released", async () => {
     const product = {
       id: "0009990001001",
       upc: "0009990001001",
@@ -119,17 +119,22 @@ describe("searchKrogerProducts", () => {
       stockLevel: "HIGH",
       fulfillment: { instore: true, curbside: true, delivery: true, shiptohome: false },
       allergens: [],
+      mayContain: [],
       imageUrl: null,
+      // No cache header: the record lives only as long as the results do.
       cacheUntil: "2026-10-30T19:28:41.000Z",
     };
     const { client } = fakeClient({ ok: true, products: [product] });
-    const [received] = await searchKrogerProducts(client, {
+    const { products, returned } = await searchKrogerProducts(client, {
       householdId: CONNECTION.householdId,
       storeId: "70500999",
       q: "chicken thighs",
     });
+    const [received] = products;
     if (!received) throw new Error("no product");
     expect(isDisplayUnchanged(received, { name: product.name, price: "$5.99" })).toBe(true);
     expect(isDisplayUnchanged({ ...received, name: "CHICKEN" })).toBe(false);
+    returned.release();
+    expect(isDisplayUnchanged(received)).toBe(false);
   });
 });

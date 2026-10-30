@@ -16,8 +16,8 @@ import {
   KrogerAdapter,
   type Rpc,
 } from "../../../packages/retailers/src/kroger/index.ts";
-import { handleRetailerOAuth, type Runtime } from "./handler.ts";
-import type { ConnectionRow, RetailerStore } from "./store.ts";
+import { handleRetailerOAuth, type Runtime, USER_HOURLY_LIMITS } from "./handler.ts";
+import type { ConnectionRow, RetailerStore, UserBudget } from "./store.ts";
 
 // supabase-js is only needed by the real runtime; the tests inject their own.
 vi.mock("./client.ts", () => ({ createClient: vi.fn() }));
@@ -49,6 +49,7 @@ class FakeDb {
   connections = new Map<string, Row>();
   vault = new Map<string, string>();
   quota = new Map<string, number>();
+  userUsage = new Map<string, number>();
   #n = 0;
 
   #id(prefix: string): string {
@@ -160,6 +161,15 @@ class FakeStore implements RetailerStore {
     });
     if (error) throw new Error(error.message);
   }
+  /** Same rule as retailer_user_consume: count only while under the limit. */
+  async consumeUserBudget(userId: string, action: string, limit: number): Promise<UserBudget> {
+    const key = `${userId}|${action}`;
+    const used = this.db.userUsage.get(key) ?? 0;
+    const resetsAt = new Date(Math.ceil((Date.now() + 1) / 3_600_000) * 3_600_000).toISOString();
+    if (used + 1 > limit) return { allowed: false, used, resetsAt };
+    this.db.userUsage.set(key, used + 1);
+    return { allowed: true, used: used + 1, resetsAt };
+  }
 }
 
 function setup(cart: RecordedResponse = cartAdd) {
@@ -175,6 +185,10 @@ function setup(cart: RecordedResponse = cartAdd) {
     },
     { path: "/v1/identity/profile", respond: identityProfile },
     { path: "/v1/locations", respond: locations98019 },
+    {
+      path: "/v1/locations/70100999",
+      respond: { status: 200, headers: {}, body: { data: locations98019.body.data[1] } },
+    },
     { path: "/v1/products", respond: productsChickenThighs },
     { method: "PUT", path: "/v1/cart/add", respond: cart },
   ]);
@@ -291,6 +305,17 @@ describe("retailer-oauth: connect and disconnect", () => {
       vault_secret_id: null,
     });
     expect(res.body.connection).toMatchObject({ status: "revoked" });
+  });
+
+  it("brands a reconnect from the connection's store id when the app has no chain", async () => {
+    const { call } = setup();
+    const res = await call("Bearer alice", {
+      action: "authorize",
+      householdId: HOUSEHOLD,
+      storeId: "70100999",
+    });
+    expect(res.status).toBe(200);
+    expect(new URL(res.body.authorizeUrl as string).searchParams.get("banner")).toBe("fredmeyer");
   });
 
   it("refuses a state that another user started", async () => {
@@ -442,6 +467,49 @@ describe("retailer-oauth: catalog and cart for the app", () => {
       error: "quota_exhausted",
       resetsAt: "2026-10-31T00:00:00.000Z",
     });
+  });
+});
+
+describe("retailer-oauth: per-member hourly limits", () => {
+  it("answers 429 with Retry-After once a member uses up an hour's product searches", async () => {
+    const { db, http, call } = setup();
+    db.userUsage.set(`${ALICE}|products`, USER_HOURLY_LIMITS.products);
+    const before = http.requests.length;
+    const res = await call("Bearer alice", {
+      action: "products",
+      householdId: HOUSEHOLD,
+      storeId: "70500999",
+      q: "milk",
+    });
+    expect(res.status).toBe(429);
+    expect(res.body.error).toBe("rate_limited");
+    expect(typeof res.body.resetsAt).toBe("string");
+    expect(Number(res.headers.get("retry-after"))).toBeGreaterThan(0);
+    // Kroger was not called, so the shared quota is untouched.
+    expect(http.requests.length).toBe(before);
+  });
+
+  it("counts each member separately", async () => {
+    const { db, call } = setup();
+    db.userUsage.set(`${ALICE}|stores`, USER_HOURLY_LIMITS.stores);
+    expect((await call("Bearer alice", { action: "stores", zip: "98019" })).status).toBe(429);
+    expect((await call("Bearer carol", { action: "stores", zip: "98019" })).status).toBe(200);
+    expect(db.userUsage.get(`${CAROL}|stores`)).toBe(1);
+  });
+
+  it("limits stores, products, and cart_add, and nothing else", async () => {
+    expect(USER_HOURLY_LIMITS).toEqual({ stores: 20, products: 60, cart_add: 30 });
+    const { db, call } = setup();
+    db.userUsage.set(`${ALICE}|cart_add`, USER_HOURLY_LIMITS.cart_add);
+    const res = await call("Bearer alice", {
+      action: "cart_add",
+      connectionId: "c0000000-0000-4000-8000-000000000001",
+      items: [{ productId: "0009990001001", upc: null, quantityDelta: 1 }],
+    });
+    expect(res.status).toBe(429);
+    expect(
+      (await call("Bearer alice", { action: "authorize", householdId: HOUSEHOLD })).status,
+    ).toBe(200);
   });
 });
 

@@ -390,22 +390,40 @@ export function createRpcVault(rpc: Rpc): RefreshTokenVault {
 // Customer access tokens, in memory
 // ---------------------------------------------------------------------------------------
 
+/** How long a refresh that lost a race waits before looking in Vault a second time. */
+export const REFRESH_RACE_REREAD_MS = 500;
+
+export interface CustomerTokenCacheOptions {
+  sleep?: (ms: number) => Promise<void>;
+  rereadDelayMs?: number;
+}
+
 /**
  * Hands out customer access tokens for cart calls. Reads the refresh token from Vault once per
  * connection, refreshes, writes the reissued refresh token back (rotation), and keeps the access
- * token in memory until it nears expiry. Never retries auth in a loop: one refresh per call site.
+ * token in memory until it nears expiry. Never retries auth in a loop: at most one retry, and only
+ * with a different refresh token another process stored (see #replacementFor).
  */
 export class CustomerTokenCache {
   readonly #auth: KrogerAuth;
   readonly #vault: RefreshTokenVault;
   readonly #now: () => number;
+  readonly #sleep: (ms: number) => Promise<void>;
+  readonly #rereadDelayMs: number;
   readonly #tokens = new Map<string, AccessToken>();
   readonly #pending = new Map<string, Promise<AccessToken>>();
 
-  constructor(auth: KrogerAuth, vault: RefreshTokenVault, now: () => number = Date.now) {
+  constructor(
+    auth: KrogerAuth,
+    vault: RefreshTokenVault,
+    now: () => number = Date.now,
+    options: CustomerTokenCacheOptions = {},
+  ) {
     this.#auth = auth;
     this.#vault = vault;
     this.#now = now;
+    this.#sleep = options.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+    this.#rereadDelayMs = options.rereadDelayMs ?? REFRESH_RACE_REREAD_MS;
   }
 
   /** Seeds the cache with a token the exchange just produced, so the first cart call skips a refresh. */
@@ -423,7 +441,7 @@ export class CustomerTokenCache {
     return (await this.refresh(conn)).accessToken;
   }
 
-  /** Forces a refresh (after a 401). Concurrent callers share one refresh. */
+  /** Forces a refresh (after a 401). Concurrent callers in this process share one refresh. */
   refresh(conn: ConnectionHandle): Promise<AccessToken> {
     const id = conn.connectionId;
     let pending = this.#pending.get(id);
@@ -434,10 +452,34 @@ export class CustomerTokenCache {
     return pending;
   }
 
+  /**
+   * The refresh token another process stored after using `used`, or null. Kroger invalidates a
+   * refresh token once it is used, so when two processes (two Edge Function isolates, or the
+   * worker and a function) refresh with the same token at once, one wins and rotates Vault and the
+   * other gets invalid_grant. The loser looks in Vault again, once at once and once after a short
+   * wait for the winner's write, before deciding the connection really needs a new sign-in.
+   */
+  async #replacementFor(connectionId: string, used: string): Promise<string | null> {
+    const first = await this.#vault.read(connectionId);
+    if (first && first !== used) return first;
+    await this.#sleep(this.#rereadDelayMs);
+    const second = await this.#vault.read(connectionId);
+    return second && second !== used ? second : null;
+  }
+
+  async #needsReauth(connectionId: string, err: RetailerAuthError): Promise<never> {
+    await this.#vault.markNeedsReauth(connectionId);
+    throw new RetailerAuthError("kroger", err.reason, err.message, {
+      connectionId,
+      needsReauth: true,
+      cause: err,
+    });
+  }
+
   async #refresh(connectionId: string): Promise<AccessToken> {
     this.#tokens.delete(connectionId);
-    const refreshToken = await this.#vault.read(connectionId);
-    if (!refreshToken) {
+    const used = await this.#vault.read(connectionId);
+    if (!used) {
       throw new RetailerAuthError(
         "kroger",
         "missing_token",
@@ -450,19 +492,22 @@ export class CustomerTokenCache {
     }
     let tokens: CustomerTokens;
     try {
-      tokens = await this.#auth.refresh(refreshToken);
+      tokens = await this.#auth.refresh(used);
     } catch (err) {
-      if (err instanceof RetailerAuthError && err.needsReauth) {
-        await this.#vault.markNeedsReauth(connectionId);
-        throw new RetailerAuthError("kroger", err.reason, err.message, {
-          connectionId,
-          needsReauth: true,
-          cause: err,
-        });
+      if (!(err instanceof RetailerAuthError) || !err.needsReauth) throw err;
+      const replacement =
+        err.reason === "invalid_grant" ? await this.#replacementFor(connectionId, used) : null;
+      if (!replacement) return this.#needsReauth(connectionId, err);
+      try {
+        tokens = await this.#auth.refresh(replacement);
+      } catch (second) {
+        if (second instanceof RetailerAuthError && second.needsReauth) {
+          return this.#needsReauth(connectionId, second);
+        }
+        throw second;
       }
-      throw err;
     }
-    // Kroger has already invalidated the old refresh token; store the new one before using it.
+    // Kroger has already invalidated the token we used; store the new one before using it.
     await this.#vault.rotate(connectionId, tokens.refreshToken);
     const access = { accessToken: tokens.accessToken, expiresAt: tokens.expiresAt };
     this.#tokens.set(connectionId, access);

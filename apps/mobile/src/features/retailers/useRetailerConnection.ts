@@ -5,15 +5,18 @@
 // queries keep no copy once the screen lets go of them (gcTime 0). Connections are our own rows,
 // read under RLS with explicit columns, because vault_secret_id is not granted to clients.
 import { useSupabase } from "@mp/db";
-import type { Banner, Modality, Store } from "@mp/retailers";
+import type { Banner, Modality, Product, Store } from "@mp/retailers";
+import type { ReturnedSet } from "@mp/retailers/kroger/terms";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
 import {
   disconnectRetailer,
   findKrogerStores,
   RetailerApiError,
   type RetailerConnection,
+  searchKrogerProducts,
   startKrogerAuthorization,
 } from "./api";
 import { completeKrogerRedirect, KROGER_REDIRECT_URI, rememberConnectChoice } from "./oauth";
@@ -107,6 +110,7 @@ export function useConnectKroger(householdId: string | undefined) {
       const authorizeUrl = await startKrogerAuthorization(client, {
         householdId,
         banner: args.banner,
+        storeId: args.store?.id,
       });
       rememberConnectChoice(args.store ?? null, args.modality ?? null);
       const result = await WebBrowser.openAuthSessionAsync(authorizeUrl, KROGER_REDIRECT_URI);
@@ -180,4 +184,49 @@ export function useKrogerStores(zip: string) {
     retry: false,
     queryFn: () => findKrogerStores(client, zip),
   });
+}
+
+/**
+ * Product search at one store, held in component state only. The terms guard's record of the
+ * results (hashes) is released when a new search replaces them, the store changes, or the screen
+ * unmounts, so nothing about them outlives the screen that showed them.
+ */
+export function useKrogerSearch(householdId: string | undefined, storeId: string | null) {
+  const client = useSupabase();
+  const held = useRef<ReturnedSet | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+
+  const drop = useCallback(() => {
+    held.current?.release();
+    held.current = null;
+    setProducts([]);
+  }, []);
+
+  const search = useMutation({
+    gcTime: 0,
+    mutationFn: (q: string) => {
+      if (!householdId || !storeId) {
+        throw new RetailerApiError("no_store", "Pick a store first.");
+      }
+      return searchKrogerProducts(client, { householdId, storeId, q });
+    },
+    onSuccess: ({ products: found, returned }) => {
+      held.current?.release();
+      held.current = returned;
+      setProducts(found);
+    },
+  });
+
+  // A different store means different prices: drop what the old one returned.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: storeId is the trigger, not an input.
+  useEffect(() => drop(), [storeId, drop]);
+  useEffect(() => () => held.current?.release(), []);
+
+  return {
+    products,
+    search: (q: string) => search.mutate(q),
+    isPending: search.isPending,
+    isError: search.isError,
+    error: search.error,
+  };
 }

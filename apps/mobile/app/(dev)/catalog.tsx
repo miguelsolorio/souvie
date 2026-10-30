@@ -2,8 +2,9 @@
 // prices, add an item to your own Kroger cart, then open Kroger checkout to see it there.
 // Reach it at souvie://catalog in a development build. Release builds redirect home.
 //
-// Kroger data here lives in component state only: no query cache, no persistence. Only Kroger
-// prices are on this screen.
+// Kroger data here lives in component state only: no query cache, no persistence. The terms
+// guard's record of a search is released when the next search replaces it or the screen
+// unmounts. Only Kroger prices are on this screen.
 import { useHousehold, useSession, useSupabase } from "@mp/db";
 import type { Product, Store } from "@mp/retailers";
 import { useMutation } from "@tanstack/react-query";
@@ -14,16 +15,15 @@ import { Button } from "../../src/components/Button";
 import { ErrorText, LoadingScreen, Screen, Section } from "../../src/components/Screen";
 import { TextField } from "../../src/components/TextField";
 import { SessionGuard } from "../../src/features/auth/SessionGuard";
-import {
-  addToKrogerCart,
-  retailerErrorMessage,
-  searchKrogerProducts,
-} from "../../src/features/retailers/api";
+import { addToKrogerCart, retailerErrorMessage } from "../../src/features/retailers/api";
 import { ConnectionCard } from "../../src/features/retailers/ConnectionCard";
 import { ConnectKroger } from "../../src/features/retailers/ConnectKroger";
 import { ProductRow } from "../../src/features/retailers/ProductRow";
 import { StorePicker } from "../../src/features/retailers/StorePicker";
-import { useRetailerConnection } from "../../src/features/retailers/useRetailerConnection";
+import {
+  useKrogerSearch,
+  useRetailerConnection,
+} from "../../src/features/retailers/useRetailerConnection";
 
 const DEFAULT_CHECKOUT = "https://www.kroger.com/checkout";
 
@@ -42,12 +42,7 @@ function CatalogExplorer() {
   const storeId = connection?.storeId ?? chosen?.id ?? null;
   const chain = chosen?.id === storeId ? chosen?.chain : null;
 
-  const search = useMutation({
-    mutationFn: (q: string) => {
-      if (!householdId || !storeId) throw new Error("Pick a store first.");
-      return searchKrogerProducts(client, { householdId, storeId, q });
-    },
-  });
+  const search = useKrogerSearch(householdId, storeId);
 
   const add = useMutation({
     mutationFn: (product: Product) => {
@@ -100,14 +95,14 @@ function CatalogExplorer() {
           value={query}
           onChangeText={setQuery}
           returnKeyType="search"
-          onSubmitEditing={() => search.mutate(query)}
+          onSubmitEditing={() => search.search(query)}
           testID="catalog-query"
         />
         <Button
           label="Search"
           loading={search.isPending}
           disabled={!storeId || query.trim().length < 3}
-          onPress={() => search.mutate(query)}
+          onPress={() => search.search(query)}
           testID="catalog-search"
         />
         {!storeId ? (
@@ -115,7 +110,7 @@ function CatalogExplorer() {
         ) : null}
         <ErrorText>{search.isError ? retailerErrorMessage(search.error) : null}</ErrorText>
         <View className="gap-3">
-          {(search.data ?? []).map((product) => (
+          {search.products.map((product) => (
             <ProductRow
               key={product.id}
               product={product}

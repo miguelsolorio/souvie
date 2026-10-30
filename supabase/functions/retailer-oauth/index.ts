@@ -1,7 +1,7 @@
 // retailer-oauth (WS07): the server side of connecting a Kroger account, plus the Kroger calls
 // the app may not make itself because they need the client secret or a customer token.
 //
-//   POST { "action": "authorize", "householdId", "banner"?: "qfc" | "fredmeyer", "chain"? }
+//   POST { "action": "authorize", "householdId", "banner"? | "chain"? | "storeId"? }
 //     -> { ok, authorizeUrl }          open it in the system browser
 //   POST { "action": "exchange", "code", "state", "storeId"?, "storeName"?, "modality"? }
 //     -> { ok, connection }            the app forwards souvie://oauth/kroger?code&state here
@@ -12,7 +12,8 @@
 //     -> { ok, result: { accepted, rejected }, checkoutUrl }
 //
 // Errors: { ok: false, error, message } with an HTTP status (handler.ts lists them). Needs a
-// signed-in user (verify_jwt stays on). Secrets, set with `supabase secrets set`:
+// signed-in user (verify_jwt stays on). stores, products, and cart_add have per-member hourly
+// limits (README.md). Secrets, set with `supabase secrets set`:
 // KROGER_CLIENT_ID, KROGER_CLIENT_SECRET, KROGER_REDIRECT_URI; optional KROGER_API_BASE.
 
 import {

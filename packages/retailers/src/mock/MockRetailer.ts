@@ -15,7 +15,6 @@ import {
   RetailerQuotaError,
   RetailerRequestError,
 } from "../errors.ts";
-import { rememberReturned } from "../kroger/terms.ts";
 import type {
   Cart,
   CartItemDelta,
@@ -238,10 +237,10 @@ export class MockRetailer implements RetailerAdapter {
         shiptohome: fixture.category === "pantry",
       }),
       allergens: Object.freeze([...fixture.allergens]) as string[],
+      mayContain: Object.freeze([] as string[]) as string[],
       imageUrl: null,
       cacheUntil: new Date(this.#now() + (this.#options.cacheSeconds ?? 300) * 1000).toISOString(),
     };
-    rememberReturned(product);
     return Object.freeze(product);
   }
 

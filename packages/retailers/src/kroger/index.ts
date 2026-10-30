@@ -34,8 +34,11 @@ export {
 } from "./KrogerAdapter.ts";
 export { findStores, getStore, isZip, listChains, SUPPORTED_CHAINS } from "./locations.ts";
 export {
+  type AllergenLevel,
+  allergenLevel,
   type KrogerLocation,
   type KrogerProduct,
+  type MappedAllergens,
   mapAllergens,
   mapProduct,
   mapStore,
@@ -67,5 +70,6 @@ export {
   formatPrice,
   isDisplayUnchanged,
   type RenderedDisplay,
+  type ReturnedSet,
   rememberReturned,
 } from "./terms.ts";

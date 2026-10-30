@@ -1,8 +1,9 @@
 -- WS07: retail. docs/02-data-model.md §Retail, migration order 9.
 --
--- Tables: retailer_connections, product_matches, retailer_quota_usage. Also here: the foreign key
--- from households.default_connection_id (WS01 left it bare for this migration), the Vault-backed
--- functions the retailer-oauth Edge Function and the worker call, and the quota counter.
+-- Tables: retailer_connections, product_matches, retailer_quota_usage, retailer_user_usage. Also
+-- here: the foreign key from households.default_connection_id (WS01 left it bare for this
+-- migration), the Vault-backed functions the retailer-oauth Edge Function and the worker call, the
+-- shared quota counter, and the per-member hourly limit.
 --
 -- Sort order: after 20261030072000_ingredients.sql (product_matches.ingredient_id references
 -- ingredients) and the identity migrations (households, helpers, audit_events).
@@ -22,6 +23,7 @@
 --   product_matches        members, for choices they confirm (chosen_by = 'user'); the worker
 --                          (service role) for agent choices.
 --   retailer_quota_usage   the worker and Edge Functions only, through retailer_quota_consume.
+--   retailer_user_usage    the retailer-oauth Edge Function only, through retailer_user_consume.
 
 create extension if not exists supabase_vault with schema vault;
 
@@ -188,10 +190,33 @@ comment on table public.retailer_quota_usage is
   'Daily API call counts per retailer endpoint (WS07). Service role only.';
 
 -- ---------------------------------------------------------------------------------------
+-- retailer_user_usage: per-member hourly counts for the retailer-oauth function. Sign-up is open,
+-- so without this one account could spend the shared daily quota and pause every household's
+-- runs (R15). The limits themselves live in the function (its README lists them).
+-- ---------------------------------------------------------------------------------------
+
+create table public.retailer_user_usage (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  -- The function action: stores, products, cart_add.
+  action text not null,
+  -- The start of the hour being counted.
+  window_start timestamptz not null,
+  count integer not null default 0,
+
+  primary key (user_id, action, window_start),
+  constraint retailer_user_usage_action_format check (action ~ '^[a-z_]{1,40}$'),
+  constraint retailer_user_usage_count_range check (count >= 0)
+);
+
+comment on table public.retailer_user_usage is
+  'Per-member hourly retailer-oauth call counts (WS07). Service role only; rows older than a day are pruned.';
+
+-- ---------------------------------------------------------------------------------------
 -- Table privileges and RLS (supabase/README.md §RLS conventions)
 -- ---------------------------------------------------------------------------------------
 
-revoke all on public.retailer_connections, public.product_matches, public.retailer_quota_usage
+revoke all on public.retailer_connections, public.product_matches, public.retailer_quota_usage,
+  public.retailer_user_usage
   from anon, authenticated;
 
 -- Every column except vault_secret_id. `select *` fails for clients on purpose.
@@ -215,6 +240,7 @@ grant update (product_name, size, confidence, chosen_by, pinned, last_chosen_at)
 alter table public.retailer_connections enable row level security;
 alter table public.product_matches enable row level security;
 alter table public.retailer_quota_usage enable row level security;
+alter table public.retailer_user_usage enable row level security;
 
 create policy "retailer_connections: members read" on public.retailer_connections
   for select to authenticated
@@ -257,8 +283,8 @@ create policy "product_matches: members delete" on public.product_matches
   for delete to authenticated
   using (household_id in (select public.current_household_ids()));
 
--- retailer_quota_usage: RLS on, no policies. Only the service role (which bypasses RLS) and the
--- functions below touch it.
+-- retailer_quota_usage and retailer_user_usage: RLS on, no policies. Only the service role
+-- (which bypasses RLS) and the functions below touch them.
 
 -- ---------------------------------------------------------------------------------------
 -- Connection functions (service role only). The retailer-oauth Edge Function and the worker
@@ -529,6 +555,52 @@ as $$
   do update set count = greatest(q.count, excluded.count), updated_at = now();
 $$;
 
+-- One call by one member against this hour's limit for an action. Atomic like the daily counter.
+-- The first call of an hour also prunes that member's rows older than a day.
+create or replace function public.retailer_user_consume(
+  p_user_id uuid,
+  p_action text,
+  p_limit integer
+)
+returns table (allowed boolean, used integer, resets_at timestamptz)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_window timestamptz := date_trunc('hour', now());
+  v_count integer;
+  v_inserted integer;
+begin
+  if p_limit is null or p_limit < 1 then
+    raise exception 'invalid_limit';
+  end if;
+  insert into public.retailer_user_usage (user_id, action, window_start, count)
+  values (p_user_id, p_action, v_window, 0)
+  on conflict on constraint retailer_user_usage_pkey do nothing;
+  get diagnostics v_inserted = row_count;
+  if v_inserted > 0 then
+    delete from public.retailer_user_usage u
+    where u.user_id = p_user_id and u.window_start < v_window - interval '1 day';
+  end if;
+
+  update public.retailer_user_usage u
+  set count = u.count + 1
+  where u.user_id = p_user_id and u.action = p_action and u.window_start = v_window
+    and u.count + 1 <= p_limit
+  returning u.count into v_count;
+
+  if v_count is not null then
+    return query select true, v_count, v_window + interval '1 hour';
+    return;
+  end if;
+  select u.count into v_count
+  from public.retailer_user_usage u
+  where u.user_id = p_user_id and u.action = p_action and u.window_start = v_window;
+  return query select false, coalesce(v_count, 0), v_window + interval '1 hour';
+end;
+$$;
+
 revoke all on function public.retailer_save_oauth_connection(
   uuid, uuid, public.retailer, text, text, text, public.retailer_connections_modality
 ) from public, anon, authenticated;
@@ -553,3 +625,7 @@ grant execute on function public.retailer_quota_consume(public.retailer, text, d
   to service_role;
 grant execute on function public.retailer_quota_raise(public.retailer, text, date, integer)
   to service_role;
+
+revoke all on function public.retailer_user_consume(uuid, text, integer)
+  from public, anon, authenticated;
+grant execute on function public.retailer_user_consume(uuid, text, integer) to service_role;

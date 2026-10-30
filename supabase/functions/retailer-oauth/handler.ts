@@ -35,6 +35,7 @@ export interface KrogerOps {
   }): Promise<{ authorizeUrl?: string }>;
   completeConnect(input: CompleteConnectInput): Promise<CompletedAuthorization>;
   verifyConnection(conn: ConnectionHandle): Promise<boolean>;
+  getStore(locationId: string): Promise<Store | null>;
   findStores(zip: string, opts?: { radiusMiles?: number }): Promise<Store[]>;
   searchProducts(q: string, store: Store, opts?: { limit?: number }): Promise<Product[]>;
   addToCart(
@@ -55,6 +56,17 @@ export interface Runtime {
 
 export const MAX_BODY_BYTES = 20_000;
 
+/**
+ * Calls one member may make per hour, per action (README.md). The daily Kroger quota is shared by
+ * every household, and sign-up is open, so these keep one account from spending it for everyone.
+ * The worker's runs do not go through this function and are budgeted by WS09.
+ */
+export const USER_HOURLY_LIMITS = {
+  stores: 20,
+  products: 60,
+  cart_add: 30,
+} as const satisfies Partial<Record<string, number>>;
+
 export type ErrorCode =
   | "unauthorized"
   | "method_not_allowed"
@@ -66,6 +78,7 @@ export type ErrorCode =
   | "invalid_grant"
   | "reauth_required"
   | "quota_exhausted"
+  | "rate_limited"
   | "retailer_error"
   | "internal_error";
 
@@ -80,6 +93,7 @@ const MESSAGES: Record<ErrorCode, string> = {
   invalid_grant: "Kroger did not accept the sign-in. Try connecting again.",
   reauth_required: "Reconnect your Kroger account to keep going.",
   quota_exhausted: "Kroger is busy for today. Try again after midnight UTC.",
+  rate_limited: "You have made a lot of store requests this hour. Try again after the hour turns.",
   retailer_error: "Kroger did not answer as expected. Try again shortly.",
   internal_error: "Something went wrong on our side.",
 };
@@ -95,6 +109,7 @@ const STATUS: Record<ErrorCode, number> = {
   invalid_grant: 400,
   reauth_required: 409,
   quota_exhausted: 429,
+  rate_limited: 429,
   retailer_error: 502,
   internal_error: 500,
 };
@@ -112,6 +127,14 @@ function json(body: unknown, status = 200): Response {
 
 function fail(error: ErrorCode, extra: Record<string, unknown> = {}, message?: string): Response {
   return json({ ok: false, error, message: message ?? MESSAGES[error], ...extra }, STATUS[error]);
+}
+
+/** 429 with Retry-After, for a member who used up this hour's calls. */
+function rateLimited(resetsAt: string): Response {
+  const retryAfter = Math.max(1, Math.ceil((Date.parse(resetsAt) - Date.now()) / 1000));
+  const res = fail("rate_limited", { resetsAt });
+  res.headers.set("Retry-After", String(retryAfter));
+  return res;
 }
 
 class BadRequest extends Error {}
@@ -218,10 +241,28 @@ function retailerFailure(err: unknown): Response | null {
 // Actions
 // ---------------------------------------------------------------------------------------
 
+/**
+ * The banner for the consent screen: given outright, from the store's chain, or, for a reconnect
+ * where the app knows only the store id, from one Locations lookup.
+ */
+async function resolveBanner(runtime: Runtime, body: Body): Promise<Banner | undefined> {
+  const banner = bannerOf(body);
+  if (banner || body.storeId === undefined || body.storeId === null) return banner;
+  const storeId = str(body, "storeId", { max: 8 });
+  if (!LOCATION_ID.test(storeId)) throw new BadRequest("storeId must be a locationId");
+  try {
+    return bannerForChain((await runtime.kroger.getStore(storeId))?.chain);
+  } catch (err) {
+    // An unbranded consent screen is better than no reconnect at all.
+    if (err instanceof RetailerQuotaError || err instanceof RetailerRequestError) return undefined;
+    throw err;
+  }
+}
+
 async function authorize(runtime: Runtime, userId: string, body: Body): Promise<Response> {
   const householdId = uuid(body, "householdId");
   await requireMember(runtime, householdId, userId);
-  const banner = bannerOf(body);
+  const banner = await resolveBanner(runtime, body);
   const { authorizeUrl } = await runtime.kroger.connect({
     householdId,
     userId,
@@ -384,6 +425,11 @@ export async function handleRetailerOAuth(req: Request, runtime: Runtime): Promi
   }
 
   try {
+    const limit = (USER_HOURLY_LIMITS as Record<string, number | undefined>)[action];
+    if (limit !== undefined) {
+      const budget = await runtime.store.consumeUserBudget(user.userId, action, limit);
+      if (!budget.allowed) return rateLimited(budget.resetsAt);
+    }
     return await ACTIONS[action as Action](runtime, user.userId, body);
   } catch (err) {
     if (err instanceof BadRequest) return fail("invalid_request", {}, err.message);

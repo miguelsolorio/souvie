@@ -6,7 +6,7 @@ import {
   RetailerQuotaError,
   RetailerRequestError,
 } from "../errors.ts";
-import { isDisplayUnchanged } from "../kroger/terms.ts";
+import { isDisplayUnchanged, rememberReturned } from "../kroger/terms.ts";
 import { pickCandidate, toCartItemDelta } from "../refs.ts";
 import type { ConnectionHandle, Store } from "../types.ts";
 import { MOCK_PRODUCTS, MOCK_STORES, MockRetailer } from "./MockRetailer.ts";
@@ -98,13 +98,19 @@ describe("MockRetailer", () => {
     expect(await mock.searchProducts("   ", store)).toEqual([]);
   });
 
-  it("returns products the terms guard recognizes", async () => {
+  it("returns frozen products the terms guard can check once the app records them", async () => {
     const mock = new MockRetailer({ now: NOW });
     const [p] = await mock.searchProducts("eggs", await firstStore(mock));
     if (!p) throw new Error("no eggs");
-    expect(isDisplayUnchanged(p)).toBe(true);
-    expect(isDisplayUnchanged({ ...p, name: "EGGS" })).toBe(false);
+    expect(Object.isFrozen(p)).toBe(true);
+    expect(p.mayContain).toEqual([]);
     expect(p.cacheUntil).toBe(new Date(T0 + 300_000).toISOString());
+    // The mock records nothing itself, like the Kroger adapter.
+    expect(isDisplayUnchanged(p, {}, { now: T0 })).toBe(false);
+    const returned = rememberReturned(p, { now: T0 });
+    expect(isDisplayUnchanged(p, {}, { now: T0 })).toBe(true);
+    expect(isDisplayUnchanged({ ...p, name: "EGGS" }, {}, { now: T0 })).toBe(false);
+    returned.release();
   });
 
   it("reflects addToCart quantities in getCart", async () => {

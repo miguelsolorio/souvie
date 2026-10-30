@@ -305,6 +305,111 @@ describe("customer tokens", () => {
   });
 });
 
+describe("refresh races between processes", () => {
+  const conn = { connectionId: "conn-1", retailer: "kroger" as const, storeId: null };
+  const sleep = vi.fn(async (_ms: number) => {});
+
+  /** Kroger as seen by the loser: R1 is already spent, R2 (the winner's) still works. */
+  function kroger() {
+    return replay([
+      {
+        method: "POST",
+        path: TOKEN_PATH,
+        respond: (req) =>
+          new URLSearchParams(req.body ?? "").get("refresh_token") === "R1"
+            ? tokenInvalidGrant
+            : tokenRefresh,
+      },
+    ]);
+  }
+
+  /** A vault whose reads return `reads` in turn, repeating the last. */
+  function racingVault(reads: (string | null)[]) {
+    let n = 0;
+    return {
+      saveConnection: vi.fn(async (_input: SaveConnectionInput) => ({ connectionId: "conn-1" })),
+      read: vi.fn(async (_id: string) => reads[Math.min(n++, reads.length - 1)] ?? null),
+      rotate: vi.fn(async (_id: string, _token: string) => {}),
+      markNeedsReauth: vi.fn(async (_id: string) => {}),
+    } satisfies RefreshTokenVault;
+  }
+
+  it("retries once with the token the winner stored, and does not flag reauth", async () => {
+    const { fetch, requests } = kroger();
+    const vault = racingVault(["R1", "R2"]);
+    const tokens = new CustomerTokenCache(
+      new KrogerAuth({ ...TEST_CONFIG, fetch }),
+      vault,
+      Date.now,
+      {
+        sleep,
+      },
+    );
+    await expect(tokens.get(conn)).resolves.toBe("fixture-customer-access-token-2");
+    expect(requests.map((r) => new URLSearchParams(r.body ?? "").get("refresh_token"))).toEqual([
+      "R1",
+      "R2",
+    ]);
+    expect(vault.markNeedsReauth).not.toHaveBeenCalled();
+    expect(vault.rotate).toHaveBeenCalledWith("conn-1", "fixture-customer-refresh-token-2");
+  });
+
+  it("waits once for a winner whose Vault write has not landed yet", async () => {
+    const { fetch } = kroger();
+    const vault = racingVault(["R1", "R1", "R2"]);
+    const tokens = new CustomerTokenCache(
+      new KrogerAuth({ ...TEST_CONFIG, fetch }),
+      vault,
+      Date.now,
+      {
+        sleep,
+        rereadDelayMs: 250,
+      },
+    );
+    await expect(tokens.get(conn)).resolves.toBe("fixture-customer-access-token-2");
+    expect(sleep).toHaveBeenLastCalledWith(250);
+    expect(vault.markNeedsReauth).not.toHaveBeenCalled();
+  });
+
+  it("flags reauth only when Vault still holds the token Kroger refused", async () => {
+    const { fetch, requests } = kroger();
+    const vault = racingVault(["R1"]);
+    const tokens = new CustomerTokenCache(
+      new KrogerAuth({ ...TEST_CONFIG, fetch }),
+      vault,
+      Date.now,
+      {
+        sleep,
+      },
+    );
+    await expect(tokens.get(conn)).rejects.toMatchObject({
+      reason: "invalid_grant",
+      needsReauth: true,
+    });
+    expect(requests).toHaveLength(1);
+    expect(vault.read).toHaveBeenCalledTimes(3);
+    expect(vault.markNeedsReauth).toHaveBeenCalledWith("conn-1");
+  });
+
+  it("flags reauth when the replacement is refused too, without a third try", async () => {
+    const { fetch, requests } = replay([
+      { method: "POST", path: TOKEN_PATH, respond: tokenInvalidGrant },
+    ]);
+    const vault = racingVault(["R1", "R2"]);
+    const tokens = new CustomerTokenCache(
+      new KrogerAuth({ ...TEST_CONFIG, fetch }),
+      vault,
+      Date.now,
+      {
+        sleep,
+      },
+    );
+    await expect(tokens.get(conn)).rejects.toMatchObject({ needsReauth: true });
+    expect(requests).toHaveLength(2);
+    expect(vault.markNeedsReauth).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("app token", () => {
   it("is fetched once and reused until a minute before it expires", async () => {
     const c = clock();

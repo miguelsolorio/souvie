@@ -17,7 +17,7 @@
 
 begin;
 
-select plan(93);
+select plan(104);
 
 -- ---------------------------------------------------------------------------------------
 -- Fixtures (as the postgres role, which bypasses RLS)
@@ -97,10 +97,12 @@ select ok(exists (select 1 from pg_extension where extname = 'supabase_vault'), 
 select ok((select relrowsecurity from pg_class where oid = 'public.retailer_connections'::regclass), 'retailer_connections has RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.product_matches'::regclass), 'product_matches has RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.retailer_quota_usage'::regclass), 'retailer_quota_usage has RLS enabled');
+select ok((select relrowsecurity from pg_class where oid = 'public.retailer_user_usage'::regclass), 'retailer_user_usage has RLS enabled');
 
 select policies_are('public', 'retailer_connections', array['retailer_connections: members read', 'retailer_connections: holder or owner update'], 'retailer_connections has a read and an update policy, no client insert or delete');
 select policies_are('public', 'product_matches', array['product_matches: members read', 'product_matches: members insert', 'product_matches: members update', 'product_matches: members delete'], 'product_matches has the household policies');
 select policies_are('public', 'retailer_quota_usage', array[]::name[], 'retailer_quota_usage has no client policy at all');
+select policies_are('public', 'retailer_user_usage', array[]::name[], 'retailer_user_usage has no client policy at all');
 
 select is(
   (select count(*)::int from information_schema.columns
@@ -119,6 +121,7 @@ select ok(not has_column_privilege('authenticated', 'public.retailer_connections
 select ok(not has_column_privilege('anon', 'public.retailer_connections', 'vault_secret_id', 'SELECT'), 'anon has no SELECT on vault_secret_id');
 select ok(not has_column_privilege('authenticated', 'public.retailer_connections', 'vault_secret_id', 'UPDATE'), 'authenticated cannot write vault_secret_id');
 select ok(not has_table_privilege('authenticated', 'public.retailer_quota_usage', 'SELECT'), 'authenticated cannot read the quota table');
+select ok(not has_table_privilege('authenticated', 'public.retailer_user_usage', 'SELECT'), 'authenticated cannot read the per-member counts');
 
 -- ---------------------------------------------------------------------------------------
 -- Saving a connection (service-role function, run here as postgres)
@@ -235,6 +238,7 @@ select throws_ok($$select public.retailer_save_oauth_connection('0a000000-0000-4
 select throws_ok($$select public.retailer_read_refresh_token(public.__t_conn_id('a1111111-1111-4111-8111-111111111111'))$$, '42501', 'permission denied for function retailer_read_refresh_token', 'alice cannot read her own token');
 select throws_ok($$select public.retailer_disconnect(public.__t_conn_id('a1111111-1111-4111-8111-111111111111'), 'a1111111-1111-4111-8111-111111111111')$$, '42501', 'permission denied for function retailer_disconnect', 'alice cannot call disconnect directly; the Edge Function does');
 select throws_ok($$select * from public.retailer_quota_consume('kroger', 'products', current_date, 9500)$$, '42501', 'permission denied for function retailer_quota_consume', 'alice cannot spend quota');
+select throws_ok($$select * from public.retailer_user_consume('a1111111-1111-4111-8111-111111111111', 'products', 1000)$$, '42501', 'permission denied for function retailer_user_consume', 'alice cannot touch her own hourly count');
 select throws_ok($$select count(*) from public.retailer_quota_usage$$, '42501', null, 'alice cannot read the quota table');
 select throws_ok($$select decrypted_secret from vault.decrypted_secrets$$, '42501', null, 'alice cannot read Vault');
 
@@ -360,7 +364,21 @@ select is((select allowed::text || ' ' || used from public.retailer_quota_consum
 select lives_ok($$select public.retailer_quota_raise('kroger', 'locations', '2026-10-30', 1500)$$, 'the count can be raised from response headers');
 select lives_ok($$select public.retailer_quota_raise('kroger', 'locations', '2026-10-30', 10)$$, 'raising to a lower number is a no-op');
 select is((select count from public.retailer_quota_usage where retailer = 'kroger' and endpoint = 'locations' and day = '2026-10-30'), 1500, 'the count only ever goes up');
+
+-- Per-member hourly limits for the retailer-oauth function.
+select is((select allowed::text || ' ' || used from public.retailer_user_consume('a1111111-1111-4111-8111-111111111111', 'products', 2)), 'true 1', 'a member''s first call this hour is allowed');
+select is((select allowed::text || ' ' || used from public.retailer_user_consume('a1111111-1111-4111-8111-111111111111', 'products', 2)), 'true 2', 'the call that reaches the hourly limit is allowed');
+select is((select allowed::text || ' ' || used from public.retailer_user_consume('a1111111-1111-4111-8111-111111111111', 'products', 2)), 'false 2', 'the call past the hourly limit is refused and not counted');
+select is((select allowed::text || ' ' || used from public.retailer_user_consume('b2222222-2222-4222-8222-222222222222', 'products', 2)), 'true 1', 'another member has their own count');
+select is((select resets_at from public.retailer_user_consume('b2222222-2222-4222-8222-222222222222', 'stores', 2)), date_trunc('hour', now()) + interval '1 hour', 'the count resets at the next hour');
 reset role;
+
+insert into public.retailer_user_usage (user_id, action, window_start, count)
+values ('d4444444-4444-4444-8444-444444444444', 'stores', date_trunc('hour', now()) - interval '2 days', 5);
+set local role service_role;
+select lives_ok($$select * from public.retailer_user_consume('d4444444-4444-4444-8444-444444444444', 'stores', 20)$$, 'a member''s first call of the hour works');
+reset role;
+select is((select count(*)::int from public.retailer_user_usage where user_id = 'd4444444-4444-4444-8444-444444444444'), 1, 'and prunes their rows older than a day');
 
 -- ---------------------------------------------------------------------------------------
 -- Cascades: deleting a household removes its connection and the Vault secret

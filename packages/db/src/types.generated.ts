@@ -745,6 +745,28 @@ export type Database = {
         };
         Relationships: [];
       };
+      retailer_user_usage: {
+        Row: {
+          action: string;
+          count: number;
+          user_id: string;
+          window_start: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          action: string;
+          count?: number;
+          user_id: string;
+          window_start: string;
+        };
+        Update: {
+          action?: string;
+          count?: number;
+          user_id?: string;
+          window_start?: string;
+        };
+        Relationships: [];
+      };
       waitlist: {
         Row: {
           created_at: string;
@@ -852,6 +874,14 @@ export type Database = {
           p_user_id: string;
         };
         Returns: string;
+      };
+      retailer_user_consume: {
+        Args: { p_action: string; p_limit: number; p_user_id: string };
+        Returns: {
+          allowed: boolean;
+          resets_at: string;
+          used: number;
+        }[];
       };
     };
     Enums: {

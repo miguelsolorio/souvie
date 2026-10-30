@@ -2,7 +2,6 @@
 // no case changes, no rounding (Kroger terms; terms.ts checks it). Shapes follow the live API as
 // observed on 2026-10-30 (fulfillment keys are camelCase: inStore, shipToHome).
 import type { Product, StockLevel, Store } from "../types.ts";
-import { rememberReturned } from "./terms.ts";
 
 export interface KrogerPrice {
   regular?: number;
@@ -72,22 +71,43 @@ export function mapStockLevel(value: string | undefined): StockLevel {
   return value && STOCK.has(value) ? (value as StockLevel) : "UNKNOWN";
 }
 
-/** Levels that mean the product does not contain the allergen. Everything else counts. */
-const ABSENT_LEVEL = /free\s*from|does\s*not\s*contain|^not\s*contain/i;
+export type AllergenLevel = "contains" | "may_contain" | "absent";
 
 /**
- * Allergen names the product contains or may contain, as Kroger names them. Allergy safety is a
- * deterministic check downstream (docs/05-security-privacy.md §Allergen safety), so "may contain"
- * is kept: the conservative reading.
+ * Kroger's `levelOfContainmentName`. Seen live on QFC products (2026-10-30): "Contains",
+ * "May contain", "Free from", and "Not intentionally nor inherently included". The last two mean
+ * the product does not contain the allergen. Any level we do not recognize counts as "contains":
+ * allergy safety must fail closed (docs/05-security-privacy.md §Allergen safety).
  */
-export function mapAllergens(raw: KrogerProduct["allergens"]): string[] {
-  const out: string[] = [];
+export function allergenLevel(level: string | undefined): AllergenLevel {
+  const text = level?.trim() ?? "";
+  if (/free\s*from|does\s*not\s*contain|^not\s+(intentionally|inherently|contain)/i.test(text)) {
+    return "absent";
+  }
+  if (/^may\s*contain/i.test(text)) return "may_contain";
+  return "contains";
+}
+
+export interface MappedAllergens {
+  /** Contains or may contain: the list safety checks read. */
+  allergens: string[];
+  /** The subset declared only as "may contain". */
+  mayContain: string[];
+}
+
+/** Allergen names as Kroger gives them, split by level. An allergen listed twice keeps its strongest level. */
+export function mapAllergens(raw: KrogerProduct["allergens"]): MappedAllergens {
+  const levels = new Map<string, Exclude<AllergenLevel, "absent">>();
   for (const a of raw ?? []) {
     if (!a.name) continue;
-    if (a.levelOfContainmentName && ABSENT_LEVEL.test(a.levelOfContainmentName)) continue;
-    if (!out.includes(a.name)) out.push(a.name);
+    const level = allergenLevel(a.levelOfContainmentName);
+    if (level === "absent") continue;
+    if (levels.get(a.name) !== "contains") levels.set(a.name, level);
   }
-  return out;
+  return {
+    allergens: [...levels.keys()],
+    mayContain: [...levels].filter(([, level]) => level === "may_contain").map(([name]) => name),
+  };
 }
 
 const IMAGE_SIZE_PREFERENCE = ["large", "xlarge", "medium", "small", "thumbnail"];
@@ -123,11 +143,13 @@ function soldByOf(value: string | undefined): Product["soldBy"] {
 
 /**
  * Maps one Kroger product. `expiresAt` comes from the response's cache headers. The result is
- * frozen and recorded with terms.ts so the UI can prove it renders it unchanged.
+ * frozen, so nothing downstream can edit a display field. Nothing is recorded here: the app
+ * records what it receives with terms.ts, for as long as it shows it.
  */
 export function mapProduct(raw: KrogerProduct, expiresAt: number): Product {
   // The public tier returns one item per product for a location (observed); use the first.
   const item = raw.items?.[0];
+  const allergens = mapAllergens(raw.allergens);
   const product: Product = {
     id: raw.productId,
     upc: raw.upc ?? null,
@@ -144,11 +166,11 @@ export function mapProduct(raw: KrogerProduct, expiresAt: number): Product {
       delivery: item?.fulfillment?.delivery === true,
       shiptohome: item?.fulfillment?.shipToHome === true,
     }),
-    allergens: Object.freeze(mapAllergens(raw.allergens)) as string[],
+    allergens: Object.freeze(allergens.allergens) as string[],
+    mayContain: Object.freeze(allergens.mayContain) as string[],
     imageUrl: pickImageUrl(raw.images),
     cacheUntil: new Date(expiresAt).toISOString(),
   };
-  rememberReturned(product);
   return Object.freeze(product);
 }
 

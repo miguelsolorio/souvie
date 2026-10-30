@@ -1,3 +1,4 @@
+import { toAdapterModality } from "@mp/core";
 import { automates, KROGER_CAPABILITIES, type RetailerAdapter } from "@mp/retailers";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -8,6 +9,13 @@ import { type RetailerConnection, retailerErrorMessage } from "./api";
 import { ConnectKroger } from "./ConnectKroger";
 import { StorePicker } from "./StorePicker";
 import { useDisconnectRetailer, useUpdateConnection } from "./useRetailerConnection";
+
+/**
+ * What Disconnect does. Kroger's public API has no way to revoke a grant, so disconnecting deletes
+ * our stored sign-in and nothing more on Kroger's side.
+ */
+export const DISCONNECT_NOTE =
+  "Souvie deletes its saved Kroger sign-in, so it can no longer add to this cart. Kroger gives apps no way to cancel a sign-in, so it stays valid at Kroger until it expires or you remove Souvie from the apps connected to your Kroger account. Your Kroger cart stays as it is.";
 
 const STATUS_TEXT: Record<RetailerConnection["status"], string> = {
   active: "Connected",
@@ -53,8 +61,7 @@ export function ConnectionCard({
   async function confirmDisconnect() {
     const ok = await confirmAction({
       title: "Disconnect Kroger",
-      message:
-        "We delete the key that lets us add to this cart. Your Kroger account and cart stay as they are.",
+      message: DISCONNECT_NOTE,
       confirmLabel: "Disconnect",
       destructive: true,
     });
@@ -117,17 +124,27 @@ export function ConnectionCard({
       ) : null}
 
       {isHolder && connection.status !== "active" ? (
-        <ConnectKroger householdId={householdId} label="Sign in to Kroger again" />
+        <ConnectKroger
+          householdId={householdId}
+          label="Sign in to Kroger again"
+          store={
+            connection.storeId ? { id: connection.storeId, name: connection.storeName ?? "" } : null
+          }
+          modality={toAdapterModality(connection.modality)}
+        />
       ) : null}
 
       {canManage && connection.status !== "revoked" ? (
-        <Button
-          testID="disconnect-kroger"
-          label="Disconnect"
-          variant="danger"
-          loading={disconnect.isPending}
-          onPress={() => void confirmDisconnect()}
-        />
+        <View className="gap-1">
+          <Button
+            testID="disconnect-kroger"
+            label="Disconnect"
+            variant="danger"
+            loading={disconnect.isPending}
+            onPress={() => void confirmDisconnect()}
+          />
+          <Text className="text-xs text-neutral-500">{DISCONNECT_NOTE}</Text>
+        </View>
       ) : null}
 
       <ErrorText>{error ? retailerErrorMessage(error) : null}</ErrorText>

@@ -51,6 +51,7 @@ describe("searchProducts", () => {
       fulfillment: { instore: true, curbside: true, delivery: true, shiptohome: false },
       // "Free from" milk is not an allergen the product contains.
       allergens: [],
+      mayContain: [],
       imageUrl: "https://images.fixture.test/large/front/0009990001001",
       cacheUntil,
     });
@@ -66,7 +67,7 @@ describe("searchProducts", () => {
       cacheUntil,
     });
 
-    // "Contains" and "May Contain" both count; no images means no image.
+    // "Contains" and "May Contain" both count, and the level is kept; no images means no image.
     expect(bites).toMatchObject({
       price: 8.49,
       promoPrice: null,
@@ -76,6 +77,7 @@ describe("searchProducts", () => {
         "Soybean and its Derivatives",
         "Sesame Seeds and its derivatives",
       ],
+      mayContain: ["Sesame Seeds and its derivatives"],
       imageUrl: null,
     });
 

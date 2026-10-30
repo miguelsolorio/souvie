@@ -19,7 +19,7 @@ Relative imports carry the `.ts` extension so the Edge Function (Deno) can load 
 - Every Products call sends `filter.locationId`. Batch lookups send at most 50 ids per call.
 - `quota.ts` counts calls per endpoint per UTC day in `retailer_quota_usage` and throws `RetailerQuotaError` at 95% of the budget, before the network.
 - `cache.ts` honors `Cache-Control` and `Expires` only. No TTL of ours. `Product.cacheUntil` carries the result. Kroger sent no cache headers when checked on 2026-10-30, so in practice nothing is cached.
-- `terms.ts` records every product as returned. `assertDisplayUnchanged` fails when a name, brand, size, price, or image no longer matches.
+- `terms.ts` records products the app receives as salted hashes of their display fields, never the values. A record ends at the product's `cacheUntil`, or, when Kroger sent no cache header, when the caller releases the set. `assertDisplayUnchanged` fails when a name, brand, size, price, or image no longer matches, or the record has ended. The adapter and the mock record nothing.
 - Nothing here writes search results or catalog data anywhere.
 
 ## Live smoke test

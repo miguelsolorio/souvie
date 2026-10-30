@@ -134,3 +134,43 @@ timeout 15 pnpm --filter @mp/shopper-worker dev   # logs "connected" then "idle"
 
 ## Completion report
 End with the completion report from `docs/implementation-guide.md` §6.2 (Message templates). Include the iOS Simulator screenshot path and the CI run link under Verification output.
+
+## Amendment 2026-10-29: no container runtime on the development machine
+
+Docker cannot be installed on the development Mac. The Supabase CLI commands that need containers (`supabase start`, `supabase db reset`, `supabase functions serve`, `supabase db lint --local`, and later `supabase test db`) run in GitHub Actions instead. Local verification uses the hosted Supabase project. This section replaces criteria 9 to 12 and the matching verification commands above. Everything else in the brief stands.
+
+**Environment on the development machine**
+- `.env.local` lives at the primary checkout root. Copy it into your worktree root before the hosted steps. It is gitignored. Never paste any of its values into a report or a commit.
+- The Supabase CLI reads `SUPABASE_ACCESS_TOKEN` from the environment for `link`, `db push`, and `functions deploy`. Miguel adds it to `.env.local`. Load the file into your shell first: `set -a; . ./.env.local; set +a`. If the token is not there yet, finish the CI path, report the hosted steps as pending the token, and say so plainly.
+- `psql` is at `/opt/homebrew/opt/libpq/bin/psql`. Node 22 and pnpm 9 are not installed globally; install them for your own shell only (nvm, corepack, or brew) and change no global config.
+- Xcode is installed at `/Applications/Xcode.app`. If `xcode-select -p` still points at the Command Line Tools, prefix Simulator commands with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`. Criterion 7 stands as written.
+
+**Interfaces change.** `.env.example` lists thirteen variables: the twelve above plus `SUPABASE_ACCESS_TOKEN` (comment: personal access token for the Supabase CLI, developer machines only, never used by the app or the worker).
+
+**Criterion 9 (replaces the original).** Two parts, both required.
+- CI: a job runs `supabase start` (or `supabase db start`), `supabase db reset`, then `psql "$(supabase status -o env | grep DB_URL | cut -d= -f2- | tr -d '"')" -c "select extname from pg_extension"` and fails unless `pgmq`, `pg_cron`, `vector`, `pg_trgm`, and `pgtap` are all listed.
+- Hosted: `supabase link --project-ref <ref>` (the ref is the host part of `EXPO_PUBLIC_SUPABASE_URL`) and `supabase db push` apply `<timestamp>_extensions.sql` to the hosted project. `psql "$WORKER_DATABASE_URL" -c "select extname from pg_extension"` lists the same five extensions.
+
+**Criterion 10 (replaces the original).** Two parts, both required.
+- CI: `supabase functions serve health &`, then `curl -s http://localhost:54321/functions/v1/health` returns a body containing `"ok":true`.
+- Hosted: `supabase functions deploy health --use-api --no-verify-jwt`, then `curl -s -H "apikey: $EXPO_PUBLIC_SUPABASE_ANON_KEY" "$EXPO_PUBLIC_SUPABASE_URL/functions/v1/health"` returns a body containing `"ok":true`.
+
+**Criterion 11 (replaces the original).** Two parts, both required.
+- CI: with `WORKER_DATABASE_URL` taken from `supabase status`, run the worker for 15 seconds and fail unless the log contains `connected` and at least two `idle` lines.
+- Hosted: with `WORKER_DATABASE_URL` from `.env.local`, the same run shows `connected` and at least two `idle` lines within 15 seconds.
+
+**Criterion 12 (replaces the original).** `.github/workflows/ci.yml` runs install, typecheck, lint, test, eval, `supabase db lint`, and the three CI parts above. It is green on `ws/00-scaffold`. Paste the run URL. There is no `act` fallback.
+
+**Verification commands (replace the Supabase and worker lines above)**
+```bash
+pnpm install && pnpm typecheck && pnpm lint && pnpm test && pnpm eval
+cd apps/mobile && npx expo export --platform web && ls dist/index.html && cd ../..
+set -a; . ./.env.local; set +a
+pnpm supabase link --project-ref "$(echo "$EXPO_PUBLIC_SUPABASE_URL" | sed -E 's#https://([^.]+)\..*#\1#')"
+pnpm supabase db push
+/opt/homebrew/opt/libpq/bin/psql "$WORKER_DATABASE_URL" -c "select extname from pg_extension" | grep -E "pgmq|pg_cron|vector|pg_trgm|pgtap"
+pnpm supabase functions deploy health --use-api --no-verify-jwt
+curl -s -H "apikey: $EXPO_PUBLIC_SUPABASE_ANON_KEY" "$EXPO_PUBLIC_SUPABASE_URL/functions/v1/health"
+pnpm --filter @mp/shopper-worker dev   # stop after 15 s; logs "connected" then "idle" at least twice
+gh run list --branch ws/00-scaffold --limit 1   # the CI run URL for criterion 12
+```

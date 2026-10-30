@@ -3,13 +3,13 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 0 (in progress)
-**Last updated:** 2026-10-29 by the orchestrator (Souvie naming merged, WS00 running)
+**Last updated:** 2026-10-29 by the orchestrator (WS00 report received, evidence round)
 
 ## Workstreams
 
 | WS | Name | Wave | State | Branch | Model | Started | Merged | Notes |
 |---|---|---|---|---|---|---|---|---|
-| 00 | Repo & infra scaffold | 0 | in progress | ws/00-scaffold | opus | 2026-10-29 | | Human checkpoint 1 after merge. Docker and Xcode were not installed at dispatch; criteria 7, 9, 10, 11 are verified once Miguel installs them |
+| 00 | Repo & infra scaffold | 0 | in progress | ws/00-scaffold | opus | 2026-10-29 | | Report received 2026-10-29: criteria 1-6, 8, 13 verified. Evidence round for 7 (Xcode now installed) and 9-12 under the no-Docker amendment (CI plus hosted project). Branch pushed; CI running. Checkpoint 1 after merge |
 | 01 | Auth & households | 1 | not started | | | | | Human checkpoint 2 before merge (migration + RLS) |
 | 02 | Recipe domain & import | 2 | not started | | | | | |
 | 03 | Ingredient ontology & parser | 1 | not started | | | | | |
@@ -38,7 +38,9 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 | Create the Supabase project | Miguel | done 2026-10-29 | Credentials in `.env.local` at the primary checkout root. WS00 verifies against local Supabase only |
 | Create the GitHub repository for `main` | Miguel | done 2026-10-29 | https://github.com/miguelsolorio/souvie (public). Miguel added `origin` and pushed `main` from the primary checkout |
 | Create accounts: Expo/EAS, Fly.io or Railway, Cloudflare Pages, Sentry, PostHog | Miguel | open | `ANTHROPIC_API_KEY` needed before WS02; the rest before WS13, WS14, WS15 |
-| Install Docker Desktop or OrbStack, and Xcode | Miguel | open | Needed for WS00 criteria 7, 9, 10, 11 and every later local Supabase or iOS check |
+| Install Xcode | Miguel | done 2026-10-29 | Open it once to accept the license and install the iOS platform |
+| Docker | Miguel | not allowed | Security policy on this Mac. Replaced by hosted project plus CI (decisions log). Podman 5.5 is installed but unused |
+| Add `SUPABASE_ACCESS_TOKEN` to `.env.local` | Miguel | open | Personal access token from the Supabase dashboard. Needed for `supabase link`, `db push`, `functions deploy` on the dev machine |
 
 ## Wave summaries
 
@@ -51,6 +53,8 @@ _None yet._
 - 2026-10-29: `main` is at https://github.com/miguelsolorio/souvie, default branch `main`, public. PRs from `ws/*` branches target it; GitHub Actions runs CI. (Miguel created and pushed; orchestrator recorded.)
 - 2026-10-29: Wave 0 gate met. The Supabase project exists and its credentials are in `.env.local` at the primary checkout root. WS00 verifies against local Supabase and never needs the hosted project. (Orchestrator.)
 - 2026-10-29: WS00 dispatched before Docker and Xcode were installed. The builder self-installs pnpm, the Supabase CLI, and Node 22. Criteria 7, 9, 10, 11 are verified once Docker and Xcode exist, with one evidence round to the same builder if the report lands first. (Orchestrator, confirmed with Miguel.)
+- 2026-10-29: Docker cannot be installed on the development Mac (security policy). Container-only Supabase commands (`start`, `db reset`, `functions serve`, `db lint --local`, `test db`) run in GitHub Actions. Local development uses the hosted project through `supabase link`, `db push`, and `functions deploy --use-api`. WS00 criteria 9 to 12 amended in the brief; docs/01 Environments updated. `.env.example` gains `SUPABASE_ACCESS_TOKEN` as a developer-tool variable, thirteen in total. Podman 5.5 is present but unused pending policy. (Orchestrator, confirmed with Miguel.)
+- 2026-10-29: WS00 completion report received. Criteria 1 to 6, 8, and 13 pass with pasted output. The branch was pushed by the orchestrator for CI. Disclosed deviations accepted for review: root `.npmrc` pinning the public npm registry (the machine's global npmrc points at a corporate registry; checkpoint 1 item), extra config files the deliverables imply, `pgcrypto` in the extensions migration per docs/02, `shopping_run` queue creation left to WS09 per docs/02, Tailwind `darkMode: "class"`, opt-in query persistence via `meta.persist`. No contract change requests. (Orchestrator.)
 - 2026-10-29: Kroger developer app registered and name checks for Sous and Larder done. Instacart application and the hosting and analytics accounts remain open. (Miguel.)
 - 2026-10-29: Reconciliation after brief drafting. Package scope `@mp/*`; Node 22 and pnpm 9; migrations use Supabase timestamp names in the logical order in docs/02; RLS helper is `current_household_ids()`; pgmq queue `shopping_run` with message `{ run_id }`; ledger columns `delta_sent`, `delta_result`, `sent_at`; `scheduled_runs.last_enqueued_for`; Kroger redirect `mealplanner://oauth/kroger`; app web export and marketing site on Cloudflare Pages; `orders` owned by WS12; `llm-proxy` owned by WS10; `export-data` created by WS01 and extended by WS12; 16 store sections per WS03. (Planning session.)
 - 2026-10-29: Working name is Souvie (Sous plus vie, said "SOO-vee"). Sous is the fallback, then Larder. The §1.3 checks in docs/08-brand.md have not been run; [Name] placeholders stay until they pass. (Brand naming session.)

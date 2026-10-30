@@ -164,7 +164,7 @@ Shared lists and run progress use Supabase Realtime on `grocery_list_items` and 
 
 | Env | Supabase | Worker | Retailers |
 |---|---|---|---|
-| Local | `supabase start` (Docker) | `pnpm --filter shopper-worker dev` | MockRetailer; Instacart dev key; Kroger certification env for Products/Locations only |
+| Local | Hosted project via `supabase link`, `db push`, `functions deploy --use-api`. `supabase start` runs only in CI, since the development Mac has no container runtime (WS00 amendment, 2026-10-29) | `pnpm --filter shopper-worker dev` against the hosted database | MockRetailer; Instacart dev key; Kroger certification env for Products/Locations only |
 | Household (prod) | Supabase Pro project | Fly.io or Railway | Kroger production (Cart only works here); Instacart prod key once approved |
 
 There is no separate staging in v1. The household project is production. Public launch (v2) adds staging.

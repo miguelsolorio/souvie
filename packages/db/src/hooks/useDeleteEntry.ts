@@ -11,6 +11,7 @@ import {
   findCachedEntry,
   invalidateMealPlan,
   mealPlanEntriesKey,
+  PLAN_WRITE_SCOPE,
   type PlanEntry,
   planRetryDelay,
   removeEntry,
@@ -38,10 +39,12 @@ interface DeleteContext {
 export function deleteEntryOptions(
   client: MpClient,
   queryClient: QueryClient,
+  onFailure?: (error: Error, input: DeleteEntryInput) => void,
 ): MutationOptions<void, Error, DeleteEntryInput, DeleteContext> {
   return {
     retry: shouldRetryPlanWrite,
     retryDelay: planRetryDelay,
+    scope: PLAN_WRITE_SCOPE,
 
     mutationFn: (input) => removeEntry(client, input.id),
 
@@ -55,13 +58,15 @@ export function deleteEntryOptions(
       return { removed };
     },
 
-    onError: (_error, input, context) => {
+    onError: (error, input, context) => {
       const removed = context?.removed;
-      if (!removed) return;
-      queryClient.setQueryData<PlanEntry[]>(
-        mealPlanEntriesKey(input.householdId, input.planId),
-        (old) => withEntry(old, removed),
-      );
+      if (removed) {
+        queryClient.setQueryData<PlanEntry[]>(
+          mealPlanEntriesKey(input.householdId, input.planId),
+          (old) => withEntry(old, removed),
+        );
+      }
+      onFailure?.(error, input);
     },
 
     onSettled: async (_data, _error, input, context) => {
@@ -75,8 +80,8 @@ export function deleteEntryOptions(
 }
 
 /** Removes an entry from the plan, optimistically. See deleteEntryOptions. */
-export function useDeleteEntry() {
+export function useDeleteEntry(onFailure?: (error: Error, input: DeleteEntryInput) => void) {
   const client = useSupabase();
   const queryClient = useQueryClient();
-  return useMutation(deleteEntryOptions(client, queryClient));
+  return useMutation(deleteEntryOptions(client, queryClient, onFailure));
 }

@@ -138,6 +138,14 @@ export function toPlanError(
   return new PlanError("unknown", message || "unknown error");
 }
 
+/**
+ * Every planner write from this device runs in this mutation scope, so TanStack runs them one
+ * after another in the order they were made. Without it, three quick taps on the servings plus
+ * button are three requests in flight at once, and the one that lands last on the server need not
+ * be the last tap. The optimistic updates still apply at once; only the network calls queue.
+ */
+export const PLAN_WRITE_SCOPE = { id: "meal-plan-writes" } as const;
+
 /** Retry a write only while the connection is the problem, for about a minute of backoff. */
 export function shouldRetryPlanWrite(failureCount: number, error: unknown): boolean {
   return error instanceof PlanError && error.code === "network" && failureCount < 6;

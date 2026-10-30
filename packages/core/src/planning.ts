@@ -210,13 +210,14 @@ export type MealPlanEntryPatch = z.infer<typeof MealPlanEntryPatch>;
 // Pure helpers the planner screens and hooks share
 // ---------------------------------------------------------------------------------------
 
-/** Entries for one slot on one day, in `position` order (then creation order, for stability). */
-export type SlotEntries = MealPlanEntry[];
-
 /** Entries indexed by date, then slot. A date or slot with nothing planned is absent. */
-export type EntriesByDay = Record<string, Partial<Record<MealSlot, SlotEntries>>>;
+export type EntriesByDay<T extends MealPlanEntry = MealPlanEntry> = Record<
+  string,
+  Partial<Record<MealSlot, T[]>>
+>;
 
-export function sortEntries(entries: readonly MealPlanEntry[]): MealPlanEntry[] {
+/** Entries in `position` order, then creation order, then id, so the order is the same everywhere. */
+export function sortEntries<T extends MealPlanEntry>(entries: readonly T[]): T[] {
   return [...entries].sort(
     (a, b) =>
       a.position - b.position ||
@@ -225,8 +226,9 @@ export function sortEntries(entries: readonly MealPlanEntry[]): MealPlanEntry[] 
   );
 }
 
-export function groupEntries(entries: readonly MealPlanEntry[]): EntriesByDay {
-  const grouped: EntriesByDay = {};
+/** Entries grouped by date and slot. Works on anything shaped like an entry (a row plus its recipe). */
+export function groupEntries<T extends MealPlanEntry>(entries: readonly T[]): EntriesByDay<T> {
+  const grouped: EntriesByDay<T> = {};
   for (const entry of sortEntries(entries)) {
     const day = grouped[entry.date] ?? {};
     const slot = day[entry.slot] ?? [];

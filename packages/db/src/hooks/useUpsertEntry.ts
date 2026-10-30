@@ -15,6 +15,7 @@ import {
   inversePatch,
   mealPlanEntriesKey,
   mealPlanKey,
+  PLAN_WRITE_SCOPE,
   type PlanEntry,
   PlanError,
   type PlannedRecipe,
@@ -55,6 +56,13 @@ export interface EditEntryInput {
 }
 
 export type UpsertEntryInput = AddEntryInput | EditEntryInput;
+
+/**
+ * Called once a write has failed for good and the cache is back to what it was. A callback passed
+ * to `mutate()` is dropped when the screen unmounts (the picker closes the moment you add), so a
+ * failure that arrives after that needs a handler that lives with the mutation itself.
+ */
+export type EntryFailureHandler = (error: Error, input: UpsertEntryInput) => void;
 
 export interface UpsertEntryResult {
   /** The plan the entry landed in. Differs from the input's when another device made the week first. */
@@ -114,10 +122,12 @@ function optimisticEntry(input: AddEntryInput): PlanEntry {
 export function upsertEntryOptions(
   client: MpClient,
   queryClient: QueryClient,
+  onFailure?: EntryFailureHandler,
 ): MutationOptions<UpsertEntryResult, Error, UpsertEntryInput, UpsertContext> {
   return {
     retry: shouldRetryPlanWrite,
     retryDelay: planRetryDelay,
+    scope: PLAN_WRITE_SCOPE,
 
     mutationFn: async (input) => {
       validate(input);
@@ -209,8 +219,9 @@ export function upsertEntryOptions(
       };
     },
 
-    onError: (_error, _input, context) => {
+    onError: (error, input, context) => {
       context?.undo();
+      onFailure?.(error, input);
     },
 
     onSuccess: (result, input) => {
@@ -255,8 +266,8 @@ export function upsertEntryOptions(
  * recipe_feedback signals (saved, cooked, skipped); the database does that in the same
  * transaction, so there is nothing to call.
  */
-export function useUpsertEntry() {
+export function useUpsertEntry(onFailure?: EntryFailureHandler) {
   const client = useSupabase();
   const queryClient = useQueryClient();
-  return useMutation(upsertEntryOptions(client, queryClient));
+  return useMutation(upsertEntryOptions(client, queryClient, onFailure));
 }

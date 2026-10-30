@@ -170,6 +170,7 @@ export function setThumbOptions(
   return {
     retry: shouldRetryPlanWrite,
     retryDelay: planRetryDelay,
+    scope: { id: "recipe-feedback-writes" },
 
     mutationFn: (input) => {
       if (!userId) throw new Error("not_authenticated");

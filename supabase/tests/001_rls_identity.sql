@@ -5,10 +5,11 @@
 --   alice   owns household A          bob    owns household B
 --   carol   joins A through an invite dave   starts with nothing, then creates a household
 --   erin    owns L, frank and grace are members of L (leave_household tests)
+--   heidi   owns D, a household that was closed (soft-deleted)
 
 begin;
 
-select plan(120);
+select plan(130);
 
 -- ---------------------------------------------------------------------------------------
 -- Fixtures (as the postgres role, which bypasses RLS)
@@ -33,22 +34,30 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('d4444444-4444-4444-8444-444444444444', 'dave@example.test', '{}'),
   ('e5555555-5555-4555-8555-555555555555', 'erin@example.test', '{}'),
   ('f6666666-6666-4666-8666-666666666666', 'frank@example.test', '{}'),
-  ('96666666-7777-4777-8777-777777777777', 'grace@example.test', '{}');
+  ('96666666-7777-4777-8777-777777777777', 'grace@example.test', '{}'),
+  ('77777777-8888-4888-8888-888888888888', 'heidi@example.test', '{}');
 
-insert into public.households (id, name, created_by) values
-  ('0a000000-0000-4000-8000-00000000000a', 'Alice House', 'a1111111-1111-4111-8111-111111111111'),
-  ('0b000000-0000-4000-8000-00000000000b', 'Bob House', 'b2222222-2222-4222-8222-222222222222'),
-  ('0c000000-0000-4000-8000-00000000000c', 'Erin House', 'e5555555-5555-4555-8555-555555555555');
+insert into public.households (id, name, created_by, deleted_at) values
+  ('0a000000-0000-4000-8000-00000000000a', 'Alice House', 'a1111111-1111-4111-8111-111111111111', null),
+  ('0b000000-0000-4000-8000-00000000000b', 'Bob House', 'b2222222-2222-4222-8222-222222222222', null),
+  ('0c000000-0000-4000-8000-00000000000c', 'Erin House', 'e5555555-5555-4555-8555-555555555555', null),
+  -- Heidi owns a household that has been closed. Her invite must still not work.
+  ('0d000000-0000-4000-8000-00000000000d', 'Closed House', '77777777-8888-4888-8888-888888888888', now());
 
 insert into public.household_members (household_id, user_id, role, created_at) values
+  ('0d000000-0000-4000-8000-00000000000d', '77777777-8888-4888-8888-888888888888', 'owner', now() - interval '5 days'),
   ('0a000000-0000-4000-8000-00000000000a', 'a1111111-1111-4111-8111-111111111111', 'owner', now() - interval '5 days'),
   ('0b000000-0000-4000-8000-00000000000b', 'b2222222-2222-4222-8222-222222222222', 'owner', now() - interval '5 days'),
   ('0c000000-0000-4000-8000-00000000000c', 'e5555555-5555-4555-8555-555555555555', 'owner', now() - interval '5 days'),
   ('0c000000-0000-4000-8000-00000000000c', 'f6666666-6666-4666-8666-666666666666', 'member', now() - interval '3 days'),
   ('0c000000-0000-4000-8000-00000000000c', '96666666-7777-4777-8777-777777777777', 'member', now() - interval '1 day');
 
--- One invite for B, plus an expired and a used invite for A.
+-- One invite for B, plus an expired and a used invite for A, two of erin's for L (one open, one
+-- already used), and heidi's for the closed household.
 insert into public.household_invites (household_id, token, created_by, expires_at, used_at, used_by) values
+  ('0c000000-0000-4000-8000-00000000000c', 'erin-open-invite', 'e5555555-5555-4555-8555-555555555555', default, null, null),
+  ('0c000000-0000-4000-8000-00000000000c', 'erin-used-invite', 'e5555555-5555-4555-8555-555555555555', default, now() - interval '2 days', '96666666-7777-4777-8777-777777777777'),
+  ('0d000000-0000-4000-8000-00000000000d', 'closed-invite', '77777777-8888-4888-8888-888888888888', default, null, null),
   ('0b000000-0000-4000-8000-00000000000b', 'bob-invite', 'b2222222-2222-4222-8222-222222222222', default, null, null),
   ('0a000000-0000-4000-8000-00000000000a', 'expired-token', 'a1111111-1111-4111-8111-111111111111', now() - interval '1 day', null, null),
   ('0a000000-0000-4000-8000-00000000000a', 'used-token', 'a1111111-1111-4111-8111-111111111111', default, now() - interval '1 hour', 'b2222222-2222-4222-8222-222222222222');
@@ -112,6 +121,14 @@ select throws_ok($$insert into public.audit_events (household_id, kind) values (
 
 select is(public.__t_affected($$update public.households set name = 'Alice Home' where id = '0a000000-0000-4000-8000-00000000000a'$$), 1::bigint, 'an owner can rename her household');
 select is((select name from public.households where id = '0a000000-0000-4000-8000-00000000000a'), 'Alice Home', 'the rename took effect');
+select is(public.__t_affected($$update public.households set zip = '98019' where id = '0a000000-0000-4000-8000-00000000000a'$$), 1::bigint, 'an owner can set the zip');
+
+-- Update is granted on name and zip only. These are denied by privilege, so they raise instead of
+-- quietly touching zero rows.
+select throws_ok($$update public.households set default_connection_id = gen_random_uuid() where id = '0a000000-0000-4000-8000-00000000000a'$$, '42501', 'permission denied for table households', 'an owner cannot change default_connection_id');
+select throws_ok($$update public.households set created_by = 'b2222222-2222-4222-8222-222222222222' where id = '0a000000-0000-4000-8000-00000000000a'$$, '42501', 'permission denied for table households', 'an owner cannot change created_by');
+select throws_ok($$update public.households set deleted_at = now() where id = '0a000000-0000-4000-8000-00000000000a'$$, '42501', 'permission denied for table households', 'an owner cannot close the household by setting deleted_at');
+select throws_ok($$update public.households set id = gen_random_uuid() where id = '0a000000-0000-4000-8000-00000000000a'$$, '42501', 'permission denied for table households', 'an owner cannot change the household id');
 select is(public.__t_affected($$update public.households set name = 'Hacked' where id = '0b000000-0000-4000-8000-00000000000b'$$), 0::bigint, 'alice cannot rename bob''s household');
 select is(public.__t_affected($$delete from public.household_members where household_id = '0b000000-0000-4000-8000-00000000000b'$$), 0::bigint, 'alice cannot remove bob''s members');
 select is(public.__t_affected($$delete from public.household_members where household_id = '0a000000-0000-4000-8000-00000000000a' and user_id = 'a1111111-1111-4111-8111-111111111111'$$), 0::bigint, 'an owner cannot delete her own membership directly; she uses leave_household');
@@ -255,6 +272,20 @@ reset role;
 
 select is((select count(*)::int from public.audit_events where household_id = '0a000000-0000-4000-8000-00000000000a' and kind = 'member_removed' and payload ->> 'user_id' = 'c3333333-3333-4333-8333-333333333333' and payload ->> 'self' = 'false'), 1, 'removing a member writes a member_removed audit event');
 
+-- An invite speaks for the owner who made it. One made by someone who is no longer an owner
+-- (carol was just removed), and one whose creator's account is gone, are void.
+insert into public.household_invites (household_id, token, created_by) values
+  ('0a000000-0000-4000-8000-00000000000a', 'left-creator-invite', 'c3333333-3333-4333-8333-333333333333'),
+  ('0a000000-0000-4000-8000-00000000000a', 'orphaned-invite', null);
+
+set local request.jwt.claims = '{"sub": "b2222222-2222-4222-8222-222222222222", "role": "authenticated"}';
+set local role authenticated;
+select throws_ok($$select public.redeem_invite('left-creator-invite')$$, 'P0001', 'invite_not_found', 'an invite made by someone who is no longer an owner cannot be redeemed');
+select throws_ok($$select public.redeem_invite('orphaned-invite')$$, 'P0001', 'invite_not_found', 'an invite whose creator no longer exists cannot be redeemed');
+reset role;
+
+select is((select count(*)::int from public.household_members where household_id = '0a000000-0000-4000-8000-00000000000a' and user_id = 'b2222222-2222-4222-8222-222222222222'), 0, 'the void invites did not add bob');
+
 -- grace, a plain member of L, leaves.
 set local request.jwt.claims = '{"sub": "96666666-7777-4777-8777-777777777777", "role": "authenticated"}';
 set local role authenticated;
@@ -273,6 +304,8 @@ reset role;
 select is((select role::text from public.household_members where household_id = '0c000000-0000-4000-8000-00000000000c' and user_id = 'f6666666-6666-4666-8666-666666666666'), 'owner', 'ownership passes to the longest-standing member');
 select is((select count(*)::int from public.audit_events where household_id = '0c000000-0000-4000-8000-00000000000c' and kind = 'owner_transferred'), 1, 'the handover is audited');
 select is((select count(*)::int from public.household_members where household_id = '0c000000-0000-4000-8000-00000000000c' and user_id = 'e5555555-5555-4555-8555-555555555555'), 0, 'erin is no longer a member');
+select is((select count(*)::int from public.household_invites where household_id = '0c000000-0000-4000-8000-00000000000c' and created_by = 'e5555555-5555-4555-8555-555555555555' and used_at is null), 0, 'leaving deletes the leaver''s unused invites');
+select is((select count(*)::int from public.household_invites where token = 'erin-used-invite'), 1, 'an invite that was already used stays as history');
 
 -- frank, now the only member, leaves. Nobody is left, so the household is soft-deleted.
 set local request.jwt.claims = '{"sub": "f6666666-6666-4666-8666-666666666666", "role": "authenticated"}';
@@ -283,13 +316,10 @@ reset role;
 select ok((select deleted_at is not null from public.households where id = '0c000000-0000-4000-8000-00000000000c'), 'an emptied household is soft-deleted');
 select is((select count(*)::int from public.household_members where household_id = '0c000000-0000-4000-8000-00000000000c'), 0, 'no members remain');
 
--- A soft-deleted household cannot take new members.
-insert into public.household_invites (household_id, token, created_by) values
-  ('0c000000-0000-4000-8000-00000000000c', 'ghost-invite', 'f6666666-6666-4666-8666-666666666666');
-
+-- A soft-deleted household cannot take new members, even through an invite its current owner made.
 set local request.jwt.claims = '{"sub": "b2222222-2222-4222-8222-222222222222", "role": "authenticated"}';
 set local role authenticated;
-select throws_ok($$select public.redeem_invite('ghost-invite')$$, 'P0001', 'invite_not_found', 'an invite to a deleted household cannot be redeemed');
+select throws_ok($$select public.redeem_invite('closed-invite')$$, 'P0001', 'invite_not_found', 'an invite to a deleted household cannot be redeemed');
 reset role;
 
 -- ---------------------------------------------------------------------------------------

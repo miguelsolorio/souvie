@@ -79,7 +79,8 @@ $$;
 
 -- Adds the caller to the invite's household as a member and marks the invite used.
 -- Returns the household id. A caller who is already a member gets the id back and the invite
--- stays valid for whoever it was meant for.
+-- stays valid for whoever it was meant for. An invite whose creator is no longer an owner of
+-- the household is void (invite_not_found).
 create or replace function public.redeem_invite(token text)
 returns uuid
 language plpgsql
@@ -116,6 +117,17 @@ begin
     return inv.household_id;
   end if;
 
+  -- An invite speaks for the owner who made it. Once that person has left, or their account is
+  -- gone (created_by is null), the invite is void.
+  if inv.created_by is null or not exists (
+    select 1 from public.household_members hm
+    where hm.household_id = inv.household_id
+      and hm.user_id = inv.created_by
+      and hm.role = 'owner'
+  ) then
+    raise exception 'invite_not_found';
+  end if;
+
   if inv.used_at is not null then
     raise exception 'invite_used';
   end if;
@@ -135,7 +147,8 @@ end;
 $$;
 
 -- Removes the caller from a household. The last owner cannot strand the others: the member who
--- joined first becomes owner. If nobody else is left, the household is soft-deleted.
+-- joined first becomes owner. If nobody else is left, the household is soft-deleted. The
+-- caller's unused invites are deleted, since an invite only speaks for a current owner.
 create or replace function public.leave_household(household_id uuid)
 returns void
 language plpgsql
@@ -151,6 +164,15 @@ begin
     raise exception 'not_authenticated';
   end if;
 
+  -- Serialize concurrent leaves of one household, so two owners leaving together cannot each
+  -- see the other as the owner who stays and strand the members. NO KEY UPDATE blocks another
+  -- leave but not the key-share lock redeem_invite takes through its foreign key, so the two
+  -- cannot deadlock. Statements after this one see what the other leave committed.
+  perform 1
+  from public.households h
+  where h.id = leave_household.household_id
+  for no key update;
+
   select hm.role into my_role
   from public.household_members hm
   where hm.household_id = leave_household.household_id
@@ -160,6 +182,11 @@ begin
   if not found then
     raise exception 'not_a_member';
   end if;
+
+  delete from public.household_invites hi
+  where hi.household_id = leave_household.household_id
+    and hi.created_by = uid
+    and hi.used_at is null;
 
   if my_role = 'owner' and not exists (
     select 1 from public.household_members hm

@@ -172,7 +172,13 @@ grant execute on function public.is_household_peer(text) to authenticated, servi
 revoke all on public.households, public.household_members, public.household_invites,
   public.profiles, public.audit_events from anon, authenticated;
 
-grant select, update on public.households to authenticated;
+grant select on public.households to authenticated;
+-- Column-level, so an owner can rename and set the zip and nothing else. id, created_by,
+-- created_at, and deleted_at are never client-editable (closing a household goes through
+-- leave_household), and default_connection_id waits for WS07, whose foreign key check would
+-- otherwise bypass RLS and let an owner point at another household's connection. A later
+-- migration that adds a households column grants update on it only if clients should edit it.
+grant update (name, zip) on public.households to authenticated;
 grant select, delete on public.household_members to authenticated;
 grant select, delete on public.household_invites to authenticated;
 grant select, insert, update on public.profiles to authenticated;

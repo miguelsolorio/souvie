@@ -105,6 +105,7 @@ pnpm --filter @mp/mobile start                               # manual: airplane-
 ```
 
 ## Risks and notes
+- From the WS03 review (2026-10-30): `toPurchasable(28, "oz", diced tomatoes)` returns 2 cans because `CATEGORY_PACKS.canned` assumes 411 g, so "1 (28 oz) can" double-buys, and "2 (14 oz) cans" parses to 28 oz while "2 cans (14 oz each)" parses to 2 can. Handle can sizes and the container count (see the `containerCount` question above) before aggregating.
 - From the WS03 report (2026-10-30): use `qty_max` from `recipe_ingredients` when present so the aggregated list never comes up short. `convert` and `toPurchasable` in `@mp/core/units` have a pack table of about 40 entries and ignore form (sifted vs packed); extend both. Open contract question for your dispatch: optional `containerCount` and `container` on `ParsedIngredient` so "2 (14 oz) cans" keeps the can count.
 - From the WS00 review (2026-10-30): TanStack Query persistence is opt-in per query with `meta: { persist: true }` and a global 24-hour maximum age. Grocery-list queries should opt in so the list works offline. Any query that returns retailer-derived data (products, prices, availability) must never set `persist`; docs/04 forbids storing search-derived data past the response's cache headers.
 - Unit conversion is the main correctness risk (R2). Keep `buildList` pure and fixture-driven so every reported bug becomes a test case. Always show the contributions so the user can see and override.

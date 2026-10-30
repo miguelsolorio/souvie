@@ -106,6 +106,7 @@ gh run list --workflow eval.yml --limit 1       # expected: success on a PR touc
 ```
 
 ## Risks and notes
+- From the WS03 review (2026-10-30): `parse-ingredients` `lines` mode has no household context, so `ai_runs.household_id` is null and the per-household daily cap cannot apply; any signed-in user can send 200 lines per call repeatedly. Design the cap so it covers user-scoped calls too (cap by `auth.uid()` when `household_id` is null) and coordinate the function change with the orchestrator; the function is WS03's code.
 - From the WS01 review (2026-10-30): `households` has column-level UPDATE grants for `authenticated` (`name`, `zip` only). A column you add is not client-editable unless your migration grants `update (<column>)` on it explicitly; otherwise write it through a security-definer function. Add a pgTAP assertion either way. Applies to `ai_daily_cap_usd`.
 - R3: the cap is enforced in code before the API call. Estimate cost from input token count and model price (Haiku 5.5 $0.10/$0.50, Sonnet 5.5 $2/$10, Opus 5.5 $4/$20 per MTok, Oct 2026); reconcile with actual usage after the call.
 - R10: heartbeats and the stalled-run cron are the only defense against a worker that dies mid-run. Keep the threshold at 10 minutes; Tier 3 Mode A runs waiting on a human are `needs_review`, not `running`, so they are not marked stalled.

@@ -166,7 +166,7 @@ export function createHandler(deps: ExportDeps): (req: Request) => Promise<Respo
 
       const day = exportedAt.toISOString().slice(0, 10);
       return json(doc, 200, {
-        "Content-Disposition": `attachment; filename="meal-planner-export-${day}.json"`,
+        "Content-Disposition": `attachment; filename="souvie-export-${day}.json"`,
       });
     } catch (error) {
       console.error("export-data failed", error);

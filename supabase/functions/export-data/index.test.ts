@@ -76,7 +76,7 @@ describe("export-data", () => {
     const res = await createHandler(deps().deps)(authed());
     expect(res.status).toBe(200);
     expect(res.headers.get("content-disposition")).toBe(
-      'attachment; filename="meal-planner-export-2026-10-30.json"',
+      'attachment; filename="souvie-export-2026-10-30.json"',
     );
     expect(res.headers.get("cache-control")).toBe("no-store");
 

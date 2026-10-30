@@ -91,7 +91,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 
 **As built (WS01).** Where the migrations differ from the tables above:
 
-- `households` has `created_at`, `updated_at` (trigger), and `deleted_at` (soft delete), plus `zip`, `default_connection_id`, and `created_by` as listed. `default_connection_id` has no foreign key yet; WS07 adds it with `retailer_connections`. `quiet_hours`, `tier3_consent`, and `ai_daily_cap_usd` arrive with WS11, WS10, and WS15. The WS01 brief called the connection column `default_store_connection_id`; the column here follows this document.
+- `households` has `created_at`, `updated_at` (trigger), and `deleted_at` (soft delete), plus `zip`, `default_connection_id`, and `created_by` as listed. `default_connection_id` has no foreign key yet; WS07 adds it with `retailer_connections`. `quiet_hours`, `tier3_consent`, and `ai_daily_cap_usd` arrive with WS11, WS08, and WS15. The WS01 brief called the connection column `default_store_connection_id`; the column here follows this document.
 - `household_members` has `created_at`, which is when the person joined. `role` is the enum `household_members_role`.
 - `household_invites` has `created_by`, `created_at`, `used_by`, and also `used_at` (the brief's name). `expires_at` defaults to 7 days. Tokens are 32 random bytes as hex, so 64 characters.
 - `audit_events` has `created_at`. `kind` is plain text. WS01 writes `member_added`, `member_removed`, and the extra kind `owner_transferred`.
@@ -261,7 +261,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | user_id | uuid → auth.users | The member whose retailer account this is |
 | retailer | enum retailer: kroger, safeway, costco | |
 | auth_type | enum retailer_connections_auth_type: oauth, browser_session, none | |
-| vault_secret_id | uuid | Supabase Vault secret holding tokens or session state. Never a password |
+| vault_secret_id | uuid | Supabase Vault secret holding OAuth tokens (Kroger) or the encryption key for an on-device browser session (WS08). Never a password or session state |
 | store_id | text | Kroger locationId or site-specific store id |
 | store_name | text | |
 | modality | enum retailer_connections_modality: pickup, delivery | |

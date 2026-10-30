@@ -44,7 +44,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 - [ ] Dispatch WS04 and WS06 (sonnet) right away.
 - [ ] Draft the Tier 3 consent copy (names each retailer, the terms risk, the account exposure, "stops at pay") and put it in front of Miguel.
-- [ ] **Human checkpoint 4** gates WS08 only: consent copy approved; retailer list chosen (Safeway, Costco, Kroger pay). Then dispatch WS08 (opus).
+- [ ] **Human checkpoint 4** gates WS08 only: consent copy approved; Tier 3 retailer list confirmed (WS08's `TIER3_RETAILERS` default is Safeway, Albertsons, Haggen, Costco; the Kroger pay adapter is a WS10 adapter, not a consent retailer). Then dispatch WS08 (opus).
 - [ ] WS08 reviewer must run the Tier 3 checklist in `docs/04-integrations.md` and confirm no playwright or puppeteer dependency.
 - [ ] Review, merge, wave 3 summary.
 

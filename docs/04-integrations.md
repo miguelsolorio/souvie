@@ -66,7 +66,7 @@ The agent and the UI only ever see this contract. Adding a store is a new adapte
 | `kroger` | 1 | search api · cartAdd api · cartRead none · slots handoff · checkout handoff · orders none | First and best adapter. OAuth with PKCE and the `banner` parameter during onboarding. Idempotency via the run ledger, not cart reads. Live product lookups every run; nothing cached past response headers. Deep link to kroger.com/checkout or the QFC or Fred Meyer app. Cart calls can only be tested in production |
 | `safeway` (browser) | 3 | all browser | Main path. Mode A on-device. Consent shown once at connect |
 | `costco` (browser) | 3 | all browser | Main path. Mode A on-device. Consent shown once at connect. Membership required; non-members are not supported at Costco |
-| `kroger` browser extension | 3 | slots browser · checkout browser | Optional: finishes slot and pay after the API filled the cart |
+| `kroger` browser adapter | 3 | slots browser · checkout browser | WS10. Finishes slot and pay on kroger.com after the API filled the cart; "Finish in app" on a Kroger run |
 
 **Cross-store splitting** stays inside Kroger's terms because the only prices we display come from the Kroger API (one retailer family), and other stores are assigned by household rules ("bulk and paper goods → Costco," "produce → QFC") and learned preferences, never by comparing prices across retailers on one screen. Browser adapters read prices during a run for the household's own cart; those prices are never shown next to Kroger prices.
 

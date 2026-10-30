@@ -29,7 +29,7 @@ When this is done, the repo has one contract every store integration implements,
 
 ## Out of scope
 - The WebView host, bridge, and session capture for browser adapters (WS08).
-- Browser-driven adapters, session capture, WebView bridge (WS10).
+- Browser-driven adapters and the assisted run screen (WS10).
 - The agent loop, line-item scoring implementation, review UI, run state machine (WS09). You only ship `Product` fields the scorer needs.
 - Scheduled runs and push notifications (WS11).
 - Order history (WS12); Kroger's public tier has no orders endpoint anyway.

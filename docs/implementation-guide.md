@@ -90,7 +90,7 @@ The orchestrator stops and asks at these points. Nowhere else, unless something 
 1. **After WS00 merges.** Approve scaffold choices: package names, lint rules, CI shape, Node and pnpm versions.
 2. **Before WS01 merges.** Approve the identity migration and RLS policies. This is where `docs/02-data-model.md` becomes real.
 3. **Before WS07 starts.** The Kroger developer app is registered and the client id, secret, and redirect URI are in `.env.local`. Never in the repo.
-4. **Before WS08 starts.** Approve the Tier 3 consent copy and choose which retailers get browser adapters.
+4. **Before WS08 starts.** Approve the Tier 3 consent copy and confirm the Tier 3 retailer list (the WS08 brief's `TIER3_RETAILERS` default: Safeway, Albertsons, Haggen, Costco).
 5. **Before WS10 starts.** Accept the WS08 host demo: the agent drives a test page in the Simulator, consent is recorded at connect, Disconnect wipes the session.
 6. **Before WS14 finishes.** Choose the name from `docs/08-brand.md` after the checks.
 7. **Any time.** A contract change the orchestrator judges to be a design change rather than a fix.

@@ -1,0 +1,753 @@
+name,plural,category,default_unit,density_g_per_ml,typical_unit_weight_g,usda_fdc_id,is_staple_default
+green chile,green chiles,produce,each,,15,,false
+sushi rice,,pantry,cup,0.8,,,false
+grits,,pantry,cup,0.65,,,false
+pancake mix,,baking,cup,0.5,,,false
+cheese,,dairy,cup,0.45,,,false
+yellow onion,yellow onions,produce,each,,150,,false
+red onion,red onions,produce,each,,150,,false
+white onion,white onions,produce,each,,150,,false
+sweet onion,sweet onions,produce,each,,200,,false
+green onion,green onions,produce,bunch,,100,,false
+shallot,shallots,produce,each,,40,,false
+garlic,,produce,clove,,5,,false
+leek,leeks,produce,each,,90,,false
+chive,chives,produce,bunch,,25,,false
+pearl onion,pearl onions,produce,each,,10,,false
+tomato,tomatoes,produce,each,,123,,false
+cherry tomato,cherry tomatoes,produce,cup,0.63,17,,false
+grape tomato,grape tomatoes,produce,cup,0.63,12,,false
+tomatillo,tomatillos,produce,each,,34,,false
+bell pepper,bell peppers,produce,each,,150,,false
+red bell pepper,red bell peppers,produce,each,,150,,false
+green bell pepper,green bell peppers,produce,each,,150,,false
+yellow bell pepper,yellow bell peppers,produce,each,,150,,false
+orange bell pepper,orange bell peppers,produce,each,,150,,false
+jalapeno,jalapenos,produce,each,,14,,false
+serrano pepper,serrano peppers,produce,each,,6,,false
+poblano pepper,poblano peppers,produce,each,,100,,false
+habanero pepper,habanero peppers,produce,each,,10,,false
+thai chile,thai chiles,produce,each,,3,,false
+fresno chile,fresno chiles,produce,each,,15,,false
+anaheim pepper,anaheim peppers,produce,each,,45,,false
+carrot,carrots,produce,each,,61,,false
+russet potato,russet potatoes,produce,each,,213,,false
+yukon gold potato,yukon gold potatoes,produce,each,,170,,false
+red potato,red potatoes,produce,each,,170,,false
+baby potato,baby potatoes,produce,each,,40,,false
+sweet potato,sweet potatoes,produce,each,,130,,false
+beet,beets,produce,each,,82,,false
+radish,radishes,produce,each,,5,,false
+daikon radish,daikon radishes,produce,each,,400,,false
+turnip,turnips,produce,each,,122,,false
+parsnip,parsnips,produce,each,,133,,false
+rutabaga,rutabagas,produce,each,,386,,false
+celery root,celery roots,produce,each,,500,,false
+jicama,jicamas,produce,each,,400,,false
+ginger,,produce,tbsp,0.6,,,false
+turmeric root,turmeric roots,produce,each,,,,false
+spinach,,produce,cup,0.12,,,false
+kale,,produce,bunch,0.09,,,false
+romaine lettuce,romaine lettuces,produce,head,,626,,false
+iceberg lettuce,iceberg lettuces,produce,head,,539,,false
+butter lettuce,butter lettuces,produce,head,,163,,false
+lettuce,lettuces,produce,head,,360,,false
+arugula,,produce,cup,0.07,,,false
+mixed greens,,produce,cup,0.1,,,false
+cabbage,cabbages,produce,head,,908,,false
+red cabbage,red cabbages,produce,head,,840,,false
+napa cabbage,napa cabbages,produce,head,,800,,false
+savoy cabbage,savoy cabbages,produce,head,,600,,false
+bok choy,,produce,each,,170,,false
+swiss chard,,produce,bunch,,250,,false
+collard greens,,produce,bunch,,300,,false
+watercress,,produce,bunch,,100,,false
+radicchio,radicchios,produce,head,,200,,false
+endive,endives,produce,head,,100,,false
+broccoli,,produce,head,,300,,false
+broccolini,,produce,bunch,,200,,false
+cauliflower,cauliflowers,produce,head,,588,,false
+brussels sprout,brussels sprouts,produce,each,,19,,false
+zucchini,zucchinis,produce,each,,196,,false
+yellow squash,yellow squashes,produce,each,,196,,false
+butternut squash,butternut squashes,produce,each,,1000,,false
+acorn squash,acorn squashes,produce,each,,550,,false
+spaghetti squash,spaghetti squashes,produce,each,,1500,,false
+kabocha squash,kabocha squashes,produce,each,,1000,,false
+pumpkin,pumpkins,produce,each,,,,false
+cucumber,cucumbers,produce,each,,300,,false
+eggplant,eggplants,produce,each,,458,,false
+asparagus,,produce,bunch,,360,,false
+green bean,green beans,produce,lb,,,,false
+snap pea,snap peas,produce,cup,,,,false
+snow pea,snow peas,produce,cup,,,,false
+corn,,produce,ear,,140,,false
+celery,,produce,stalk,,40,,false
+white mushroom,white mushrooms,produce,oz,,,,false
+cremini mushroom,cremini mushrooms,produce,oz,,,,false
+shiitake mushroom,shiitake mushrooms,produce,oz,,,,false
+portobello mushroom,portobello mushrooms,produce,each,,85,,false
+oyster mushroom,oyster mushrooms,produce,oz,,,,false
+fennel,,produce,each,,234,,false
+artichoke,artichokes,produce,each,,128,,false
+okra,,produce,oz,,,,false
+avocado,avocados,produce,each,,200,,false
+lemon,lemons,produce,each,,58,,false
+lime,limes,produce,each,,67,,false
+orange,oranges,produce,each,,131,,false
+grapefruit,grapefruits,produce,each,,246,,false
+apple,apples,produce,each,,182,,false
+pear,pears,produce,each,,178,,false
+banana,bananas,produce,each,,118,,false
+plantain,plantains,produce,each,,179,,false
+strawberry,strawberries,produce,cup,0.55,18,,false
+blueberry,blueberries,produce,cup,0.62,1,,false
+raspberry,raspberries,produce,cup,0.5,5,,false
+blackberry,blackberries,produce,cup,0.6,8,,false
+cranberry,cranberries,produce,cup,0.4,1,,false
+grape,grapes,produce,cup,0.62,5,,false
+peach,peaches,produce,each,,150,,false
+nectarine,nectarines,produce,each,,142,,false
+plum,plums,produce,each,,66,,false
+cherry,cherries,produce,cup,0.65,8,,false
+mango,mangoes,produce,each,,336,,false
+pineapple,pineapples,produce,each,,905,,false
+watermelon,watermelons,produce,each,,4500,,false
+cantaloupe,cantaloupes,produce,each,,552,,false
+kiwi,kiwis,produce,each,,69,,false
+pomegranate,pomegranates,produce,each,,282,,false
+papaya,papayas,produce,each,,304,,false
+apricot,apricots,produce,each,,35,,false
+fig,figs,produce,each,,50,,false
+coconut,coconuts,produce,each,,400,,false
+parsley,,produce,bunch,0.25,60,,false
+cilantro,,produce,bunch,0.2,30,,false
+basil,,produce,bunch,0.2,20,,false
+thai basil,,produce,bunch,,20,,false
+mint,,produce,bunch,0.2,20,,false
+rosemary,,produce,sprig,,2,,false
+thyme,,produce,sprig,,1,,false
+sage,,produce,bunch,,15,,false
+dill,,produce,bunch,0.15,25,,false
+tarragon,,produce,bunch,,15,,false
+oregano,,produce,bunch,,15,,false
+marjoram,,produce,bunch,,15,,false
+lemongrass,,produce,stalk,,30,,false
+curry leaf,curry leaves,produce,sprig,,1,,false
+kaffir lime leaf,kaffir lime leaves,produce,each,,1,,false
+bean sprout,bean sprouts,produce,cup,0.2,,,false
+microgreens,,produce,cup,,,,false
+edamame,,produce,cup,,,,false
+tofu,,produce,package,,400,,false
+tempeh,,produce,package,,227,,false
+yuca,,produce,lb,,,,false
+taro,,produce,lb,,,,false
+water chestnut,water chestnuts,produce,each,,,,false
+kohlrabi,kohlrabis,produce,each,,135,,false
+rhubarb,,produce,stalk,,51,,false
+sunchoke,sunchokes,produce,lb,,,,false
+chicken breast,chicken breasts,meat,lb,,225,,false
+chicken thigh,chicken thighs,meat,lb,,115,,false
+chicken drumstick,chicken drumsticks,meat,lb,,100,,false
+chicken wing,chicken wings,meat,lb,,85,,false
+whole chicken,whole chickens,meat,each,,1800,,false
+rotisserie chicken,rotisserie chickens,meat,each,,900,,false
+ground chicken,,meat,lb,,,,false
+ground turkey,,meat,lb,,,,false
+turkey breast,turkey breasts,meat,lb,,,,false
+whole turkey,whole turkeys,meat,lb,,,,false
+turkey bacon,,meat,slice,,,,false
+ground beef,,meat,lb,,,,false
+beef chuck roast,beef chuck roasts,meat,lb,,,,false
+stew meat,,meat,lb,,,,false
+ribeye steak,ribeye steaks,meat,each,,340,,false
+sirloin steak,sirloin steaks,meat,lb,,,,false
+flank steak,flank steaks,meat,lb,,,,false
+skirt steak,skirt steaks,meat,lb,,,,false
+strip steak,strip steaks,meat,each,,340,,false
+filet mignon,filet mignons,meat,each,,170,,false
+steak,steaks,meat,lb,,,,false
+brisket,briskets,meat,lb,,,,false
+short ribs,,meat,lb,,,,false
+prime rib,prime ribs,meat,lb,,,,false
+beef sausage,beef sausages,meat,each,,,,false
+pork chop,pork chops,meat,each,,200,,false
+pork tenderloin,pork tenderloins,meat,lb,,,,false
+pork loin,pork loins,meat,lb,,,,false
+pork shoulder,pork shoulders,meat,lb,,,,false
+ground pork,,meat,lb,,,,false
+pork belly,pork bellies,meat,lb,,,,false
+pork rib,pork ribs,meat,lb,,,,false
+bacon,,meat,slice,,28,,false
+pancetta,,meat,oz,,,,false
+guanciale,,meat,oz,,,,false
+ham,,meat,lb,,,,false
+prosciutto,,meat,oz,,,,false
+italian sausage,italian sausages,meat,each,,100,,false
+breakfast sausage,breakfast sausages,meat,each,,,,false
+chorizo,,meat,each,,100,,false
+andouille sausage,andouille sausages,meat,each,,110,,false
+kielbasa,,meat,lb,,,,false
+bratwurst,bratwursts,meat,each,,110,,false
+hot dog,hot dogs,meat,each,,50,,false
+chicken sausage,chicken sausages,meat,each,,85,,false
+salami,,meat,oz,,,,false
+pepperoni,,meat,oz,,,,false
+deli turkey,,meat,oz,,,,false
+roast beef,,meat,oz,,,,false
+ground lamb,,meat,lb,,,,false
+lamb chop,lamb chops,meat,each,,120,,false
+leg of lamb,legs of lamb,meat,lb,,,,false
+lamb shoulder,lamb shoulders,meat,lb,,,,false
+veal,,meat,lb,,,,false
+duck breast,duck breasts,meat,each,,250,,false
+ground bison,,meat,lb,,,,false
+venison,,meat,lb,,,,false
+liver,livers,meat,lb,,,,false
+oxtail,oxtails,meat,lb,,,,false
+bone broth bones,,meat,lb,,,,false
+salmon fillet,salmon fillets,seafood,lb,,170,,false
+cod fillet,cod fillets,seafood,lb,,170,,false
+tilapia fillet,tilapia fillets,seafood,lb,,115,,false
+halibut fillet,halibut fillets,seafood,lb,,170,,false
+mahi mahi,,seafood,lb,,170,,false
+sea bass,,seafood,lb,,170,,false
+trout fillet,trout fillets,seafood,lb,,150,,false
+tuna steak,tuna steaks,seafood,lb,,170,,false
+swordfish steak,swordfish steaks,seafood,lb,,170,,false
+snapper fillet,snapper fillets,seafood,lb,,170,,false
+catfish fillet,catfish fillets,seafood,lb,,150,,false
+white fish fillet,white fish fillets,seafood,lb,,150,,false
+shrimp,,seafood,lb,,,,false
+sea scallop,sea scallops,seafood,lb,,,,false
+crab meat,,seafood,oz,,,,false
+lobster tail,lobster tails,seafood,each,,140,,false
+mussel,mussels,seafood,lb,,,,false
+clam,clams,seafood,lb,,,,false
+oyster,oysters,seafood,each,,,,false
+squid,,seafood,lb,,,,false
+octopus,octopuses,seafood,lb,,,,false
+smoked salmon,,seafood,oz,,,,false
+anchovy fillet,anchovy fillets,seafood,each,,2,,false
+sardine,sardines,seafood,can,,,,false
+canned tuna,,seafood,can,,142,,false
+canned salmon,,seafood,can,,,,false
+fish sticks,,seafood,each,,28,,false
+roe,,seafood,oz,,,,false
+crawfish,,seafood,lb,,,,false
+eel,,seafood,oz,,,,false
+herring,,seafood,oz,,,,false
+mackerel,,seafood,each,,,,false
+milk,,dairy,cup,1.03,,,false
+skim milk,,dairy,cup,1.03,,,false
+buttermilk,,dairy,cup,1.03,,,false
+heavy cream,,dairy,cup,0.99,,,false
+half-and-half,,dairy,cup,1.0,,,false
+sour cream,sour creams,dairy,cup,1.0,,,false
+creme fraiche,,dairy,cup,1.0,,,false
+yogurt,,dairy,cup,1.03,,,false
+greek yogurt,,dairy,cup,1.05,,,false
+butter,,dairy,tbsp,0.96,,,false
+unsalted butter,,dairy,tbsp,0.96,,,false
+margarine,,dairy,tbsp,0.96,,,false
+ghee,,dairy,tbsp,0.91,,,false
+cream cheese,,dairy,oz,0.96,,,false
+cottage cheese,,dairy,cup,1.04,,,false
+ricotta,,dairy,cup,1.03,,,false
+mozzarella,,dairy,cup,0.47,,,false
+fresh mozzarella,,dairy,oz,,,,false
+cheddar,,dairy,cup,0.48,,,false
+parmesan,,dairy,cup,0.4,,,false
+pecorino romano,,dairy,cup,0.4,,,false
+gruyere,,dairy,cup,0.45,,,false
+swiss cheese,,dairy,oz,,,,false
+provolone,,dairy,oz,,,,false
+monterey jack,,dairy,cup,0.47,,,false
+pepper jack,,dairy,cup,0.47,,,false
+colby jack,,dairy,cup,0.47,,,false
+american cheese,,dairy,slice,,21,,false
+mexican cheese blend,,dairy,cup,0.47,,,false
+italian cheese blend,,dairy,cup,0.47,,,false
+feta,,dairy,cup,0.55,,,false
+goat cheese,,dairy,oz,,,,false
+blue cheese,,dairy,oz,,,,false
+brie,,dairy,oz,,,,false
+mascarpone,,dairy,oz,1.0,,,false
+havarti,,dairy,oz,,,,false
+queso fresco,,dairy,oz,,,,false
+cotija,,dairy,oz,,,,false
+halloumi,,dairy,oz,,,,false
+paneer,,dairy,oz,,,,false
+string cheese,,dairy,each,,28,,false
+fontina,,dairy,oz,,,,false
+asiago,,dairy,oz,,,,false
+manchego,,dairy,oz,,,,false
+whipped cream,,dairy,cup,0.25,,,false
+almond milk,,dairy,cup,1.0,,,false
+oat milk,,dairy,cup,1.0,,,false
+soy milk,,dairy,cup,1.03,,,false
+coconut milk beverage,,dairy,cup,1.0,,,false
+cashew milk,,dairy,cup,1.0,,,false
+kefir,,dairy,cup,1.03,,,false
+eggnog,,dairy,cup,1.03,,,false
+egg,eggs,eggs,each,,50,,false
+egg white,egg whites,eggs,each,,33,,false
+egg yolk,egg yolks,eggs,each,,17,,false
+sandwich bread,,bakery,slice,,30,,false
+whole wheat bread,,bakery,slice,,35,,false
+sourdough bread,,bakery,slice,,50,,false
+baguette,baguettes,bakery,each,,250,,false
+ciabatta,,bakery,each,,250,,false
+focaccia,,bakery,each,,300,,false
+brioche bun,brioche buns,bakery,each,,60,,false
+hamburger bun,hamburger buns,bakery,each,,55,,false
+hot dog bun,hot dog buns,bakery,each,,50,,false
+dinner roll,dinner rolls,bakery,each,,40,,false
+flour tortilla,flour tortillas,bakery,each,,45,,false
+corn tortilla,corn tortillas,bakery,each,,25,,false
+pita bread,pita breads,bakery,each,,60,,false
+naan,,bakery,each,,90,,false
+english muffin,english muffins,bakery,each,,57,,false
+bagel,bagels,bakery,each,,100,,false
+croissant,croissants,bakery,each,,57,,false
+biscuit,biscuits,bakery,each,,60,,false
+pizza dough,,bakery,lb,,454,,false
+pizza crust,pizza crusts,bakery,each,,250,,false
+pie crust,pie crusts,bakery,each,,200,,false
+graham cracker crust,graham cracker crusts,bakery,each,,180,,false
+puff pastry,,bakery,sheet,,250,,false
+phyllo dough,,bakery,sheet,,20,,false
+croutons,,bakery,cup,0.25,,,false
+stuffing mix,,bakery,cup,0.4,,,false
+cornbread,,bakery,each,,,,false
+cake,cakes,bakery,each,,,,false
+cookie,cookies,bakery,each,,,,false
+muffin,muffins,bakery,each,,,,false
+donut,donuts,bakery,each,,,,false
+waffle,waffles,bakery,each,,,,false
+pancake,pancakes,bakery,each,,,,false
+hush puppy,hush puppies,bakery,each,,,,false
+bread crumbs,,pantry,cup,0.47,,,false
+panko,,pantry,cup,0.25,,,false
+vegetable oil,,pantry,tbsp,0.92,,,true
+olive oil,,pantry,tbsp,0.91,,,true
+coconut oil,,pantry,tbsp,0.92,,,true
+cooking spray,,pantry,each,,,,true
+shortening,,pantry,cup,0.85,,,true
+lard,,pantry,tbsp,0.92,,,true
+white vinegar,,pantry,tbsp,1.01,,,true
+apple cider vinegar,,pantry,tbsp,1.01,,,false
+balsamic vinegar,,pantry,tbsp,1.1,,,false
+red wine vinegar,,pantry,tbsp,1.01,,,false
+white wine vinegar,,pantry,tbsp,1.01,,,false
+sherry vinegar,,pantry,tbsp,1.01,,,false
+rice vinegar,,pantry,tbsp,1.01,,,false
+ketchup,,pantry,tbsp,1.15,,,false
+yellow mustard,,pantry,tbsp,1.05,,,false
+dijon mustard,,pantry,tbsp,1.05,,,false
+whole grain mustard,,pantry,tbsp,1.05,,,false
+mayonnaise,,pantry,tbsp,0.96,,,false
+hot sauce,,pantry,tsp,1.0,,,false
+sriracha,,pantry,tbsp,1.1,,,false
+worcestershire sauce,,pantry,tsp,1.1,,,false
+soy sauce,,pantry,tbsp,1.15,,,false
+bbq sauce,,pantry,cup,1.15,,,false
+salsa,,pantry,cup,1.05,,,false
+relish,,pantry,tbsp,1.1,,,false
+pickle,pickles,pantry,each,,35,,false
+pickle juice,,pantry,tbsp,1.0,,,false
+capers,,pantry,tbsp,1.0,,,false
+green olives,,pantry,cup,0.65,,,false
+black olives,,pantry,cup,0.65,,,false
+kalamata olives,,pantry,cup,0.65,,,false
+jam,,pantry,tbsp,1.3,,,false
+honey,,pantry,tbsp,1.42,,,false
+maple syrup,,pantry,tbsp,1.33,,,false
+agave nectar,,pantry,tbsp,1.38,,,false
+molasses,,pantry,tbsp,1.4,,,false
+peanut butter,,pantry,tbsp,1.09,,,false
+almond butter,,pantry,tbsp,1.05,,,false
+tahini,,pantry,tbsp,1.0,,,false
+hazelnut spread,,pantry,tbsp,1.2,,,false
+white rice,,pantry,cup,0.78,,,false
+brown rice,,pantry,cup,0.77,,,false
+jasmine rice,,pantry,cup,0.78,,,false
+basmati rice,,pantry,cup,0.78,,,false
+arborio rice,,pantry,cup,0.8,,,false
+wild rice,,pantry,cup,0.65,,,false
+cooked rice,,pantry,cup,0.65,,,false
+quinoa,,pantry,cup,0.72,,,false
+couscous,,pantry,cup,0.65,,,false
+barley,,pantry,cup,0.77,,,false
+farro,,pantry,cup,0.75,,,false
+bulgur,,pantry,cup,0.68,,,false
+rolled oats,,pantry,cup,0.34,,,false
+steel-cut oats,,pantry,cup,0.7,,,false
+cornmeal,,pantry,cup,0.65,,,false
+spaghetti,,pantry,oz,0.45,,,false
+penne,,pantry,oz,0.45,,,false
+rotini,,pantry,oz,0.45,,,false
+elbow macaroni,,pantry,oz,0.45,,,false
+linguine,,pantry,oz,0.45,,,false
+fettuccine,,pantry,oz,0.45,,,false
+angel hair pasta,,pantry,oz,0.45,,,false
+lasagna noodles,,pantry,oz,0.45,,,false
+orzo,,pantry,cup,0.7,,,false
+egg noodles,,pantry,oz,0.35,,,false
+farfalle,,pantry,oz,0.4,,,false
+lentils,,pantry,cup,0.84,,,false
+red lentils,,pantry,cup,0.84,,,false
+split peas,,pantry,cup,0.85,,,false
+dried black beans,,pantry,cup,0.8,,,false
+dried chickpeas,,pantry,cup,0.8,,,false
+dried kidney beans,,pantry,cup,0.8,,,false
+almonds,,pantry,cup,0.6,,,false
+walnuts,,pantry,cup,0.47,,,false
+pecans,,pantry,cup,0.42,,,false
+cashews,,pantry,cup,0.58,,,false
+peanuts,,pantry,cup,0.62,,,false
+pistachios,,pantry,cup,0.55,,,false
+pine nuts,,pantry,cup,0.5,,,false
+hazelnuts,,pantry,cup,0.57,,,false
+macadamia nuts,,pantry,cup,0.55,,,false
+brazil nuts,,pantry,cup,0.58,,,false
+mixed nuts,,pantry,cup,0.55,,,false
+sunflower seeds,,pantry,cup,0.55,,,false
+pumpkin seeds,,pantry,cup,0.5,,,false
+sesame seeds,,pantry,tbsp,0.6,,,false
+chia seeds,,pantry,tbsp,0.7,,,false
+flax seeds,,pantry,tbsp,0.55,,,false
+hemp seeds,,pantry,tbsp,0.65,,,false
+raisins,,pantry,cup,0.64,,,false
+dried cranberries,,pantry,cup,0.45,,,false
+dates,,pantry,cup,0.7,,,false
+dried apricots,,pantry,cup,0.6,,,false
+prunes,,pantry,cup,0.68,,,false
+coconut flakes,,pantry,cup,0.35,,,false
+chicken broth,,pantry,cup,1.0,,,false
+beef broth,,pantry,cup,1.0,,,false
+vegetable broth,,pantry,cup,1.0,,,false
+marinara sauce,,pantry,cup,1.05,,,false
+alfredo sauce,,pantry,cup,1.03,,,false
+pesto,,pantry,tbsp,1.0,,,false
+diced tomatoes,,canned,can,1.0,,,false
+fire-roasted tomatoes,,canned,can,1.0,,,false
+crushed tomatoes,,canned,can,1.04,,,false
+whole peeled tomatoes,,canned,can,1.0,,,false
+tomato sauce,,canned,can,1.04,,,false
+tomato paste,,canned,tbsp,1.1,,,false
+diced tomatoes with green chiles,,canned,can,1.0,,,false
+black beans,,canned,can,0.75,,,false
+kidney beans,,canned,can,0.75,,,false
+pinto beans,,canned,can,0.75,,,false
+cannellini beans,,canned,can,0.75,,,false
+chickpeas,,canned,can,0.75,,,false
+refried beans,,canned,can,1.1,,,false
+baked beans,,canned,can,1.05,,,false
+corn kernels canned,,canned,can,0.75,,,false
+green chiles,,canned,can,1.0,,,false
+chipotle peppers in adobo,,canned,can,1.1,,,false
+coconut milk,,canned,can,0.97,,,false
+coconut cream,,canned,can,1.0,,,false
+evaporated milk,,canned,can,1.07,,,false
+sweetened condensed milk,,canned,can,1.3,,,false
+artichoke hearts,,canned,can,,,,false
+roasted red peppers,,canned,jar,,,,false
+pumpkin puree,,canned,can,1.0,,,false
+cream of mushroom soup,,canned,can,1.05,,,false
+canned pineapple,,canned,can,,,,false
+canned peaches,,canned,can,,,,false
+canned lentils,,canned,can,,,,false
+water chestnuts,,canned,can,,,,false
+canned beets,,canned,can,,,,false
+sauerkraut,,canned,jar,,,,false
+applesauce,,canned,cup,1.05,,,false
+frozen peas,,frozen,cup,0.64,,,false
+frozen corn,,frozen,cup,0.7,,,false
+frozen spinach,,frozen,package,,,,false
+frozen broccoli,,frozen,package,,,,false
+frozen green beans,,frozen,package,,,,false
+frozen cauliflower,,frozen,package,,,,false
+frozen mixed vegetables,,frozen,package,,,,false
+frozen stir-fry blend,,frozen,package,,,,false
+frozen edamame,,frozen,package,,,,false
+frozen hash browns,,frozen,package,,,,false
+french fries,,frozen,package,,,,false
+tater tots,,frozen,package,,,,false
+frozen mixed berries,,frozen,cup,0.55,,,false
+frozen strawberries,,frozen,cup,0.6,,,false
+frozen blueberries,,frozen,cup,0.62,,,false
+frozen raspberries,,frozen,cup,0.5,,,false
+frozen mango,,frozen,cup,0.6,,,false
+frozen peaches,,frozen,cup,0.6,,,false
+frozen cherries,,frozen,cup,0.6,,,false
+frozen banana,,frozen,each,,,,false
+frozen pineapple,,frozen,cup,0.6,,,false
+frozen acai,,frozen,package,,,,false
+frozen shrimp,,frozen,lb,,,,false
+frozen fish fillets,,frozen,lb,,,,false
+frozen meatballs,,frozen,package,,,,false
+frozen dumplings,,frozen,package,,,,false
+frozen pizza,,frozen,each,,,,false
+frozen waffles,,frozen,package,,,,false
+vanilla ice cream,,frozen,cup,0.55,,,false
+frozen chopped onions,,frozen,package,,,,false
+frozen pie crust,,frozen,each,,,,false
+frozen cookie dough,,frozen,package,,,,false
+frozen okra,,frozen,package,,,,false
+frozen collard greens,,frozen,package,,,,false
+frozen lima beans,,frozen,package,,,,false
+frozen artichoke hearts,,frozen,package,,,,false
+frozen sweet potato fries,,frozen,package,,,,false
+frozen chicken nuggets,,frozen,package,,,,false
+frozen burritos,,frozen,each,,,,false
+frozen biscuits,,frozen,package,,,,false
+frozen bread dough,,frozen,each,,,,false
+frozen cooked rice,,frozen,package,,,,false
+frozen vegetable burgers,,frozen,package,,,,false
+water,,beverages,cup,1.0,,,true
+ice,,beverages,cup,0.92,,,true
+sparkling water,,beverages,cup,1.0,,,false
+tonic water,,beverages,cup,1.0,,,false
+ginger beer,,beverages,cup,1.0,,,false
+cola,,beverages,cup,1.0,,,false
+coconut water,,beverages,cup,1.0,,,false
+orange juice,,beverages,cup,1.04,,,false
+lemon juice,,beverages,tbsp,1.03,,,false
+lime juice,,beverages,tbsp,1.03,,,false
+apple juice,,beverages,cup,1.05,,,false
+cranberry juice,,beverages,cup,1.05,,,false
+grape juice,,beverages,cup,1.05,,,false
+pineapple juice,,beverages,cup,1.05,,,false
+tomato juice,,beverages,cup,1.03,,,false
+carrot juice,,beverages,cup,1.03,,,false
+lemonade,,beverages,cup,1.04,,,false
+coffee,,beverages,cup,1.0,,,false
+espresso,,beverages,tbsp,1.0,,,false
+instant coffee,,beverages,tsp,0.4,,,false
+ground coffee,,beverages,tbsp,0.4,,,false
+tea bag,tea bags,beverages,each,,,,false
+white wine,,beverages,cup,0.99,,,false
+red wine,,beverages,cup,0.99,,,false
+marsala wine,,beverages,cup,1.0,,,false
+sparkling wine,,beverages,cup,0.99,,,false
+beer,,beverages,cup,1.01,,,false
+vodka,,beverages,fl_oz,0.95,,,false
+rum,,beverages,fl_oz,0.95,,,false
+bourbon,,beverages,fl_oz,0.95,,,false
+brandy,,beverages,fl_oz,0.95,,,false
+tequila,,beverages,fl_oz,0.95,,,false
+gin,,beverages,fl_oz,0.95,,,false
+triple sec,,beverages,fl_oz,1.05,,,false
+liqueur,,beverages,fl_oz,1.05,,,false
+bitters,,beverages,dash,,,,false
+simple syrup,,beverages,fl_oz,1.2,,,false
+hot cocoa mix,,beverages,packet,,,,false
+sports drink,,beverages,cup,1.0,,,false
+all-purpose flour,,baking,cup,0.53,,,true
+bread flour,,baking,cup,0.54,,,false
+whole wheat flour,,baking,cup,0.51,,,false
+cake flour,,baking,cup,0.45,,,false
+self-rising flour,,baking,cup,0.53,,,false
+almond flour,,baking,cup,0.41,,,false
+coconut flour,,baking,cup,0.5,,,false
+oat flour,,baking,cup,0.4,,,false
+rice flour,,baking,cup,0.6,,,false
+gluten-free flour blend,,baking,cup,0.53,,,false
+rye flour,,baking,cup,0.45,,,false
+semolina flour,,baking,cup,0.67,,,false
+chickpea flour,,baking,cup,0.45,,,false
+cornstarch,,baking,tbsp,0.54,,,false
+arrowroot,,baking,tbsp,0.5,,,false
+tapioca starch,,baking,tbsp,0.55,,,false
+masa harina,,baking,cup,0.5,,,false
+granulated sugar,,baking,cup,0.85,,,true
+brown sugar,,baking,cup,0.93,,,true
+powdered sugar,,baking,cup,0.5,,,false
+coarse sugar,,baking,tbsp,0.85,,,false
+stevia,,baking,tsp,,,,false
+baking soda,,baking,tsp,0.93,,,false
+baking powder,,baking,tsp,0.8,,,false
+active dry yeast,,baking,tsp,0.6,,,false
+vanilla extract,,baking,tsp,0.88,,,true
+vanilla bean,vanilla beans,baking,each,,3,,false
+almond extract,,baking,tsp,0.88,,,false
+lemon extract,,baking,tsp,0.88,,,false
+cocoa powder,,baking,cup,0.43,,,false
+semi-sweet chocolate chips,,baking,cup,0.7,,,false
+bittersweet chocolate,,baking,oz,,,,false
+unsweetened chocolate,,baking,oz,,,,false
+marshmallows,,baking,cup,0.2,,,false
+graham crackers,,baking,each,,,,false
+cream of tartar,,baking,tsp,1.0,,,false
+gelatin,,baking,tbsp,0.7,,,false
+instant pudding mix,,baking,package,,,,false
+cake mix,,baking,package,,,,false
+corn syrup,,baking,tbsp,1.38,,,false
+dry milk powder,,baking,tbsp,0.5,,,false
+xanthan gum,,baking,tsp,0.6,,,false
+food coloring,,baking,drop,,,,false
+kosher salt,,spices,tsp,0.95,,,true
+salt,,spices,tsp,1.2,,,true
+flaky sea salt,,spices,tsp,0.6,,,true
+black pepper,,spices,tsp,0.47,,,true
+white pepper,,spices,tsp,0.47,,,false
+peppercorns,,spices,tsp,0.6,,,false
+red pepper flakes,,spices,tsp,0.45,,,false
+cayenne pepper,,spices,tsp,0.5,,,false
+paprika,,spices,tsp,0.47,,,false
+smoked paprika,,spices,tsp,0.47,,,false
+chili powder,,spices,tsp,0.5,,,false
+chipotle powder,,spices,tsp,0.5,,,false
+cumin,,spices,tsp,0.45,,,false
+coriander,,spices,tsp,0.4,,,false
+turmeric,,spices,tsp,0.6,,,false
+curry powder,,spices,tsp,0.5,,,false
+garam masala,,spices,tsp,0.5,,,false
+cinnamon,,spices,tsp,0.52,,,false
+cinnamon stick,cinnamon sticks,spices,each,,3,,false
+nutmeg,,spices,tsp,0.5,,,false
+allspice,,spices,tsp,0.45,,,false
+ground cloves,,spices,tsp,0.5,,,false
+whole cloves,,spices,each,,0.1,,false
+ground ginger,,spices,tsp,0.4,,,false
+cardamom,,spices,tsp,0.45,,,false
+star anise,,spices,each,,2,,false
+fennel seeds,,spices,tsp,0.45,,,false
+mustard seeds,,spices,tsp,0.65,,,false
+dry mustard,,spices,tsp,0.45,,,false
+caraway seeds,,spices,tsp,0.45,,,false
+celery seed,,spices,tsp,0.55,,,false
+celery salt,,spices,tsp,1.0,,,false
+garlic powder,,spices,tsp,0.6,,,false
+onion powder,,spices,tsp,0.47,,,false
+garlic salt,,spices,tsp,1.0,,,false
+italian seasoning,,spices,tsp,0.2,,,false
+dried oregano,,spices,tsp,0.2,,,false
+dried basil,,spices,tsp,0.2,,,false
+dried thyme,,spices,tsp,0.25,,,false
+dried rosemary,,spices,tsp,0.3,,,false
+dried sage,,spices,tsp,0.2,,,false
+dried parsley,,spices,tsp,0.1,,,false
+dried dill,,spices,tsp,0.15,,,false
+dried marjoram,,spices,tsp,0.2,,,false
+bay leaf,bay leaves,spices,each,,0.2,,false
+herbes de provence,,spices,tsp,0.2,,,false
+poultry seasoning,,spices,tsp,0.3,,,false
+taco seasoning,,spices,tbsp,0.5,,,false
+cajun seasoning,,spices,tsp,0.5,,,false
+old bay seasoning,,spices,tsp,0.7,,,false
+chinese five-spice,,spices,tsp,0.5,,,false
+za'atar,,spices,tsp,0.4,,,false
+ras el hanout,,spices,tsp,0.5,,,false
+saffron,,spices,pinch,,,,false
+nutritional yeast,,spices,tbsp,0.3,,,false
+msg,,spices,tsp,1.0,,,false
+ancho chile,ancho chiles,spices,each,,15,,false
+guajillo chile,guajillo chiles,spices,each,,5,,false
+fish sauce,,international,tbsp,1.2,,,false
+oyster sauce,,international,tbsp,1.2,,,false
+hoisin sauce,,international,tbsp,1.2,,,false
+teriyaki sauce,,international,tbsp,1.15,,,false
+sesame oil,,international,tsp,0.92,,,false
+chili oil,,international,tsp,0.92,,,false
+miso paste,,international,tbsp,1.2,,,false
+gochujang,,international,tbsp,1.2,,,false
+sambal oelek,,international,tsp,1.1,,,false
+red curry paste,,international,tbsp,1.1,,,false
+green curry paste,,international,tbsp,1.1,,,false
+yellow curry paste,,international,tbsp,1.1,,,false
+curry paste,,international,tbsp,1.1,,,false
+tikka masala sauce,,international,cup,1.05,,,false
+harissa,,international,tbsp,1.1,,,false
+tamarind paste,,international,tbsp,1.2,,,false
+pomegranate molasses,,international,tbsp,1.3,,,false
+mirin,,international,tbsp,1.05,,,false
+shaoxing wine,,international,tbsp,1.0,,,false
+nori,,international,sheet,,3,,false
+dashi,,international,tsp,0.8,,,false
+rice paper,,international,sheet,,4,,false
+wonton wrappers,,international,package,,225,,false
+rice noodles,,international,oz,0.35,,,false
+ramen noodles,,international,package,,,,false
+udon noodles,,international,package,,,,false
+soba noodles,,international,oz,0.35,,,false
+kimchi,,international,cup,1.0,,,false
+sriracha mayo,,international,tbsp,1.0,,,false
+coconut aminos,,international,tbsp,1.15,,,false
+enchilada sauce,,international,cup,1.03,,,false
+taco sauce,,international,tbsp,1.05,,,false
+taco shells,,international,each,,12,,false
+black bean sauce,,international,tbsp,1.15,,,false
+sweet chili sauce,,international,tbsp,1.2,,,false
+sushi rice vinegar,,international,tbsp,1.01,,,false
+tzatziki,,international,cup,1.0,,,false
+hummus,,international,cup,1.05,,,false
+jerk marinade,,international,tbsp,1.1,,,false
+sofrito,,international,cup,1.0,,,false
+mole sauce,,international,tbsp,1.2,,,false
+hominy,,international,can,0.75,,,false
+corn husks,,international,each,,5,,false
+tortilla chips,,snacks,cup,0.15,,,false
+potato chips,,snacks,cup,0.12,,,false
+pretzels,,snacks,cup,0.25,,,false
+crackers,,snacks,each,,3,,false
+popcorn,,snacks,cup,0.1,,,false
+granola,,snacks,cup,0.4,,,false
+granola bar,granola bars,snacks,each,,40,,false
+trail mix,,snacks,cup,0.5,,,false
+rice cakes,,snacks,each,,9,,false
+beef jerky,,snacks,oz,,,,false
+seaweed snack,seaweed snacks,snacks,package,,,,false
+fruit snacks,,snacks,package,,,,false
+candy,,snacks,oz,,,,false
+aluminum foil,,household,sheet,,,,true
+plastic wrap,,household,sheet,,,,true
+parchment paper,,household,sheet,,,,true
+paper towels,,household,sheet,,,,true
+zip-top bag,zip-top bags,household,each,,,,true
+toothpicks,,household,each,,,,true
+skewers,,household,each,,,,true
+cupcake liners,,household,each,,,,true
+kitchen twine,,household,each,,,,true
+cheesecloth,,household,each,,,,true
+charcoal,,household,bag,,,,true
+dish soap,,household,each,,,,true
+protein powder,,other,scoop,0.45,,,false
+baby food,,other,jar,,,,false
+pet food,,other,bag,,,,false
+vitamins,,other,each,,,,false
+pasta,,pantry,oz,0.45,,,false
+rigatoni,,pantry,oz,0.45,,,false
+ziti,,pantry,oz,0.45,,,false
+shell pasta,,pantry,oz,0.45,,,false
+ditalini,,pantry,oz,0.5,,,false
+cavatappi,,pantry,oz,0.45,,,false
+tortellini,,pantry,oz,,,,false
+bucatini,,pantry,oz,0.45,,,false
+pappardelle,,pantry,oz,0.4,,,false
+whole wheat pasta,,pantry,oz,0.45,,,false
+vermicelli,,pantry,oz,0.4,,,false
+graham cracker crumbs,,pantry,cup,0.5,,,false
+black-eyed peas,,pantry,can,0.75,,,false
+lima beans,,pantry,cup,0.75,,,false
+split pea soup mix,,pantry,package,,,,false
+chicken base,,pantry,tsp,1.2,,,false
+bouillon cubes,,pantry,each,,4,,false
+tomato soup,,pantry,can,1.03,,,false
+peanut oil,,pantry,tbsp,0.92,,,false
+canola oil,,pantry,tbsp,0.92,,,true
+avocado oil,,pantry,tbsp,0.92,,,true
+walnut oil,,pantry,tbsp,0.92,,,false
+italian dressing,,pantry,tbsp,1.0,,,false
+ranch dressing,,pantry,tbsp,1.0,,,false
+caesar dressing,,pantry,tbsp,1.0,,,false
+blue cheese dressing,,pantry,tbsp,1.0,,,false
+horseradish,,pantry,tbsp,1.1,,,false
+liquid smoke,,pantry,tsp,1.1,,,false
+cream of chicken soup,,canned,can,1.05,,,false
+cream of celery soup,,canned,can,1.05,,,false
+chestnuts,,pantry,cup,0.6,,,false
+sumac,,spices,tsp,0.5,,,false
+orange extract,,baking,tsp,0.88,,,false
+psyllium husk,,baking,tbsp,0.35,,,false

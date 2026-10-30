@@ -7,19 +7,19 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 ## 0. Before the first orchestrator session (human)
 
 - [x] Git identity pinned to the Gmail account for this clone (`scripts/setup-git-identity.sh`). Run it again on any fresh clone before the first commit.
-- [ ] Create the Supabase project. Put `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `WORKER_DATABASE_URL` in a local `.env.local`. Never commit it.
-- [ ] Register the Kroger developer app at developer.kroger.com with redirect URI `mealplanner://oauth/kroger`. Put `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` in `.env.local`. (Gates wave 2.)
+- [x] Create the Supabase project. Put `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `WORKER_DATABASE_URL` in a local `.env.local`. Never commit it.
+- [x] Register the Kroger developer app at developer.kroger.com with redirect URI `mealplanner://oauth/kroger`. Put `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` in `.env.local`. (Gates wave 2.)
 - [ ] Submit the Instacart Developer Platform application at company.instacart.com/business/developers. Record the response in `docs/status.md` under External tasks. (Gates WS08 production; a dev key works without approval.)
 - [ ] Create accounts: Expo/EAS, Fly.io or Railway (worker), Cloudflare Pages (web and marketing), Sentry, PostHog. Put `ANTHROPIC_API_KEY`, `SENTRY_DSN`, `EXPO_PUBLIC_POSTHOG_KEY` in `.env.local`.
-- [ ] Optional now, required before WS14 finishes: run the name checks in `docs/08-brand.md` §1.3 for Sous and Larder.
+- [x] Optional now, required before WS14 finishes: run the name checks in `docs/08-brand.md` §1.3 for Sous and Larder.
 - [ ] Decide where `main` lives. Either create a GitHub repository and push `main` (enables PRs and GitHub Actions as the docs assume), or tell the orchestrator you're staying local (then CI is the same commands run locally and merges are local squash merges; no PRs).
-- [ ] Open a Claude Code session in this folder with Fable as the model and paste the kickoff prompt at the bottom of this file.
+- [x] Open a Claude Code session in this folder with Fable as the model and paste the kickoff prompt at the bottom of this file.
 
 ## 1. Wave 0: scaffold
 
-- [ ] Bootstrap per `docs/implementation-guide.md` §1: read `CLAUDE.md`, this file, the guide, `docs/status.md`, `docs/07-roadmap.md` §Waves.
-- [ ] Confirm the Supabase credentials exist locally (ask the human; do not look for secrets in the repo).
-- [ ] Dispatch the WS00 builder: Agent tool, `isolation: "worktree"`, `model: "opus"`, prompt from guide §6.1 pointing at `docs/workstreams/WS00-scaffold.md`. Set WS00 to `in progress` in `docs/status.md`.
+- [x] Bootstrap per `docs/implementation-guide.md` §1: read `CLAUDE.md`, this file, the guide, `docs/status.md`, `docs/07-roadmap.md` §Waves.
+- [x] Confirm the Supabase credentials exist locally (ask the human; do not look for secrets in the repo).
+- [x] Dispatch the WS00 builder: Agent tool, `isolation: "worktree"`, `model: "opus"`, prompt from guide §6.1 pointing at `docs/workstreams/WS00-scaffold.md`. Set WS00 to `in progress` in `docs/status.md`.
 - [ ] Receive the completion report. Reject it if the Verification output section is missing real command output.
 - [ ] Dispatch the WS00 reviewer: `model: "sonnet"`, `isolation: "worktree"`, prompt from guide §6.3. Do not hand it the builder's report.
 - [ ] Act on the verdict: merge (squash into `main`, delete branch), or one fix round with the same builder, or escalate.

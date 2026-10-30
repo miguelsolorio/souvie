@@ -2,14 +2,14 @@
 
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
-**Current wave:** 0 (not started)
-**Last updated:** 2026-10-29 by the planning session
+**Current wave:** 0 (in progress)
+**Last updated:** 2026-10-29 by the orchestrator (WS00 dispatched)
 
 ## Workstreams
 
 | WS | Name | Wave | State | Branch | Model | Started | Merged | Notes |
 |---|---|---|---|---|---|---|---|---|
-| 00 | Repo & infra scaffold | 0 | not started | | | | | Human checkpoint 1 after merge |
+| 00 | Repo & infra scaffold | 0 | in progress | ws/00-scaffold | opus | 2026-10-29 | | Human checkpoint 1 after merge. Docker and Xcode were not installed at dispatch; criteria 7, 9, 10, 11 are verified once Miguel installs them |
 | 01 | Auth & households | 1 | not started | | | | | Human checkpoint 2 before merge (migration + RLS) |
 | 02 | Recipe domain & import | 2 | not started | | | | | |
 | 03 | Ingredient ontology & parser | 1 | not started | | | | | |
@@ -32,9 +32,13 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 
 | Task | Owner | Status | Notes |
 |---|---|---|---|
-| Register Kroger developer app at developer.kroger.com | Miguel | open | Needed before WS07. Credentials go in `.env.local`, never the repo |
+| Register Kroger developer app at developer.kroger.com | Miguel | done 2026-10-29 | Credentials in `.env.local`, never the repo. Checkpoint 3 prerequisite met |
 | Submit Instacart Developer Platform application | Miguel | open | Needed before WS08 production; dev key works without approval. Marketing page said "not accepting" on 2026-10-29; docs still say apply |
-| Trademark, domain, and App Store name checks for the shortlist | Miguel | open | Needed before WS14 finishes |
+| Trademark, domain, and App Store name checks for the shortlist | Miguel | done 2026-10-29 | Sous and Larder checked per docs/08-brand.md §1.3. Outcome recorded at checkpoint 6 |
+| Create the Supabase project | Miguel | done 2026-10-29 | Credentials in `.env.local` at the primary checkout root. WS00 verifies against local Supabase only |
+| Create the GitHub repository for `main` | Miguel | open | Orchestrator adds the remote and pushes `main` once it has the URL |
+| Create accounts: Expo/EAS, Fly.io or Railway, Cloudflare Pages, Sentry, PostHog | Miguel | open | `ANTHROPIC_API_KEY` needed before WS02; the rest before WS13, WS14, WS15 |
+| Install Docker Desktop or OrbStack, and Xcode | Miguel | open | Needed for WS00 criteria 7, 9, 10, 11 and every later local Supabase or iOS check |
 
 ## Wave summaries
 
@@ -43,4 +47,8 @@ _None yet._
 ## Decisions log
 
 - 2026-10-29: Stack: Expo + React Native (TypeScript), Supabase, separate Node worker. Audience v1: household first. Checkout tiers 1, 2, and 3 all allowed; Tier 3 is on-device assisted mode first. (Planning session.)
+- 2026-10-29: `main` lives on GitHub in a repository Miguel creates. Merges go through PRs and GitHub Actions. The orchestrator session runs in an app-made worktree on branch `claude/repo-orchestration-setup-4365a5`, which mirrors `origin/main`. Ledger and contract commits are made there and pushed with `git push origin HEAD:main`. The primary checkout's local `main` is refreshed by Miguel with `git pull`. (Orchestrator, confirmed with Miguel.)
+- 2026-10-29: Wave 0 gate met. The Supabase project exists and its credentials are in `.env.local` at the primary checkout root. WS00 verifies against local Supabase and never needs the hosted project. (Orchestrator.)
+- 2026-10-29: WS00 dispatched before Docker and Xcode were installed. The builder self-installs pnpm, the Supabase CLI, and Node 22. Criteria 7, 9, 10, 11 are verified once Docker and Xcode exist, with one evidence round to the same builder if the report lands first. (Orchestrator, confirmed with Miguel.)
+- 2026-10-29: Kroger developer app registered and name checks for Sous and Larder done. Instacart application and the hosting and analytics accounts remain open. (Miguel.)
 - 2026-10-29: Reconciliation after brief drafting. Package scope `@mp/*`; Node 22 and pnpm 9; migrations use Supabase timestamp names in the logical order in docs/02; RLS helper is `current_household_ids()`; pgmq queue `shopping_run` with message `{ run_id }`; ledger columns `delta_sent`, `delta_result`, `sent_at`; `scheduled_runs.last_enqueued_for`; Kroger redirect `mealplanner://oauth/kroger`; app web export and marketing site on Cloudflare Pages; `orders` owned by WS12; `llm-proxy` owned by WS10; `export-data` created by WS01 and extended by WS12; 16 store sections per WS03. (Planning session.)

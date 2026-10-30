@@ -10,14 +10,23 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
+    "gen-types": "node scripts/gen-types.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "test": "vitest run"
   },
   "dependencies": {
-    "@mp/core": "workspace:*"
+    "@mp/core": "workspace:*",
+    "@supabase/supabase-js": "^2.118.0"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.105.0",
+    "react": "^19.0.0"
   },
   "devDependencies": {
+    "@tanstack/react-query": "^5.105.0",
+    "@types/react": "~19.3.0",
+    "react": "19.3.0",
     "typescript": "~6.0.3",
     "vitest": "^5.0.5"
   }

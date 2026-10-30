@@ -82,11 +82,14 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      # Postgres, the API gateway, and the Edge runtime are all these checks need.
+      # Postgres, the API gateway, and the Edge runtime, plus what the identity tests (WS01)
+      # need: gotrue (the auth schema and auth.uid()), postgrest (the API roles the policies
+      # are written for), storage-api (the storage schema behind the avatars policies), and
+      # mailpit (the magic link check below reads the email back from it).
       - name: Start Supabase
         run: >-
           pnpm supabase start
-          -x gotrue,realtime,storage-api,imgproxy,mailpit,postgrest,postgres-meta,studio,logflare,vector,supavisor
+          -x realtime,imgproxy,postgres-meta,studio,logflare,vector,supavisor
 
       - name: Reset database from migrations
         run: pnpm supabase db reset
@@ -117,15 +120,69 @@ jobs:
             grep -qw "$ext" extensions.txt || { echo "missing extension: $ext"; exit 1; }
           done
 
-      # pgTAP policy tests in supabase/tests (WS03 adds 003_ingredients_policies.sql). WS01 adds
-      # the same step on its branch; the orchestrator reconciles at merge.
+      # Lint our own schemas only. The `extensions` schema holds third-party functions
+      # (pgTAP) that plpgsql_check flags; add schemas here as migrations create them.
+      # WS01 creates none: its tables and functions are all in `public`.
+      - name: Lint schema
+        run: pnpm supabase db lint --local --schema public --fail-on error
+
+      # Every pgTAP file in supabase/tests runs here, once: WS01's RLS isolation, invite, and
+      # avatars tests (001_rls_identity.sql), WS03's ingredient policies, and the waitlist
+      # policies. Every later workstream adds its own file under supabase/tests.
       - name: Database tests (pgTAP)
         run: pnpm supabase test db
 
-      # Lint our own schemas only. The `extensions` schema holds third-party functions
-      # (pgTAP) that plpgsql_check flags; add schemas here as migrations create them.
-      - name: Lint schema
-        run: pnpm supabase db lint --local --schema public --fail-on error
+      # WS01 criterion 4. Request a magic link the way the app does (PKCE, redirect to the
+      # mealplanner:// scheme), read the email back from Mailpit, open the link, and exchange the
+      # code it redirects with for a session. Proves the template, the redirect allow list, and
+      # that a profile is created for the new user. No secrets are printed.
+      - name: Magic link signs a user in (Mailpit)
+        run: |
+          set -euo pipefail
+          api=http://127.0.0.1:54321
+          mail=http://127.0.0.1:54324
+          anon="$(pnpm --silent supabase status -o env | grep '^ANON_KEY=' | cut -d= -f2- | tr -d '"')"
+          test -n "$anon"
+          email="ci-magic-$(date +%s)@example.test"
+          verifier="$(openssl rand -hex 32)"
+          challenge="$(printf '%s' "$verifier" | openssl dgst -sha256 -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')"
+
+          curl -sf -X POST "$api/auth/v1/otp?redirect_to=mealplanner://callback" \
+            -H "apikey: $anon" -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$email\",\"create_user\":true,\"code_challenge\":\"$challenge\",\"code_challenge_method\":\"s256\"}" > /dev/null
+
+          id=""
+          for _ in $(seq 1 30); do
+            id="$(curl -sf "$mail/api/v1/search?query=to:$email" | jq -r '.messages[0].ID // empty')"
+            [ -n "$id" ] && break
+            sleep 1
+          done
+          if [ -z "$id" ]; then echo "no email reached Mailpit for $email"; curl -s "$mail/api/v1/messages" | head -c 1500; exit 1; fi
+
+          message="$(curl -sf "$mail/api/v1/message/$id")"
+          echo "subject: $(echo "$message" | jq -r .Subject)"
+          html="$(echo "$message" | jq -r .HTML)"
+          echo "$html" | grep -q "Sign in to Meal Planner"
+          link="$(echo "$html" | grep -oE 'href="[^"]*/auth/v1/verify[^"]*"' | head -1 | sed -e 's/^href="//' -e 's/"$//' -e 's/&amp;/\&/g')"
+          test -n "$link"
+          echo "$html" | grep -qE '<strong>[0-9]{6}</strong>'
+          echo "the email carries a sign-in link and a 6 digit code"
+
+          location="$(curl -s -o /dev/null -D - "$link" | tr -d '\r' | awk -F': ' 'tolower($1)=="location"{print $2}')"
+          case "$location" in
+            mealplanner://callback\?code=*) echo "opening the link redirects to mealplanner://callback?code=<redacted>" ;;
+            *) echo "unexpected redirect: ${location%%code=*}"; exit 1 ;;
+          esac
+          auth_code="${location#*code=}"; auth_code="${auth_code%%&*}"
+
+          access="$(curl -sf -X POST "$api/auth/v1/token?grant_type=pkce" \
+            -H "apikey: $anon" -H 'Content-Type: application/json' \
+            -d "{\"auth_code\":\"$auth_code\",\"code_verifier\":\"$verifier\"}" | jq -r .access_token)"
+          signed_in="$(curl -sf "$api/auth/v1/user" -H "apikey: $anon" -H "Authorization: Bearer $access" | jq -r .email)"
+          test "$signed_in" = "$email"
+          echo "the code exchanges for a session for $email"
+          psql "$DB_URL" -tAc "select count(*) from public.profiles p join auth.users u on u.id = p.user_id where u.email = '$email'" | grep -qx 1
+          echo "a profile row exists for the new user"
 
       # Criterion 10 (CI part)
       - name: Health function answers
@@ -158,3 +215,19 @@ jobs:
             echo "worker did not read the real queue"; exit 1
           fi
           test "$(grep -c "\] idle " worker.log)" -ge 2
+
+      # The committed packages/db/src/types.generated.ts must match the migrated schema. A new
+      # migration that changes a table or function fails here until the regenerated file (the
+      # artifact below, or `pnpm --filter @mp/db gen-types` on a stack) is committed. The upload
+      # comes first so the fresh file is there to download when the check fails.
+      - name: Generate database types
+        run: pnpm --filter @mp/db gen-types
+
+      - name: Upload generated types
+        uses: actions/upload-artifact@v7
+        with:
+          name: types.generated.ts
+          path: packages/db/src/types.generated.ts
+
+      - name: Check committed types are current
+        run: git diff --exit-code packages/db/src/types.generated.ts

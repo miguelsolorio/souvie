@@ -7,5 +7,6 @@
 //
 // Relative imports carry the .ts extension so Deno (Supabase Edge Functions) can load this
 // barrel through an import map.
+export * from "./identity.ts";
 export * from "./ingredient.ts";
 export * from "./units.ts";

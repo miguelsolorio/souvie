@@ -160,12 +160,21 @@ max_indexes = 5
 [auth]
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
-# in emails.
-site_url = "http://127.0.0.1:3000"
+# in emails. WS01: the Expo web dev server. The hosted project uses the deployed web origin.
+site_url = "http://localhost:8081"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
-# A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# URLs that auth providers and magic links may redirect to after authentication (WS01).
+# Glob patterns are allowed. This is the development list, for the local stack and CI. The
+# production project lists only https://<web-origin>/callback and mealplanner://callback, not
+# the localhost wildcards or exp://** (supabase/README.md §Auth).
+additional_redirect_urls = [
+  "http://localhost:8081/**",       # Expo web dev server: /callback, /join/<token>
+  "http://127.0.0.1:8081/**",
+  "mealplanner://**",               # Deep link scheme (apps/mobile app.json): mealplanner://callback
+  "exp://**",                       # Expo Go: exp://<lan-ip>:8081/--/callback
+  # "https://<web-origin>/**",      # Deployed web build and, later, the Tauri origin (WS13)
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -248,6 +257,12 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Magic link email (WS01). The template carries both the link and the 6 digit code, so a person
+# whose mail app opens links in the wrong browser can type the code instead.
+[auth.email.template.magic_link]
+subject = "Your sign-in link"
+content_path = "./supabase/templates/magic_link.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"
@@ -325,9 +340,16 @@ max_frequency = "5s"
 # Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
 # `twitter`, `x`, `slack`, `spotify`, `workos`, `zoom`.
+#
+# WS01: Apple and Google sign-in. Both ship disabled here on purpose. The CLI refuses to start
+# when an enabled provider has an empty client_id or secret, which would break every
+# `supabase` command (and CI) until real credentials exist. To enable on a stack you control,
+# export the four variables named below and set enabled = true. The hosted project is
+# configured in the dashboard (Authentication -> Providers); see supabase/README.md §Auth.
 [auth.external.apple]
 enabled = false
-client_id = ""
+# Comma separated: the iOS bundle id (native sign-in) and the Services ID (web OAuth).
+client_id = "env(SUPABASE_AUTH_EXTERNAL_APPLE_CLIENT_ID)"
 # DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
 secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
 # Overrides the default auth callback URL derived from auth.external_url.
@@ -338,6 +360,16 @@ url = ""
 # If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
 skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
+email_optional = false
+
+[auth.external.google]
+enabled = false
+# Web client id from Google Cloud Console. Native Google sign-in uses the same browser flow.
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+redirect_uri = ""
+url = ""
+skip_nonce_check = false
 email_optional = false
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.
@@ -397,6 +429,14 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/health/deno.json"
 entrypoint = "./functions/health/index.ts"
+
+# Export everything the calling user and their households own (WS01; WS12 extends it).
+# verify_jwt stays on: it answers only for a signed-in user, under that user's RLS.
+[functions.export-data]
+enabled = true
+verify_jwt = true
+import_map = "./functions/export-data/deno.json"
+entrypoint = "./functions/export-data/index.ts"
 
 [analytics]
 enabled = true

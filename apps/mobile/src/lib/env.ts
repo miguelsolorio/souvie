@@ -4,6 +4,8 @@
 export const publicEnv = {
   supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
   supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+  // Origin of the deployed web app, used to build invite links (WS01). Empty in a fresh clone.
+  webOrigin: process.env.EXPO_PUBLIC_WEB_ORIGIN,
   // PostHog is wired in WS15. WS00 only reads the variable.
   posthogKey: process.env.EXPO_PUBLIC_POSTHOG_KEY,
 };

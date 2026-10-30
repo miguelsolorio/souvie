@@ -8,9 +8,11 @@
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.miguelsolorio.mealplanner"
     },
     "android": {
+      "package": "com.miguelsolorio.mealplanner",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2F6B4F"
@@ -34,6 +36,14 @@
             "image": "./assets/splash-icon.png",
             "backgroundColor": "#2F6B4F"
           }
+        }
+      ],
+      "expo-apple-authentication",
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Meal Planner uses your photos so you can choose a profile picture."
         }
       ]
     ]

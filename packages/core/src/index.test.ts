@@ -14,4 +14,17 @@ describe("@mp/core", () => {
       expect(mod).toHaveProperty(name);
     }
   });
+
+  it("exports the identity schemas from WS01", async () => {
+    const mod = await import("./index");
+    for (const name of [
+      "Household",
+      "HouseholdMember",
+      "Profile",
+      "ProfilePreferences",
+      "HouseholdRole",
+    ]) {
+      expect(mod).toHaveProperty(name);
+    }
+  });
 });

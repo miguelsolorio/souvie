@@ -105,6 +105,7 @@ pnpm --filter @mp/mobile start                               # manual: airplane-
 ```
 
 ## Risks and notes
+- From the WS00 review (2026-10-30): TanStack Query persistence is opt-in per query with `meta: { persist: true }` and a global 24-hour maximum age. Grocery-list queries should opt in so the list works offline. Any query that returns retailer-derived data (products, prices, availability) must never set `persist`; docs/04 forbids storing search-derived data past the response's cache headers.
 - Unit conversion is the main correctness risk (R2). Keep `buildList` pure and fixture-driven so every reported bug becomes a test case. Always show the contributions so the user can see and override.
 - Never drop an unparsed line. A missing item in the store is worse than an odd one; `needsAttention` keeps it visible.
 - Offline (R6): persist the query cache per household, queue mutations with client-generated ids, and treat `checked` as last-writer-wins by `checked_at`. Do not build CRDTs.

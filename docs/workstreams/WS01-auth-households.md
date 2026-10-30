@@ -114,6 +114,7 @@ pnpm --filter @mp/mobile start                # manual: Apple sign-in on iOS, Go
 - `profiles.preferences` is per user, not per household, because allergies and dislikes belong to a person. Household-wide settings live on `households`.
 - Human checkpoint 2: the orchestrator pauses before merging this WS so the human can approve the first migration and policies.
 - Mitigates R9 (sharing permission bugs) and sets up R4 (allergen hard filters live in `preferences`).
+- From the WS00 review (2026-10-30): the CI `supabase` job starts the stack with `-x gotrue,realtime,storage-api,imgproxy,mailpit,postgrest,postgres-meta,studio,logflare,vector,supavisor`. Add back the services your pgTAP and auth tests need, at least `gotrue` and `postgrest`. `supabase db lint` in CI is scoped to `--schema public`; add every schema your migrations create (for example the one holding `current_household_ids()`) to that flag. The development Mac has no Docker, so run your own checks against the hosted project per the WS00 amendment and rely on CI for `supabase test db`.
 
 **Suggested build order**
 1. Migration `0001` tables and RLS; `0002` functions. Run `supabase db reset`.

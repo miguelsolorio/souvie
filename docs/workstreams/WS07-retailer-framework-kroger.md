@@ -144,6 +144,7 @@ pnpm --filter mobile start                                    # manual: Connect 
 ```
 
 ## Risks and notes
+- From the WS00 review (2026-10-30): never set `meta: { persist: true }` on a TanStack query that returns Kroger data. The WS00 persisted cache keeps opted-in queries for up to 24 hours regardless of `cacheUntil`, which would break the Kroger cache-header rule. Keep catalog data in memory only, bounded by the response's cache headers.
 - R15: quotas are shared across every household on one client ID. Batch pinned items through `filter.productId`, search only unpinned items, and surface `RetailerQuotaError` to WS09 so it can pause a run instead of failing it.
 - R21: Kroger forbids storing data derived from searches or cart adds and forbids caching past headers. This WS is where that rule becomes code: no table receives search results; `product_matches` has no price or stock; `Product.cacheUntil` is the only cache signal. The orchestrator will seek written clarification from Kroger before any public launch; design so a stricter reading still works.
 - R22: banner logos (QFC, Fred Meyer) may appear only in the Add-to-Cart UI and only while the app is not monetized. Put logo usage behind a single `showBannerLogos` flag defaulting to true for the household build and document the Partnership Request requirement in the component.

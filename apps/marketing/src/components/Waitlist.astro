@@ -1,0 +1,141 @@
+---
+import { site } from "../config";
+---
+
+<section id="waitlist" class="band band-brand" data-section="waitlist" aria-labelledby="waitlist-title">
+  <div class="container narrow">
+    <h2 id="waitlist-title">Join the waitlist</h2>
+    <p class="lead">
+      We're starting in Washington. Tell us your zip and we'll email you when your stores are live.
+    </p>
+    <form id="waitlist-form" novalidate>
+      <div class="field">
+        <label for="waitlist-email">Email</label>
+        <input
+          id="waitlist-email"
+          name="email"
+          type="email"
+          autocomplete="email"
+          inputmode="email"
+          required
+          aria-describedby="waitlist-status"
+        />
+      </div>
+      <div class="field">
+        <label for="waitlist-zip">Zip code <span class="optional">(optional)</span></label>
+        <input
+          id="waitlist-zip"
+          name="zip"
+          type="text"
+          inputmode="numeric"
+          autocomplete="postal-code"
+          maxlength="5"
+          aria-describedby="waitlist-status"
+        />
+      </div>
+      <!-- Honeypot. People never see it or tab to it. Bots that fill every field get a fake success
+           and no row is written. -->
+      <div class="hp" aria-hidden="true">
+        <label for="waitlist-website">Leave this field empty</label>
+        <input id="waitlist-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+      </div>
+      <button class="button" type="submit">Join the waitlist</button>
+      <p id="waitlist-status" class="status" role="status" aria-live="polite"></p>
+    </form>
+    <p class="fine">
+      We use your email and zip only to tell you when {site.name} opens. Coming to iOS and web.
+    </p>
+  </div>
+</section>
+
+<style>
+  .band-brand {
+    background: var(--color-surface-brand);
+  }
+
+  form {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+  }
+
+  form .button {
+    justify-self: start;
+  }
+
+  .hp {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .status {
+    min-height: 1.5rem;
+    font-weight: 600;
+  }
+
+  .status[data-state="joined"],
+  .status[data-state="duplicate"] {
+    color: var(--color-text-success);
+  }
+
+  .status[data-state="invalid-email"],
+  .status[data-state="invalid-zip"],
+  .status[data-state="error"],
+  .status[data-state="unavailable"] {
+    color: var(--color-text-danger);
+  }
+</style>
+
+<script>
+  import { loadWaitlistClient } from "../lib/supabase";
+  import { submitWaitlist } from "../lib/waitlist";
+
+  const form = document.querySelector<HTMLFormElement>("#waitlist-form");
+  const status = document.querySelector<HTMLElement>("#waitlist-status");
+  const button = form?.querySelector<HTMLButtonElement>("button[type=submit]");
+
+  if (form && status && button) {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const data = new FormData(form);
+      const params = new URLSearchParams(location.search);
+
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      status.removeAttribute("data-state");
+      status.textContent = "";
+
+      const result = await submitWaitlist(
+        {
+          email: String(data.get("email") ?? ""),
+          zip: String(data.get("zip") ?? ""),
+          honeypot: String(data.get("website") ?? ""),
+          source: params.get("ref") ?? params.get("utm_source") ?? "landing",
+        },
+        loadWaitlistClient,
+      );
+
+      status.dataset.state = result.status;
+      status.textContent = result.message;
+      const email = form.elements.namedItem("email");
+      const zip = form.elements.namedItem("zip");
+      if (email instanceof HTMLInputElement) {
+        email.setAttribute("aria-invalid", String(result.status === "invalid-email"));
+      }
+      if (zip instanceof HTMLInputElement) {
+        zip.setAttribute("aria-invalid", String(result.status === "invalid-zip"));
+      }
+      if (result.status === "joined") form.reset();
+
+      button.disabled = false;
+      button.removeAttribute("aria-busy");
+    });
+  }
+</script>

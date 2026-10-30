@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <title>Meal Planner: Dinner, decided. Groceries, done.</title>
+  <!-- Source for public/og.png (1200x630). Render with:
+       rsvg-convert -w 1200 -h 630 src/assets/og.svg -o public/og.png
+       Change the name in the two text lines marked NAME when the name is chosen. -->
+  <rect width="1200" height="630" fill="#FAF8F5"/>
+  <rect x="800" width="400" height="630" fill="#2F6B4F"/>
+  <g fill="#FAF8F5" transform="translate(808 129.25) scale(6)">
+    <path d="M6 36h52c0 12.4-11.6 20-26 20S6 48.4 6 36z"/>
+    <path d="M33 31C33 19 40 11 53 9c0 12.5-7.6 21.2-20 22z"/>
+    <path d="M31 31C31 23 26 17 15 15c0 8.5 5.5 14.5 16 16z"/>
+  </g>
+
+  <g fill="#2F6B4F" transform="translate(80 60) scale(0.9)">
+    <path d="M6 36h52c0 12.4-11.6 20-26 20S6 48.4 6 36z"/>
+    <path d="M33 31C33 19 40 11 53 9c0 12.5-7.6 21.2-20 22z"/>
+    <path d="M31 31C31 23 26 17 15 15c0 8.5 5.5 14.5 16 16z"/>
+  </g>
+  <!-- NAME -->
+  <text x="148" y="106" font-family="Charter, 'Bitstream Charter', Georgia, serif" font-size="32" font-weight="700" fill="#1A1814">Meal Planner</text>
+
+  <g font-family="Charter, 'Bitstream Charter', Georgia, serif" font-weight="700" font-size="80" letter-spacing="-1.6" fill="#1A1814">
+    <text x="80" y="300">Dinner, decided.</text>
+    <text x="80" y="390">Groceries, done.</text>
+  </g>
+  <!-- NAME -->
+  <text x="80" y="470" font-family="'Helvetica Neue', Arial, sans-serif" font-size="30" fill="#5B5449">Meal Planner plans the week and fills your carts.</text>
+  <text x="80" y="512" font-family="'Helvetica Neue', Arial, sans-serif" font-size="30" fill="#5B5449">You tap pay.</text>
+</svg>

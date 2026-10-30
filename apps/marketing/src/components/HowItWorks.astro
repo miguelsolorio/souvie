@@ -1,0 +1,101 @@
+---
+import { site } from "../config";
+
+const steps = [
+  {
+    title: "Plan",
+    body: "Tell it how your household eats: allergies, budget, how much time you have on a Tuesday. It suggests a week of dinners you'll cook. Swap anything with a tap.",
+  },
+  {
+    title: "List",
+    body: "One list for the whole week. Pantry staples come off, amounts add up, and everything's grouped by aisle. Shop it in the store, offline, with everyone checking things off.",
+  },
+  {
+    title: "Cart",
+    body: `Pick a day and ${site.name} fills your cart. You review it, swap anything, and pay in the store's app. Pickup's on the way home.`,
+  },
+];
+
+const points = [
+  "One list, several stores. Bulk at Costco, produce at QFC, by your rules.",
+  "It remembers. Pick a brand once and it stays picked.",
+  "Allergies are enforced in code, not suggested by a model.",
+];
+---
+
+<section id="how-it-works" class="band band-sunken" data-section="how-it-works" aria-labelledby="how-title">
+  <div class="container">
+    <h2 id="how-title">How it works</h2>
+    <ol class="steps">
+      {
+        steps.map((step, index) => (
+          <li class="step">
+            <span class="step-number" aria-hidden="true">{index + 1}</span>
+            <h3>{step.title}</h3>
+            <p>{step.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+    <h3 class="different">Why it's different</h3>
+    <ul class="points">
+      {points.map((point) => <li>{point}</li>)}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .steps {
+    display: grid;
+    gap: var(--space-4);
+    margin: var(--space-8) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .step {
+    padding: var(--space-6);
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .step h3 {
+    margin-top: var(--space-3);
+  }
+
+  .step p {
+    margin-top: var(--space-2);
+    color: var(--color-text-muted);
+  }
+
+  .step-number {
+    display: inline-grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    color: var(--color-text-on-primary);
+    font-weight: 700;
+  }
+
+  .different {
+    margin-top: var(--space-12);
+  }
+
+  .points {
+    display: grid;
+    gap: var(--space-3);
+    margin: var(--space-4) 0 0;
+    padding-left: var(--space-5);
+    max-width: 40rem;
+  }
+
+  @media (min-width: 48rem) {
+    .steps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>

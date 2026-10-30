@@ -1,3 +1,10 @@
 // @mp/ui: Design system: tokens, NativeWind primitives, icons, theming.
-// Scaffold from WS00. See README.md for what lands here and which workstream owns it.
+// WS14 adds the tokens. WS04 adds the first primitives. See README.md.
+//
+// CSS helpers live behind `@mp/ui/css`, not here: they use `.ts` import paths so Node can load
+// them directly (tailwind.preset.js, apps/marketing/scripts/gen-tokens.mjs), and app code never
+// needs them.
 export const packageName = "@mp/ui";
+
+export type { ColorMode, Tokens } from "./tokens";
+export { tokens } from "./tokens";

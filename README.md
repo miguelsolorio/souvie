@@ -6,7 +6,7 @@ Mobile first (Expo, iOS and Android), then web (Expo Router static export), then
 
 ## Where things stand
 
-Design and orchestration are complete. **No application code exists yet.** The documents in `docs/` are the source of truth, and `docs/implementation-guide.md` tells a Claude Fable session how to run the build as the orchestrator of builder and reviewer agents.
+Wave 0 is merged: the monorepo scaffold exists and CI is green (see Getting started). Product features start in wave 1. The documents in `docs/` remain the source of truth for the design, and `docs/implementation-guide.md` tells a Claude Fable session how to run the build as the orchestrator of builder and reviewer agents.
 
 See `docs/status.md` for the live ledger.
 

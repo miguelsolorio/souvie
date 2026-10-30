@@ -2,14 +2,14 @@
 
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
-**Current wave:** 0 (in progress)
-**Last updated:** 2026-10-30 by the orchestrator (WS00 fix landed, re-review running)
+**Current wave:** 0 merged, awaiting human checkpoint 1
+**Last updated:** 2026-10-30 by the orchestrator (WS00 merged)
 
 ## Workstreams
 
 | WS | Name | Wave | State | Branch | Model | Started | Merged | Notes |
 |---|---|---|---|---|---|---|---|---|
-| 00 | Repo & infra scaffold | 0 | in review | ws/00-scaffold | opus | 2026-10-29 | | Fix commit 73db72f landed; CI green: https://github.com/miguelsolorio/souvie/actions/runs/41010562175. Re-review by the same reviewer running. Hosted halves of 9-11 need `SUPABASE_ACCESS_TOKEN`; criterion 7 needs the Xcode license. Checkpoint 1 after merge |
+| 00 | Repo & infra scaffold | 0 | merged | ws/00-scaffold | opus | 2026-10-29 | 2026-10-30 | Squash 7713b7f, PR #1. Reviewer: merge, twice. Deferred to checkpoint 1: criterion 7 (Xcode license) and the hosted halves of 9-11 (`SUPABASE_ACCESS_TOKEN`). Checkpoint 1 pending |
 | 01 | Auth & households | 1 | not started | | | | | Human checkpoint 2 before merge (migration + RLS) |
 | 02 | Recipe domain & import | 2 | not started | | | | | |
 | 03 | Ingredient ontology & parser | 1 | not started | | | | | |
@@ -44,7 +44,12 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 
 ## Wave summaries
 
-_None yet._
+### Wave 0 (merged 2026-10-30)
+- Landed: WS00 scaffold as 7713b7f (88 files). pnpm 9 workspaces, Turborepo, Biome, strict TypeScript, Vitest with `unit` and `evals` projects, eight `@mp/*` shells, Expo SDK 58 app with static web output, NativeWind and an opt-in persisted Query cache, Supabase config with the extensions migration and `health`, shopper-worker pgmq loop, CI with `checks` and `supabase` jobs. Reviewer verdict merge on both passes.
+- Deferred: criterion 7 (iOS Simulator; Xcode license not accepted) and the hosted halves of 9 to 11 (`SUPABASE_ACCESS_TOKEN` missing). The hosted project has not received `db push` or `functions deploy` yet. Both are verified at checkpoint 1 once Miguel unblocks them.
+- Contracts changed: none. `.env.example` grew to thirteen variables with `SUPABASE_ACCESS_TOKEN` (CLI only). Root `.npmrc` pins the public npm registry.
+- Next wave needs: checkpoint 1 approval. WS01 re-enables `gotrue` and `postgrest` in the CI stack, extends `db lint --schema`, and adds `supabase test db`. Builders verify against the hosted project; container-only checks run in CI.
+- Human: accept the Xcode license, add `SUPABASE_ACCESS_TOKEN` to `.env.local`, approve the checkpoint 1 items, and `git pull` in the primary checkout. Instacart application and the hosting and analytics accounts remain open.
 
 ## Decisions log
 
@@ -54,6 +59,8 @@ _None yet._
 - 2026-10-29: Wave 0 gate met. The Supabase project exists and its credentials are in `.env.local` at the primary checkout root. WS00 verifies against local Supabase and never needs the hosted project. (Orchestrator.)
 - 2026-10-29: WS00 dispatched before Docker and Xcode were installed. The builder self-installs pnpm, the Supabase CLI, and Node 22. Criteria 7, 9, 10, 11 are verified once Docker and Xcode exist, with one evidence round to the same builder if the report lands first. (Orchestrator, confirmed with Miguel.)
 - 2026-10-29: Docker cannot be installed on the development Mac (security policy). Container-only Supabase commands (`start`, `db reset`, `functions serve`, `db lint --local`, `test db`) run in GitHub Actions. Local development uses the hosted project through `supabase link`, `db push`, and `functions deploy --use-api`. WS00 criteria 9 to 12 amended in the brief; docs/01 Environments updated. `.env.example` gains `SUPABASE_ACCESS_TOKEN` as a developer-tool variable, thirteen in total. Podman 5.5 is present but unused pending policy. (Orchestrator, confirmed with Miguel.)
+- 2026-10-30: WS00 merged as 7713b7f by a local squash pushed to `origin/main`; PR #1 closed from the commit message. Squash merges are done locally rather than with `gh pr merge` so every commit on `main` is authored and committed as the pinned Gmail identity; a GitHub-side squash would set GitHub as the committer. PRs remain the review and CI record. Criterion 7 and the hosted halves of 9 to 11 were deferred past the merge because only human actions on the dev machine block them; they are checkpoint 1 items. (Orchestrator.)
+- 2026-10-30: WS00 re-review of fix commit 73db72f returned merge. CI now exercises the real `pgmq.read` path, Vitest excludes nested worktrees, Metro copies only `EXPO_PUBLIC_*`, `.node-version` pins 22, pooler mode documented. Open nits carried: `pnpm typecheck` skips `supabase/functions`; CI actions pinned to major tags; PRs run CI twice (`push` on `ws/**` plus `pull_request`); the worker documents but does not set `prepare: false` (WS09). (Orchestrator.)
 - 2026-10-30: WS00 review (Sonnet, detached worktree) returned merge with no blockers and no false claims in the builder's report. Criteria 1 to 6, 8, 12, 13 and the CI halves of 9 to 11 pass; 7 and the hosted halves wait on Miguel. Fix round sent to the same builder for: CI creating `shopping_run` so the real `pgmq.read` path runs; Vitest excluding `**/.claude/**` and `.gitignore` adding `.claude/worktrees/`; Metro copying only `EXPO_PUBLIC_*` from `.env.local`; a root `.node-version`; pooler-mode notes for `WORKER_DATABASE_URL`. Carried into briefs: WS01 (CI services to re-enable, `db lint` schema list), WS05 and WS07 (retailer data never sets `meta.persist`). Noted for checkpoint 1: `pnpm typecheck` does not cover `supabase/functions`, CI actions pinned to major tags, PRs run CI twice. (Orchestrator.)
 - 2026-10-30: WS00 second report received. CI run 41008341567 is green with two jobs: checks (install, typecheck, lint, test, eval) and a Supabase stack job (start, db reset, extension check, db lint on the public schema, health curl, 15-second worker run). CI starts the stack with auth, realtime, storage, postgrest, studio and supavisor excluded; WS01 adds back what its tests need. `db lint` is scoped to `--schema public` because plpgsql_check flags pgTAP's own functions; later migrations add their schemas to that flag. Hosted halves of 9 to 11 and criterion 7 wait on Miguel. Reviewer dispatched. (Orchestrator.)
 - 2026-10-29: WS00 completion report received. Criteria 1 to 6, 8, and 13 pass with pasted output. The branch was pushed by the orchestrator for CI. Disclosed deviations accepted for review: root `.npmrc` pinning the public npm registry (the machine's global npmrc points at a corporate registry; checkpoint 1 item), extra config files the deliverables imply, `pgcrypto` in the extensions migration per docs/02, `shopping_run` queue creation left to WS09 per docs/02, Tailwind `darkMode: "class"`, opt-in query persistence via `meta.persist`. No contract change requests. (Orchestrator.)

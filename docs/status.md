@@ -3,14 +3,14 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 1 (in progress)
-**Last updated:** 2026-10-30 by the orchestrator (WS14 in review)
+**Last updated:** 2026-10-30 by the orchestrator (WS01 and WS14 in review)
 
 ## Workstreams
 
 | WS | Name | Wave | State | Branch | Model | Started | Merged | Notes |
 |---|---|---|---|---|---|---|---|---|
 | 00 | Repo & infra scaffold | 0 | merged | ws/00-scaffold | opus | 2026-10-29 | 2026-10-30 | Squash 7713b7f, PR #1. Checkpoint 1 approved 2026-10-30. Still to verify once Miguel unblocks: criterion 7 (Xcode license) and the hosted halves of 9-11 (`SUPABASE_ACCESS_TOKEN`) |
-| 01 | Auth & households | 1 | in progress | ws/01-auth-households | sonnet | 2026-10-30 | | Report received 2026-10-30; branch pushed, CI pending. Evidence round: CI proof for criteria 1, 2, 9 (commit generated types), iOS Simulator screenshot, Mailpit check in CI if feasible. Criterion 3 provider sign-ins wait on Apple and Google setup. Hosted push only after checkpoint 2 and merge |
+| 01 | Auth & households | 1 | in review | ws/01-auth-households | sonnet | 2026-10-30 | | Head 2ce508d. CI green: https://github.com/miguelsolorio/souvie/actions/runs/41022980566 (pgTAP 120/120, Mailpit magic link, hard types-drift check). Reviewer running. Criterion 3 partial: Simulator shows the sign-in screen; Apple and Google completion wait on provider setup. Checkpoint 2 before merge; hosted push after merge |
 | 02 | Recipe domain & import | 2 | not started | | | | | |
 | 03 | Ingredient ontology & parser | 1 | in progress | ws/03-ingredient-ontology-parser | sonnet | 2026-10-30 | | |
 | 04 | Planner UI | 3 | not started | | | | | |

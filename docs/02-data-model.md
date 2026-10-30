@@ -162,7 +162,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | column | type |
 |---|---|
 | normalized_text | text pk |
-| result | jsonb (`core.ParsedIngredient`) |
+| result | jsonb: `{ items: core.ParsedIngredient[] }`; one line can name several ingredients |
 | source | enum ingredient_parse_cache_source: grammar, llm |
 | model, prompt_version | text |
 
@@ -174,6 +174,8 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | proposed_name | text |
 | proposed_category | text |
 | household_id | uuid → households (nullable) |
+| suggested_ingredient_id | uuid → ingredients (nullable); the closest existing ingredient, when the lookup had one |
+| count | integer ≥ 1, default 1; how many lines proposed the same name |
 | status | enum ingredient_alias_proposals_status: pending, accepted, rejected |
 
 ### Planning

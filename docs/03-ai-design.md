@@ -69,7 +69,7 @@ Deterministic first, model second, cache always.
 
 1. **Grammar.** Quantity (integers, fractions, unicode fractions, ranges "2–3", "a"), unit (dictionary with aliases: tbsp, T, tablespoon, tablespoons), preparation phrases ("diced", "finely chopped"), qualifiers ("to taste", "optional", "divided"), and parenthetical sizes ("1 (15 oz) can").
 2. **Ontology lookup.** Match the remaining noun phrase against `ingredients.name` and `ingredient_aliases.alias` with trigram similarity; accept above 0.85.
-3. **Model fallback.** Lines below the confidence threshold go to Haiku in batches of 20 with a strict schema `{qty, unit, ingredient, prep, optional, confidence}`. Results are cached by normalized `raw_text` so the same line is never parsed twice across the household.
+3. **Model fallback.** Lines below the confidence threshold (0.8) go to Haiku in batches of 20 with a strict schema `{qty, unit, ingredient, prep, optional, confidence}`. Results are cached by normalized `raw_text` so the same line is never parsed twice across the household.
 4. **Unknowns.** An ingredient the ontology lacks creates a proposed `ingredient_aliases` row with `source: llm` for review, and the line is kept with `ingredient_id null` so the list can still show it as free text.
 
 Why this path: no actively maintained TypeScript ingredient parser exists. The best open one (`ingredient-parser-nlp`, ~94% sentence accuracy) is Python. Grammar plus Haiku is the pragmatic TypeScript route, and the golden set doubles as the eval set.

@@ -297,6 +297,17 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | last_chosen_at | timestamptz | |
 | unique (household_id, retailer, store_id, ingredient_id, product_id) | | |
 
+**retailer_user_usage**: per-member hourly call counts for the `retailer-oauth` actions a signed-in client may call (`stores` 20, `products` 60, `cart_add` 30 per hour), so one account cannot drain the quota every household shares (WS07 fix round). Service-role only; RLS on with no policies.
+| column | type |
+|---|---|
+| user_id | uuid → auth.users |
+| action | text |
+| window_start | timestamptz |
+| count | int |
+| pk (user_id, action, window_start) | |
+
+As built (WS07, 2026-10-30): `retailer_connections` and `product_matches` carry `created_at` and `updated_at` per the convention above; connections are unique on (household_id, user_id, retailer); `vault_secret_id` is granted to neither anon nor authenticated and is reachable only through service-role functions (`retailer_save_connection`, `retailer_read_refresh_token`, `retailer_rotate_refresh_token`, `retailer_mark_needs_reauth`, `retailer_disconnect`); deleting a connection row deletes its Vault secret by trigger; the connection's own member or a household owner may change `store_id`, `store_name` and `modality` (docs said owner only; the holder manages their own account); `households.default_connection_id` is a foreign key with an index and is set on first connect and cleared on disconnect. `product_matches.ingredient_id` is not null, and client inserts and updates must carry `chosen_by = 'user'`. `retailer_quota_usage` is consumed atomically by `retailer_quota_consume`. Disconnect cannot revoke the grant at Kroger (no public revocation endpoint); it deletes our secret and sets `status = 'revoked'`.
+
 **shopping_runs**
 | column | type | notes |
 |---|---|---|
@@ -469,7 +480,7 @@ Files are created with `supabase migration new <name>` and carry a timestamp pre
 | 6 | ingredients | ingredients, ingredient_aliases, ingredient_parse_cache, ingredient_alias_proposals | WS03 |
 | 7 | planning | meal_plans, meal_plan_entries, recipe_feedback | WS04 |
 | 8 | lists | grocery_lists, grocery_list_items, pantry_items, Realtime publication | WS05 |
-| 9 | retail | retailer_connections, product_matches, retailer_quota_usage, FK `households.default_connection_id` → `retailer_connections` | WS07 |
+| 9 | retail | retailer_connections, product_matches, retailer_quota_usage, retailer_user_usage, FK `households.default_connection_id` → `retailer_connections` | WS07 |
 | 10 | ws06_preferences | profiles.preferences, onboarding_step, taste_embedding, costco_member | WS06 |
 | 11 | runs | shopping_runs, shopping_run_items, pgmq queue `shopping_run` | WS09 |
 | 12 | tier3 | households.tier3_consent, Storage bucket `run-screenshots` | WS10 |

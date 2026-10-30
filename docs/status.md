@@ -3,7 +3,7 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 2 (WS02 and WS14 merged; WS07 in progress)
-**Last updated:** 2026-10-30 by the orchestrator (WS07 review returned fix round; round sent)
+**Last updated:** 2026-10-30 by the orchestrator (WS07 fix round received and pushed; re-review requested)
 
 ## Workstreams
 
@@ -16,7 +16,7 @@ The orchestrator updates this file after every dispatch, report, review, merge, 
 | 04 | Planner UI | 3 | not started | | | | | |
 | 05 | Grocery list & in-store mode | 4 | not started | | | | | |
 | 06 | Onboarding & suggestions | 3 | not started | | | | | |
-| 07 | Retailer framework + Kroger | 2 | in review | ws/07-retailer-framework-kroger | opus | 2026-10-30 | | Review 2026-10-30: no blockers, CI green on PR #7 (real pgTAP with Vault, types current), verdict fix round. Round sent: terms guard retains display data, concurrent refresh race, a fourth allergen level, per-user throttle on the shared quota, stock and disconnect copy, re-auth banner, flag name. Cart step needs Miguel's Kroger sign-in; screenshot needs the hosted release and a dev build |
+| 07 | Retailer framework + Kroger | 2 | in review | ws/07-retailer-framework-kroger | opus | 2026-10-30 | | Fix round received 2026-10-30 (1299bd5 on a clean merge of main; 1032 tests; live catalog test green): terms guard keeps salted hashes with expiry, refresh race retried from Vault, four allergen levels with `mayContain`, per-member hourly limits via `retailer_user_usage`, copy and banner fixes, enums from core. Pushed for CI; re-review requested. Cart step and screenshot still human-gated |
 | 08 | Instacart adapter | 3 | not started | | | | | Human checkpoint 4 before start (IDP application status) |
 | 09 | Shopping agent + worker + review UI | 5 | not started | | | | | |
 | 10 | Browser adapters | 6 | not started | | | | | Human checkpoint 5 before start (Tier 3 consent copy) |

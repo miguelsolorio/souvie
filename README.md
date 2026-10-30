@@ -17,6 +17,40 @@ See `docs/status.md` for the live ledger.
 
 3. The orchestrator dispatches one wave at a time, reviews each workstream, merges, and updates `docs/status.md`. It stops at the seven human checkpoints listed in the guide.
 
+## Getting started
+
+You need Node 22 (22.13 or later; `.node-version` pins the major), pnpm 9 (`corepack enable` picks the version pinned in `package.json`), and Xcode with an iOS Simulator for iOS. If `corepack` is not available, install pnpm under your Node 22 with `npm install -g pnpm@9`. Development runs against the hosted Supabase project. The local Supabase stack (`supabase start`) needs a container runtime, so it runs only in CI.
+
+```bash
+scripts/setup-git-identity.sh       # once per clone
+pnpm install
+cp .env.example .env.local          # one env file for the whole repo; never commit it
+set -a; . ./.env.local; set +a      # the Supabase CLI reads SUPABASE_ACCESS_TOKEN from the shell
+pnpm supabase link --project-ref <ref>   # <ref> is the host part of EXPO_PUBLIC_SUPABASE_URL
+pnpm supabase db push               # apply supabase/migrations to the hosted project
+```
+
+| Command | What it does |
+|---|---|
+| `pnpm dev` | Expo dev server (web at http://localhost:8081) and the worker together, through Turborepo. Expo's key shortcuts need the next command |
+| `pnpm --filter @mp/mobile start` | Expo only. Press `w` for web at http://localhost:8081, `i` for the iOS Simulator |
+| `pnpm --filter @mp/shopper-worker dev` | Worker only. Logs `connected`, then `idle` every 5 seconds |
+| `pnpm supabase functions deploy <name> --use-api` | Deploy an Edge Function to the hosted project without Docker |
+| `pnpm supabase db push` | Apply new migrations to the hosted project |
+| `pnpm typecheck` | `tsc --noEmit` in every workspace |
+| `pnpm lint` | Biome check of the whole repo. `pnpm format` applies fixes |
+| `pnpm test` | Vitest `unit` project: every `*.test.ts` |
+| `pnpm eval` | Vitest `evals` project: `**/evals/**/*.eval.ts`. Passes with none |
+| `cd apps/mobile && npx expo export --platform web` | Static web build in `apps/mobile/dist` |
+
+Notes:
+
+- Metro (`apps/mobile/metro.config.js`) and the worker's dev script both read the root `.env.local`. Only `EXPO_PUBLIC_*` values reach the app bundle.
+- `.npmrc` pins the public npm registry, so a user-level registry in `~/.npmrc` does not apply here.
+- Expo Go runs the app, but the query cache persists to MMKV only in a development build. Expo Go keeps it in memory.
+- The Supabase CLI is a dev dependency (`pnpm supabase ...`), so everyone and CI use the same version.
+- CI (`.github/workflows/ci.yml`) runs `supabase start`, `db reset`, `db lint`, `functions serve`, and the worker against the local stack on every push to `main` and `ws/**`.
+
 ## Documents
 
 | Doc | What it holds |

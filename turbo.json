@@ -1,0 +1,24 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "globalDependencies": ["tsconfig.base.json", "biome.json", "vitest.config.ts"],
+  "tasks": {
+    "typecheck": { "dependsOn": ["^typecheck"] },
+    "lint": {},
+    "test": { "dependsOn": ["^build"] },
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**"] },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": [
+        "EXPO_PUBLIC_*",
+        "SUPABASE_*",
+        "WORKER_DATABASE_URL",
+        "ANTHROPIC_API_KEY",
+        "KROGER_*",
+        "INSTACART_*",
+        "SENTRY_DSN"
+      ]
+    }
+  }
+}

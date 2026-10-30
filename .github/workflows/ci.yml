@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "ws/**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Typecheck, lint, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # Reads the pnpm version from "packageManager" in package.json.
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit tests
+        run: pnpm test
+
+      # Passes with zero eval files. WS15 adds score thresholds.
+      - name: Evals
+        run: pnpm eval
+
+  # The local Supabase stack needs a container runtime, which the development Mac does not
+  # have (WS00 amendment, 2026-10-29). These checks run here instead.
+  supabase:
+    name: Supabase stack (migrations, health, worker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      # Also installs the pinned Supabase CLI (`supabase` devDependency), run as `pnpm supabase`.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Postgres, the API gateway, and the Edge runtime are all these checks need.
+      - name: Start Supabase
+        run: >-
+          pnpm supabase start
+          -x gotrue,realtime,storage-api,imgproxy,mailpit,postgrest,postgres-meta,studio,logflare,vector,supavisor
+
+      - name: Reset database from migrations
+        run: pnpm supabase db reset
+
+      - name: Database URL
+        run: |
+          db_url="$(pnpm --silent supabase status -o env | grep DB_URL | cut -d= -f2- | tr -d '"')"
+          test -n "$db_url"
+          echo "DB_URL=$db_url" >> "$GITHUB_ENV"
+
+      # Criterion 9 (CI part)
+      - name: Extensions are installed
+        run: |
+          psql "$DB_URL" -c "select extname from pg_extension order by 1" | tee extensions.txt
+          for ext in pgmq pg_cron vector pg_trgm pgtap; do
+            grep -qw "$ext" extensions.txt || { echo "missing extension: $ext"; exit 1; }
+          done
+
+      # Lint our own schemas only. The `extensions` schema holds third-party functions
+      # (pgTAP) that plpgsql_check flags; add schemas here as migrations create them.
+      - name: Lint schema
+        run: pnpm supabase db lint --local --schema public --fail-on error
+
+      # Criterion 10 (CI part)
+      - name: Health function answers
+        run: |
+          pnpm supabase functions serve health > functions.log 2>&1 &
+          body=""
+          for _ in $(seq 1 60); do
+            body="$(curl -s http://localhost:54321/functions/v1/health || true)"
+            case "$body" in *'"ok":true'*) break ;; esac
+            sleep 2
+          done
+          echo "$body"
+          case "$body" in *'"ok":true'*) ;; *) cat functions.log; exit 1 ;; esac
+
+      # The WS09 runs migration owns the real queue. Create it here only, so the worker
+      # exercises pgmq.list_queues and pgmq.read instead of the queue-missing path.
+      - name: Create the shopping_run queue (CI only)
+        run: psql "$DB_URL" -v ON_ERROR_STOP=1 -c "select pgmq.create('shopping_run')"
+
+      # Criterion 11 (CI part)
+      - name: Worker connects and polls
+        env:
+          WORKER_DATABASE_URL: ${{ env.DB_URL }}
+        run: |
+          timeout 15 pnpm --filter @mp/shopper-worker start > worker.log 2>&1 || true
+          cat worker.log
+          grep -q "\] connected " worker.log
+          # `! grep` would not trip `set -e`, so fail explicitly.
+          if grep -qE "poll failed|queue_missing" worker.log; then
+            echo "worker did not read the real queue"; exit 1
+          fi
+          test "$(grep -c "\] idle " worker.log)" -ge 2

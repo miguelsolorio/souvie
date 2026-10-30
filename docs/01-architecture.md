@@ -77,6 +77,14 @@ meal-planner/
 └── CLAUDE.md                   # Conventions for coding agents
 ```
 
+**As built (WS00).** Every path above exists. Additions and one interpretation:
+
+- The root also holds `vitest.config.ts` (projects `unit` and `evals`), `.npmrc` (public npm registry, strict peer dependencies), and `pnpm-lock.yaml`.
+- `apps/mobile/src/lib/` has `env.ts` and the storage split (`storage.ts` for web, `storage.native.ts` for MMKV, `storage.types.ts`) beside `supabase.ts` and `queryClient.ts`.
+- `supabase/functions/health/` has `deno.json` and `index.test.ts` (run by Vitest) beside `index.ts`.
+- `apps/marketing/` holds only a README until WS14. With no `package.json`, pnpm and Turborepo skip it.
+- "Project references via `tsconfig.base.json`" is built as a shared base config, not `tsc -b`. Each package extends the base and exports its TypeScript source (`"exports": { ".": "./src/index.ts" }`), so there is no build step. Turborepo orders `typecheck` by the dependency graph.
+
 ### Package boundaries
 
 - `packages/core` is pure: zod schemas for every domain object, unit conversion, list aggregation, line-item scoring inputs. No network, no database, no React. Everything else depends on it.

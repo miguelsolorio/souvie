@@ -51,7 +51,7 @@ The reviewer returns, for each acceptance criterion, pass or fail with the comma
 
 ### 3.4 Decide
 
-- `merge`: run CI on the branch (or the equivalent local commands), squash-merge into `main`, delete the branch, set the ledger row to `merged` with the date.
+- `merge`: with CI green on the PR, squash-merge through GitHub (`gh pr merge <n> --squash --delete-branch -t "<type>(wsNN): <title>" -b "<summary>"`) so the PR shows as merged, confirm the squash commit's author email is the Gmail address, fast-forward the orchestrator's branch to `origin/main`, delete the local branch, set the ledger row to `merged` with the date.
 - `fix round`: send the reviewer's findings to the same builder via SendMessage. One fix round per workstream. After the fix, run the reviewer again (same reviewer via SendMessage, or a fresh one if the diff changed a lot).
 - Second failure, or `escalate`: set the row to `blocked`, write what is wrong in the Notes column, and ask the human.
 
@@ -205,7 +205,7 @@ Wave summary:
 ## 7. Branch, merge, and CI rules
 
 - The repo is initialized with `main` and one commit of these docs. If the human has pushed to GitHub, use PRs and GitHub Actions; if not, merge locally and run the CI commands yourself before merging. Ask once at bootstrap and record the answer in the decisions log.
-- Branches `ws/NN-slug`, one per workstream. Squash-merge into `main`. Delete after merge.
+- Branches `ws/NN-slug`, one per workstream. Squash-merge into `main` through GitHub (`gh pr merge --squash --delete-branch`), never locally. Delete after merge.
 - CI must be green before merge: `pnpm typecheck`, `pnpm lint`, `pnpm test`; `supabase test db` from WS01 onward; `pnpm eval` thresholds from WS15 onward; web export from WS13 onward.
 - No direct commits to `main` except the orchestrator's contract changes, doc updates, and ledger updates. Each is its own small commit.
 - Builders commit on their branch as they go. The orchestrator never rewrites a builder's history.

@@ -83,8 +83,8 @@ select ok((select relrowsecurity from pg_class where oid = 'public.recipe_ingred
 select ok((select relrowsecurity from pg_class where oid = 'public.import_jobs'::regclass), 'import_jobs has RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.ai_runs'::regclass), 'ai_runs has RLS enabled');
 
-select policies_are('public', 'recipes', array['recipes: members read', 'recipes: members insert', 'recipes: members update'], 'recipes has exactly the reviewed policies (no delete policy)');
-select policies_are('public', 'recipe_ingredients', array['recipe_ingredients: members read', 'recipe_ingredients: members insert', 'recipe_ingredients: members update', 'recipe_ingredients: members delete'], 'recipe_ingredients has exactly the reviewed policies');
+select policies_are('public', 'recipes', array['recipes: members read', 'recipes: members insert', 'recipes: members update', 'recipes: catalog read'], 'recipes has exactly the reviewed policies (no delete policy; catalog read added 2026-10-30)');
+select policies_are('public', 'recipe_ingredients', array['recipe_ingredients: members read', 'recipe_ingredients: members insert', 'recipe_ingredients: members update', 'recipe_ingredients: members delete', 'recipe_ingredients: catalog read'], 'recipe_ingredients has exactly the reviewed policies (catalog read added 2026-10-30)');
 select policies_are('public', 'import_jobs', array['import_jobs: members read'], 'import_jobs has one read policy and no write policy');
 select policies_are('public', 'ai_runs', array['ai_runs: members read'], 'ai_runs has one read policy and no write policy');
 

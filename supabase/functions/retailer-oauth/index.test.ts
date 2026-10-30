@@ -497,8 +497,8 @@ describe("retailer-oauth: per-member hourly limits", () => {
     expect(db.userUsage.get(`${CAROL}|stores`)).toBe(1);
   });
 
-  it("limits stores, products, and cart_add, and nothing else", async () => {
-    expect(USER_HOURLY_LIMITS).toEqual({ stores: 20, products: 60, cart_add: 30 });
+  it("limits authorize, stores, products, and cart_add, and nothing else", async () => {
+    expect(USER_HOURLY_LIMITS).toEqual({ authorize: 10, stores: 20, products: 60, cart_add: 30 });
     const { db, call } = setup();
     db.userUsage.set(`${ALICE}|cart_add`, USER_HOURLY_LIMITS.cart_add);
     const res = await call("Bearer alice", {
@@ -507,9 +507,23 @@ describe("retailer-oauth: per-member hourly limits", () => {
       items: [{ productId: "0009990001001", upc: null, quantityDelta: 1 }],
     });
     expect(res.status).toBe(429);
+    // exchange and disconnect stay open: a refused state comes back as invalid_state, not 429.
     expect(
-      (await call("Bearer alice", { action: "authorize", householdId: HOUSEHOLD })).status,
-    ).toBe(200);
+      (await call("Bearer alice", { action: "exchange", code: "c", state: "v1.a.b" })).status,
+    ).toBe(400);
+  });
+
+  it("limits authorize, whose store lookup spends the shared Locations quota", async () => {
+    const { db, http, call } = setup();
+    db.userUsage.set(`${ALICE}|authorize`, USER_HOURLY_LIMITS.authorize);
+    const res = await call("Bearer alice", {
+      action: "authorize",
+      householdId: HOUSEHOLD,
+      storeId: "70100999",
+    });
+    expect(res.status).toBe(429);
+    expect(res.body.error).toBe("rate_limited");
+    expect(http.requests.filter((r) => r.url.pathname.startsWith("/v1/locations"))).toHaveLength(0);
   });
 });
 

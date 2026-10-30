@@ -120,6 +120,7 @@ describe("searchKrogerProducts", () => {
       fulfillment: { instore: true, curbside: true, delivery: true, shiptohome: false },
       allergens: [],
       mayContain: [],
+      undeclared: [],
       imageUrl: null,
       // No cache header: the record lives only as long as the results do.
       cacheUntil: "2026-10-30T19:28:41.000Z",

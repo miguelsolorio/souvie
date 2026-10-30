@@ -71,13 +71,15 @@ export function mapStockLevel(value: string | undefined): StockLevel {
   return value && STOCK.has(value) ? (value as StockLevel) : "UNKNOWN";
 }
 
-export type AllergenLevel = "contains" | "may_contain" | "absent";
+export type AllergenLevel = "contains" | "may_contain" | "undeclared" | "absent";
 
 /**
  * Kroger's `levelOfContainmentName`. Seen live on QFC products (2026-10-30): "Contains",
- * "May contain", "Free from", and "Not intentionally nor inherently included". The last two mean
- * the product does not contain the allergen. Any level we do not recognize counts as "contains":
- * allergy safety must fail closed (docs/05-security-privacy.md §Allergen safety).
+ * "May contain", "Free from", "Not intentionally nor inherently included", and "Undeclared".
+ * "Free from" and "Not intentionally..." mean the product does not contain the allergen.
+ * "Undeclared" means the maker did not say either way, so it stays in the safety list. Any level
+ * we do not recognize counts as "contains": allergy safety must fail closed
+ * (docs/05-security-privacy.md §Allergen safety).
  */
 export function allergenLevel(level: string | undefined): AllergenLevel {
   const text = level?.trim() ?? "";
@@ -85,28 +87,42 @@ export function allergenLevel(level: string | undefined): AllergenLevel {
     return "absent";
   }
   if (/^may\s*contain/i.test(text)) return "may_contain";
+  if (/^undeclared$|^not\s+declared$/i.test(text)) return "undeclared";
   return "contains";
 }
 
 export interface MappedAllergens {
-  /** Contains or may contain: the list safety checks read. */
+  /** Contains, may contain, or undeclared: the list safety checks read. */
   allergens: string[];
   /** The subset declared only as "may contain". */
   mayContain: string[];
+  /** The subset whose presence the maker did not declare ("Undeclared"). */
+  undeclared: string[];
 }
 
-/** Allergen names as Kroger gives them, split by level. An allergen listed twice keeps its strongest level. */
+/** Strongest first. An allergen listed twice keeps the strongest level it was given. */
+const STRENGTH: Record<Exclude<AllergenLevel, "absent">, number> = {
+  contains: 3,
+  may_contain: 2,
+  undeclared: 1,
+};
+
+/** Allergen names as Kroger gives them, split by level. */
 export function mapAllergens(raw: KrogerProduct["allergens"]): MappedAllergens {
   const levels = new Map<string, Exclude<AllergenLevel, "absent">>();
   for (const a of raw ?? []) {
     if (!a.name) continue;
     const level = allergenLevel(a.levelOfContainmentName);
     if (level === "absent") continue;
-    if (levels.get(a.name) !== "contains") levels.set(a.name, level);
+    const seen = levels.get(a.name);
+    if (!seen || STRENGTH[level] > STRENGTH[seen]) levels.set(a.name, level);
   }
+  const named = (wanted: AllergenLevel) =>
+    [...levels].filter(([, level]) => level === wanted).map(([name]) => name);
   return {
     allergens: [...levels.keys()],
-    mayContain: [...levels].filter(([, level]) => level === "may_contain").map(([name]) => name),
+    mayContain: named("may_contain"),
+    undeclared: named("undeclared"),
   };
 }
 
@@ -168,6 +184,7 @@ export function mapProduct(raw: KrogerProduct, expiresAt: number): Product {
     }),
     allergens: Object.freeze(allergens.allergens) as string[],
     mayContain: Object.freeze(allergens.mayContain) as string[],
+    undeclared: Object.freeze(allergens.undeclared) as string[],
     imageUrl: pickImageUrl(raw.images),
     cacheUntil: new Date(expiresAt).toISOString(),
   };

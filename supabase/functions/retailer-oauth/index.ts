@@ -12,8 +12,8 @@
 //     -> { ok, result: { accepted, rejected }, checkoutUrl }
 //
 // Errors: { ok: false, error, message } with an HTTP status (handler.ts lists them). Needs a
-// signed-in user (verify_jwt stays on). stores, products, and cart_add have per-member hourly
-// limits (README.md). Secrets, set with `supabase secrets set`:
+// signed-in user (verify_jwt stays on). authorize, stores, products, and cart_add have
+// per-member hourly limits (README.md). Secrets, set with `supabase secrets set`:
 // KROGER_CLIENT_ID, KROGER_CLIENT_SECRET, KROGER_REDIRECT_URI; optional KROGER_API_BASE.
 
 import {

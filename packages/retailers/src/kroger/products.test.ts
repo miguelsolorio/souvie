@@ -52,6 +52,7 @@ describe("searchProducts", () => {
       // "Free from" milk is not an allergen the product contains.
       allergens: [],
       mayContain: [],
+      undeclared: [],
       imageUrl: "https://images.fixture.test/large/front/0009990001001",
       cacheUntil,
     });

@@ -4,18 +4,31 @@ import { allergenLines, approvedForLabel, STOCK_LABEL } from "./labels";
 describe("allergenLines", () => {
   it("keeps contains and may contain on separate lines", () => {
     expect(
-      allergenLines({ allergens: ["Tree Nuts", "Peanuts", "Milk"], mayContain: ["Peanuts"] }),
+      allergenLines({
+        allergens: ["Tree Nuts", "Peanuts", "Milk"],
+        mayContain: ["Peanuts"],
+        undeclared: [],
+      }),
     ).toEqual(["Contains: Tree Nuts, Milk", "May contain: Peanuts"]);
   });
 
   it("never prints a may-contain allergen as Contains", () => {
-    const lines = allergenLines({ allergens: ["Sesame"], mayContain: ["Sesame"] });
+    const lines = allergenLines({ allergens: ["Sesame"], mayContain: ["Sesame"], undeclared: [] });
     expect(lines).toEqual(["May contain: Sesame"]);
     expect(lines.join(" ")).not.toContain("Contains");
   });
 
+  it("prints an undeclared allergen as Not declared, never as Contains", () => {
+    const lines = allergenLines({
+      allergens: ["Wheat", "Sesame"],
+      mayContain: [],
+      undeclared: ["Sesame"],
+    });
+    expect(lines).toEqual(["Contains: Wheat", "Not declared: Sesame"]);
+  });
+
   it("shows nothing when nothing is declared", () => {
-    expect(allergenLines({ allergens: [], mayContain: [] })).toEqual([]);
+    expect(allergenLines({ allergens: [], mayContain: [], undeclared: [] })).toEqual([]);
   });
 });
 

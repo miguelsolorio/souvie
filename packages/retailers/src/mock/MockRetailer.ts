@@ -238,6 +238,7 @@ export class MockRetailer implements RetailerAdapter {
       }),
       allergens: Object.freeze([...fixture.allergens]) as string[],
       mayContain: Object.freeze([] as string[]) as string[],
+      undeclared: Object.freeze([] as string[]) as string[],
       imageUrl: null,
       cacheUntil: new Date(this.#now() + (this.#options.cacheSeconds ?? 300) * 1000).toISOString(),
     };

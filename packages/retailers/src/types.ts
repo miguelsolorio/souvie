@@ -76,12 +76,14 @@ export interface Product {
   /** "Approved for", not "in stock". Inventory is confirmed only at the retailer's checkout. */
   fulfillment: { instore: boolean; curbside: boolean; delivery: boolean; shiptohome: boolean };
   /**
-   * Every allergen the product declares it contains or may contain, as the retailer names them.
-   * Safety checks read this list: it is the conservative one. Empty when none are listed.
+   * Every allergen the product contains, may contain, or leaves undeclared, as the retailer names
+   * them. Safety checks read this list: it is the conservative one. Empty when none are listed.
    */
   allergens: string[];
   /** The subset of `allergens` declared only as "may contain". Shown as "May contain", never as "Contains". */
   mayContain: string[];
+  /** The subset of `allergens` the maker left undeclared. Shown as "Not declared". */
+  undeclared: string[];
   imageUrl: string | null;
   /** ISO timestamp from the response's cache headers. Past it, fetch again. */
   cacheUntil: string;

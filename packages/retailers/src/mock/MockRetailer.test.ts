@@ -104,6 +104,7 @@ describe("MockRetailer", () => {
     if (!p) throw new Error("no eggs");
     expect(Object.isFrozen(p)).toBe(true);
     expect(p.mayContain).toEqual([]);
+    expect(p.undeclared).toEqual([]);
     expect(p.cacheUntil).toBe(new Date(T0 + 300_000).toISOString());
     // The mock records nothing itself, like the Kroger adapter.
     expect(isDisplayUnchanged(p, {}, { now: T0 })).toBe(false);

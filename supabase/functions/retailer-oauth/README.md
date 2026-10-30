@@ -21,11 +21,12 @@ The Kroger quota is shared by every household on our client id, and sign-up is o
 
 | Action | Calls per member per hour | Kroger quota it protects |
 |---|---|---|
+| `authorize` | 10 | Locations, when it looks up a `storeId` to pick the banner |
 | `stores` | 20 | Locations, 1,600 a day (published) |
 | `products` | 60 | Products, 10,000 a day |
 | `cart_add` | 30 | Cart, 5,000 a day |
 
-Past the limit the answer is HTTP 429, `error: "rate_limited"`, a plain message, `resetsAt` (the next hour), and a `Retry-After` header. `authorize`, `exchange`, and `disconnect` are not limited here. The worker's runs (WS09) call the adapter directly and are budgeted there. The shared daily ceiling (95% of each quota) still applies on top: past it the answer is HTTP 429 with `error: "quota_exhausted"`.
+Past the limit the answer is HTTP 429, `error: "rate_limited"`, a plain message, `resetsAt` (the next hour), and a `Retry-After` header. `exchange` and `disconnect` are not limited here. The worker's runs (WS09) call the adapter directly and are budgeted there. The shared daily ceiling (95% of each quota) still applies on top: past it the answer is HTTP 429 with `error: "quota_exhausted"`.
 
 ## Errors
 

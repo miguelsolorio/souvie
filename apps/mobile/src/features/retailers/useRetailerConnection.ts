@@ -194,28 +194,38 @@ export function useKrogerStores(zip: string) {
 export function useKrogerSearch(householdId: string | undefined, storeId: string | null) {
   const client = useSupabase();
   const held = useRef<ReturnedSet | null>(null);
+  const currentStore = useRef(storeId);
+  currentStore.current = storeId;
   const [products, setProducts] = useState<Product[]>([]);
-
-  const drop = useCallback(() => {
-    held.current?.release();
-    held.current = null;
-    setProducts([]);
-  }, []);
 
   const search = useMutation({
     gcTime: 0,
-    mutationFn: (q: string) => {
+    mutationFn: async (q: string) => {
       if (!householdId || !storeId) {
         throw new RetailerApiError("no_store", "Pick a store first.");
       }
-      return searchKrogerProducts(client, { householdId, storeId, q });
+      return { storeId, ...(await searchKrogerProducts(client, { householdId, storeId, q })) };
     },
-    onSuccess: ({ products: found, returned }) => {
+    onSuccess: ({ storeId: searched, products: found, returned }) => {
+      // A search that was in flight when the store changed returns another store's prices.
+      if (searched !== currentStore.current) {
+        returned.release();
+        return;
+      }
       held.current?.release();
       held.current = returned;
       setProducts(found);
     },
   });
+  const { reset } = search;
+
+  const drop = useCallback(() => {
+    held.current?.release();
+    held.current = null;
+    setProducts([]);
+    // The mutation keeps its last result too; clear it so nothing outlives the store change.
+    reset();
+  }, [reset]);
 
   // A different store means different prices: drop what the old one returned.
   // biome-ignore lint/correctness/useExhaustiveDependencies: storeId is the trigger, not an input.

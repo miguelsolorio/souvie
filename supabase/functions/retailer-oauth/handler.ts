@@ -62,6 +62,8 @@ export const MAX_BODY_BYTES = 20_000;
  * The worker's runs do not go through this function and are budgeted by WS09.
  */
 export const USER_HOURLY_LIMITS = {
+  // authorize may look a store up in Locations to pick the banner.
+  authorize: 10,
   stores: 20,
   products: 60,
   cart_add: 30,

@@ -25,15 +25,21 @@ export function approvedForLabel(fulfillment: Product["fulfillment"]): string {
 }
 
 /**
- * The allergen lines to show: what the product contains, then what it may contain. A "may
- * contain" allergen is never printed under "Contains", and the reverse.
+ * The allergen lines to show: what the product contains, what it may contain, and what the maker
+ * left undeclared. Each allergen is printed under its own level only: a "may contain" or an
+ * undeclared allergen never appears under "Contains".
  */
-export function allergenLines(product: Pick<Product, "allergens" | "mayContain">): string[] {
+export function allergenLines(
+  product: Pick<Product, "allergens" | "mayContain" | "undeclared">,
+): string[] {
   const may = new Set(product.mayContain);
-  const contains = product.allergens.filter((name) => !may.has(name));
+  const undeclared = new Set(product.undeclared);
+  const contains = product.allergens.filter((name) => !may.has(name) && !undeclared.has(name));
   const mayContain = product.allergens.filter((name) => may.has(name));
+  const notDeclared = product.allergens.filter((name) => undeclared.has(name) && !may.has(name));
   const lines: string[] = [];
   if (contains.length > 0) lines.push(`Contains: ${contains.join(", ")}`);
   if (mayContain.length > 0) lines.push(`May contain: ${mayContain.join(", ")}`);
+  if (notDeclared.length > 0) lines.push(`Not declared: ${notDeclared.join(", ")}`);
   return lines;
 }

@@ -22,6 +22,7 @@ import {
   patchEntry,
   planErrorMessage,
   planRetryDelay,
+  planWritesPending,
   removeEntry,
   shouldRetryPlanWrite,
   toPlanError,
@@ -742,6 +743,89 @@ describe("useUpsertEntry: editing", () => {
     await expect(first).rejects.toBeInstanceOf(PlanError);
     await second;
     expect(current()).toMatchObject({ servings: 4, notes: "less salt" });
+  });
+});
+
+describe("a burst of saves", () => {
+  it("runs them in the order they were made and refetches once, at the end", async () => {
+    const { client, server, queryClient } = world();
+    seedServer(server, seedEntry(queryClient));
+    server.log.length = 0;
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    const edit = (servings: number) =>
+      new MutationObserver(queryClient, upsertEntryOptions(client, queryClient)).mutate({
+        mode: "edit",
+        id: ENTRY,
+        householdId: HOUSEHOLD,
+        planId: PLAN,
+        patch: { servings },
+      });
+
+    // Three quick taps on the plus button: the screen has 7 before any request has answered.
+    const done = [edit(5), edit(6), edit(7)];
+    const current = () =>
+      queryClient.getQueryData<PlanEntry[]>(mealPlanEntriesKey(HOUSEHOLD, PLAN))?.[0]?.servings;
+    await until(() => current() === 7, "all three optimistic edits");
+    await Promise.all(done);
+
+    const sent = server
+      .requests("meal_plan_entries", "update")
+      .map((r) => (r.payload as { servings: number }).servings);
+    expect(sent).toEqual([5, 6, 7]);
+    expect(server.tables.meal_plan_entries?.[0]?.servings).toBe(7);
+    const planKeyInvalidations = invalidate.mock.calls.filter(
+      (call) => JSON.stringify(call[0]?.queryKey) === JSON.stringify(mealPlanKey(HOUSEHOLD, WEEK)),
+    );
+    expect(planKeyInvalidations).toHaveLength(1);
+  });
+
+  it("counts the saves that have not finished", async () => {
+    const { client, server, queryClient } = world();
+    seedServer(server, seedEntry(queryClient));
+    let release: () => void = () => {};
+    server.gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    expect(planWritesPending(queryClient)).toBe(0);
+    const done = new MutationObserver(queryClient, upsertEntryOptions(client, queryClient)).mutate({
+      mode: "edit",
+      id: ENTRY,
+      householdId: HOUSEHOLD,
+      planId: PLAN,
+      patch: { servings: 5 },
+    });
+    await until(() => planWritesPending(queryClient) === 1, "the save to start");
+    release();
+    await done;
+    expect(planWritesPending(queryClient)).toBe(0);
+  });
+
+  it("tells the caller about a failure after the cache is back to normal", async () => {
+    const { client, server, queryClient } = world();
+    seedServer(server, seedEntry(queryClient));
+    server.failures = [{ message: "permission denied", code: "42501", status: 403 }];
+    const seen: Array<{ code: string; servings: number | undefined; mode: string }> = [];
+    const observer = new MutationObserver(
+      queryClient,
+      upsertEntryOptions(client, queryClient, (error, input) => {
+        seen.push({
+          code: (error as PlanError).code,
+          mode: input.mode,
+          servings: queryClient.getQueryData<PlanEntry[]>(mealPlanEntriesKey(HOUSEHOLD, PLAN))?.[0]
+            ?.servings,
+        });
+      }),
+    );
+    await expect(
+      observer.mutate({
+        mode: "edit",
+        id: ENTRY,
+        householdId: HOUSEHOLD,
+        planId: PLAN,
+        patch: { servings: 9 },
+      }),
+    ).rejects.toBeInstanceOf(PlanError);
+    expect(seen).toEqual([{ code: "forbidden", mode: "edit", servings: 4 }]);
   });
 });
 

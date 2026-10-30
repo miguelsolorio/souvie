@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { MpClient } from "../client";
 import { useSupabase } from "../context";
-import { mealPlanRootKey } from "../planning";
+import { mealPlanRootKey, planWritesPending } from "../planning";
 
 // Realtime for the planner (WS04). When another member adds, edits, or removes an entry, this
 // device refetches the plan within a second or two, with no manual refresh.
@@ -48,7 +48,11 @@ export function subscribePlanChanges(
     if (stopped || timer !== undefined) return;
     timer = setTimeout(() => {
       timer = undefined;
-      if (!stopped) void queryClient.invalidateQueries({ queryKey: mealPlanRootKey(householdId) });
+      if (stopped) return;
+      // This device is still saving its own changes. A refetch now would show the server's older
+      // copy over them; the last of those saves refetches anyway and picks up this change too.
+      if (planWritesPending(queryClient) > 0) return;
+      void queryClient.invalidateQueries({ queryKey: mealPlanRootKey(householdId) });
     }, debounceMs);
   };
 

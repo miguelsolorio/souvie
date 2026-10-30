@@ -21,6 +21,7 @@ import {
   type PlannedRecipe,
   patchEntry,
   planRetryDelay,
+  planWritesPending,
   shouldRetryPlanWrite,
   withEntry,
   withoutEntry,
@@ -246,6 +247,9 @@ export function upsertEntryOptions(
     },
 
     onSettled: async (result, _error, input, context) => {
+      // Only the last write of a burst refetches. A refetch while another write is still queued
+      // would bring back the server's older copy and flicker the screen back and forth.
+      if (planWritesPending(queryClient) > 1) return;
       await invalidateMealPlan(queryClient, {
         householdId: input.householdId,
         weekStart:

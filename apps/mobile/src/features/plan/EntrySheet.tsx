@@ -18,7 +18,7 @@ import {
 } from "./format";
 import { PlanNoticeBar } from "./PlanNotice";
 import { pickRoute, recipeRoute } from "./routes";
-import { ServingsStepper } from "./ServingsStepper";
+import { EntryServingsStepper } from "./ServingsStepper";
 import { SwapMenu } from "./SwapMenu";
 import type { usePlanActions } from "./usePlanActions";
 import { useEntryWhy } from "./why";
@@ -186,9 +186,9 @@ function EntryBody({
 
       <View className="flex-row items-center justify-between gap-4">
         <Text className="text-base font-semibold text-neutral-900">Servings</Text>
-        <ServingsStepper
-          value={entry.servings}
-          onChange={(servings) => actions.setServings(entry, servings)}
+        <EntryServingsStepper
+          servings={entry.servings}
+          onCommit={(servings) => actions.setServings(entry, servings)}
         />
       </View>
 

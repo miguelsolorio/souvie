@@ -1,6 +1,7 @@
 import type { EntriesByDay } from "@mp/core";
 import { MEAL_SLOTS, type MealSlot, weekDates } from "@mp/core";
 import type { PlanEntry } from "@mp/db";
+import { useRef } from "react";
 import { Pressable, Text, useWindowDimensions, View } from "react-native";
 import { longDate, shortDayName, shortMonthDay } from "./format";
 import { SlotCell } from "./SlotCell";
@@ -25,6 +26,7 @@ export function WeekGrid({
   onAdd,
   onOpenEntry,
   onOpenDay,
+  onTodayOffset,
 }: {
   weekStart: string;
   byDay: EntriesByDay<PlanEntry>;
@@ -33,9 +35,15 @@ export function WeekGrid({
   onAdd: (date: string, slot: MealSlot) => void;
   onOpenEntry: (entry: PlanEntry) => void;
   onOpenDay: (date: string) => void;
+  /**
+   * On a phone the week is a long list. Called with today's card's distance from the top of the
+   * scrolling content, once it has been laid out, so the screen can open on today.
+   */
+  onTodayOffset?: (y: number) => void;
 }) {
   const wide = useIsWideGrid();
   const days = weekDates(weekStart);
+  const gridY = useRef(0);
 
   if (wide) {
     return (
@@ -65,11 +73,23 @@ export function WeekGrid({
   }
 
   return (
-    <View testID="week-grid" accessibilityLabel="Week plan, one card per day" className="gap-4">
+    <View
+      testID="week-grid"
+      accessibilityLabel="Week plan, one card per day"
+      className="gap-4"
+      onLayout={(event) => {
+        gridY.current = event.nativeEvent.layout.y;
+      }}
+    >
       {days.map((date) => (
         <View
           key={date}
           testID={`day-${date}`}
+          onLayout={
+            date === today
+              ? (event) => onTodayOffset?.(gridY.current + event.nativeEvent.layout.y)
+              : undefined
+          }
           className={`gap-3 rounded-2xl border p-3 ${
             date === today ? "border-brand bg-green-50/40" : "border-neutral-200 bg-white"
           }`}
@@ -110,8 +130,8 @@ function DayHeader({
       accessibilityRole="button"
       accessibilityLabel={`${longDate(date)}${isToday ? ", today" : ""}. Open the day`}
       onPress={() => onOpenDay(date)}
-      className={`min-h-11 justify-center rounded-lg px-2 ${centered ? "items-center bg-neutral-100" : ""} ${
-        isToday && centered ? "bg-brand" : ""
+      className={`min-h-11 justify-center rounded-lg px-2 ${
+        centered ? (isToday ? "items-center bg-brand" : "items-center bg-neutral-100") : ""
       }`}
     >
       {centered ? (

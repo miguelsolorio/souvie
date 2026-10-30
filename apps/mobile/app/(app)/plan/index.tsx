@@ -1,8 +1,8 @@
 import { isIsoDate, isoDateOf, type MealSlot, shiftWeek, weekStartFor } from "@mp/core";
 import { EmptyState } from "@mp/ui/primitives";
 import { Redirect, Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { RefreshControl, ScrollView, type ScrollViewInstance, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "../../../src/components/Button";
 import { LoadingScreen } from "../../../src/components/Screen";
@@ -41,6 +41,15 @@ export default function PlanScreen() {
     [data.entries, openId],
   );
 
+  // On a phone the week is a long list; open it on today, once, when it is this week.
+  const scroller = useRef<ScrollViewInstance>(null);
+  const openedOnToday = useRef(false);
+  const scrollToToday = (y: number) => {
+    if (openedOnToday.current || weekStart !== thisWeek || y <= 0) return;
+    openedOnToday.current = true;
+    scroller.current?.scrollTo({ y: Math.max(0, y - 8), animated: false });
+  };
+
   if (data.noHousehold) return <Redirect href={CREATE_HOUSEHOLD_ROUTE} />;
   if (data.loading) return <LoadingScreen label="Loading your week" />;
 
@@ -64,6 +73,7 @@ export default function PlanScreen() {
         }}
       />
       <ScrollView
+        ref={scroller}
         testID="plan-scroll"
         contentContainerClassName="mx-auto w-full max-w-6xl gap-5 px-4 py-4"
         refreshControl={<RefreshControl refreshing={data.refreshing} onRefresh={data.refetch} />}
@@ -116,6 +126,7 @@ export default function PlanScreen() {
           onAdd={addTo}
           onOpenEntry={(entry) => setOpenId(entry.id)}
           onOpenDay={(date) => router.push(dayRoute(date))}
+          onTodayOffset={scrollToToday}
         />
       </ScrollView>
 

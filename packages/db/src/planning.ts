@@ -146,6 +146,13 @@ export function toPlanError(
  */
 export const PLAN_WRITE_SCOPE = { id: "meal-plan-writes" } as const;
 
+/** How many planner writes from this device have not finished (running, retrying, or queued). */
+export function planWritesPending(queryClient: QueryClient): number {
+  return queryClient.isMutating({
+    predicate: (mutation) => mutation.options.scope?.id === PLAN_WRITE_SCOPE.id,
+  });
+}
+
 /** Retry a write only while the connection is the problem, for about a minute of backoff. */
 export function shouldRetryPlanWrite(failureCount: number, error: unknown): boolean {
   return error instanceof PlanError && error.code === "network" && failureCount < 6;

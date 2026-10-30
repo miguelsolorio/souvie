@@ -14,6 +14,7 @@ import {
   PLAN_WRITE_SCOPE,
   type PlanEntry,
   planRetryDelay,
+  planWritesPending,
   removeEntry,
   shouldRetryPlanWrite,
   withEntry,
@@ -70,6 +71,8 @@ export function deleteEntryOptions(
     },
 
     onSettled: async (_data, _error, input, context) => {
+      // Only the last write of a burst refetches (see useUpsertEntry).
+      if (planWritesPending(queryClient) > 1) return;
       await invalidateMealPlan(queryClient, {
         householdId: input.householdId,
         weekStart: context?.removed ? weekStartFor(context.removed.date) : null,

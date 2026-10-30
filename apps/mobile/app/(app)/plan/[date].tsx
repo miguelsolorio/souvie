@@ -42,7 +42,7 @@ export default function DayScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
-      <Stack.Screen options={{ title: day === today ? "Today" : longDate(day) }} />
+      <Stack.Screen options={{ title: day === today ? "Today" : "Day plan" }} />
       <ScrollView
         contentContainerClassName="mx-auto w-full max-w-2xl gap-6 px-4 py-4"
         refreshControl={<RefreshControl refreshing={data.refreshing} onRefresh={data.refetch} />}

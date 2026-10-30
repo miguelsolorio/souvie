@@ -1,13 +1,10 @@
 import { Stepper } from "@mp/ui/primitives";
+import { useDraftNumber } from "./useDraftNumber";
 
 export const SERVINGS_MIN = 1;
 export const SERVINGS_MAX = 100;
 
-/**
- * The servings control: how many people this meal is for. It writes on every press (the planner
- * saves in the background and queues quick presses in order), so the number on screen is always
- * the number the household sees.
- */
+/** The servings control: how many people a meal is for. Controlled; every press calls onChange. */
 export function ServingsStepper({
   value,
   onChange,
@@ -33,4 +30,19 @@ export function ServingsStepper({
       onChange={onChange}
     />
   );
+}
+
+/**
+ * The servings of a planned meal. Presses show at once and are saved once, a moment after the
+ * last one, so a quick run of presses is one write of the final number.
+ */
+export function EntryServingsStepper({
+  servings,
+  onCommit,
+}: {
+  servings: number;
+  onCommit: (servings: number) => void;
+}) {
+  const draft = useDraftNumber(servings, onCommit);
+  return <ServingsStepper value={draft.value} onChange={draft.change} />;
 }

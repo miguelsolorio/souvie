@@ -58,7 +58,7 @@ export function SwapMenu({
   return (
     <View testID="swap-menu" className="gap-3">
       <Text className="text-base text-neutral-700">
-        Replace {entry.recipe?.title ?? "this recipe"} with something else. Servings and notes stay.
+        Choose a different recipe for this meal. Servings and notes stay.
       </Text>
       <Button testID="swap-pick" label="Pick a recipe" onPress={onPick} />
       {suggestEnabled ? (

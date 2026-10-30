@@ -211,6 +211,14 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | signal | enum recipe_feedback_signal: like, dislike, cooked, skipped, saved | |
 | rating | smallint | 1–5, nullable |
 
+As built (WS04, 2026-10-30): the tables match the shapes above, with these specifics. `servings` is `numeric` with a check of 1000 or less (the WS04 brief said `int`; the docs win). The three enums are Postgres enums named `meal_plan_entries_slot`, `meal_plan_entries_status` and `recipe_feedback_signal`. `meal_plans` and `meal_plan_entries` carry `created_at` and `updated_at` (maintained by `set_updated_at`); `recipe_feedback` carries `created_at` only and is append-only. `meal_plan_entries.recipe_id` is not null, and there is no `deleted_at`: an entry is removed with a real delete. `meal_plans.week_start` must be a Monday (check constraint) and is unique per household.
+
+Two triggers keep entries consistent. `meal_plan_entries_sync` runs for every writer, including the service role. It copies `household_id` from the plan (so a client cannot forge it), rejects a `date` outside the plan's week (`date_outside_plan_week`), and rejects a recipe that is deleted or belongs to another household (`recipe_not_found`; catalog recipes pass). `meal_plan_entries_feedback` writes the planner's feedback signals in the same transaction as the entry change: `saved` when an entry is inserted or its recipe is swapped, `cooked` or `skipped` when its status changes to that value. It writes nothing when `auth.uid()` is null, so the service role's drafts (WS06) are not counted as a person's saves.
+
+Grants and policies: members of a household read all three tables and insert and delete entries. Clients may insert a plan with `(id, household_id, week_start)` and never update or delete one. On entries they insert `(id, plan_id, household_id, date, slot, recipe_id, servings, status, notes, position)` and update only `(date, slot, recipe_id, servings, status, notes, position)`; `id`, `plan_id` and `household_id` are fixed once the row exists. On `recipe_feedback` clients insert only `like` and `dislike`, only for themselves (`user_id` defaults to `auth.uid()` and is not grantable), only for a recipe of their own household, and delete only their own thumbs. The service role writes all three tables.
+
+Realtime: `meal_plans` and `meal_plan_entries` are in the `supabase_realtime` publication. `meal_plan_entries` has `replica identity full`, because Realtime applies no row level security to deletes and can filter a delete by `household_id` only when the old row is fully logged. Query keys: `['meal-plan', householdId, weekStart]` for the plan, `['meal-plan', householdId, 'entries', planId]` for its entries; WS05 listens to the first.
+
 ### Lists and pantry
 
 **grocery_lists**

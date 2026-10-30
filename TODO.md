@@ -36,7 +36,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 ## 3. Wave 2: recipes and Kroger
 
-- [ ] Dispatch WS02 (sonnet) right away.
+- [x] Dispatch WS02 (sonnet) right away.
 - [ ] **Human checkpoint 3** gates WS07 only: Kroger app registered, credentials in `.env.local`. Then dispatch WS07 (opus).
 - [ ] WS07 reviewer must run the Kroger compliance checklist in `docs/04-integrations.md`.
 - [ ] Review, merge, wave 2 summary.

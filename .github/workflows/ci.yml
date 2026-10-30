@@ -137,7 +137,7 @@ jobs:
         run: pnpm supabase test db
 
       # WS01 criterion 4. Request a magic link the way the app does (PKCE, redirect to the
-      # mealplanner:// scheme), read the email back from Mailpit, open the link, and exchange the
+      # souvie:// scheme), read the email back from Mailpit, open the link, and exchange the
       # code it redirects with for a session. Proves the template, the redirect allow list, and
       # that a profile is created for the new user. No secrets are printed.
       - name: Magic link signs a user in (Mailpit)
@@ -151,7 +151,7 @@ jobs:
           verifier="$(openssl rand -hex 32)"
           challenge="$(printf '%s' "$verifier" | openssl dgst -sha256 -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')"
 
-          curl -sf -X POST "$api/auth/v1/otp?redirect_to=mealplanner://callback" \
+          curl -sf -X POST "$api/auth/v1/otp?redirect_to=souvie://callback" \
             -H "apikey: $anon" -H 'Content-Type: application/json' \
             -d "{\"email\":\"$email\",\"create_user\":true,\"code_challenge\":\"$challenge\",\"code_challenge_method\":\"s256\"}" > /dev/null
 
@@ -166,7 +166,7 @@ jobs:
           message="$(curl -sf "$mail/api/v1/message/$id")"
           echo "subject: $(echo "$message" | jq -r .Subject)"
           html="$(echo "$message" | jq -r .HTML)"
-          echo "$html" | grep -q "Sign in to Meal Planner"
+          echo "$html" | grep -q "Sign in to Souvie"
           link="$(echo "$html" | grep -oE 'href="[^"]*/auth/v1/verify[^"]*"' | head -1 | sed -e 's/^href="//' -e 's/"$//' -e 's/&amp;/\&/g')"
           test -n "$link"
           echo "$html" | grep -qE '<strong>[0-9]{6}</strong>'
@@ -174,7 +174,7 @@ jobs:
 
           location="$(curl -s -o /dev/null -D - "$link" | tr -d '\r' | awk -F': ' 'tolower($1)=="location"{print $2}')"
           case "$location" in
-            mealplanner://callback\?code=*) echo "opening the link redirects to mealplanner://callback?code=<redacted>" ;;
+            souvie://callback\?code=*) echo "opening the link redirects to souvie://callback?code=<redacted>" ;;
             *) echo "unexpected redirect: ${location%%code=*}"; exit 1 ;;
           esac
           auth_code="${location#*code=}"; auth_code="${auth_code%%&*}"

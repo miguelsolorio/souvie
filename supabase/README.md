@@ -60,12 +60,12 @@ Clients cannot insert `households`, `household_members`, or `household_invites` 
 
 The app signs in with Apple, Google, or an email magic link, using the PKCE flow. The hosted project is configured in the dashboard; `config.toml` configures the local stack (CI) and lists the development redirect URLs.
 
-**Redirect URLs** (Authentication -> URL Configuration). The development list is `additional_redirect_urls` in `config.toml`: the Expo web server on localhost, `mealplanner://**`, and `exp://**` for Expo Go. The production project lists only the deployed web origin (`https://<web-origin>/callback`) and `mealplanner://callback`. Do not leave `exp://**` or localhost wildcards on it: a wildcard on a development origin lets anyone who controls that origin receive sign-in codes. There is no staging project in v1 and the dev machine develops against the hosted one, so add the development URLs only while testing sign-in there and remove them before real households use it. Set the Site URL to the Expo web server in development and to the deployed web origin in production.
+**Redirect URLs** (Authentication -> URL Configuration). The development list is `additional_redirect_urls` in `config.toml`: the Expo web server on localhost, `souvie://**`, and `exp://**` for Expo Go. The production project lists only the deployed web origin (`https://<web-origin>/callback`) and `souvie://callback`. Do not leave `exp://**` or localhost wildcards on it: a wildcard on a development origin lets anyone who controls that origin receive sign-in codes. There is no staging project in v1 and the dev machine develops against the hosted one, so add the development URLs only while testing sign-in there and remove them before real households use it. Set the Site URL to the Expo web server in development and to the deployed web origin in production.
 
 **Email magic link.** On by default. Paste `templates/magic_link.html` into Authentication -> Emails -> Magic Link on the hosted project. The email carries a link and a 6 digit code. Local emails appear in the Inbucket/Mailpit page that `supabase status` prints (port 54324).
 
 **Apple.** Needs an Apple Developer account.
-1. Create an App ID with the Sign in with Apple capability for the bundle id in `apps/mobile/app.json` (`com.miguelsolorio.mealplanner` today; change it before registering if the final name differs).
+1. Create an App ID with the Sign in with Apple capability for the bundle id in `apps/mobile/app.json` (`com.miguelsolorio.souvie` today; change it before registering if the final name differs).
 2. For web and Android, create a Services ID and set its return URL to `https://<project-ref>.supabase.co/auth/v1/callback`.
 3. In Authentication -> Providers -> Apple, set Client IDs to the bundle id and the Services ID, comma separated, and paste the secret key JWT generated from your Apple private key. Apple secrets expire after 6 months.
 

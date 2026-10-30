@@ -44,7 +44,7 @@ export default function Home() {
 
   if (household.isError) {
     return (
-      <Screen title="Meal Planner">
+      <Screen title="Souvie">
         <Text accessibilityRole="alert" className="text-base text-red-700">
           Could not load your household.
         </Text>

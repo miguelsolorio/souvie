@@ -8,7 +8,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 - [x] Git identity pinned to the Gmail account for this clone (`scripts/setup-git-identity.sh`). Run it again on any fresh clone before the first commit.
 - [x] Create the Supabase project. Put `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `WORKER_DATABASE_URL` in a local `.env.local`. Never commit it.
-- [x] Register the Kroger developer app at developer.kroger.com with redirect URI `mealplanner://oauth/kroger`. Put `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` in `.env.local`. (Gates wave 2.)
+- [x] Register the Kroger developer app at developer.kroger.com with redirect URI `souvie://oauth/kroger`. Put `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` in `.env.local`. (Gates wave 2.)
 - [ ] Submit the Instacart Developer Platform application at company.instacart.com/business/developers. Record the response in `docs/status.md` under External tasks. (Gates WS08 production; a dev key works without approval.)
 - [ ] Create accounts: Expo/EAS, Fly.io or Railway (worker), Cloudflare Pages (web and marketing), Sentry, PostHog. Put `ANTHROPIC_API_KEY`, `SENTRY_DSN`, `EXPO_PUBLIC_POSTHOG_KEY` in `.env.local`.
 - [x] Optional now, required before WS14 finishes: run the name checks in `docs/08-brand.md` §1.3 for Sous and Larder.

@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "Meal Planner",
-    "slug": "meal-planner",
+    "name": "Souvie",
+    "slug": "souvie",
     "version": "0.1.0",
-    "scheme": "mealplanner",
+    "scheme": "souvie",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.miguelsolorio.mealplanner"
+      "bundleIdentifier": "com.miguelsolorio.souvie"
     },
     "android": {
-      "package": "com.miguelsolorio.mealplanner",
+      "package": "com.miguelsolorio.souvie",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2F6B4F"
@@ -43,8 +43,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Meal Planner uses your photos so you can choose a profile picture or a picture of a recipe.",
-          "cameraPermission": "Meal Planner uses your camera so you can photograph a recipe card or cookbook page."
+          "photosPermission": "Souvie uses your photos so you can choose a profile picture or a picture of a recipe.",
+          "cameraPermission": "Souvie uses your camera so you can photograph a recipe card or cookbook page."
         }
       ],
       [

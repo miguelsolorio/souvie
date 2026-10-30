@@ -12,7 +12,7 @@ import { getSupabase, isSupabaseConfigured } from "../src/lib/supabase";
 function NotConfigured() {
   return (
     <View className="flex-1 items-center justify-center gap-2 bg-white px-6">
-      <Text className="text-2xl font-bold text-brand">Meal Planner</Text>
+      <Text className="text-2xl font-bold text-brand">Souvie</Text>
       <Text testID="backend-status" className="text-center text-sm text-neutral-600">
         Backend: not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in
         .env.local (see .env.example).

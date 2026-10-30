@@ -7,7 +7,7 @@ import { setSharedInput, toSharedInput } from "./sharedInbox";
  * Receives what other apps share into this one (WS02, acceptance criterion 7). Mounted once, below
  * the session guard, so a share that arrives while signed out waits and is read after sign-in.
  *
- * On iOS the share extension opens the app with a `mealplanner://dataUrl=...` link (app/+native-intent.tsx
+ * On iOS the share extension opens the app with a `souvie://dataUrl=...` link (app/+native-intent.tsx
  * sends that link to the home route instead of a not-found screen) and the expo-share-intent
  * module hands the content to this hook. On Android the hook reads the Intent directly. On web
  * the hook is off. Expo Go has no share extension; use a development build.

@@ -131,7 +131,7 @@ meal-planner/
 
 ## Deep links and storage buckets
 
-Scheme `mealplanner://`, registered in WS01. Routes: `join/<token>` (invites, WS01), `oauth/kroger` (Kroger redirect URI, WS07), `instacart/return?runId=` (Instacart linkback, WS08), `runs/<id>` (push notifications, WS09 and WS11). The web build serves the same paths.
+Scheme `souvie://`, registered in WS01. Routes: `join/<token>` (invites, WS01), `oauth/kroger` (Kroger redirect URI, WS07), `instacart/return?runId=` (Instacart linkback, WS08), `runs/<id>` (push notifications, WS09 and WS11). The web build serves the same paths.
 
 Storage buckets: `avatars` (WS01), `recipe-images` (WS02), `run-screenshots` (WS10, 30-day retention).
 

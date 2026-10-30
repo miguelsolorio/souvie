@@ -19,6 +19,8 @@ Also considered: Provision, Simmer, Marketday, Stocked, Ladle, Hearth, Tablewise
 
 **Recommendation (updated 2026-10-30):** the checks in §1.4 knocked out Sous and Larder, the earlier fallbacks, along with Mise, Forkcast, and Cartwheel. Souvie stays the working name, conditional on a lawyer's read of one pending mark and a domain plan. Tablewise and Marketday are the next two. Use "meal-planner" as the repo and working name until checkpoint 6, and keep [Name] in the copy below until the name is chosen.
 
+**Decision (2026-10-30, Miguel): Souvie.** Carried as follow-ups, not blockers: the pending ESSENTIAL SOUVIE application by Cuisine Solutions and the Suvie sound-alike go to a trademark lawyer before public beta; souvie.com, .app and .co are taken, so the domain candidates are getsouvie.com and souvieapp.com. The deep-link scheme is `souvie://`, the iOS bundle id and Android package are `com.miguelsolorio.souvie`, and the Kroger redirect is `souvie://oauth/kroger`. The WS14 name-swap round replaces every [Name] below and the placeholder wordmark.
+
 ### 1.2 Rules the name must follow
 
 - Must not contain "Kroger," "QFC," "Fred Meyer," "Safeway," "Albertsons," "Costco," or "Instacart." Kroger's developer terms forbid "Kroger" anywhere in the app name, and the rest invite trademark trouble.

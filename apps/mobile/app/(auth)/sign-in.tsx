@@ -11,7 +11,7 @@ export default function SignInScreen() {
 
   return (
     <Screen
-      title="Meal Planner"
+      title="Souvie"
       subtitle={
         pendingInvite.token
           ? "Sign in to join the household you were invited to."

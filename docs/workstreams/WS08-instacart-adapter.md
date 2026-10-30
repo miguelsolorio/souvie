@@ -101,7 +101,7 @@ Rules the mapper follows: strip brand, quantity, and size words from `name`; kee
       { "name": "chicken thighs", "display_text": "Chicken thighs, boneless skinless, 2 lb", "line_item_measurements": [{ "quantity": 2, "unit": "lb" }] },
       { "name": "cheddar cheese", "display_text": "Tillamook sharp cheddar, 8 oz", "line_item_measurements": [{ "quantity": 8, "unit": "oz" }], "upcs": ["072830012345"] }
     ],
-    "landing_page_configuration": { "partner_linkback_url": "mealplanner://instacart/return?runId=<id>" }
+    "landing_page_configuration": { "partner_linkback_url": "souvie://instacart/return?runId=<id>" }
   }
   ```
   Response: `{ "products_link_url": "https://www.instacart.com/store/shopping_lists/<id>" }`. The client appends `?retailer_key=safeway` only when `INSTACART_PRESELECT_SUPPORTED=true`.

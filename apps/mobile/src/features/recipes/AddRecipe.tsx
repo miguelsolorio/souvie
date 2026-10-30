@@ -269,7 +269,7 @@ export function AddRecipe() {
 
   if (shared) {
     return (
-      <Section title="Shared with Meal Planner">
+      <Section title="Shared with Souvie">
         {sharedDomain ? (
           <Text className="text-sm text-neutral-600">From {sharedDomain}</Text>
         ) : null}

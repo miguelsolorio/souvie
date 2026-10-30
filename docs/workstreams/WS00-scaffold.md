@@ -77,7 +77,7 @@ SUPABASE_SERVICE_ROLE_KEY=           # worker and Edge Functions only
 ANTHROPIC_API_KEY=
 KROGER_CLIENT_ID=                    # developer.kroger.com app (WS07)
 KROGER_CLIENT_SECRET=
-KROGER_REDIRECT_URI=mealplanner://oauth/kroger
+KROGER_REDIRECT_URI=souvie://oauth/kroger
 INSTACART_API_KEY=                   # dev key works without approval (WS08)
 INSTACART_ENV=dev                    # dev | prod
 EXPO_PUBLIC_POSTHOG_KEY=
@@ -91,7 +91,7 @@ WORKER_DATABASE_URL=                 # supabase status -> DB URL
 3. `pnpm lint` exits 0 (Biome) across all workspaces.
 4. `pnpm test` runs at least one Vitest test per package and exits 0.
 5. `pnpm eval` exits 0 with "no tests found" treated as success for the `evals` project.
-6. `pnpm --filter @mp/mobile start` then pressing `w` serves the placeholder screen at `http://localhost:8081` and the text "Meal Planner" is visible.
+6. `pnpm --filter @mp/mobile start` then pressing `w` serves the placeholder screen at `http://localhost:8081` and the text "Souvie" is visible.
 7. `pnpm --filter @mp/mobile start` then pressing `i` opens the iOS Simulator and renders the same screen (verified by screenshot in the report).
 8. `npx expo export --platform web` in `apps/mobile` produces a `dist/` folder with `index.html` (static output).
 9. `supabase start` boots; `supabase db reset` applies `<timestamp>_extensions.sql`; `select extname from pg_extension` lists `pgmq`, `pg_cron`, `vector`, `pg_trgm`, `pgtap`.

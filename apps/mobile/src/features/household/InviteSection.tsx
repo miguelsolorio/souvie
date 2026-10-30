@@ -10,7 +10,7 @@ import { buildInviteUrl } from "../auth/links";
 
 /**
  * Owner only. Creates a single-use invite link that lasts 7 days, then offers the share sheet
- * and a copy button. The link opens the web app or, with the mealplanner:// scheme, the native
+ * and a copy button. The link opens the web app or, with the souvie:// scheme, the native
  * app; either way the token is redeemed after sign-in.
  */
 export function InviteSection({ householdId }: { householdId: string }) {
@@ -33,7 +33,7 @@ export function InviteSection({ householdId }: { householdId: string }) {
 
   async function share() {
     if (!url) return;
-    const shared = await shareLink(url, "Join my household on Meal Planner:");
+    const shared = await shareLink(url, "Join my household on Souvie:");
     if (!shared) {
       await copyText(url);
       setNotice("Link copied.");

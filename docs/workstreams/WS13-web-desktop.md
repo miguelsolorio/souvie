@@ -24,7 +24,7 @@ When this is done, the same Expo codebase ships as a hosted web app and as a des
 - Responsive layouts at ≥1024px for: planner week view (7 columns visible at once, drag-to-slot with mouse), grocery list (two-pane: sections on the left, items on the right), run review screen (table layout). Phone layouts must not change.
 - Keyboard basics: tab order through interactive elements, Enter to check an item, Escape to close sheets, arrow keys to move between planner days. Visible focus rings.
 - Platform-specific files (`*.web.tsx`, `*.native.tsx`) for any module without a web implementation (camera for photo import, share-sheet receiver, Expo Push registration, haptics). Web fallbacks: file picker for photos, "paste a link" for share, no-op for haptics and push with a settings notice.
-- Tauri 2 desktop app in `apps/desktop`: loads the static web build (bundled, not remote), window title from the brand name (placeholder "Meal Planner" until WS14 lands), native menu bar with App, Edit, View, Window, Help, and a "Check for updates" placeholder item. macOS first; Windows build job may be allowed to fail until a Windows runner is available.
+- Tauri 2 desktop app in `apps/desktop`: loads the static web build (bundled, not remote), window title from the brand name (Souvie), native menu bar with App, Edit, View, Window, Help, and a "Check for updates" placeholder item. macOS first; Windows build job may be allowed to fail until a Windows runner is available.
 - CI: `web-export` job on every PR runs the export and uploads `dist` as an artifact; `deploy-web` job on `main` deploys to Cloudflare Pages; `desktop-build` job on `main` builds the macOS Tauri bundle and uploads it as an artifact.
 - Smoke test: a Playwright test (`apps/mobile/e2e-web/home.spec.ts`) that serves `dist`, loads `/`, and asserts the sign-in screen renders and the title is correct.
 
@@ -52,7 +52,7 @@ When this is done, the same Expo codebase ships as a hosted web app and as a des
 **Implements**
 - `useBreakpoint(): 'phone' | 'tablet' | 'desktop'` in `apps/mobile/src/layout/useBreakpoint.ts` (thresholds 0, 768, 1024).
 - Platform modules with identical signatures across `.native.ts` and `.web.ts`: `pickPhoto(): Promise<Blob | null>`, `onSharedContent(cb)`, `registerPush(): Promise<string | null>`, `haptic(kind)`.
-- Tauri app id `com.mealplanner.desktop` (placeholder; WS14 may rename, coordinate in the report).
+- Tauri app id `com.miguelsolorio.souvie.desktop` (placeholder; WS14 may rename, coordinate in the report).
 
 **Consumes**
 - Screens and components from WS04 and WS05 as they exist; add layout branches, do not change behavior.

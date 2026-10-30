@@ -3,14 +3,14 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 1 (in progress)
-**Last updated:** 2026-10-30 by the orchestrator (WS03 in review)
+**Last updated:** 2026-10-30 by the orchestrator (WS01 fix landed, re-review)
 
 ## Workstreams
 
 | WS | Name | Wave | State | Branch | Model | Started | Merged | Notes |
 |---|---|---|---|---|---|---|---|---|
 | 00 | Repo & infra scaffold | 0 | merged | ws/00-scaffold | opus | 2026-10-29 | 2026-10-30 | Squash 7713b7f, PR #1. Checkpoint 1 approved 2026-10-30. Still to verify once Miguel unblocks: criterion 7 (Xcode license) and the hosted halves of 9-11 (`SUPABASE_ACCESS_TOKEN`) |
-| 01 | Auth & households | 1 | fix round | ws/01-auth-households | sonnet | 2026-10-30 | | Review verdict: fix round, no blockers. Fixing: column-level UPDATE grants on `households`, invite cleanup on leave, README migration rule, plus five nits. Criterion 3 partial pending provider setup. Checkpoint 2 before merge; hosted push after merge |
+| 01 | Auth & households | 1 | in review | ws/01-auth-households | sonnet | 2026-10-30 | | Fix landed at 82e815e; CI green: https://github.com/miguelsolorio/souvie/actions/runs/41025917823 (pgTAP 130/130). Re-review by the same reviewer running. Criterion 3 partial pending provider setup. Checkpoint 2 before merge; hosted push after merge |
 | 02 | Recipe domain & import | 2 | not started | | | | | |
 | 03 | Ingredient ontology & parser | 1 | in review | ws/03-ingredient-ontology-parser | sonnet | 2026-10-30 | | Head f2eab3f. CI green: https://github.com/miguelsolorio/souvie/actions/runs/41024818567 (reset with seed 751/4103 asserted, pgTAP 40/40). Reviewer running. Golden set self-labeled and in-sample, blind about 90% before the model; live Haiku unmeasured without `ANTHROPIC_API_KEY` |
 | 04 | Planner UI | 3 | not started | | | | | |

@@ -118,7 +118,8 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | position | int | |
 | group_name | text | "For the sauce" |
 | raw_text | text | As imported |
-| qty | numeric | Nullable ("to taste") |
+| qty | numeric | Nullable ("to taste"). Lower bound when the source line gives a range |
+| qty_max | numeric | Nullable. Upper bound of a range ("1 to 2 cups"). List aggregation uses it when present so a list never comes up short. Added 2026-10-30 from the WS03 report |
 | unit | text | Canonical unit code from `core/units` |
 | ingredient_id | uuid → ingredients | Nullable until parsed |
 | prep_note | text | "diced" |

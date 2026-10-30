@@ -142,7 +142,6 @@ tofu,,produce,package,,400,,false
 tempeh,,produce,package,,227,,false
 yuca,,produce,lb,,,,false
 taro,,produce,lb,,,,false
-water chestnut,water chestnuts,produce,each,,,,false
 kohlrabi,kohlrabis,produce,each,,135,,false
 rhubarb,,produce,stalk,,51,,false
 sunchoke,sunchokes,produce,lb,,,,false
@@ -445,7 +444,7 @@ chickpeas,,canned,can,0.75,,,false
 refried beans,,canned,can,1.1,,,false
 baked beans,,canned,can,1.05,,,false
 corn kernels canned,,canned,can,0.75,,,false
-green chiles,,canned,can,1.0,,,false
+canned green chiles,,canned,can,1.0,,,false
 chipotle peppers in adobo,,canned,can,1.1,,,false
 coconut milk,,canned,can,0.97,,,false
 coconut cream,,canned,can,1.0,,,false

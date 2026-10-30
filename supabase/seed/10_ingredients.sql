@@ -147,7 +147,6 @@ values
   ('502d1dff-4d2f-5b2e-a5e9-8b91cbc7f6da', 'tempeh', null, 'produce', 'package', null, 227, null, false),
   ('0d67a3c9-5cce-53fa-8cc7-7e93fa6588f1', 'yuca', null, 'produce', 'lb', null, null, null, false),
   ('109a3ffe-dc79-554f-965b-e7ff48bc3684', 'taro', null, 'produce', 'lb', null, null, null, false),
-  ('239dc406-3bcb-5e8b-90f3-7961d95cd0a9', 'water chestnut', 'water chestnuts', 'produce', 'each', null, null, null, false),
   ('dffba19a-05d9-5d65-80d0-695264b3fd0b', 'kohlrabi', 'kohlrabis', 'produce', 'each', null, 135, null, false),
   ('6aa6b92b-e61d-5bc6-a023-5d9b2546d678', 'rhubarb', null, 'produce', 'stalk', null, 51, null, false),
   ('774b131d-19ad-5daf-bc6d-9405b9a8360b', 'sunchoke', 'sunchokes', 'produce', 'lb', null, null, null, false),
@@ -253,7 +252,8 @@ values
   ('03419ade-8c47-5d0a-87ed-543778b4c66d', 'yogurt', null, 'dairy', 'cup', 1.03, null, null, false),
   ('d5b92824-c4d6-5501-ae2e-ee54a22cdc8e', 'greek yogurt', null, 'dairy', 'cup', 1.05, null, null, false),
   ('2cff53a5-068a-54ff-ae4f-b2f7c9713ac3', 'butter', null, 'dairy', 'tbsp', 0.96, null, null, false),
-  ('1e134b96-3ed8-51f3-af2c-44c71a747fb4', 'unsalted butter', null, 'dairy', 'tbsp', 0.96, null, null, false)
+  ('1e134b96-3ed8-51f3-af2c-44c71a747fb4', 'unsalted butter', null, 'dairy', 'tbsp', 0.96, null, null, false),
+  ('e17b137f-edf6-5946-b5f9-e9b8e03361a3', 'margarine', null, 'dairy', 'tbsp', 0.96, null, null, false)
 on conflict (name) do update set
   plural = excluded.plural,
   category = excluded.category,
@@ -265,7 +265,6 @@ on conflict (name) do update set
 
 insert into public.ingredients (id, name, plural, category, default_unit, density_g_per_ml, typical_unit_weight_g, usda_fdc_id, is_staple_default)
 values
-  ('e17b137f-edf6-5946-b5f9-e9b8e03361a3', 'margarine', null, 'dairy', 'tbsp', 0.96, null, null, false),
   ('f19e328c-bdcb-5864-9c1a-ab2c61af82d9', 'ghee', null, 'dairy', 'tbsp', 0.91, null, null, false),
   ('193a9160-d331-5ada-9bc4-64665e45f855', 'cream cheese', null, 'dairy', 'oz', 0.96, null, null, false),
   ('f88376dc-ba1d-52ce-ac13-9dc965efecac', 'cottage cheese', null, 'dairy', 'cup', 1.04, null, null, false),
@@ -461,7 +460,7 @@ values
   ('3f35819f-9cf9-50d5-a19e-f287b5481fe2', 'refried beans', null, 'canned', 'can', 1.1, null, null, false),
   ('d85ff976-0d05-5ba5-85ec-373b8c2972c2', 'baked beans', null, 'canned', 'can', 1.05, null, null, false),
   ('219f8546-0944-5357-b6be-9c5a7062e161', 'corn kernels canned', null, 'canned', 'can', 0.75, null, null, false),
-  ('c6d9adf7-36df-5c95-a67d-5cfa40dafb29', 'green chiles', null, 'canned', 'can', 1, null, null, false),
+  ('e18c2c91-e818-52ed-b7e6-d70852e4ca3b', 'canned green chiles', null, 'canned', 'can', 1, null, null, false),
   ('cb5eb365-9836-5b05-a1bb-d95d873a974a', 'chipotle peppers in adobo', null, 'canned', 'can', 1.1, null, null, false),
   ('b527bdac-8db5-5f05-b3d5-f6ba729fbe5d', 'coconut milk', null, 'canned', 'can', 0.97, null, null, false),
   ('663e21f3-3f6f-5ddf-9f11-a57eb03b80c2', 'coconut cream', null, 'canned', 'can', 1, null, null, false),
@@ -514,7 +513,8 @@ values
   ('63feb7a8-7f45-5576-9328-a5e2e7e67ac8', 'frozen collard greens', null, 'frozen', 'package', null, null, null, false),
   ('cbc3b62e-5780-596c-93e2-2c7ae7f7a8d3', 'frozen lima beans', null, 'frozen', 'package', null, null, null, false),
   ('59a2de16-43a4-5ecf-8ff0-ede487c97284', 'frozen artichoke hearts', null, 'frozen', 'package', null, null, null, false),
-  ('3d4b137d-eb80-5990-9c19-809fbd4cc80d', 'frozen sweet potato fries', null, 'frozen', 'package', null, null, null, false)
+  ('3d4b137d-eb80-5990-9c19-809fbd4cc80d', 'frozen sweet potato fries', null, 'frozen', 'package', null, null, null, false),
+  ('53b10817-5d79-53c1-9826-b5bad6fea6e9', 'frozen chicken nuggets', null, 'frozen', 'package', null, null, null, false)
 on conflict (name) do update set
   plural = excluded.plural,
   category = excluded.category,
@@ -526,7 +526,6 @@ on conflict (name) do update set
 
 insert into public.ingredients (id, name, plural, category, default_unit, density_g_per_ml, typical_unit_weight_g, usda_fdc_id, is_staple_default)
 values
-  ('53b10817-5d79-53c1-9826-b5bad6fea6e9', 'frozen chicken nuggets', null, 'frozen', 'package', null, null, null, false),
   ('ffbbcb78-c712-557a-a527-b4137f3dc47d', 'frozen burritos', null, 'frozen', 'each', null, null, null, false),
   ('6074dd2d-4ec2-5fc7-b15f-0947d3852e3c', 'frozen biscuits', null, 'frozen', 'package', null, null, null, false),
   ('9ee3a81a-7e87-579d-8c7f-12db90cbf9c1', 'frozen bread dough', null, 'frozen', 'each', null, null, null, false),
@@ -775,7 +774,8 @@ values
   ('1f328dd8-5733-5852-ade2-298f24b496c8', 'cream of chicken soup', null, 'canned', 'can', 1.05, null, null, false),
   ('987cb9c9-5ae9-57be-ab96-f0d0a31cd7ba', 'cream of celery soup', null, 'canned', 'can', 1.05, null, null, false),
   ('eddf6ecf-7bf2-5c08-8557-a6cf896e4225', 'chestnuts', null, 'pantry', 'cup', 0.6, null, null, false),
-  ('44676a02-b079-59de-89d0-609bb2d6a7b7', 'sumac', null, 'spices', 'tsp', 0.5, null, null, false)
+  ('44676a02-b079-59de-89d0-609bb2d6a7b7', 'sumac', null, 'spices', 'tsp', 0.5, null, null, false),
+  ('730961cd-860c-5e82-94ce-4c3a7283326d', 'orange extract', null, 'baking', 'tsp', 0.88, null, null, false)
 on conflict (name) do update set
   plural = excluded.plural,
   category = excluded.category,
@@ -787,7 +787,6 @@ on conflict (name) do update set
 
 insert into public.ingredients (id, name, plural, category, default_unit, density_g_per_ml, typical_unit_weight_g, usda_fdc_id, is_staple_default)
 values
-  ('730961cd-860c-5e82-94ce-4c3a7283326d', 'orange extract', null, 'baking', 'tsp', 0.88, null, null, false),
   ('0663aac0-c276-5c9e-a3d5-504248a551ba', 'psyllium husk', null, 'baking', 'tbsp', 0.35, null, null, false)
 on conflict (name) do update set
   plural = excluded.plural,
@@ -944,7 +943,6 @@ from (values
   ('tempeh', 'tempeh', 'seed'),
   ('yuca', 'yuca', 'seed'),
   ('taro', 'taro', 'seed'),
-  ('water chestnut', 'water chestnut', 'seed'),
   ('kohlrabi', 'kohlrabi', 'seed'),
   ('rhubarb', 'rhubarb', 'seed'),
   ('sunchoke', 'sunchoke', 'seed'),
@@ -1247,7 +1245,7 @@ from (values
   ('refried beans', 'refried beans', 'seed'),
   ('baked beans', 'baked beans', 'seed'),
   ('corn kernels canned', 'corn kernels canned', 'seed'),
-  ('green chiles', 'green chiles', 'seed'),
+  ('canned green chiles', 'canned green chiles', 'seed'),
   ('chipotle peppers in adobo', 'chipotle peppers in adobo', 'seed'),
   ('coconut milk', 'coconut milk', 'seed'),
   ('coconut cream', 'coconut cream', 'seed'),
@@ -1300,7 +1298,8 @@ from (values
   ('frozen collard greens', 'frozen collard greens', 'seed'),
   ('frozen lima beans', 'frozen lima beans', 'seed'),
   ('frozen artichoke hearts', 'frozen artichoke hearts', 'seed'),
-  ('frozen sweet potato fries', 'frozen sweet potato fries', 'seed')
+  ('frozen sweet potato fries', 'frozen sweet potato fries', 'seed'),
+  ('frozen chicken nuggets', 'frozen chicken nuggets', 'seed')
 ) as v (ingredient_name, alias, source)
 join public.ingredients as i on i.name = v.ingredient_name
 on conflict (alias) do update set ingredient_id = excluded.ingredient_id
@@ -1309,7 +1308,6 @@ on conflict (alias) do update set ingredient_id = excluded.ingredient_id
 insert into public.ingredient_aliases (ingredient_id, alias, source)
 select i.id, v.alias, v.source::public.ingredient_aliases_source
 from (values
-  ('frozen chicken nuggets', 'frozen chicken nuggets', 'seed'),
   ('frozen burritos', 'frozen burritos', 'seed'),
   ('frozen biscuits', 'frozen biscuits', 'seed'),
   ('frozen bread dough', 'frozen bread dough', 'seed'),
@@ -1561,6 +1559,7 @@ from (values
   ('sumac', 'sumac', 'seed'),
   ('orange extract', 'orange extract', 'seed'),
   ('psyllium husk', 'psyllium husk', 'seed'),
+  ('green chile', 'green chiles', 'seed'),
   ('yellow onion', 'yellow onions', 'seed'),
   ('red onion', 'red onions', 'seed'),
   ('white onion', 'white onions', 'seed'),
@@ -2651,12 +2650,12 @@ from (values
   ('fresh mozzarella', 'bocconcini', 'seed'),
   ('fresh mozzarella', 'mozzarella pearls', 'seed'),
   ('fresh mozzarella', 'ciliegine', 'seed'),
+  ('cheddar', 'sharp white cheddar', 'seed'),
+  ('cheddar', 'white cheddar cheese', 'seed'),
   ('cheddar', 'cheddar cheese', 'seed'),
   ('cheddar', 'sharp cheddar', 'seed'),
   ('cheddar', 'sharp cheddar cheese', 'seed'),
   ('cheddar', 'extra-sharp cheddar', 'seed'),
-  ('cheddar', 'white cheddar', 'seed'),
-  ('cheddar', 'aged cheddar', 'seed'),
   ('parmesan', 'parmesan cheese', 'seed'),
   ('parmesan', 'parmigiano-reggiano', 'seed'),
   ('parmesan', 'parmigiano reggiano', 'seed'),
@@ -3324,15 +3323,15 @@ from (values
   ('spaghetti', 'spaghettini', 'seed'),
   ('spaghetti', 'whole wheat spaghetti', 'seed'),
   ('spaghetti', 'gluten-free spaghetti', 'seed'),
+  ('penne', 'dried penne', 'seed'),
+  ('penne', 'dried penne pasta', 'seed'),
   ('penne', 'penne pasta', 'seed'),
   ('penne', 'penne rigate', 'seed'),
   ('penne', 'whole wheat penne', 'seed'),
   ('penne', 'penne noodles', 'seed'),
-  ('penne', 'gluten-free penne', 'seed'),
-  ('rotini', 'fusilli', 'seed'),
-  ('rotini', 'rotini pasta', 'seed'),
-  ('rotini', 'fusilli pasta', 'seed'),
-  ('rotini', 'corkscrew pasta', 'seed')
+  ('rotini', 'dried rotini', 'seed'),
+  ('rotini', 'dried fusilli', 'seed'),
+  ('rotini', 'fusilli', 'seed')
 ) as v (ingredient_name, alias, source)
 join public.ingredients as i on i.name = v.ingredient_name
 on conflict (alias) do update set ingredient_id = excluded.ingredient_id
@@ -3341,8 +3340,9 @@ on conflict (alias) do update set ingredient_id = excluded.ingredient_id
 insert into public.ingredient_aliases (ingredient_id, alias, source)
 select i.id, v.alias, v.source::public.ingredient_aliases_source
 from (values
-  ('rotini', 'spiral pasta', 'seed'),
-  ('rotini', 'rotelle', 'seed'),
+  ('rotini', 'rotini pasta', 'seed'),
+  ('rotini', 'fusilli pasta', 'seed'),
+  ('rotini', 'corkscrew pasta', 'seed'),
   ('elbow macaroni', 'macaroni', 'seed'),
   ('elbow macaroni', 'elbow pasta', 'seed'),
   ('elbow macaroni', 'elbows', 'seed'),
@@ -3383,12 +3383,12 @@ from (values
   ('egg noodles', 'kluski noodles', 'seed'),
   ('egg noodles', 'dumpling noodles', 'seed'),
   ('egg noodles', 'fine egg noodles', 'seed'),
+  ('farfalle', 'dried farfalle', 'seed'),
+  ('farfalle', 'dried bow tie pasta', 'seed'),
   ('farfalle', 'bow tie pasta', 'seed'),
   ('farfalle', 'bowtie pasta', 'seed'),
   ('farfalle', 'bow ties', 'seed'),
   ('farfalle', 'bowties', 'seed'),
-  ('farfalle', 'farfalle pasta', 'seed'),
-  ('farfalle', 'butterfly pasta', 'seed'),
   ('lentils', 'brown lentils', 'seed'),
   ('lentils', 'green lentils', 'seed'),
   ('lentils', 'french green lentils', 'seed'),
@@ -3676,10 +3676,9 @@ from (values
   ('corn kernels canned', 'canned corn kernels', 'seed'),
   ('corn kernels canned', 'cream-style corn', 'seed'),
   ('corn kernels canned', 'creamed corn', 'seed'),
-  ('green chiles', 'canned green chiles', 'seed'),
-  ('green chiles', 'fire-roasted green chiles', 'seed'),
-  ('green chiles', 'ortega green chiles', 'seed'),
-  ('green chiles', 'hatch green chiles', 'seed'),
+  ('canned green chiles', 'diced green chiles', 'seed'),
+  ('canned green chiles', 'mild green chiles', 'seed'),
+  ('canned green chiles', 'chopped green chiles', 'seed'),
   ('chipotle peppers in adobo', 'chipotle chilies in adobo', 'seed'),
   ('chipotle peppers in adobo', 'chipotle chiles in adobo', 'seed'),
   ('chipotle peppers in adobo', 'chipotle chilis in adobo', 'seed'),

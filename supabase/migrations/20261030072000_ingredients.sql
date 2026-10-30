@@ -172,6 +172,32 @@ comment on function public.match_ingredient_alias(text, real, integer) is
   'Trigram match of a noun phrase against ingredient_aliases. Returns the best aliases first.';
 
 -- ---------------------------------------------------------------------------
+-- Recording an unknown ingredient (atomic: one pending row per name, count grows)
+-- ---------------------------------------------------------------------------
+create or replace function public.record_ingredient_alias_proposal(
+  p_raw_text text,
+  p_proposed_name text,
+  p_proposed_category text default null,
+  p_household_id uuid default null
+)
+returns uuid
+language sql
+set search_path = ''
+as $$
+  insert into public.ingredient_alias_proposals as p
+    (raw_text, proposed_name, proposed_category, household_id)
+  values (p_raw_text, lower(btrim(p_proposed_name)), p_proposed_category, p_household_id)
+  on conflict (proposed_name) where status = 'pending'
+  do update set
+    count = p.count + 1,
+    proposed_category = coalesce(p.proposed_category, excluded.proposed_category)
+  returning p.id;
+$$;
+
+comment on function public.record_ingredient_alias_proposal(text, text, text, uuid) is
+  'Upserts the pending proposal for a name the ontology lacks. Service role only.';
+
+-- ---------------------------------------------------------------------------
 -- Row level security
 -- ---------------------------------------------------------------------------
 -- ingredients and ingredient_aliases: any signed-in user reads; nobody but the service role writes.
@@ -199,3 +225,8 @@ revoke all on table public.ingredient_alias_proposals from public, anon, authent
 revoke all on function public.match_ingredient_alias(text, real, integer) from public, anon;
 grant execute on function public.match_ingredient_alias(text, real, integer)
   to authenticated, service_role;
+
+revoke all on function public.record_ingredient_alias_proposal(text, text, text, uuid)
+  from public, anon, authenticated;
+grant execute on function public.record_ingredient_alias_proposal(text, text, text, uuid)
+  to service_role;

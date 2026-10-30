@@ -142,7 +142,6 @@ tofu,tofu,seed
 tempeh,tempeh,seed
 yuca,yuca,seed
 taro,taro,seed
-water chestnut,water chestnut,seed
 kohlrabi,kohlrabi,seed
 rhubarb,rhubarb,seed
 sunchoke,sunchoke,seed
@@ -445,7 +444,7 @@ chickpeas,chickpeas,seed
 refried beans,refried beans,seed
 baked beans,baked beans,seed
 corn kernels canned,corn kernels canned,seed
-green chiles,green chiles,seed
+canned green chiles,canned green chiles,seed
 chipotle peppers in adobo,chipotle peppers in adobo,seed
 coconut milk,coconut milk,seed
 coconut cream,coconut cream,seed
@@ -751,6 +750,7 @@ chestnuts,chestnuts,seed
 sumac,sumac,seed
 orange extract,orange extract,seed
 psyllium husk,psyllium husk,seed
+green chile,green chiles,seed
 yellow onion,yellow onions,seed
 red onion,red onions,seed
 white onion,white onions,seed
@@ -1825,12 +1825,12 @@ fresh mozzarella,buffalo mozzarella,seed
 fresh mozzarella,bocconcini,seed
 fresh mozzarella,mozzarella pearls,seed
 fresh mozzarella,ciliegine,seed
+cheddar,sharp white cheddar,seed
+cheddar,white cheddar cheese,seed
 cheddar,cheddar cheese,seed
 cheddar,sharp cheddar,seed
 cheddar,sharp cheddar cheese,seed
 cheddar,extra-sharp cheddar,seed
-cheddar,white cheddar,seed
-cheddar,aged cheddar,seed
 parmesan,parmesan cheese,seed
 parmesan,parmigiano-reggiano,seed
 parmesan,parmigiano reggiano,seed
@@ -2490,17 +2490,18 @@ spaghetti,spaghetti pasta,seed
 spaghetti,spaghettini,seed
 spaghetti,whole wheat spaghetti,seed
 spaghetti,gluten-free spaghetti,seed
+penne,dried penne,seed
+penne,dried penne pasta,seed
 penne,penne pasta,seed
 penne,penne rigate,seed
 penne,whole wheat penne,seed
 penne,penne noodles,seed
-penne,gluten-free penne,seed
+rotini,dried rotini,seed
+rotini,dried fusilli,seed
 rotini,fusilli,seed
 rotini,rotini pasta,seed
 rotini,fusilli pasta,seed
 rotini,corkscrew pasta,seed
-rotini,spiral pasta,seed
-rotini,rotelle,seed
 elbow macaroni,macaroni,seed
 elbow macaroni,elbow pasta,seed
 elbow macaroni,elbows,seed
@@ -2541,12 +2542,12 @@ egg noodles,broad egg noodles,seed
 egg noodles,kluski noodles,seed
 egg noodles,dumpling noodles,seed
 egg noodles,fine egg noodles,seed
+farfalle,dried farfalle,seed
+farfalle,dried bow tie pasta,seed
 farfalle,bow tie pasta,seed
 farfalle,bowtie pasta,seed
 farfalle,bow ties,seed
 farfalle,bowties,seed
-farfalle,farfalle pasta,seed
-farfalle,butterfly pasta,seed
 lentils,brown lentils,seed
 lentils,green lentils,seed
 lentils,french green lentils,seed
@@ -2834,10 +2835,9 @@ corn kernels canned,canned whole kernel corn,seed
 corn kernels canned,canned corn kernels,seed
 corn kernels canned,cream-style corn,seed
 corn kernels canned,creamed corn,seed
-green chiles,canned green chiles,seed
-green chiles,fire-roasted green chiles,seed
-green chiles,ortega green chiles,seed
-green chiles,hatch green chiles,seed
+canned green chiles,diced green chiles,seed
+canned green chiles,mild green chiles,seed
+canned green chiles,chopped green chiles,seed
 chipotle peppers in adobo,chipotle chilies in adobo,seed
 chipotle peppers in adobo,chipotle chiles in adobo,seed
 chipotle peppers in adobo,chipotle chilis in adobo,seed

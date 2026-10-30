@@ -5,5 +5,8 @@
 // The shapes it will hold are defined in docs/02-data-model.md. Each workstream brief
 // names the module it adds here (for example identity.ts in WS01, units.ts in WS03).
 //
-// WS01 adds identity.ts, as its brief lists it among the deliverables.
-export * from "./identity";
+// Relative imports carry the .ts extension so Deno (Supabase Edge Functions) can load this
+// barrel through an import map.
+export * from "./identity.ts";
+export * from "./ingredient.ts";
+export * from "./units.ts";

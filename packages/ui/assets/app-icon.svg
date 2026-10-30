@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Meal Planner app icon</title>
+  <!-- Source for apps/mobile/assets/icon.png. Full-bleed, no transparency, no rounded corners:
+       iOS and Android apply their own masks. The mark is logo-mark.svg scaled 11.5x and centered. -->
+  <rect width="1024" height="1024" fill="#2F6B4F"/>
+  <g fill="#FAF8F5" transform="translate(144 138.25) scale(11.5)">
+    <path d="M6 36h52c0 12.4-11.6 20-26 20S6 48.4 6 36z"/>
+    <path d="M33 31C33 19 40 11 53 9c0 12.5-7.6 21.2-20 22z"/>
+    <path d="M31 31C31 23 26 17 15 15c0 8.5 5.5 14.5 16 16z"/>
+  </g>
+</svg>

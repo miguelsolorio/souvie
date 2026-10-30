@@ -80,7 +80,7 @@ kosher salt,,spices,tsp,1.2,,,true
 ## Acceptance criteria
 1. `supabase db reset` applies `0005` and loads ≥ 600 `ingredients` and ≥ 1,200 `ingredient_aliases` rows (counts in report).
 2. Every seed row has `category` from the fixed list and `default_unit` set; at least 150 rows have `density_g_per_ml` and at least 100 have `typical_unit_weight_g` (a test asserts these counts).
-3. `pnpm eval --filter @mp/ingredient-parser` on the 500-line golden set reports: qty and unit exactly right on ≥ 95% of lines; `ingredientId` right on ≥ 90%; output includes per-stage counts (grammar, lookup, llm).
+3. `pnpm --filter @mp/ingredient-parser eval` on the 500-line golden set reports: qty and unit exactly right on ≥ 95% of lines; `ingredientId` right on ≥ 90%; output includes per-stage counts (grammar, lookup, llm).
 4. The grammar stage alone (no LLM, no network) handles ≥ 80% of golden lines at confidence ≥ 0.8; the eval shows this number.
 5. Running the eval twice makes zero Anthropic calls the second time (cache hit; assert via `ai_runs` count or a mocked client counter).
 6. `convert(1, 'cup', 'g', flour)` returns 120–130; `convert(2, 'clove', 'head', garlic)` returns ≤ 1 rounded up by `toPurchasable`; `convert(1.3, 'lb', 'lb', chicken)` via `toPurchasable` returns 1.5. Unit tests cover these plus 20 more cases.
@@ -94,8 +94,8 @@ kosher salt,,spices,tsp,1.2,,,true
 supabase db reset                                             # 0005 applied, seed loaded
 psql "$WORKER_DATABASE_URL" -c "select count(*) from ingredients" -c "select count(*) from ingredient_aliases"
 supabase test db                                              # 003 policies pass
-pnpm eval --filter @mp/ingredient-parser                      # >=95% qty/unit, >=90% ingredient, stage counts
-pnpm eval --filter @mp/ingredient-parser                      # second run: 0 LLM calls
+pnpm --filter @mp/ingredient-parser eval                      # >=95% qty/unit, >=90% ingredient, stage counts
+pnpm --filter @mp/ingredient-parser eval                      # second run: 0 LLM calls
 pnpm --filter @mp/core test                                   # units tests pass
 pnpm typecheck && pnpm lint && pnpm test
 ```

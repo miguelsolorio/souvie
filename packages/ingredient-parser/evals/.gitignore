@@ -1,0 +1,2 @@
+# Persisted model results from a live eval run (needs ANTHROPIC_API_KEY). Local only.
+.cache/

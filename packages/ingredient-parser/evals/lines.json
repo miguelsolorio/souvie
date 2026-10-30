@@ -1,0 +1,6580 @@
+[
+  {
+    "raw": "1 large yellow onion, diced",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "large",
+        "ingredient": "yellow onion",
+        "prep": "diced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound ground beef",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "ground beef",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (14.5 ounce) can diced tomatoes",
+    "items": [
+      {
+        "qty": 14.5,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "diced tomatoes",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (15 oz) can tomato sauce",
+    "items": [
+      {
+        "qty": 15,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "tomato sauce",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 cup chopped fresh cilantro",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "cilantro",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon lime juice",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "lime juice",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 1/2 pounds boneless, skinless chicken thighs",
+    "items": [
+      {
+        "qty": 1.5,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "chicken thigh",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 teaspoon sesame oil",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "sesame oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 red bell pepper, sliced",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "red bell pepper",
+        "prep": "sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup broccoli florets",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "broccoli",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups cooked rice",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "cooked rice",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup all-purpose flour",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "all-purpose flour",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup packed brown sugar",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "brown sugar",
+        "prep": "packed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 teaspoon baking soda",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "baking soda",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 teaspoon salt",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "salt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup (2 sticks) unsalted butter, softened",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "unsalted butter",
+        "prep": "softened",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3/4 cup buttermilk",
+    "items": [
+      {
+        "qty": 0.75,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "buttermilk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup milk",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound spaghetti",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "spaghetti",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 jar (24 ounces) marinara sauce",
+    "items": [
+      {
+        "qty": 24,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "marinara sauce",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound Italian sausage, casings removed",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "italian sausage",
+        "prep": "casings removed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 cup extra-virgin olive oil",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "olive oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 slices bacon, chopped",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "slice",
+        "ingredient": "bacon",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon yellow mustard",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "yellow mustard",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 head romaine lettuce, chopped",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "head",
+        "ingredient": "romaine lettuce",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 large tomato, sliced",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "large",
+        "ingredient": "tomato",
+        "prep": "sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 red onion, thinly sliced",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "red onion",
+        "prep": "thinly sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cucumber, peeled and diced",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "cucumber",
+        "prep": "peeled and diced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 stalks celery, diced",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "stalk",
+        "ingredient": "celery",
+        "prep": "diced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 carrots, peeled and sliced",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "carrot",
+        "prep": "peeled and sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup frozen peas",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "frozen peas",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 bay leaves",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "bay leaf",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon tomato paste",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "tomato paste",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (28 ounce) can crushed tomatoes",
+    "items": [
+      {
+        "qty": 28,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "crushed tomatoes",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 can (13.5 ounces) coconut milk",
+    "items": [
+      {
+        "qty": 13.5,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "coconut milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup heavy cream",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "heavy cream",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon Dijon mustard, optional",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "dijon mustard",
+        "prep": null,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup raisins",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "raisins",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 teaspoon ground cinnamon",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "cinnamon",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 teaspoon ground nutmeg",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "nutmeg",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons maple syrup",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "maple syrup",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups fresh blueberries",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "blueberry",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 teaspoon ground ginger",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "ground ginger",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 teaspoon onion powder",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "onion powder",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 lemon, juiced",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "lemon",
+        "prep": "juiced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup dry white wine",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "white wine",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound salmon fillet",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "salmon fillet",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups cooked quinoa",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "quinoa",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (1-inch) piece fresh ginger, grated",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "piece",
+        "ingredient": "ginger",
+        "prep": "grated",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 tbsp olive oil",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "olive oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/3 cup chopped fresh parsley",
+    "items": [
+      {
+        "qty": 0.3333,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "parsley",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 pounds russet potatoes",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "russet potato",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup whole milk",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 package (16 oz) elbow macaroni",
+    "items": [
+      {
+        "qty": 16,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "elbow macaroni",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups shredded sharp cheddar",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "cheddar",
+        "prep": "shredded",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 cup all-purpose flour",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "all-purpose flour",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup panko breadcrumbs",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "panko",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 teaspoon dry mustard",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "dry mustard",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pinch cayenne pepper",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "pinch",
+        "ingredient": "cayenne pepper",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "a pinch of nutmeg",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "pinch",
+        "ingredient": "nutmeg",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 package active dry yeast",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "package",
+        "ingredient": "active dry yeast",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 1/4 teaspoons active dry yeast",
+    "items": [
+      {
+        "qty": 2.25,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "active dry yeast",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon sugar",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "granulated sugar",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons extra virgin olive oil, plus more for brushing",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "olive oil",
+        "prep": "plus more for brushing",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 cup cocoa powder",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "cocoa powder",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup sweetened shredded coconut",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "coconut flakes",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (14 ounce) can sweetened condensed milk",
+    "items": [
+      {
+        "qty": 14,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "sweetened condensed milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 box yellow cake mix",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "box",
+        "ingredient": "cake mix",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (3.4 ounce) package instant vanilla pudding mix",
+    "items": [
+      {
+        "qty": 3.4,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "instant pudding mix",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup whipped cream",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "whipped cream",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons lemon juice",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "lemon juice",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups frozen mixed berries",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "frozen mixed berries",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup orange juice",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "orange juice",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (6 ounce) can tomato paste",
+    "items": [
+      {
+        "qty": 6,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "tomato paste",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon taco seasoning",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "taco seasoning",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup salsa",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "salsa",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 avocado, sliced",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "avocado",
+        "prep": "sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 lime, cut into wedges",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "lime",
+        "prep": "cut into wedges",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 can (4 oz) diced green chiles",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "canned green chiles",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons ghee",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "ghee",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 teaspoon mustard seeds",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "mustard seeds",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon ginger-garlic paste",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "ginger-garlic paste",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 teaspoons garam masala",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "garam masala",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 teaspoon Kashmiri chili powder",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "kashmiri chili powder",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (14 oz) can chickpeas",
+    "items": [
+      {
+        "qty": 14,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "chickpeas",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup red lentils, rinsed",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "red lentils",
+        "prep": "rinsed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 cups water",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "water",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tomatoes, chopped",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "tomato",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup plain yogurt",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "yogurt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup heavy cream",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "heavy cream",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound paneer, cubed",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "paneer",
+        "prep": "cubed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cinnamon stick",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "cinnamon stick",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "6 whole cloves",
+    "items": [
+      {
+        "qty": 6,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "whole cloves",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "10 curry leaves",
+    "items": [
+      {
+        "qty": 10,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "curry leaf",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 teaspoon asafoetida",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "asafoetida",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups basmati rice, rinsed",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "basmati rice",
+        "prep": "rinsed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon kasuri methi",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "kasuri methi",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (400g) tin chopped tomatoes",
+    "items": [
+      {
+        "qty": 400,
+        "qtyMax": null,
+        "unit": "g",
+        "ingredient": "diced tomatoes",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "200g spinach",
+    "items": [
+      {
+        "qty": 200,
+        "qtyMax": null,
+        "unit": "g",
+        "ingredient": "spinach",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons red curry paste",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "red curry paste",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon palm sugar",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "brown sugar",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "8 ounces rice noodles",
+    "items": [
+      {
+        "qty": 8,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "rice noodles",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup Thai basil leaves",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "thai basil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 Thai chilies, sliced",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "thai chile",
+        "prep": "sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 block (14 oz) extra-firm tofu, pressed and cubed",
+    "items": [
+      {
+        "qty": 14,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "tofu",
+        "prep": "pressed and cubed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons vegetable oil",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "vegetable oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups pho broth",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "pho broth",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 bunch mint",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "bunch",
+        "ingredient": "mint",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound pork shoulder",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "pork shoulder",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons hoisin sauce",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "hoisin sauce",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon oyster sauce",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "oyster sauce",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons Shaoxing wine",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "shaoxing wine",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon cornstarch",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "cornstarch",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 green onions, cut into 1-inch pieces",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "green onion",
+        "prep": "cut into 1-inch pieces",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 head bok choy, chopped",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "head",
+        "ingredient": "bok choy",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon grated fresh ginger",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "ginger",
+        "prep": "grated",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon mirin",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "mirin",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 cup rice vinegar",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "rice vinegar",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons white miso paste",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "miso paste",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 cups dashi",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "dashi",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon gochugaru",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "gochugaru",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon toasted sesame oil",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "sesame oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound ground pork",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "ground pork",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 package wonton wrappers",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "package",
+        "ingredient": "wonton wrappers",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon black vinegar",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "black vinegar",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup panko",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "panko",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup tonkatsu sauce",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "tonkatsu sauce",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 1/2 pounds pork shoulder, cut into chunks",
+    "items": [
+      {
+        "qty": 1.5,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "pork shoulder",
+        "prep": "cut into chunks",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 dried guajillo chiles, stemmed and seeded",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "guajillo chile",
+        "prep": "stemmed and seeded",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 white onion, diced",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "white onion",
+        "prep": "diced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "12 corn tortillas",
+    "items": [
+      {
+        "qty": 12,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "corn tortilla",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup crumbled cotija cheese",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "cotija",
+        "prep": "crumbled",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 jalapeño, seeded and minced",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "jalapeno",
+        "prep": "seeded and minced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 bunch cilantro, chopped",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "bunch",
+        "ingredient": "cilantro",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup long-grain white rice",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "white rice",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups shredded Mexican cheese blend",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "mexican cheese blend",
+        "prep": "shredded",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound masa harina",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "masa harina",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "8 ounces queso fresco",
+    "items": [
+      {
+        "qty": 8,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "queso fresco",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tomatillo, husked",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "tomatillo",
+        "prep": "husked",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 poblano peppers, roasted",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "poblano pepper",
+        "prep": "roasted",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup refried beans",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "refried beans",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup crema",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "crema",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup crumbled feta cheese",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "feta",
+        "prep": "crumbled",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 cup Kalamata olives, pitted and halved",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "kalamata olives",
+        "prep": "pitted and halved",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons pomegranate molasses",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "pomegranate molasses",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup plain hummus",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "hummus",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 pita breads",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "pita bread",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 eggplant, cubed",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "eggplant",
+        "prep": "cubed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound lamb shoulder, cubed",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "lamb shoulder",
+        "prep": "cubed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup pine nuts, toasted",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "pine nuts",
+        "prep": "toasted",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 bunch flat-leaf parsley, finely chopped",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "bunch",
+        "ingredient": "parsley",
+        "prep": "finely chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 tablespoons tahini",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "tahini",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (15 oz) can cannellini beans",
+    "items": [
+      {
+        "qty": 15,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "cannellini beans",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "6 large eggs",
+    "items": [
+      {
+        "qty": 6,
+        "qtyMax": null,
+        "unit": "large",
+        "ingredient": "egg",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 cup milk",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons chopped chives",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "chive",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 slices sourdough bread",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "slice",
+        "ingredient": "sourdough bread",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 1/2 cups buttermilk",
+    "items": [
+      {
+        "qty": 1.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "buttermilk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "8 breakfast sausage links",
+    "items": [
+      {
+        "qty": 8,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "breakfast sausage",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup heavy cream, plus more as needed",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "heavy cream",
+        "prep": "plus more as needed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups granola",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "granola",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup vanilla yogurt",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "yogurt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 bagel, toasted",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "bagel",
+        "prep": "toasted",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon capers",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "capers",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "½ cup sugar",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "granulated sugar",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "¼ teaspoon salt",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "salt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "¾ cup milk",
+    "items": [
+      {
+        "qty": 0.75,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2½ tablespoons butter",
+    "items": [
+      {
+        "qty": 2.5,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "butter",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "⅔ cup brown sugar",
+    "items": [
+      {
+        "qty": 0.6667,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "brown sugar",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "⅛ teaspoon nutmeg",
+    "items": [
+      {
+        "qty": 0.125,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "nutmeg",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1-2 tablespoons olive oil",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": 2,
+        "unit": "tbsp",
+        "ingredient": "olive oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 to 3 tablespoons lemon juice",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": 3,
+        "unit": "tbsp",
+        "ingredient": "lemon juice",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 to 2 teaspoons sugar",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": 2,
+        "unit": "tsp",
+        "ingredient": "granulated sugar",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3-4 large carrots",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": 4,
+        "unit": "large",
+        "ingredient": "carrot",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 1/2 to 2 pounds chicken thighs",
+    "items": [
+      {
+        "qty": 1.5,
+        "qtyMax": 2,
+        "unit": "lb",
+        "ingredient": "chicken thigh",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2–3 sprigs rosemary",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": 3,
+        "unit": "sprig",
+        "ingredient": "rosemary",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1-1/2 cups chicken broth",
+    "items": [
+      {
+        "qty": 1.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "chicken broth",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "0.5 cup cream",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "heavy cream",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1.5 tsp baking powder",
+    "items": [
+      {
+        "qty": 1.5,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "baking powder",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": ".25 tsp cinnamon",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "cinnamon",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 1/2 cups all-purpose flour",
+    "items": [
+      {
+        "qty": 2.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "all-purpose flour",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 3/4 cups sugar",
+    "items": [
+      {
+        "qty": 1.75,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "granulated sugar",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 or 5 eggs",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": 5,
+        "unit": "each",
+        "ingredient": "egg",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 Tbsp butter",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "butter",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tbsp. olive oil",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "olive oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 T flour",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "all-purpose flour",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 TBS soy sauce",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "soy sauce",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 c. milk",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 C flour",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "all-purpose flour",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "8 fl oz chicken broth",
+    "items": [
+      {
+        "qty": 8,
+        "qtyMax": null,
+        "unit": "fl_oz",
+        "ingredient": "chicken broth",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "8 fluid ounces water",
+    "items": [
+      {
+        "qty": 8,
+        "qtyMax": null,
+        "unit": "fl_oz",
+        "ingredient": "water",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "12 ounces penne",
+    "items": [
+      {
+        "qty": 12,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "penne",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 lbs chicken wings",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "chicken wing",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "500g potatoes",
+    "items": [
+      {
+        "qty": 500,
+        "qtyMax": null,
+        "unit": "g",
+        "ingredient": "russet potato",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 kg flour",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "kg",
+        "ingredient": "all-purpose flour",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "750 ml red wine",
+    "items": [
+      {
+        "qty": 750,
+        "qtyMax": null,
+        "unit": "ml",
+        "ingredient": "red wine",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "250ml milk",
+    "items": [
+      {
+        "qty": 250,
+        "qtyMax": null,
+        "unit": "ml",
+        "ingredient": "milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 qt milk",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "quart",
+        "ingredient": "milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "14 oz can diced tomatoes",
+    "items": [
+      {
+        "qty": 14,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "diced tomatoes",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 14-ounce can coconut milk",
+    "items": [
+      {
+        "qty": 14,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "coconut milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "one 15-ounce can black beans",
+    "items": [
+      {
+        "qty": 15,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "black beans",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "two 14.5-ounce cans diced tomatoes",
+    "items": [
+      {
+        "qty": 29,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "diced tomatoes",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (12 ounce) bag frozen broccoli",
+    "items": [
+      {
+        "qty": 12,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "frozen broccoli",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (16-ounce) jar salsa",
+    "items": [
+      {
+        "qty": 16,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "salsa",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (5 oz) can tuna, drained",
+    "items": [
+      {
+        "qty": 5,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "canned tuna",
+        "prep": "drained",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (10.5 ounce) can cream of mushroom soup",
+    "items": [
+      {
+        "qty": 10.5,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "cream of mushroom soup",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 package (8 oz) sliced mushrooms",
+    "items": [
+      {
+        "qty": 8,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "white mushroom",
+        "prep": "sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 can black beans (15 oz)",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "can",
+        "ingredient": "black beans",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cans diced tomatoes",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "can",
+        "ingredient": "diced tomatoes",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 bag frozen peas",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "bag",
+        "ingredient": "frozen peas",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 box macaroni and cheese",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "box",
+        "ingredient": "macaroni and cheese",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 package dry onion soup mix",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "package",
+        "ingredient": "onion soup mix",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 loaf French bread",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "loaf",
+        "ingredient": "baguette",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 stick butter",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "stick",
+        "ingredient": "butter",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 head garlic",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "head",
+        "ingredient": "garlic",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 head cauliflower, cut into florets",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "head",
+        "ingredient": "cauliflower",
+        "prep": "cut into florets",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 heads romaine lettuce",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "head",
+        "ingredient": "romaine lettuce",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 bunch kale, stems removed",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "bunch",
+        "ingredient": "kale",
+        "prep": "stems removed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 bunches green onions",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "bunch",
+        "ingredient": "green onion",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 bunch asparagus",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "bunch",
+        "ingredient": "asparagus",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 ears of corn",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "ear",
+        "ingredient": "corn",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 sprigs fresh rosemary",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "sprig",
+        "ingredient": "rosemary",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "6 sprigs of thyme",
+    "items": [
+      {
+        "qty": 6,
+        "qtyMax": null,
+        "unit": "sprig",
+        "ingredient": "thyme",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "a handful of spinach",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "handful",
+        "ingredient": "spinach",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 slices provolone",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "slice",
+        "ingredient": "provolone",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 clove of garlic",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "clove",
+        "ingredient": "garlic",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cloves garlic, crushed",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "clove",
+        "ingredient": "garlic",
+        "prep": "crushed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 large head of broccoli",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "head",
+        "ingredient": "broccoli",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 medium onion",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "medium",
+        "ingredient": "yellow onion",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 medium sweet potato, cubed",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "medium",
+        "ingredient": "sweet potato",
+        "prep": "cubed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 dozen eggs",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "dozen",
+        "ingredient": "egg",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 piece ginger",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "piece",
+        "ingredient": "ginger",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "three eggs",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "egg",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "a lemon",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "lemon",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "an onion, chopped",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "yellow onion",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "half an onion, diced",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "yellow onion",
+        "prep": "diced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "half a lemon",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "lemon",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 an avocado",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "avocado",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "a pinch of salt",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "pinch",
+        "ingredient": "salt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup butter or margarine",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "butter",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup milk or cream",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons olive oil or vegetable oil",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "olive oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup chicken or vegetable broth",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "chicken broth",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup cooked chicken (shredded)",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "rotisserie chicken",
+        "prep": "shredded",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups cooked, shredded chicken",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "rotisserie chicken",
+        "prep": "shredded",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup (about 4 ounces) shredded mozzarella",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "mozzarella",
+        "prep": "shredded",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup flour (130 g)",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "all-purpose flour",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 teaspoon salt (or to taste)",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "salt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup walnuts (optional)",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "walnuts",
+        "prep": null,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "raw": "1 (optional) jalapeno",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "jalapeno",
+        "prep": null,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "raw": "1 cup cream cheese (8 oz), softened",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "cream cheese",
+        "prep": "softened",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound boneless, skinless chicken breast, cubed",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "chicken breast",
+        "prep": "cubed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon minced garlic",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "garlic",
+        "prep": "minced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup finely diced celery",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "celery",
+        "prep": "finely diced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup thinly sliced onions",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "yellow onion",
+        "prep": "thinly sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 cup fresh dill, chopped",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "dill",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 teaspoons finely grated lemon zest",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "lemon",
+        "prep": "finely grated zest",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 oz bourbon",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "bourbon",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 ounce simple syrup",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "simple syrup",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 orange peel",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "orange",
+        "prep": "peel",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 shot espresso",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "espresso",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 can (12 oz) ginger beer",
+    "items": [
+      {
+        "qty": 12,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "ginger beer",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 bottle dry red wine",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "bottle",
+        "ingredient": "red wine",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups sparkling water",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "sparkling water",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 ounces vodka",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "vodka",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon ube extract",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "ube extract",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons yuzu juice",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "yuzu juice",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 ounces nduja",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "nduja",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 links lap cheong",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "link",
+        "ingredient": "lap cheong",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon aji amarillo paste",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "aji amarillo paste",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup freekeh",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "freekeh",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 teaspoon shichimi togarashi",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "shichimi togarashi",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons furikake",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "furikake",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 package kataifi dough",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "package",
+        "ingredient": "kataifi dough",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup teff flour",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "teff flour",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Salt",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "salt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Kosher salt, to taste",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "kosher salt",
+        "prep": "to taste",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "salt and pepper to taste",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "salt",
+        "prep": "to taste",
+        "optional": false
+      },
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "black pepper",
+        "prep": "to taste",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Salt and freshly ground black pepper",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "salt",
+        "prep": null,
+        "optional": false
+      },
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "black pepper",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "salt & pepper",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "salt",
+        "prep": null,
+        "optional": false
+      },
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "black pepper",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Sea salt and black pepper, to taste",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "salt",
+        "prep": "to taste",
+        "optional": false
+      },
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "black pepper",
+        "prep": "to taste",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Freshly ground black pepper",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "black pepper",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Freshly cracked black pepper",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "black pepper",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Cooking spray",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "cooking spray",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Nonstick cooking spray, for the pan",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "cooking spray",
+        "prep": "for the pan",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Vegetable oil, for frying",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "vegetable oil",
+        "prep": "for frying",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Oil for frying",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "vegetable oil",
+        "prep": "for frying",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Olive oil, for drizzling",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "olive oil",
+        "prep": "for drizzling",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Extra virgin olive oil, for serving",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "olive oil",
+        "prep": "for serving",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Fresh parsley, for garnish",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "parsley",
+        "prep": "for garnish",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Chopped fresh cilantro, for garnish",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "cilantro",
+        "prep": "for garnish",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Lime wedges, for serving",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "lime",
+        "prep": "for serving",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Flaky sea salt, for finishing",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "flaky sea salt",
+        "prep": "for finishing",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Flour, for dusting",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "all-purpose flour",
+        "prep": "for dusting",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Water, as needed",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "water",
+        "prep": "as needed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Hot sauce, to taste",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "hot sauce",
+        "prep": "to taste",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Red pepper flakes, to taste",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "red pepper flakes",
+        "prep": "to taste",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Lemon juice, to taste",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "lemon juice",
+        "prep": "to taste",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Fresh basil leaves, for serving",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "basil",
+        "prep": "for serving",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Sesame seeds, for garnish",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "sesame seeds",
+        "prep": "for garnish",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Sliced green onions, for garnish",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "green onion",
+        "prep": "for garnish",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Butter, for greasing",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "butter",
+        "prep": "for greasing",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Ice",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "ice",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Ice cubes",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "ice",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Sour cream, for serving",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "sour cream",
+        "prep": "for serving",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Shredded cheese, for topping",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "cheese",
+        "prep": "for topping",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Cooking oil",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "vegetable oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Black pepper",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "black pepper",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Cayenne pepper, optional",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "cayenne pepper",
+        "prep": null,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "raw": "Optional: chopped walnuts",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "walnuts",
+        "prep": "chopped",
+        "optional": true
+      }
+    ]
+  },
+  {
+    "raw": "Maple syrup, for serving",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "maple syrup",
+        "prep": "for serving",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Powdered sugar, for dusting",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "powdered sugar",
+        "prep": "for dusting",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Whipped cream, for serving",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "whipped cream",
+        "prep": "for serving",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Honey, to drizzle",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "honey",
+        "prep": "to drizzle",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Fresh mint leaves",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "mint",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Chopped chives",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "chive",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Toasted almonds",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "almonds",
+        "prep": "toasted",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Cooked bacon, crumbled",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "bacon",
+        "prep": "cooked, crumbled",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Plain yogurt",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "yogurt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Garlic powder",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "garlic powder",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Dried oregano",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "dried oregano",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Fresh lemon wedges",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "lemon",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon plus 1 teaspoon olive oil",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "olive oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 teaspoon each salt and pepper",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "salt",
+        "prep": null,
+        "optional": false
+      },
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "black pepper",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 pounds bone-in, skin-on chicken thighs (about 6 thighs)",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "chicken thigh",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3/4 cup (1 1/2 sticks) unsalted butter, at room temperature",
+    "items": [
+      {
+        "qty": 0.75,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "unsalted butter",
+        "prep": "at room temperature",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (8 ounce) container sour cream",
+    "items": [
+      {
+        "qty": 8,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "sour cream",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (3 ounce) package ramen noodles, seasoning packet discarded",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "ramen noodles",
+        "prep": "seasoning packet discarded",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 ½ cups (190 g) all-purpose flour, spooned and leveled",
+    "items": [
+      {
+        "qty": 1.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "all-purpose flour",
+        "prep": "spooned and leveled",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons finely chopped shallots (about 1 large)",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "shallot",
+        "prep": "finely chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup low-sodium chicken broth, plus more as needed",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "chicken broth",
+        "prep": "plus more as needed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Zest and juice of 1 lemon",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "lemon",
+        "prep": "zest and juice",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 lb. sweet Italian sausage links, casings removed",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "italian sausage",
+        "prep": "casings removed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (28-ounce) can whole peeled tomatoes, preferably San Marzano",
+    "items": [
+      {
+        "qty": 28,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "whole peeled tomatoes",
+        "prep": "preferably san marzano",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup freshly grated Parmigiano-Reggiano, plus more for serving",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "parmesan",
+        "prep": "freshly grated, plus more for serving",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 (4-ounce) pieces cod",
+    "items": [
+      {
+        "qty": 16,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "cod fillet",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 medium russet potatoes (about 1 1/2 pounds)",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "medium",
+        "ingredient": "russet potato",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "10 to 12 fresh basil leaves",
+    "items": [
+      {
+        "qty": 10,
+        "qtyMax": 12,
+        "unit": "each",
+        "ingredient": "basil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 small bunch parsley, leaves picked",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "bunch",
+        "ingredient": "parsley",
+        "prep": "leaves picked",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Handful of fresh mint leaves",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "handful",
+        "ingredient": "mint",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 heaping tablespoons mayonnaise",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "mayonnaise",
+        "prep": "heaping",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 scant cup sugar",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "granulated sugar",
+        "prep": "scant",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 tablespoons good olive oil",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "olive oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup of water",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "water",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 Tbsp. EVOO",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "olive oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 lb of ground beef",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "ground beef",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "400 g can chickpeas",
+    "items": [
+      {
+        "qty": 400,
+        "qtyMax": null,
+        "unit": "g",
+        "ingredient": "chickpeas",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 x 400g tins chopped tomatoes",
+    "items": [
+      {
+        "qty": 800,
+        "qtyMax": null,
+        "unit": "g",
+        "ingredient": "diced tomatoes",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 x 14 oz can coconut milk",
+    "items": [
+      {
+        "qty": 14,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "coconut milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "225g/8oz butter, softened",
+    "items": [
+      {
+        "qty": 225,
+        "qtyMax": null,
+        "unit": "g",
+        "ingredient": "butter",
+        "prep": "softened",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 stick (4 oz) unsalted butter",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "stick",
+        "ingredient": "unsalted butter",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "½ lb. bacon, cooked and crumbled",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "bacon",
+        "prep": "cooked and crumbled",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 medium (about 8 oz) sweet potato",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "medium",
+        "ingredient": "sweet potato",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 14 oz. package extra firm tofu",
+    "items": [
+      {
+        "qty": 14,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "tofu",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2-3 tablespoons chopped fresh dill (or 1-2 teaspoons dried)",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": 3,
+        "unit": "tbsp",
+        "ingredient": "dill",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Cooking oil, as needed",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "vegetable oil",
+        "prep": "as needed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 egg yolk, beaten",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "egg yolk",
+        "prep": "beaten",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 egg whites",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "egg white",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 large egg yolks, at room temperature",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "large",
+        "ingredient": "egg yolk",
+        "prep": "at room temperature",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup (packed) fresh basil leaves",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "basil",
+        "prep": "packed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup raw cashews, soaked",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "cashews",
+        "prep": "soaked",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 cups cooked and shredded chicken",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "rotisserie chicken",
+        "prep": "cooked and shredded",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 teaspoon Diamond Crystal kosher salt",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "kosher salt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pkg. (8 oz.) cream cheese",
+    "items": [
+      {
+        "qty": 8,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "cream cheese",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 qt. chicken broth",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "quart",
+        "ingredient": "chicken broth",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 Tbsp. + 1 tsp. cornstarch",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "cornstarch",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 1/2 cups (about 10 ounces) frozen peas",
+    "items": [
+      {
+        "qty": 2.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "frozen peas",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 can (14 ounces) artichoke hearts, drained and quartered",
+    "items": [
+      {
+        "qty": 14,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "artichoke hearts",
+        "prep": "drained and quartered",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 package (12 ounces) chocolate chips",
+    "items": [
+      {
+        "qty": 12,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "semi-sweet chocolate chips",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "6-8 ounces fresh mozzarella",
+    "items": [
+      {
+        "qty": 6,
+        "qtyMax": 8,
+        "unit": "oz",
+        "ingredient": "fresh mozzarella",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound (450 g) pasta",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "pasta",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 lb. (about 3 cups) shredded cooked chicken",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "rotisserie chicken",
+        "prep": "shredded",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 teaspoon cream of tartar",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "cream of tartar",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Pinch kosher salt",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "pinch",
+        "ingredient": "kosher salt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 envelope (2 1/4 tsp) active dry yeast",
+    "items": [
+      {
+        "qty": 2.25,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "active dry yeast",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (1/4 ounce) packet active dry yeast",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "active dry yeast",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Juice of 2 limes",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "lime",
+        "prep": "juice",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Grated zest of 1 lemon",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "lemon",
+        "prep": "grated zest",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup mixed berries",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "frozen mixed berries",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 tablespoons Greek yogurt",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "greek yogurt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 Roma tomatoes, seeded and diced",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "tomato",
+        "prep": "seeded and diced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 jalapeño pepper, minced",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "jalapeno",
+        "prep": "minced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 scallions, white and green parts, thinly sliced",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "green onion",
+        "prep": "white and green parts, thinly sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 pounds (900 g) boneless beef chuck, trimmed and cut into 1 1/2-inch cubes",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "beef chuck roast",
+        "prep": "trimmed and cut into 1 1/2-inch cubes",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 teaspoon freshly ground black pepper",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "black pepper",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 teaspoons dried Italian herbs",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "italian seasoning",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (13.5 ounce) can full-fat coconut milk, shaken",
+    "items": [
+      {
+        "qty": 13.5,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "coconut milk",
+        "prep": "shaken",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 cups low-sodium beef broth",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "beef broth",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/3 cup soy sauce or tamari",
+    "items": [
+      {
+        "qty": 0.3333,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "soy sauce",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon maple syrup or honey",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "maple syrup",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons butter, divided",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "butter",
+        "prep": "divided",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup all-purpose flour, divided",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "all-purpose flour",
+        "prep": "divided",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon chopped fresh rosemary",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "rosemary",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup grated carrots",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "carrot",
+        "prep": "grated",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 small red onion, thinly sliced",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "small",
+        "ingredient": "red onion",
+        "prep": "thinly sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 clove garlic, grated",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "clove",
+        "ingredient": "garlic",
+        "prep": "grated",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (6-ounce) container plain Greek yogurt",
+    "items": [
+      {
+        "qty": 6,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "greek yogurt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pint grape tomatoes",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "pint",
+        "ingredient": "grape tomato",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "12 ounces linguine",
+    "items": [
+      {
+        "qty": 12,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "linguine",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 lemon, sliced into rounds",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "lemon",
+        "prep": "sliced into rounds",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "6 cups water or stock",
+    "items": [
+      {
+        "qty": 6,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "water",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 sheet frozen puff pastry (from a 17.3-ounce package), thawed",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "sheet",
+        "ingredient": "puff pastry",
+        "prep": "thawed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "6 slices thick-cut bacon",
+    "items": [
+      {
+        "qty": 6,
+        "qtyMax": null,
+        "unit": "slice",
+        "ingredient": "bacon",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons miso",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "miso paste",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups arugula",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "arugula",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 Granny Smith apple, cored and thinly sliced",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "apple",
+        "prep": "cored and thinly sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup sliced almonds, toasted",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "almonds",
+        "prep": "toasted",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup (60 g) powdered sugar",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "powdered sugar",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups (240 g) all-purpose flour",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "all-purpose flour",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 3/4 cups (350 g) sugar",
+    "items": [
+      {
+        "qty": 1.75,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "granulated sugar",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 teaspoon ground cinnamon, divided",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "cinnamon",
+        "prep": "divided",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 cup neutral oil (such as canola)",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "vegetable oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 can (15 oz) pumpkin puree",
+    "items": [
+      {
+        "qty": 15,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "pumpkin puree",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup canned pumpkin",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "pumpkin puree",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups half & half",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "half-and-half",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tbsp. unsalted butter",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "unsalted butter",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "juice from 1/2 lemon",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "lemon",
+        "prep": "juice",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "the juice of half a lemon",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "lemon",
+        "prep": "juice",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 of a small onion",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "small",
+        "ingredient": "yellow onion",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 of an avocado",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "avocado",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 bag (10 oz) baby spinach",
+    "items": [
+      {
+        "qty": 10,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "spinach",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 container (10 oz) cherry tomatoes",
+    "items": [
+      {
+        "qty": 10,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "cherry tomato",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "8-10 ounces mushrooms",
+    "items": [
+      {
+        "qty": 8,
+        "qtyMax": 10,
+        "unit": "oz",
+        "ingredient": "white mushroom",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 lbs. lean ground turkey",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "ground turkey",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 envelope ranch dressing mix",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "packet",
+        "ingredient": "ranch dressing mix",
+        "unknown": true,
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups shredded rotisserie chicken",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "rotisserie chicken",
+        "prep": "shredded",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (15-ounce) can pinto beans",
+    "items": [
+      {
+        "qty": 15,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "pinto beans",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 chipotle chilies in adobo, minced",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "chipotle peppers in adobo",
+        "prep": "minced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound boneless, skinless chicken breasts (about 2 large)",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "chicken breast",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 bunch lacinato kale, stemmed and chopped",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "bunch",
+        "ingredient": "kale",
+        "prep": "stemmed and chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 head cauliflower (about 2 pounds)",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "head",
+        "ingredient": "cauliflower",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 stalks celery",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "stalk",
+        "ingredient": "celery",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tsp. ground ginger",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "ground ginger",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 tsp. crushed red pepper",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "red pepper flakes",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 T. fresh lemon juice",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "lemon juice",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 oz. cream cheese, softened",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "cream cheese",
+        "prep": "softened",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 c. chopped onion",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "yellow onion",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 c. milk",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 lb. ground beef, browned and drained",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "ground beef",
+        "prep": "browned and drained",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pkg. frozen chopped spinach, thawed and drained",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "package",
+        "ingredient": "frozen spinach",
+        "prep": "chopped, thawed and drained",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tbsp. toasted sesame oil",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "sesame oil",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 can (8 oz) tomato sauce",
+    "items": [
+      {
+        "qty": 8,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "tomato sauce",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (10 oz.) pkg. frozen broccoli florets",
+    "items": [
+      {
+        "qty": 10,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "frozen broccoli",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 cup minced fresh chives",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "chive",
+        "prep": "minced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 1/2 teaspoons baking powder",
+    "items": [
+      {
+        "qty": 1.5,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "baking powder",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Flaky salt (like Maldon), for finishing",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "flaky sea salt",
+        "prep": "like maldon, for finishing",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 to 3 teaspoons sriracha, to taste",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": 3,
+        "unit": "tsp",
+        "ingredient": "sriracha",
+        "prep": "to taste",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup roughly chopped cilantro",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "cilantro",
+        "prep": "roughly chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (2 inch) piece ginger, peeled",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "piece",
+        "ingredient": "ginger",
+        "prep": "peeled",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon olive oil, plus more for the pan",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "olive oil",
+        "prep": "plus more for the pan",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 tbsp. (45 ml) fresh lime juice",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "lime juice",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (16-oz.) package penne pasta",
+    "items": [
+      {
+        "qty": 16,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "penne",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Sea salt, as needed",
+    "items": [
+      {
+        "qty": null,
+        "qtyMax": null,
+        "unit": null,
+        "ingredient": "salt",
+        "prep": "as needed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 medium-sized zucchini, grated",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "medium",
+        "ingredient": "zucchini",
+        "prep": "grated",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound (about 3 medium) tomatoes, cored",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "tomato",
+        "prep": "cored",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "5 ounces (140 g) baby kale",
+    "items": [
+      {
+        "qty": 5,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "kale",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 cups vegetable stock (or water)",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "vegetable broth",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "8 large sea scallops",
+    "items": [
+      {
+        "qty": 8,
+        "qtyMax": null,
+        "unit": "large",
+        "ingredient": "sea scallop",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (12-ounce) bottle beer",
+    "items": [
+      {
+        "qty": 12,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "beer",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup (1 stick) cold unsalted butter, cubed",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "unsalted butter",
+        "prep": "cold, cubed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound Brussels sprouts, halved",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "brussels sprout",
+        "prep": "halved",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 head garlic, top sliced off",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "head",
+        "ingredient": "garlic",
+        "prep": "top sliced off",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 teaspoons Dijon",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "dijon mustard",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon Worcestershire",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "worcestershire sauce",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup unsweetened shredded coconut",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "coconut flakes",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups vanilla ice cream, softened",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "vanilla ice cream",
+        "prep": "softened",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 (6-ounce) boneless skinless chicken breasts",
+    "items": [
+      {
+        "qty": 24,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "chicken breast",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 box (16 oz) spaghetti",
+    "items": [
+      {
+        "qty": 16,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "spaghetti",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup half-and-half or whole milk",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "half-and-half",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 cups arborio rice",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "arborio rice",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 14-oz. (400g) can crushed tomatoes",
+    "items": [
+      {
+        "qty": 14,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "crushed tomatoes",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "5-6 medium-sized potatoes",
+    "items": [
+      {
+        "qty": 5,
+        "qtyMax": 6,
+        "unit": "medium",
+        "ingredient": "russet potato",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "About 1 cup of milk",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "Approximately 2 cups water",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "water",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 lb. (8 oz.) mushrooms, sliced",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "white mushroom",
+        "prep": "sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 (8-inch) flour tortillas",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "flour tortilla",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 tablespoons butter or oil",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "butter",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 cups ice",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "ice",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (3-inch) cinnamon stick",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "cinnamon stick",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 inches fresh ginger, sliced",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "piece",
+        "ingredient": "ginger",
+        "prep": "sliced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (12 oz) bag frozen berries",
+    "items": [
+      {
+        "qty": 12,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "frozen mixed berries",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 pound fresh or frozen peaches",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "lb",
+        "ingredient": "peach",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 teaspoon each cinnamon and nutmeg",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "cinnamon",
+        "prep": null,
+        "optional": false
+      },
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "nutmeg",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 (4 ounce) jar diced pimentos",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "roasted red peppers",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup lightly packed fresh spinach",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "spinach",
+        "prep": "lightly packed",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 rounded tablespoons flour",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "all-purpose flour",
+        "prep": "rounded",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tablespoon each soy sauce and honey",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "soy sauce",
+        "prep": null,
+        "optional": false
+      },
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "honey",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup finely diced red bell pepper",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "red bell pepper",
+        "prep": "finely diced",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "3 whole cloves garlic",
+    "items": [
+      {
+        "qty": 3,
+        "qtyMax": null,
+        "unit": "clove",
+        "ingredient": "garlic",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 whole chicken (about 4 pounds)",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "each",
+        "ingredient": "whole chicken",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 rack baby back ribs",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "rack",
+        "ingredient": "pork rib",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 slabs spare ribs",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "slab",
+        "ingredient": "pork rib",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "12 oz. dark chocolate, chopped",
+    "items": [
+      {
+        "qty": 12,
+        "qtyMax": null,
+        "unit": "oz",
+        "ingredient": "bittersweet chocolate",
+        "prep": "chopped",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 recipe pizza dough",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "recipe",
+        "ingredient": "pizza dough",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 cup chicken stock, hot",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "chicken broth",
+        "prep": "hot",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "4 tablespoons (1/2 stick) butter",
+    "items": [
+      {
+        "qty": 4,
+        "qtyMax": null,
+        "unit": "tbsp",
+        "ingredient": "butter",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/2 cup canned coconut milk",
+    "items": [
+      {
+        "qty": 0.5,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "coconut milk",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1/4 teaspoon fine sea salt",
+    "items": [
+      {
+        "qty": 0.25,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "salt",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "2 cups (about 8 oz) grated Gruyère",
+    "items": [
+      {
+        "qty": 2,
+        "qtyMax": null,
+        "unit": "cup",
+        "ingredient": "gruyere",
+        "prep": "grated",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "raw": "1 tsp instant espresso powder",
+    "items": [
+      {
+        "qty": 1,
+        "qtyMax": null,
+        "unit": "tsp",
+        "ingredient": "instant coffee",
+        "prep": null,
+        "optional": false
+      }
+    ]
+  }
+]

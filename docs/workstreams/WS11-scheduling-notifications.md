@@ -100,6 +100,7 @@ pnpm --filter mobile start                      # manual: open Settings → Sche
 ```
 
 ## Risks and notes
+- From the WS01 review (2026-10-30): `households` has column-level UPDATE grants for `authenticated` (`name`, `zip` only). A column you add is not client-editable unless your migration grants `update (<column>)` on it explicitly; otherwise write it through a security-definer function. Add a pgTAP assertion either way. Applies to `quiet_hours`.
 - R10 (background jobs stall): the cron function must be short and transactional. Do not call the Edge Function from inside it; write to `notification_outbox` and let a separate 1-minute pg_cron drain call `send-push`. This keeps enqueue and notify independent.
 - R19 (hand-off perception): the `cart_ready` notification copy must say what happens next, for example "Your QFC cart is ready ($142.10). Tap to review, then pick a pickup time and pay in the QFC app." Never imply the order was placed.
 - Idempotency is the hard part. Use `select ... for update skip locked` on due schedules and advance `next_run_at` and `last_enqueued_for` in the same transaction as the insert and `pgmq.send`.

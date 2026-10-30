@@ -4,7 +4,12 @@ Domain types as zod schemas, unit conversion, list aggregation, and line-item sc
 
 ## Status
 
-Scaffold from WS00. `src/index.ts` exports nothing yet.
+WS03 added two modules, exported from `src/index.ts`:
+
+- `units.ts`: the unit dictionary (`UNIT_CODES`, `UNIT_ALIASES`, `normalizeUnit`), `convert(qty, from, to, ingredient)` across volume, weight, and count, and `toPurchasable(qty, unit, ingredient)`, which rounds a recipe amount up to something a person can buy (1.3 lb chicken to 1.5 lb, 2 cloves garlic to 1 head, 1.5 cups flour to 1 bag). `convert` returns null rather than guess when the ingredient lacks the density or unit weight.
+- `ingredient.ts`: zod `Ingredient`, `ParsedIngredient`, and the 16 `INGREDIENT_CATEGORIES`.
+
+Relative imports in this package use the `.ts` extension so Supabase Edge Functions (Deno) can load it. Pack sizes and container weights live in tables at the top of `units.ts`; WS05 extends them.
 
 ## Ownership
 

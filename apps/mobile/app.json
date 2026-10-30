@@ -6,19 +6,38 @@
     "scheme": "mealplanner",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.miguelsolorio.mealplanner"
     },
     "android": {
-      "package": "com.miguelsolorio.mealplanner"
+      "package": "com.miguelsolorio.mealplanner",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2F6B4F"
+      }
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "static",
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#2F6B4F",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#2F6B4F"
+          }
+        }
+      ],
       "expo-apple-authentication",
       "expo-web-browser",
       [

@@ -2,7 +2,7 @@ import { MEAL_SLOTS, type MealSlot, weekDates, weekStartFor } from "@mp/core";
 import { currentThumb, type PlanEntry, useRecipeFeedback, useSetThumb } from "@mp/db";
 import { SegmentedControl, Sheet } from "@mp/ui/primitives";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "../../components/Button";
@@ -248,11 +248,23 @@ function NotesField({
 }) {
   const [draft, setDraft] = useState(entry.notes ?? "");
   const [focused, setFocused] = useState(false);
+  const pending = useRef({ draft, saved: entry.notes ?? "", onCommit });
+  pending.current = { draft, saved: entry.notes ?? "", onCommit };
 
   // Follow another member's edit, but never overwrite what this person is typing.
   useEffect(() => {
     if (!focused) setDraft(entry.notes ?? "");
   }, [entry.notes, focused]);
+
+  // Closing the sheet unmounts the field, and on a phone that does not always send a blur first.
+  // Whatever was typed and not yet saved is saved now.
+  useEffect(
+    () => () => {
+      const { draft: typed, saved, onCommit: commit } = pending.current;
+      if (typed.trim() !== saved.trim()) commit(typed);
+    },
+    [],
+  );
 
   return (
     <View className="gap-1.5">

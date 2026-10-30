@@ -2,8 +2,8 @@
 
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
-**Current wave:** 3 (WS04 in review on PR #10; WS06 report received, interim round, merges after WS04; WS08 held at checkpoint 4)
-**Last updated:** 2026-10-30 by the orchestrator (CCR2 landed, WS04 in review, WS06 interim round)
+**Current wave:** 3 (WS04 in review on PR #10; WS06 interim round, merges after WS04; WS16 starter catalog dispatched; WS08 held at checkpoint 4)
+**Last updated:** 2026-10-30 by the orchestrator (starter catalog decided, WS16 dispatched, catalog read policies on PR)
 
 ## Workstreams
 
@@ -25,6 +25,7 @@ The orchestrator updates this file after every dispatch, report, review, merge, 
 | 13 | Web & desktop packaging | 6 | not started | | | | | |
 | 14 | Brand & marketing site | 1 | merged | ws/14-brand-marketing-site | sonnet | 2026-10-30 | 2026-10-30 | First round 88b3b19 (PR #2); name swap 0fd014f (PR #6, GitHub squash, review: merge). Deploy-gates round still to run before the site goes live: see the brief's closing section (stores lead wording, listing sentence, privacy contact, waitlist rate limit, `db push`, Pages project) |
 | 15 | Observability & AI evals | 6 | not started | | | | | |
+| 16 | Starter catalog | 3 | in progress | ws/16-starter-catalog | sonnet | 2026-10-30 | | Added 2026-10-30 after Miguel chose a starter catalog over import-first onboarding. At least 60 original Sonnet-drafted dinners as `visibility = catalog`, seeded by `20_catalog.sql`. Miguel reviews the content before the hosted load |
 
 States: `not started` · `in progress` · `in review` · `fix round` · `merged` · `blocked`
 
@@ -71,6 +72,7 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 
 ## Decisions log
 
+- 2026-10-30: Starter catalog (Miguel, checkpoint 7 scope decision). A new household had no recipes; Miguel chose a starter catalog over import-first onboarding. New brief `WS16-starter-catalog.md` (wave 3, Sonnet): at least 60 original dinner recipes drafted by Sonnet from a coverage spec, parsed against the ontology, seeded idempotently with deterministic ids as `visibility = catalog`, `source_type = ai`, embeddings left to WS06's backfill, content reviewed by Miguel before the hosted load. With it, an orchestrator contract change: `recipes` and `recipe_ingredients` gain read policies for catalog rows (every signed-in member reads them; only the seed writes them), since WS02 left catalog rows unreadable and WS04's planner embeds recipe titles and WS05 will aggregate their lines. Migration `20261030140000_recipes_catalog_read.sql` with a pgTAP file goes through its own PR. docs/02 and docs/09 updated.
 - 2026-10-30: Migration versions are assigned by the orchestrator at dispatch when two workstreams build in one wave. WS04 and WS06 both chose `20261030120000`; WS06 moves to `20261030130000` in its interim round. From wave 4 on, every brief names its version prefix.
 - 2026-10-30: WS06 completion report received: contracts in `packages/core/src/preferences.ts` as the brief allows, `suggest` with `draft`, `replace`, `calibration` and `backfill`, Voyage `embed()` in `@mp/llm`, eight onboarding screens, 90 bundled Washington stores, a ten-household eval with zero hard-filter violations, and three live Sonnet compositions. Interim round sent before its merge round: unique migration version, push for CI, `mode: "swap"` per the WS04 contract, calibration swipe-left stored as `dislike` (clients may insert only `like` and `dislike`), `useProfile` selects an explicit column list without `taste_embedding`. Requests decided: `ingredients.allergen_tags` accepted in principle as an orchestrator migration before WS09 (term lists stay the shipped path); the `why` column lands through WS04; docs/02 as-built paragraph is the orchestrator's after merge. Open question for Miguel: a new household has no recipes, since the catalog holds only our own or licensed recipes and nothing seeds it (docs/09, Product).
 - 2026-10-30: WS04 completion report received and verified: 8 commits as the Gmail identity, `packages/core/src/planning.ts` is inside the brief's Deliverables, every other file outside Deliverables is disclosed, no secrets or em dashes in the diff, migration version unique on the branch, CI green on cbd9674. PR #10 opened; reviewer dispatched (Sonnet, detached worktree, stack criteria from CI). Contract decisions from its request: `suggest` gains `mode: "swap"` (one entry for one slot, nothing written; WS06 implements, WS04 already calls it behind `EXPO_PUBLIC_SUGGEST_ENABLED`); `meal_plan_entries` gains `why text` for the one-line reason (WS04 adds it in the fix round, WS06 writes it); the `recipe_feedback` insert policy must admit `visibility = 'catalog'` recipes, whose `household_id` is null, or WS06's calibration swipes fail.

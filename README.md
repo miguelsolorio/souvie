@@ -19,14 +19,15 @@ See `docs/status.md` for the live ledger.
 
 ## Getting started
 
-You need Node 22 (22.13 or later), pnpm 9 (`corepack enable` picks the version pinned in `package.json`), Docker for the local Supabase stack, and Xcode with an iOS Simulator for iOS.
+You need Node 22 (22.13 or later), pnpm 9 (`corepack enable` picks the version pinned in `package.json`), and Xcode with an iOS Simulator for iOS. Development runs against the hosted Supabase project. The local Supabase stack (`supabase start`) needs a container runtime, so it runs only in CI.
 
 ```bash
 scripts/setup-git-identity.sh       # once per clone
 pnpm install
 cp .env.example .env.local          # one env file for the whole repo; never commit it
-pnpm supabase start                 # local Postgres, Auth, Storage, Edge runtime (Docker)
-pnpm supabase status                # copy the API URL, anon key, and DB URL into .env.local
+set -a; . ./.env.local; set +a      # the Supabase CLI reads SUPABASE_ACCESS_TOKEN from the shell
+pnpm supabase link --project-ref <ref>   # <ref> is the host part of EXPO_PUBLIC_SUPABASE_URL
+pnpm supabase db push               # apply supabase/migrations to the hosted project
 ```
 
 | Command | What it does |
@@ -34,8 +35,8 @@ pnpm supabase status                # copy the API URL, anon key, and DB URL int
 | `pnpm dev` | Expo dev server (web at http://localhost:8081) and the worker together, through Turborepo. Expo's key shortcuts need the next command |
 | `pnpm --filter @mp/mobile start` | Expo only. Press `w` for web at http://localhost:8081, `i` for the iOS Simulator |
 | `pnpm --filter @mp/shopper-worker dev` | Worker only. Logs `connected`, then `idle` every 5 seconds |
-| `pnpm supabase functions serve` | Edge Functions at http://localhost:54321/functions/v1/(name) |
-| `pnpm supabase db reset` | Rebuild the local database from `supabase/migrations` and `supabase/seed` |
+| `pnpm supabase functions deploy <name> --use-api` | Deploy an Edge Function to the hosted project without Docker |
+| `pnpm supabase db push` | Apply new migrations to the hosted project |
 | `pnpm typecheck` | `tsc --noEmit` in every workspace |
 | `pnpm lint` | Biome check of the whole repo. `pnpm format` applies fixes |
 | `pnpm test` | Vitest `unit` project: every `*.test.ts` |
@@ -48,6 +49,7 @@ Notes:
 - `.npmrc` pins the public npm registry, so a user-level registry in `~/.npmrc` does not apply here.
 - Expo Go runs the app, but the query cache persists to MMKV only in a development build. Expo Go keeps it in memory.
 - The Supabase CLI is a dev dependency (`pnpm supabase ...`), so everyone and CI use the same version.
+- CI (`.github/workflows/ci.yml`) runs `supabase start`, `db reset`, `db lint`, `functions serve`, and the worker against the local stack on every push to `main` and `ws/**`.
 
 ## Documents
 

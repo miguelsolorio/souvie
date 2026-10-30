@@ -44,20 +44,71 @@ jobs:
       - name: Evals
         run: pnpm eval
 
-  database:
-    name: Supabase db lint
+  # The local Supabase stack needs a container runtime, which the development Mac does not
+  # have (WS00 amendment, 2026-10-29). These checks run here instead.
+  supabase:
+    name: Supabase stack (migrations, health, worker)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
-      # With no version input, the CLI version comes from pnpm-lock.yaml (the `supabase`
-      # devDependency), so CI and local runs use the same CLI.
-      - uses: supabase/setup-cli@v3
+      - uses: pnpm/action-setup@v6
 
-      # Starts only Postgres and applies supabase/migrations.
-      - name: Start database
-        run: supabase db start
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Also installs the pinned Supabase CLI (`supabase` devDependency), run as `pnpm supabase`.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Postgres, the API gateway, and the Edge runtime are all these checks need.
+      - name: Start Supabase
+        run: >-
+          pnpm supabase start
+          -x gotrue,realtime,storage-api,imgproxy,mailpit,postgrest,postgres-meta,studio,logflare,vector,supavisor
+
+      - name: Reset database from migrations
+        run: pnpm supabase db reset
+
+      - name: Database URL
+        run: |
+          db_url="$(pnpm --silent supabase status -o env | grep DB_URL | cut -d= -f2- | tr -d '"')"
+          test -n "$db_url"
+          echo "DB_URL=$db_url" >> "$GITHUB_ENV"
+
+      # Criterion 9 (CI part)
+      - name: Extensions are installed
+        run: |
+          psql "$DB_URL" -c "select extname from pg_extension order by 1" | tee extensions.txt
+          for ext in pgmq pg_cron vector pg_trgm pgtap; do
+            grep -qw "$ext" extensions.txt || { echo "missing extension: $ext"; exit 1; }
+          done
 
       - name: Lint schema
-        run: supabase db lint --local --fail-on error
+        run: pnpm supabase db lint --local --fail-on error
+
+      # Criterion 10 (CI part)
+      - name: Health function answers
+        run: |
+          pnpm supabase functions serve health > functions.log 2>&1 &
+          body=""
+          for _ in $(seq 1 60); do
+            body="$(curl -s http://localhost:54321/functions/v1/health || true)"
+            case "$body" in *'"ok":true'*) break ;; esac
+            sleep 2
+          done
+          echo "$body"
+          case "$body" in *'"ok":true'*) ;; *) cat functions.log; exit 1 ;; esac
+
+      # Criterion 11 (CI part)
+      - name: Worker connects and polls
+        env:
+          WORKER_DATABASE_URL: ${{ env.DB_URL }}
+        run: |
+          timeout 15 pnpm --filter @mp/shopper-worker start > worker.log 2>&1 || true
+          cat worker.log
+          grep -q "connected" worker.log
+          test "$(grep -c " idle " worker.log)" -ge 2

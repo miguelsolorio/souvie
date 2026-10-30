@@ -34,7 +34,7 @@ function readConfig(env: NodeJS.ProcessEnv): WorkerConfig {
   const databaseUrl = env.WORKER_DATABASE_URL?.trim();
   if (!databaseUrl) {
     throw new Error(
-      "WORKER_DATABASE_URL is not set. Copy .env.example to .env.local and use the DB URL from `supabase status`.",
+      "WORKER_DATABASE_URL is not set. Copy .env.example to .env.local and add the database connection string.",
     );
   }
   // Sentry is wired in WS15. WS00 only reads the variable.

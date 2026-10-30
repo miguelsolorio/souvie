@@ -3,7 +3,7 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 0 (in progress)
-**Last updated:** 2026-10-29 by the orchestrator (remote set, WS00 running)
+**Last updated:** 2026-10-29 by the orchestrator (Souvie naming merged, WS00 running)
 
 ## Workstreams
 
@@ -34,7 +34,7 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 |---|---|---|---|
 | Register Kroger developer app at developer.kroger.com | Miguel | done 2026-10-29 | Credentials in `.env.local`, never the repo. Checkpoint 3 prerequisite met |
 | Submit Instacart Developer Platform application | Miguel | open | Needed before WS08 production; dev key works without approval. Marketing page said "not accepting" on 2026-10-29; docs still say apply |
-| Trademark, domain, and App Store name checks for the shortlist | Miguel | done 2026-10-29 | Sous and Larder checked per docs/08-brand.md §1.3. Outcome recorded at checkpoint 6 |
+| Trademark, domain, and App Store name checks for the shortlist | Miguel | partly done | Sous and Larder checked per docs/08-brand.md §1.3. Souvie, the working name, still needs the checks before checkpoint 6 |
 | Create the Supabase project | Miguel | done 2026-10-29 | Credentials in `.env.local` at the primary checkout root. WS00 verifies against local Supabase only |
 | Create the GitHub repository for `main` | Miguel | done 2026-10-29 | https://github.com/miguelsolorio/souvie (public). Miguel added `origin` and pushed `main` from the primary checkout |
 | Create accounts: Expo/EAS, Fly.io or Railway, Cloudflare Pages, Sentry, PostHog | Miguel | open | `ANTHROPIC_API_KEY` needed before WS02; the rest before WS13, WS14, WS15 |
@@ -53,3 +53,4 @@ _None yet._
 - 2026-10-29: WS00 dispatched before Docker and Xcode were installed. The builder self-installs pnpm, the Supabase CLI, and Node 22. Criteria 7, 9, 10, 11 are verified once Docker and Xcode exist, with one evidence round to the same builder if the report lands first. (Orchestrator, confirmed with Miguel.)
 - 2026-10-29: Kroger developer app registered and name checks for Sous and Larder done. Instacart application and the hosting and analytics accounts remain open. (Miguel.)
 - 2026-10-29: Reconciliation after brief drafting. Package scope `@mp/*`; Node 22 and pnpm 9; migrations use Supabase timestamp names in the logical order in docs/02; RLS helper is `current_household_ids()`; pgmq queue `shopping_run` with message `{ run_id }`; ledger columns `delta_sent`, `delta_result`, `sent_at`; `scheduled_runs.last_enqueued_for`; Kroger redirect `mealplanner://oauth/kroger`; app web export and marketing site on Cloudflare Pages; `orders` owned by WS12; `llm-proxy` owned by WS10; `export-data` created by WS01 and extended by WS12; 16 store sections per WS03. (Planning session.)
+- 2026-10-29: Working name is Souvie (Sous plus vie, said "SOO-vee"). Sous is the fallback, then Larder. The §1.3 checks in docs/08-brand.md have not been run; [Name] placeholders stay until they pass. (Brand naming session.)

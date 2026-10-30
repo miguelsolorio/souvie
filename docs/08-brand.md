@@ -8,15 +8,16 @@ Names, slogans, positioning, and the marketing materials WS14 turns into a landi
 
 | Name | Why it works | Watch out for |
 |---|---|---|
+| **Souvie** | Sous plus vie: "Sous life," said "SOO-vee." One word, sounds like sous vide, and keeps the sous-chef idea with some motion in it. Fits on an icon as is, verbs well ("Souvie it"), and reads playful rather than technical | Said aloud it may get typed "Souvi," "Suvi," or "Soovee," so check those variants too. App Store search will surface sous vide cooker apps next to it. Check USPTO class 9 and 42, and `souvie.com`, `.app`, `.co` |
 | **Sous** | A sous-chef preps and shops so the cook can cook. Four letters, one syllable, verbs well ("Sous it"). Says "assistant in the kitchen" without saying AI | Several small kitchen apps have used "Sous" or "Sous Chef." Check the App Store and USPTO class 9 and 42 |
 | **Larder** | The stocked pantry. Implies provisioning, which is the job, and it's warmer than "grocery" | Common word; a few food brands use it. Domain likely taken; `larder.app` or `getlarder.com` may be open |
 | **Mise** | From mise en place: everything in its place before you cook. Pronounced "meez." Reads as craft | Needs a pronunciation hint on first use. At least one cooking app has used it |
 | **Forkcast** | A forecast for the week's forks. Dry, a little silly, memorable | Puns date fast. Check for a podcast or newsletter by this name |
 | **Cartwheel** | The plan-to-cart motion in one word. Friendly | Target ran a loyalty program called Cartwheel until 2019. The trademark may still be live in retail classes. Probably skip |
 
-Also considered: Provision, Simmer, Marketday, Stocked, Ladle, Hearth, Tablewise, Platewise, Weeknight.
+Also considered: Provision, Simmer, Marketday, Stocked, Ladle, Hearth, Tablewise, Platewise, Weeknight. Two-word variants on Sous that add motion: Sous Vive, Sous Vif, Sous Vite, Sous Run, Sous Shift, Sous Avant, Sous Loop, Sous Tempo. Any of these would put "Sous" alone on the home screen icon and the full name in the store.
 
-**Recommendation:** Sous first, Larder second. Both describe what the product does for you rather than what it is. Use "meal-planner" as the repo and working name until checkpoint 6.
+**Recommendation:** Souvie. Sous is the fallback if the §1.3 checks fail, Larder after that. All three describe what the product does for you rather than what it is. Use "meal-planner" as the repo and working name until checkpoint 6, and keep [Name] in the copy below until the checks pass.
 
 ### 1.2 Rules the name must follow
 

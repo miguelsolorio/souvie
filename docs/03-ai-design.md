@@ -7,7 +7,7 @@ Everything the model does is bounded by code. Hard constraints (allergies, budge
 | Model | Use | Notes |
 |---|---|---|
 | `claude-haiku-5-5` | Ingredient parsing, alias canonicalization, classification, cheap re-ranks | $0.10 / $0.50 per MTok |
-| `claude-sonnet-5-5` | Weekly plan composition, recipe extraction from messy text, caption-to-recipe, the shopping agent loop, the in-app assistant | $2 / $10 per MTok; cache reads 0.05× |
+| `claude-sonnet-5-5` | Weekly plan composition, recipe extraction from messy text, caption-to-recipe, the shopping agent loop, the in-app assistant | $2 / $10 per MTok; cache reads $0.20 per MTok (0.1×) |
 | `claude-opus-5-5` | Escalation only: ambiguous imports, complex substitution reasoning | $4 / $20 per MTok |
 
 Plumbing rules:

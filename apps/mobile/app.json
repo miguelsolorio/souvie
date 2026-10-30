@@ -7,12 +7,26 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.miguelsolorio.mealplanner"
+    },
+    "android": {
+      "package": "com.miguelsolorio.mealplanner"
     },
     "web": {
       "bundler": "metro",
       "output": "static"
     },
-    "plugins": ["expo-router"]
+    "plugins": [
+      "expo-router",
+      "expo-apple-authentication",
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Meal Planner uses your photos so you can choose a profile picture."
+        }
+      ]
+    ]
   }
 }

@@ -9,6 +9,7 @@ Everything the model does is bounded by code. Hard constraints (allergies, budge
 | `claude-haiku-5-5` | Ingredient parsing, alias canonicalization, classification, cheap re-ranks | $0.10 / $0.50 per MTok |
 | `claude-sonnet-5-5` | Weekly plan composition, recipe extraction from messy text, caption-to-recipe, the shopping agent loop, the in-app assistant | $2 / $10 per MTok; cache reads $0.20 per MTok (0.1×) |
 | `claude-opus-5-5` | Escalation only: ambiguous imports, complex substitution reasoning | $4 / $20 per MTok |
+| Voyage AI `voyage-3` | Recipe and taste-profile embeddings (`recipes.embedding`, `profiles.taste_embedding`, 1024 dimensions) | Decided 2026-10-30; key `VOYAGE_API_KEY`; without it the pipeline falls back to catalog popularity |
 
 Plumbing rules:
 - Every call declares a zod schema and uses structured outputs (`output_config` with a JSON schema; `messages.parse()` in the SDK). Agent tools are declared with `strict: true`.

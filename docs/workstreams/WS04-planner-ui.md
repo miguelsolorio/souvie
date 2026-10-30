@@ -107,6 +107,9 @@ psql "$WORKER_DATABASE_URL" -c "select signal, count(*) from recipe_feedback gro
 ```
 
 ## Risks and notes
+- From the orchestrator (2026-10-30), as built by WS02: `@mp/db` exports `useRecipes`, `useRecipe`, `useImportRecipe` and `useRecipeImageUrl`; recipes are soft-deleted (`deleted_at`) and the hooks already filter them; `recipe_ingredients.qty` is the lower bound of a range and `qty_max` the upper; a recipe's `source_url` attribution must stay reachable wherever you show a recipe, so link to the detail screen rather than reproducing it.
+- From the orchestrator (2026-10-30), servings default: profiles are private per user, so "household size" is not readable across members. Default an entry's servings from the current user's `ProfilePreferences.portions`, else `household_size.adults + household_size.kids`, else the recipe's `servings`.
+- From the orchestrator (2026-10-30), wave 3 sequencing: WS06 builds in parallel and, through the `suggest` Edge Function on the service role, inserts the first `meal_plans` and `meal_plan_entries` and writes `recipe_feedback` rows (`like` and `dislike` from calibration swipes). Keep the docs/02 §Planning shapes exactly, let the service role write all three tables, and keep client grants household-scoped and column-level where a client may update (`servings`, `status`, `notes`, `position` on entries). Name the migration with a timestamp after `20261030110000`, and merge main before your report.
 - Denormalizing `household_id` onto `meal_plan_entries` keeps RLS simple and fast; keep it in sync with a trigger from `meal_plans` on insert.
 - Supabase Realtime needs the tables added to the `supabase_realtime` publication in the migration; RLS applies to Realtime payloads, so members only receive their household's changes.
 - Persisted TanStack Query cache must be keyed by household so switching households does not show stale plans.

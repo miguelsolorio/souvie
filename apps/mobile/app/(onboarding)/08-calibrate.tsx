@@ -164,7 +164,7 @@ export default function CalibrateStep() {
     <OnboardingFrame
       step={8}
       title="What looks good?"
-      subtitle="Like the dinners you would cook and skip the rest. This teaches us your taste."
+      subtitle="Like the dinners you would cook and pass on the rest. This teaches us your taste."
       onBack={goBack}
       error={error}
       onContinue={finished ? () => void finish(deck) : undefined}
@@ -200,10 +200,10 @@ export default function CalibrateStep() {
             <View className="flex-row gap-3 self-center">
               <View className="w-36">
                 <Button
-                  testID="swipe-skip"
-                  label="Skip"
+                  testID="swipe-dislike"
+                  label="Not for me"
                   variant="secondary"
-                  onPress={() => setDeck(answerCard(deck, "skipped"))}
+                  onPress={() => setDeck(answerCard(deck, "dislike"))}
                 />
               </View>
               <View className="w-36">

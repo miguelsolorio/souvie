@@ -28,6 +28,9 @@ create table public.meal_plan_entries (
   servings integer,
   status public.meal_plan_entries_status not null default 'planned',
   notes text,
+  -- WS04's migration gains this column (orchestrator decision). The suggest function writes its
+  -- one-line reason here and leaves notes to the person.
+  why text,
   position integer,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

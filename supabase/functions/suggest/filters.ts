@@ -305,6 +305,11 @@ export interface FilterInput {
   dislikes: readonly string[];
   /** The requesting person's weeknight limit. Null or undefined for no limit. */
   weeknightMinutes?: number | null | undefined;
+  /**
+   * Leave out recipes tagged dessert, drink, breakfast, and the like. True unless a swap asks
+   * for another slot (a breakfast swap should be able to return a breakfast recipe).
+   */
+  dinnerOnly?: boolean | undefined;
 }
 
 export interface FilterSpec {
@@ -382,7 +387,7 @@ export function buildFilterSpec(input: FilterInput): FilterSpec {
 
   const patterns: string[] = [];
   const categoryRules: CategoryRule[] = [];
-  const tags = new Set<string>(NON_DINNER_TAGS);
+  const tags = new Set<string>(input.dinnerOnly === false ? [] : NON_DINNER_TAGS);
 
   for (const allergen of allergies) {
     patterns.push(...ALLERGEN_PATTERNS[allergen]);

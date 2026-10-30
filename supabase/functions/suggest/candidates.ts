@@ -97,7 +97,10 @@ export interface Candidate {
 export interface History {
   /** Likes this household gave the recipe. */
   likes: number;
+  /** Plan nights skipped (a signal WS04 writes from entry changes). */
   skips: number;
+  /** Thumbs down, including a left swipe on the onboarding cards. */
+  dislikes: number;
   /** When the household last cooked it. */
   lastCookedAt: Date | null;
   /** Likes from every household. */
@@ -121,8 +124,8 @@ function num(value: number | string | null | undefined): number | null {
 /**
  * The ranking score. A taste embedding match is the main term. Smaller terms: the cuisine the
  * person named, recipes the household liked, popularity across households (what a cold profile
- * runs on), the household's own recipes over the catalog, and a penalty for dinners cooked in
- * the last weeks so the plan does not repeat itself. Ties break on title, then id, so a run is
+ * runs on), the household's own recipes over the catalog, a penalty for a thumbs down, and a
+ * penalty for dinners cooked in the last weeks so the plan does not repeat itself. Ties break on title, then id, so a run is
  * repeatable.
  */
 export function scoreCandidate(
@@ -143,6 +146,8 @@ export function scoreCandidate(
   if (history) {
     score += Math.min(history.likes, 2) * 0.08;
     score -= Math.min(history.skips, 2) * 0.05;
+    // A thumbs down is a "no": it sends the recipe to the bottom without removing it.
+    if (history.dislikes > 0) score -= 0.3;
     score += (Math.log1p(history.popularity) / Math.log1p(50)) * 0.08;
     if (history.lastCookedAt) {
       const days = (context.now.getTime() - history.lastCookedAt.getTime()) / DAY_MS;
@@ -197,7 +202,7 @@ async function loadHistory(
   const entry = (id: string): History => {
     let item = history.get(id);
     if (!item) {
-      item = { likes: 0, skips: 0, lastCookedAt: null, popularity: 0 };
+      item = { likes: 0, skips: 0, dislikes: 0, lastCookedAt: null, popularity: 0 };
       history.set(id, item);
     }
     return item;
@@ -214,7 +219,8 @@ async function loadHistory(
       const item = entry(row.recipe_id);
       const n = num(row.n) ?? 0;
       if (row.signal === "like") item.likes += n;
-      else if (row.signal === "skipped" || row.signal === "dislike") item.skips += n;
+      else if (row.signal === "skipped") item.skips += n;
+      else if (row.signal === "dislike") item.dislikes += n;
       else if (row.signal === "cooked" && row.last_at) {
         const at = new Date(row.last_at);
         if (!item.lastCookedAt || at > item.lastCookedAt) item.lastCookedAt = at;

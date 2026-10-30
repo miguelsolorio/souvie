@@ -51,7 +51,7 @@ Eight screens in `apps/mobile/app/(onboarding)/`. Each one saves its own keys wh
 | 5 | `05-time-skill` | weeknight minutes, skill, equipment | 10 to 120; beginner, comfortable, confident | `preferences.weeknight_minutes`, `skill`, `equipment` |
 | 6 | `06-budget-leftovers` | weekly budget, leftovers, note | budget empty or 20 to 1000 (empty removes the key); avoid, ok, prefer; note up to 500 characters | `preferences.budget_per_week_usd`, `leftovers`, `notes` |
 | 7 | `07-stores` | ZIP, primary store, Costco membership | 5 digits; a store or "not listed"; yes or no | `preferences.primary_store_id`, `profiles.costco_member`, `households.zip` (owner only) |
-| 8 | `08-calibrate` | twelve swipes | like or skip; "Skip the rest" ends early | `recipe_feedback` (`like`, `skipped`), `profiles.taste_embedding`, first plan |
+| 8 | `08-calibrate` | twelve swipes | like or not for me; "Skip the rest" ends early | `recipe_feedback` (`like`, `dislike`), `profiles.taste_embedding`, first plan |
 
 An `allergies` key in `profiles.preferences` means the person answered the allergy question, and an empty list means "none". The `suggest` function refuses to plan for someone whose key is absent, so nothing writes the form's defaults to the database. A CHECK constraint on `profiles.preferences` refuses an allergen or diet outside the lists.
 

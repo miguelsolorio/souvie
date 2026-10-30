@@ -29,7 +29,8 @@ export interface PlanEntry {
   recipeId: string;
   servings: number | null;
   status: string;
-  notes: string | null;
+  /** The one-line reason the suggestion gave. `notes` stays the person's own. */
+  why: string | null;
 }
 
 export interface ExistingPlan {
@@ -41,7 +42,7 @@ export interface NewEntry {
   date: string;
   recipeId: string;
   servings: number;
-  /** The one-line reason, stored in meal_plan_entries.notes. */
+  /** The one-line reason, stored in meal_plan_entries.why. */
   why: string;
 }
 
@@ -75,7 +76,7 @@ interface EntryRow {
   recipe_id: string;
   servings: number | string | null;
   status: string;
-  notes: string | null;
+  why: string | null;
 }
 
 export class SqlSuggestStore {
@@ -124,7 +125,7 @@ export class SqlSuggestStore {
     if (!plan) return null;
     const rows = await this.sql.query<EntryRow>(
       `select e.id, e.date::text as date, e.slot::text as slot, e.recipe_id,
-              e.servings, e.status::text as status, e.notes
+              e.servings, e.status::text as status, e.why
          from public.meal_plan_entries e
         where e.plan_id = $1::uuid and e.household_id = $2::uuid
         order by e.date, e.position nulls last, e.id`,
@@ -139,7 +140,7 @@ export class SqlSuggestStore {
         recipeId: row.recipe_id,
         servings: row.servings === null ? null : Number(row.servings),
         status: row.status,
-        notes: row.notes,
+        why: row.why,
       })),
     };
   }
@@ -261,9 +262,9 @@ export class SqlSuggestStore {
       if (input.entries.length > 0) {
         await tx.query(
           `insert into public.meal_plan_entries
-             (plan_id, household_id, date, slot, recipe_id, servings, status, notes, position)
-           select $1::uuid, $2::uuid, t.d, 'dinner', t.r, t.s, 'planned', t.n, 0
-             from unnest($3::date[], $4::uuid[], $5::int[], $6::text[]) as t(d, r, s, n)`,
+             (plan_id, household_id, date, slot, recipe_id, servings, status, why, position)
+           select $1::uuid, $2::uuid, t.d, 'dinner', t.r, t.s, 'planned', t.w, 0
+             from unnest($3::date[], $4::uuid[], $5::int[], $6::text[]) as t(d, r, s, w)`,
           [
             planId,
             input.householdId,

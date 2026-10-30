@@ -7,6 +7,7 @@ import {
   CALIBRATION_CARD_COUNT,
   SuggestCalibrationResponse,
   SuggestPlanResponse,
+  SuggestSwapResponse,
 } from "../../../packages/core/src/index.ts";
 import type { MessagesClient } from "../../../packages/llm/src/index.ts";
 import { addDays, isMonday, pickDinnerDates, weekDates } from "./compose.ts";
@@ -135,10 +136,11 @@ async function planRows() {
     date: string;
     recipe_id: string;
     status: string;
-    notes: string;
+    why: string;
+    notes: string | null;
     servings: number;
   }>(
-    `select e.date::text as date, e.recipe_id, e.status::text as status, e.notes, e.servings
+    `select e.date::text as date, e.recipe_id, e.status::text as status, e.why, e.notes, e.servings
        from public.meal_plan_entries e join public.meal_plans p on p.id = e.plan_id
       where p.household_id = $1 order by e.date`,
     [FIXTURE_HOUSEHOLD],
@@ -285,7 +287,9 @@ describe("draft (criterion 7)", () => {
     const rows = await planRows();
     expect(rows).toHaveLength(5);
     expect(rows.every((r) => r.status === "planned")).toBe(true);
-    expect(rows.every((r) => r.notes.length > 0 && r.notes.length < 140)).toBe(true);
+    // The reason goes in `why`; `notes` stays empty for the person's own.
+    expect(rows.every((r) => r.why.length > 0 && r.why.length < 140)).toBe(true);
+    expect(rows.every((r) => r.notes === null)).toBe(true);
     for (const row of rows) {
       const recipe = corpus.byId.get(row.recipe_id);
       expect(recipe?.labels.contains).not.toContain("shellfish");
@@ -494,7 +498,7 @@ describe("embeddings", () => {
     const model = fakeModel();
     await t.query(
       `insert into public.recipe_feedback (household_id, user_id, recipe_id, signal)
-       values ($1, $2, $3, 'like'), ($1, $2, $4, 'skipped')`,
+       values ($1, $2, $3, 'like'), ($1, $2, $4, 'dislike')`,
       [
         FIXTURE_HOUSEHOLD,
         FIXTURE_USER,
@@ -767,6 +771,172 @@ describe("calibration (criterion 6)", () => {
     if (tacos) expect(tacos.imageUrl).toBe(`https://signed.example/${FIXTURE_HOUSEHOLD}/photo.jpg`);
     const gazpacho = body.cards.find((c) => c.recipeId === corpus.ids.get("gazpacho"));
     if (gazpacho) expect(gazpacho.imageUrl).toBeNull();
+  });
+});
+
+describe("swap", () => {
+  const swapBody = (extra: Record<string, unknown> = {}) => ({
+    householdId: FIXTURE_HOUSEHOLD,
+    weekStart: WEEK,
+    mode: "swap",
+    date: "2026-11-04",
+    slot: "dinner",
+    excludeRecipeIds: [] as string[],
+    ...extra,
+  });
+
+  async function swap(extra: Record<string, unknown> = {}, runtime: Runtime = runtimeWith()) {
+    const res = await post(swapBody(extra), "Bearer fixture", runtime);
+    return { res, body: (await res.json()) as Record<string, unknown> };
+  }
+
+  async function rowCounts() {
+    const rows = await t.query<Record<string, number>>(
+      `select (select count(*) from public.meal_plans)::int as plans,
+              (select count(*) from public.meal_plan_entries)::int as entries,
+              (select count(*) from public.recipe_feedback)::int as feedback,
+              (select count(*) from public.ai_runs)::int as runs,
+              (select count(*) from public.recipes where embedding is not null)::int as embedded,
+              (select count(*) from public.profiles where taste_embedding is not null)::int as tastes`,
+    );
+    return rows[0];
+  }
+
+  it("returns exactly one entry for the date and slot, and writes nothing", async () => {
+    const before = await rowCounts();
+    const { res, body } = await swap();
+    expect(res.status).toBe(200);
+    expect(SuggestSwapResponse.parse(body).entries).toHaveLength(1);
+    const entry = (body.entries as Record<string, unknown>[])[0];
+    expect(entry).toMatchObject({ date: "2026-11-04", slot: "dinner" });
+    expect(corpus.byId.has(String(entry?.recipeId))).toBe(true);
+    expect(Number.isInteger(entry?.servings)).toBe(true);
+    expect(String(entry?.why).length).toBeGreaterThan(0);
+    expect(String(entry?.why).length).toBeLessThan(140);
+    // No plan row, no entry, no feedback, no log, no embedding written anywhere.
+    expect(await rowCounts()).toEqual(before);
+    // With no plan for the week, there is no plan id to return.
+    expect(body.planId).toBeUndefined();
+  });
+
+  it("never returns a recipe from the exclude list, one swap after another", async () => {
+    const seen: string[] = [];
+    for (let i = 0; i < 12; i++) {
+      const { body } = await swap({ excludeRecipeIds: seen });
+      const entry = (body.entries as { recipeId: string }[])[0];
+      expect(entry).toBeDefined();
+      expect(seen).not.toContain(entry?.recipeId);
+      seen.push(String(entry?.recipeId));
+    }
+    expect(new Set(seen).size).toBe(12);
+  });
+
+  it("leaves out the recipes already on that week's plan and returns the plan id", async () => {
+    const model = fakeModel();
+    const runtime = runtimeWith({ anthropic: async () => model.client });
+    const plan = SuggestPlanResponse.parse(
+      await (
+        await post(
+          { householdId: FIXTURE_HOUSEHOLD, weekStart: WEEK, mode: "draft" },
+          "Bearer fixture",
+          runtime,
+        )
+      ).json(),
+    );
+    const planned = new Set(plan.entries.map((e) => e.recipeId));
+    const before = await rowCounts();
+    for (let i = 0; i < 5; i++) {
+      const { body } = await swap({}, runtime);
+      const entry = (body.entries as { recipeId: string }[])[0];
+      expect(planned.has(String(entry?.recipeId))).toBe(false);
+      expect(body.planId).toBe(plan.planId);
+    }
+    expect(await rowCounts()).toEqual(before);
+  });
+
+  it("applies the same hard filters as a draft", async () => {
+    const seen: string[] = [];
+    for (let i = 0; i < 15; i++) {
+      const { body } = await swap({ excludeRecipeIds: seen });
+      const entry = (body.entries as { recipeId: string }[])[0];
+      const recipe = corpus.byId.get(String(entry?.recipeId));
+      expect(recipe?.labels.contains).not.toContain("shellfish");
+      expect(recipe?.owner).not.toBe("other");
+      expect(recipe?.deleted).toBe(false);
+      seen.push(String(entry?.recipeId));
+    }
+  });
+
+  it("applies every housemate's allergies too", async () => {
+    await insertHousemate({ allergies: ["milk", "egg"], dinners_per_week: 5 });
+    const seen: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const { body } = await swap({ excludeRecipeIds: seen });
+      const entry = (body.entries as { recipeId: string }[])[0];
+      const labels = corpus.byId.get(String(entry?.recipeId))?.labels.contains ?? [];
+      expect(labels).not.toContain("milk");
+      expect(labels).not.toContain("egg");
+      seen.push(String(entry?.recipeId));
+    }
+  });
+
+  it("calls no model", async () => {
+    const model = fakeModel();
+    await swap({}, runtimeWith({ anthropic: async () => model.client }));
+    expect(model.parse).not.toHaveBeenCalled();
+  });
+
+  it("says there is nothing to suggest when everything is excluded", async () => {
+    const every = [...corpus.ids.values()];
+    expect(every.length).toBeLessThanOrEqual(200);
+    const { res, body } = await swap({ excludeRecipeIds: every });
+    expect(res.status).toBe(200);
+    expect(body).toMatchObject({ ok: false, error: "no_candidates" });
+  });
+
+  it("lets a snack swap return a recipe a dinner swap would never show", async () => {
+    // Exclude everything except the dessert and the smoothie, which are tagged as not dinners.
+    const keep = new Set([corpus.ids.get("chocolate-cake"), corpus.ids.get("berry-smoothie")]);
+    const exclude = [...corpus.ids.values()].filter((id) => !keep.has(id));
+    const dinner = await swap({ excludeRecipeIds: exclude, slot: "dinner" });
+    expect(dinner.body).toMatchObject({ ok: false, error: "no_candidates" });
+    const snack = await swap({ excludeRecipeIds: exclude, slot: "snack" });
+    const entry = (snack.body.entries as { recipeId: string; slot: string }[])[0];
+    expect(keep.has(entry?.recipeId)).toBe(true);
+    expect(entry?.slot).toBe("snack");
+  });
+
+  it("echoes the slot and date it was asked for", async () => {
+    const { body } = await swap({ slot: "lunch", date: "2026-11-08" });
+    expect((body.entries as Record<string, unknown>[])[0]).toMatchObject({
+      slot: "lunch",
+      date: "2026-11-08",
+    });
+  });
+
+  it("needs a date, a slot, a Monday, and a date inside the week", async () => {
+    expect((await post({ ...swapBody(), date: undefined })).status).toBe(400);
+    expect((await post({ ...swapBody(), slot: undefined })).status).toBe(400);
+    expect((await post({ ...swapBody(), slot: "brunch" })).status).toBe(400);
+    expect((await post({ ...swapBody(), weekStart: "2026-11-03" })).status).toBe(400);
+    expect((await post({ ...swapBody(), date: "2026-11-20" })).status).toBe(400);
+  });
+
+  it("accepts up to 200 recipe ids to avoid and refuses more", async () => {
+    const ids = Array.from(
+      { length: 200 },
+      (_, i) => `c77e0000-0000-4000-8000-${String(i).padStart(12, "0")}`,
+    );
+    expect((await post(swapBody({ excludeRecipeIds: ids }))).status).toBe(200);
+    expect((await post(swapBody({ excludeRecipeIds: [...ids, ids[0]] }))).status).toBe(400);
+  });
+
+  it("is for members only and needs the allergy answer", async () => {
+    const outsider = await post(swapBody({ householdId: OTHER_HOUSEHOLD }));
+    expect(outsider.status).toBe(403);
+    await setPreferences(FIXTURE_USER, { dinners_per_week: 5 });
+    const { body } = await swap();
+    expect(body).toMatchObject({ ok: false, error: "allergies_not_set" });
   });
 });
 

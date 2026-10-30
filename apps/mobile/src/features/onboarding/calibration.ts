@@ -1,9 +1,10 @@
-// The swipe screen's state (WS06): twelve cards, each answered like or skip. A right swipe is a
-// like; a left swipe is a skip, stored as the `skipped` signal (docs/02 §Planning). "Skip the rest"
-// ends the deck early. Pure functions, so Vitest runs them.
+// The swipe screen's state (WS06): twelve cards, each answered like or not for me. A right swipe is
+// a `like` and a left swipe is a `dislike`: those are the two signals a client may insert into
+// recipe_feedback (WS04's policy; `saved`, `cooked`, and `skipped` come from its trigger).
+// "Skip the rest" ends the deck early. Pure functions, so Vitest runs them.
 import type { CalibrationCard } from "@mp/core";
 
-export type SwipeSignal = "like" | "skipped";
+export type SwipeSignal = "like" | "dislike";
 
 export interface Answer {
   recipeId: string;
@@ -91,6 +92,6 @@ export const SWIPE_THRESHOLD = 90;
 /** Which answer a finished drag means, or null when it did not travel far enough. */
 export function signalForDrag(dx: number, threshold = SWIPE_THRESHOLD): SwipeSignal | null {
   if (dx >= threshold) return "like";
-  if (dx <= -threshold) return "skipped";
+  if (dx <= -threshold) return "dislike";
   return null;
 }

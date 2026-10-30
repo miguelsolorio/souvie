@@ -31,18 +31,18 @@ describe("the swipe deck", () => {
     expect(currentCard(state)?.title).toBe("Recipe 0");
     expect(progressOf(state)).toEqual({ answered: 0, total: 12 });
     state = answerCard(state, "like");
-    state = answerCard(state, "skipped");
+    state = answerCard(state, "dislike");
     expect(currentCard(state)?.title).toBe("Recipe 2");
     expect(progressOf(state)).toEqual({ answered: 2, total: 12 });
     expect(state.answers).toEqual([
       { recipeId: CARDS[0]?.recipeId, signal: "like" },
-      { recipeId: CARDS[1]?.recipeId, signal: "skipped" },
+      { recipeId: CARDS[1]?.recipeId, signal: "dislike" },
     ]);
   });
 
   it("is finished after all twelve cards are answered (acceptance criterion: all twelve)", () => {
     let state = startCalibration(CARDS);
-    for (let i = 0; i < 12; i++) state = answerCard(state, i % 2 === 0 ? "like" : "skipped");
+    for (let i = 0; i < 12; i++) state = answerCard(state, i % 2 === 0 ? "like" : "dislike");
     expect(isFinished(state)).toBe(true);
     expect(currentCard(state)).toBeNull();
     expect(answerCard(state, "like")).toBe(state);
@@ -80,15 +80,15 @@ describe("the swipe deck", () => {
 describe("feedbackRows", () => {
   const answers = [
     { recipeId: "r1", signal: "like" as const },
-    { recipeId: "r2", signal: "skipped" as const },
-    { recipeId: "r1", signal: "skipped" as const },
+    { recipeId: "r2", signal: "dislike" as const },
+    { recipeId: "r1", signal: "dislike" as const },
   ];
 
   it("builds one row per recipe with the household and user", () => {
     const rows = feedbackRows("h1", "u1", answers);
     expect(rows).toEqual([
       { household_id: "h1", user_id: "u1", recipe_id: "r1", signal: "like" },
-      { household_id: "h1", user_id: "u1", recipe_id: "r2", signal: "skipped" },
+      { household_id: "h1", user_id: "u1", recipe_id: "r2", signal: "dislike" },
     ]);
   });
 
@@ -97,9 +97,9 @@ describe("feedbackRows", () => {
     expect(rows.map((r) => r.recipe_id)).toEqual(["r1"]);
   });
 
-  it("uses only the like and skipped signals the enum allows", () => {
+  it("uses only the like and dislike signals a client may insert", () => {
     for (const row of feedbackRows("h", "u", answers)) {
-      expect(["like", "skipped"]).toContain(row.signal);
+      expect(["like", "dislike"]).toContain(row.signal);
     }
   });
 });
@@ -108,8 +108,8 @@ describe("signalForDrag", () => {
   it("means like to the right and skip to the left, past the threshold", () => {
     expect(signalForDrag(SWIPE_THRESHOLD)).toBe("like");
     expect(signalForDrag(200)).toBe("like");
-    expect(signalForDrag(-SWIPE_THRESHOLD)).toBe("skipped");
-    expect(signalForDrag(-250)).toBe("skipped");
+    expect(signalForDrag(-SWIPE_THRESHOLD)).toBe("dislike");
+    expect(signalForDrag(-250)).toBe("dislike");
   });
 
   it("ignores a short drag", () => {

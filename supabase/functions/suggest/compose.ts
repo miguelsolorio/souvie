@@ -255,7 +255,7 @@ export async function composeWeek(input: ComposeInput, deps: ComposeDeps): Promi
 // ---------------------------------------------------------------------------------------
 
 /** A reason the person can read, built from facts we hold, not from a model. */
-function fallbackWhy(candidate: Candidate, cuisinePreferred: boolean): string {
+export function rankedWhy(candidate: Candidate, cuisinePreferred: boolean): string {
   const parts: string[] = [];
   if (candidate.totalMin) parts.push(`ready in about ${candidate.totalMin} minutes`);
   if (cuisinePreferred && candidate.cuisine)
@@ -296,7 +296,7 @@ export function fallbackWeek(
     recipeId: candidate.id,
     date: dates[i] as string,
     servings: Math.min(Math.max(Math.round(options.servings), 1), 24),
-    why: fallbackWhy(
+    why: rankedWhy(
       candidate,
       candidate.cuisine ? wanted.has(candidate.cuisine.trim().toLowerCase()) : false,
     ),

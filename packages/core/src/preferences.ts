@@ -368,9 +368,17 @@ export const CALIBRATION_CARD_COUNT = 12;
 /** The longest one-line reason a dinner may carry. */
 export const WHY_MAX_CHARS = 139;
 
-export const SUGGEST_MODES = ["draft", "replace", "calibration", "backfill"] as const;
+export const SUGGEST_MODES = ["draft", "replace", "calibration", "backfill", "swap"] as const;
 export const SuggestMode = z.enum(SUGGEST_MODES);
 export type SuggestMode = z.infer<typeof SuggestMode>;
+
+/** The meal slots a suggestion can be for. Plans are dinners; a swap may name any slot. */
+export const SUGGEST_SLOTS = ["breakfast", "lunch", "dinner", "snack"] as const;
+export const SuggestSlot = z.enum(SUGGEST_SLOTS);
+export type SuggestSlot = z.infer<typeof SuggestSlot>;
+
+/** Most recipe ids a swap may ask to avoid. */
+export const SWAP_EXCLUDE_MAX = 200;
 
 /**
  * Request body of POST /functions/v1/suggest.
@@ -378,26 +386,39 @@ export type SuggestMode = z.infer<typeof SuggestMode>;
  *   draft        Compose the week's dinners. When the week already has a plan with dinners, that
  *                plan comes back unchanged.
  *   replace      Recompose. Without `date`, every still-planned dinner of the week is replaced.
- *                With `date` (an optional addition for the planner's "swap with a suggestion"),
- *                only that night is replaced.
+ *                With `date`, only that night is replaced.
+ *   swap         One recipe for one slot, for the planner's "swap with a suggestion". Needs `date`
+ *                and `slot`. `excludeRecipeIds` are recipes it must not return (the one being
+ *                replaced, the rest of the week); the recipes already on that week's plan are left
+ *                out as well. It writes nothing: the planner applies the answer itself.
  *   calibration  Twelve recipes for the swipe screen. Writes nothing.
  *   backfill     Embed the household's recipes that have no embedding yet. Writes nothing else.
  *
  * `weekStart` must be a Monday.
  */
-export const SuggestRequest = z.object({
-  householdId: z.uuid(),
-  weekStart: z.iso.date(),
-  dinners: z.number().int().min(1).max(7).optional(),
-  mode: SuggestMode,
-  date: z.iso.date().optional(),
-});
+export const SuggestRequest = z
+  .object({
+    householdId: z.uuid(),
+    weekStart: z.iso.date(),
+    dinners: z.number().int().min(1).max(7).optional(),
+    mode: SuggestMode,
+    date: z.iso.date().optional(),
+    /** swap only. */
+    slot: SuggestSlot.optional(),
+    /** swap only. */
+    excludeRecipeIds: z.array(z.uuid()).max(SWAP_EXCLUDE_MAX).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.mode !== "swap") return;
+    if (!value.date) ctx.addIssue({ code: "custom", path: ["date"], message: "swap needs a date" });
+    if (!value.slot) ctx.addIssue({ code: "custom", path: ["slot"], message: "swap needs a slot" });
+  });
 export type SuggestRequest = z.infer<typeof SuggestRequest>;
 
 export const SuggestEntry = z.object({
   /** YYYY-MM-DD, inside the requested week. */
   date: z.iso.date(),
-  slot: z.literal("dinner"),
+  slot: SuggestSlot,
   recipeId: z.uuid(),
   servings: z.number().int().min(1),
   /** One line, at most 139 characters. Empty only for a dinner someone added by hand. */
@@ -432,6 +453,14 @@ export const SuggestPlanResponse = z.object({
   shortBy: z.number().int().min(1).optional(),
 });
 export type SuggestPlanResponse = z.infer<typeof SuggestPlanResponse>;
+
+/** The answer to a swap: exactly one entry. `planId` is there when the week already has a plan. */
+export const SuggestSwapResponse = z.object({
+  ok: z.literal(true),
+  planId: z.uuid().optional(),
+  entries: z.array(SuggestEntry).length(1),
+});
+export type SuggestSwapResponse = z.infer<typeof SuggestSwapResponse>;
 
 export const SuggestCalibrationResponse = z.object({
   ok: z.literal(true),

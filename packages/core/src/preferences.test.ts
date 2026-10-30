@@ -29,6 +29,8 @@ import {
   SuggestCalibrationResponse,
   SuggestEntry,
   SuggestRequest,
+  SuggestSwapResponse,
+  SWAP_EXCLUDE_MAX,
   TimeSkillInput,
   WHY_MAX_CHARS,
 } from "./preferences.ts";
@@ -420,6 +422,48 @@ describe("suggest contract", () => {
     expect(SuggestRequest.safeParse({ ...body, weekStart: "11/02/2026" }).success).toBe(false);
     expect(SuggestRequest.safeParse({ ...body, dinners: 8 }).success).toBe(false);
     expect(SuggestRequest.safeParse({ ...body, householdId: "nope" }).success).toBe(false);
+  });
+
+  it("takes a swap request with a date, a slot, and recipes to avoid", () => {
+    const body = {
+      householdId: HOUSEHOLD,
+      weekStart: "2026-11-02",
+      mode: "swap",
+      date: "2026-11-04",
+      slot: "dinner",
+      excludeRecipeIds: [RECIPE],
+    };
+    expect(SuggestRequest.parse(body)).toEqual(body);
+    expect(SuggestRequest.safeParse({ ...body, excludeRecipeIds: undefined }).success).toBe(true);
+    expect(SuggestRequest.safeParse({ ...body, date: undefined }).success).toBe(false);
+    expect(SuggestRequest.safeParse({ ...body, slot: undefined }).success).toBe(false);
+    expect(SuggestRequest.safeParse({ ...body, slot: "brunch" }).success).toBe(false);
+    expect(SuggestRequest.safeParse({ ...body, excludeRecipeIds: ["nope"] }).success).toBe(false);
+    const tooMany = Array.from({ length: SWAP_EXCLUDE_MAX + 1 }, () => RECIPE);
+    expect(SuggestRequest.safeParse({ ...body, excludeRecipeIds: tooMany }).success).toBe(false);
+  });
+
+  it("does not ask the other modes for a slot", () => {
+    const body = { householdId: HOUSEHOLD, weekStart: "2026-11-02", mode: "draft" };
+    expect(SuggestRequest.safeParse(body).success).toBe(true);
+  });
+
+  it("answers a swap with exactly one entry for any slot", () => {
+    const entry = {
+      date: "2026-11-04",
+      slot: "lunch",
+      recipeId: RECIPE,
+      servings: 2,
+      why: "Quick.",
+    };
+    expect(SuggestSwapResponse.safeParse({ ok: true, entries: [entry] }).success).toBe(true);
+    expect(
+      SuggestSwapResponse.safeParse({ ok: true, planId: HOUSEHOLD, entries: [entry] }).success,
+    ).toBe(true);
+    expect(SuggestSwapResponse.safeParse({ ok: true, entries: [] }).success).toBe(false);
+    expect(SuggestSwapResponse.safeParse({ ok: true, entries: [entry, entry] }).success).toBe(
+      false,
+    );
   });
 
   it("holds a why to 139 characters", () => {

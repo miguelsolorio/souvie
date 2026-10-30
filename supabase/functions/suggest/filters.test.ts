@@ -45,6 +45,23 @@ describe("buildFilterSpec", () => {
     expect(spec.maxMinutes).toBeNull();
   });
 
+  it("keeps the diet tag conflicts but drops the not-a-dinner tags for another slot", () => {
+    const plain = buildFilterSpec({ allergies: [], diets: [], dislikes: [], dinnerOnly: false });
+    expect(plain.excludedTags).toEqual([]);
+    const vegan = buildFilterSpec({
+      allergies: [],
+      diets: ["vegan"],
+      dislikes: [],
+      dinnerOnly: false,
+    });
+    expect(vegan.excludedTags).toContain("dairy");
+    expect(vegan.excludedTags).not.toContain("dessert");
+    // The default and an explicit true both leave dinner-only on.
+    expect(
+      buildFilterSpec({ allergies: [], diets: [], dislikes: [], dinnerOnly: true }).excludedTags,
+    ).toContain("dessert");
+  });
+
   it("fails closed on an allergen or diet it has no rule for", () => {
     expect(() => buildFilterSpec({ allergies: ["shellfsh"], diets: [], dislikes: [] })).toThrow(
       FilterError,

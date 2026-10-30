@@ -42,6 +42,7 @@ import {
   fallbackWeek,
   isMonday,
   pickDinnerDates,
+  rankedWhy,
   weekDates,
 } from "./compose.ts";
 import { buildFilterSpec, FilterError, filterInputFromPreferences } from "./filters.ts";
@@ -54,8 +55,8 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-/** Largest request body accepted, in bytes. The real one is under 200. */
-export const MAX_BODY_BYTES = 4_000;
+/** Largest request body accepted, in bytes. A swap with 200 recipe ids to avoid is about 8,000. */
+export const MAX_BODY_BYTES = 16_000;
 /** Recipes embedded per call before ranking, so a first plan stays quick. */
 export const EMBED_BATCH = 40;
 /** Recipes embedded per backfill call. */
@@ -212,13 +213,58 @@ async function runSuggest(
   if (!me || me.preferences.allergies === undefined) return fail("allergies_not_set", 200);
   const others = members.filter((member) => member.userId !== userId);
 
-  const spec = buildFilterSpec(
-    filterInputFromPreferences(
+  const spec = buildFilterSpec({
+    ...filterInputFromPreferences(
       me.preferences,
       others.map((member) => member.preferences),
     ),
-  );
+    // A swap for a breakfast or lunch slot may return a recipe tagged breakfast or lunch.
+    dinnerOnly: request.mode === "swap" ? request.slot === "dinner" : true,
+  });
   const cuisines = me.preferences.cuisines ?? [];
+
+  // --- swap -------------------------------------------------------------------------------------
+  // One recipe for one slot, for the planner's "swap with a suggestion". Same filters and ranking
+  // as a draft, but nothing is written (no plan, no entry, no feedback, no embedding refresh) and no
+  // model is called: the planner applies the answer through its own upsert, and the reason is built
+  // from facts. The week's own recipes and the ones the planner lists are left out.
+  if (request.mode === "swap" && request.date && request.slot) {
+    const plan = await store.getPlan(householdId, weekStart);
+    const exclude = [
+      ...new Set([
+        ...(request.excludeRecipeIds ?? []),
+        ...(plan?.entries ?? []).map((e) => e.recipeId),
+      ]),
+    ];
+    const { candidates } = await fetchCandidates(runtime.sql, {
+      householdId,
+      spec,
+      tasteEmbedding: me.tasteEmbedding,
+      cuisines,
+      excludeIds: exclude,
+      now,
+      limit: 3,
+      warn,
+    });
+    const pick = candidates[0];
+    if (!pick) return fail("no_candidates", 200);
+    const favorite = pick.cuisine
+      ? cuisines.some((c) => c.trim().toLowerCase() === pick.cuisine?.trim().toLowerCase())
+      : false;
+    return json({
+      ok: true,
+      ...(plan ? { planId: plan.id } : {}),
+      entries: [
+        {
+          date: request.date,
+          slot: request.slot,
+          recipeId: pick.id,
+          servings: defaultServings(me),
+          why: rankedWhy(pick, favorite),
+        },
+      ],
+    });
+  }
 
   // --- calibration ------------------------------------------------------------------------------
   if (request.mode === "calibration") {
@@ -421,7 +467,7 @@ async function runSuggest(
 }
 
 function entryFrom(
-  entry: { date: string; recipeId: string; servings: number | null; notes: string | null },
+  entry: { date: string; recipeId: string; servings: number | null; why: string | null },
   fallbackServings: number,
 ): SuggestEntry {
   return {
@@ -429,7 +475,7 @@ function entryFrom(
     slot: "dinner",
     recipeId: entry.recipeId,
     servings: Math.max(entry.servings ?? fallbackServings, 1),
-    why: (entry.notes ?? "").slice(0, 139),
+    why: (entry.why ?? "").slice(0, 139),
   };
 }
 

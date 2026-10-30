@@ -48,9 +48,9 @@ describe("scoreCandidate", () => {
 
   it("boosts likes, penalizes skips, and uses popularity", () => {
     const history = new Map([
-      ["r1", { likes: 1, skips: 0, lastCookedAt: null, popularity: 0 }],
-      ["r2", { likes: 0, skips: 1, lastCookedAt: null, popularity: 0 }],
-      ["r3", { likes: 0, skips: 0, lastCookedAt: null, popularity: 50 }],
+      ["r1", { likes: 1, skips: 0, dislikes: 0, lastCookedAt: null, popularity: 0 }],
+      ["r2", { likes: 0, skips: 1, dislikes: 0, lastCookedAt: null, popularity: 0 }],
+      ["r3", { likes: 0, skips: 0, dislikes: 0, lastCookedAt: null, popularity: 50 }],
     ]);
     const ctx = { cuisines: [], history, now: NOW };
     const plain = scoreCandidate({ ...base, id: "x" }, ctx);
@@ -59,8 +59,21 @@ describe("scoreCandidate", () => {
     expect(scoreCandidate({ ...base, id: "r3" }, ctx) - plain).toBeCloseTo(0.08, 5);
   });
 
+  it("sends a thumbs down to the bottom, once however many there are", () => {
+    const history = new Map([
+      ["r1", { likes: 0, skips: 0, dislikes: 1, lastCookedAt: null, popularity: 0 }],
+      ["r2", { likes: 0, skips: 0, dislikes: 4, lastCookedAt: null, popularity: 0 }],
+    ]);
+    const ctx = { cuisines: [], history, now: NOW };
+    const plain = scoreCandidate({ ...base, id: "x" }, ctx);
+    expect(scoreCandidate(base, ctx) - plain).toBeCloseTo(-0.3, 5);
+    expect(scoreCandidate({ ...base, id: "r2" }, ctx) - plain).toBeCloseTo(-0.3, 5);
+  });
+
   it("caps the like and skip effect at two", () => {
-    const history = new Map([["r1", { likes: 9, skips: 0, lastCookedAt: null, popularity: 0 }]]);
+    const history = new Map([
+      ["r1", { likes: 9, skips: 0, dislikes: 0, lastCookedAt: null, popularity: 0 }],
+    ]);
     const ctx = { cuisines: [], history, now: NOW };
     expect(scoreCandidate(base, ctx) - scoreCandidate({ ...base, id: "x" }, ctx)).toBeCloseTo(
       0.16,
@@ -73,7 +86,13 @@ describe("scoreCandidate", () => {
       new Map([
         [
           "r1",
-          { likes: 0, skips: 0, lastCookedAt: new Date(NOW.getTime() - days * DAY), popularity: 0 },
+          {
+            likes: 0,
+            skips: 0,
+            dislikes: 0,
+            lastCookedAt: new Date(NOW.getTime() - days * DAY),
+            popularity: 0,
+          },
         ],
       ]);
     const plain = scoreCandidate(
@@ -275,6 +294,37 @@ describe("fetchCandidates ranking on PGlite", () => {
     // A like is worth 0.08, plus its small share of popularity (one like of fifty).
     const popularity = (Math.log1p(1) / Math.log1p(50)) * 0.08;
     if (liked && peer) expect(liked.c.score - peer.score).toBeCloseTo(0.08 + popularity, 5);
+  });
+
+  it("reads a dislike from recipe_feedback and ranks that recipe below its peers", async () => {
+    const gazpacho = corpus.ids.get("gazpacho");
+    await t.query(
+      `insert into public.recipe_feedback (household_id, user_id, recipe_id, signal)
+       values ($1, $2, $3, 'dislike')`,
+      [FIXTURE_HOUSEHOLD, FIXTURE_USER, gazpacho],
+    );
+    try {
+      const { candidates } = await fetchCandidates(t.runner, {
+        householdId: FIXTURE_HOUSEHOLD,
+        spec,
+        tasteEmbedding: null,
+        cuisines: [],
+        now: NOW,
+        warn: () => {},
+      });
+      const disliked = candidates.find((c) => c.id === gazpacho);
+      // On a cold profile a household recipe without history scores the same as gazpacho did
+      // before the dislike, so the lentil soup is the baseline: the dislike costs 0.3.
+      const baseline = candidates.find((c) => c.id === corpus.ids.get("lentil-soup"));
+      expect(disliked).toBeDefined();
+      expect(baseline).toBeDefined();
+      if (disliked && baseline) expect(baseline.score - disliked.score).toBeCloseTo(0.3, 5);
+    } finally {
+      await t.query(
+        "delete from public.recipe_feedback where recipe_id = $1 and signal = 'dislike'",
+        [gazpacho],
+      );
+    }
   });
 
   it("still ranks when the feedback table is missing", async () => {

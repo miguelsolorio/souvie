@@ -24,7 +24,7 @@ export interface LooseClient {
 }
 
 /**
- * Saves a person's like and skip answers as recipe_feedback rows (`like`, `skipped`) in their
+ * Saves a person's like and skip answers as recipe_feedback rows (`like`, `dislike`) in their
  * household. A recipe they already answered is left alone, so retrying a failed finish, or going
  * through calibration twice, never writes twice. Returns how many rows were written.
  */
@@ -44,7 +44,7 @@ export async function saveCalibrationFeedback(
   if (existing.error) throw new Error(existing.error.message);
   const answered = new Set(
     (existing.data ?? [])
-      .filter((row) => row.signal === "like" || row.signal === "skipped")
+      .filter((row) => row.signal === "like" || row.signal === "dislike")
       .map((row) => row.recipe_id),
   );
 

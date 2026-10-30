@@ -14,13 +14,16 @@ Requires a signed-in user who belongs to the household: send the user's JWT as `
 | `weekStart` | A Monday, `YYYY-MM-DD`. Any other day is `week_not_monday` |
 | `mode` | `draft`, `replace`, `calibration`, or `backfill` |
 | `dinners` | Optional, 1 to 7. Defaults to the caller's `dinners_per_week`, else 5 |
-| `date` | Optional, `replace` only: replace just that night. An addition to the brief, for the planner's "swap with a suggestion" |
+| `date` | `replace`: optional, replace just that night. `swap`: required, the night to suggest for |
+| `slot` | `swap` only, required: `breakfast`, `lunch`, `dinner`, or `snack` |
+| `excludeRecipeIds` | `swap` only, optional, up to 200 recipe ids the suggestion must not return |
 
 | Mode | What it does |
 |---|---|
 | `draft` | Composes the week. If the week already has dinners it returns them unchanged (`composedBy: "existing"`) and calls no model |
 | `replace` | Composes again. Without `date`, every still-planned dinner of the week is replaced and cooked or skipped ones stay. With `date`, only that night, and never with the recipe it had |
-| `calibration` | Twelve recipes for the swipe screen, spread over cuisines, leaving out ones the caller already answered. Writes nothing |
+| `swap` | One recipe for one slot, for the planner's "swap with a suggestion" (WS04). Same filters and ranking as `draft`, minus recipes in `excludeRecipeIds` and the ones already on that week's plan. Writes nothing: no plan, no entry, no feedback, no embedding refresh, no model call. The reason is built from facts, not by a model. Another slot than `dinner` also lets recipes tagged breakfast, dessert, and the like through. Returns `{ ok, planId?, entries }` with exactly one entry, `planId` only when the week already has a plan |
+| `calibration` | Twelve recipes for the swipe screen, spread over cuisines, leaving out ones the caller already answered (a like or a dislike). Writes nothing |
 | `backfill` | Embeds up to 50 of the household's recipes that have no embedding. Needs `VOYAGE_API_KEY` |
 
 ```bash
@@ -77,7 +80,7 @@ Filters are SQL `where` clauses built by `buildFilterSpec` and `buildCandidateQu
 
 ### Ranking
 
-`score = similarity + 0.12 (favorite cuisine) + 0.08 per like (up to 2) - 0.05 per skip (up to 2) + 0.08 × popularity (likes across households, saturating at 50) - 0.25 (cooked in the last 14 days) or - 0.10 (last 28) + 0.05 (household's own recipe)`. Similarity is cosine similarity to the taste vector, or 0 on a cold profile, which is then ranked by cuisine, popularity, and the household bonus. Ties break on title, then id.
+`score = similarity + 0.12 (favorite cuisine) + 0.08 per like (up to 2) - 0.05 per skipped night (up to 2) - 0.3 for a thumbs down (once) + 0.08 × popularity (likes across households, saturating at 50) - 0.25 (cooked in the last 14 days) or - 0.10 (last 28) + 0.05 (household's own recipe)`. Similarity is cosine similarity to the taste vector, or 0 on a cold profile, which is then ranked by cuisine, popularity, and the household bonus. Ties break on title, then id.
 
 ## What it reads and writes
 
@@ -88,11 +91,11 @@ The function connects to Postgres as the database owner (`SUPABASE_DB_URL`), whi
 | `household_members`, `households` | read | membership, `deleted_at` |
 | `profiles` | read; writes `taste_embedding` | `preferences`, `onboarding_step`, `taste_embedding` |
 | `recipes`, `recipe_ingredients`, `ingredients`, `ingredient_aliases` | read; writes `recipes.embedding` | see `filters.ts` |
-| `meal_plans`, `meal_plan_entries` (WS04) | read, insert, delete planned dinners | `meal_plans(household_id, week_start)`; entries `(plan_id, household_id, date, slot, recipe_id, servings, status, notes, position)` |
+| `meal_plans`, `meal_plan_entries` (WS04) | read, insert, delete planned dinners | `meal_plans(household_id, week_start)`; entries `(plan_id, household_id, date, slot, recipe_id, servings, status, why, position)` |
 | `recipe_feedback` (WS04) | read | `(household_id, user_id, recipe_id, signal, created_at)`; if the table is missing, ranking runs without history |
 | `ai_runs` | insert, read | every model and embedding call; the daily spend |
 
-The one-line reason is stored in `meal_plan_entries.notes`; docs/02 has no column for it. Servings are rounded to whole numbers for `meal_plan_entries.servings`.
+The one-line reason is stored in `meal_plan_entries.why` (WS04's migration adds the column) and `notes` is left to the person. Servings are rounded to whole numbers for `meal_plan_entries.servings`.
 
 ## `ai_runs`
 

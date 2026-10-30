@@ -35,7 +35,7 @@ function fakeClient(options: {
 
 const answers = [
   { recipeId: "r1", signal: "like" as const },
-  { recipeId: "r2", signal: "skipped" as const },
+  { recipeId: "r2", signal: "dislike" as const },
   { recipeId: "r3", signal: "like" as const },
 ];
 
@@ -50,7 +50,7 @@ describe("saveCalibrationFeedback", () => {
     expect(written).toBe(3);
     expect(insert).toHaveBeenCalledWith([
       { household_id: "h", user_id: "u", recipe_id: "r1", signal: "like" },
-      { household_id: "h", user_id: "u", recipe_id: "r2", signal: "skipped" },
+      { household_id: "h", user_id: "u", recipe_id: "r2", signal: "dislike" },
       { household_id: "h", user_id: "u", recipe_id: "r3", signal: "like" },
     ]);
     expect(filters).toContainEqual(["household_id", "h"]);
@@ -72,6 +72,19 @@ describe("saveCalibrationFeedback", () => {
     });
     // r1 was answered before. r2 only has a "cooked" signal, which is not a calibration answer.
     expect(written).toBe(2);
+    const rows = insert.mock.calls[0]?.[0] as { recipe_id: string }[];
+    expect(rows.map((r) => r.recipe_id)).toEqual(["r2", "r3"]);
+  });
+
+  it("counts a like or a dislike as an answer, and not the signals WS04's trigger writes", async () => {
+    const { client, insert } = fakeClient({
+      existing: [
+        { recipe_id: "r1", signal: "dislike" },
+        { recipe_id: "r2", signal: "skipped" },
+        { recipe_id: "r3", signal: "saved" },
+      ],
+    });
+    await saveCalibrationFeedback(client, { householdId: "h", userId: "u", answers });
     const rows = insert.mock.calls[0]?.[0] as { recipe_id: string }[];
     expect(rows.map((r) => r.recipe_id)).toEqual(["r2", "r3"]);
   });

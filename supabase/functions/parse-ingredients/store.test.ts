@@ -448,6 +448,7 @@ describe("SupabaseRecipeStore", () => {
         {
           id: "a",
           qty: 2,
+          qty_max: null,
           unit: "cup",
           ingredient_id: "flour",
           prep_note: null,
@@ -462,6 +463,7 @@ describe("SupabaseRecipeStore", () => {
           group_name: null,
           raw_text: "2 cups flour",
           qty: null,
+          qty_max: null,
           unit: null,
           ingredient_id: "salt",
           prep_note: null,

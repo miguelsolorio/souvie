@@ -151,7 +151,7 @@ pnpm --filter mobile start                                    # manual: Connect 
 - R13: `Product.id` and `upc` come from the API; nothing upstream may invent them. Export a `ProductRef` type that WS09 must use for agent tool outputs.
 - Kroger's own site runs on Akamai; this WS never touches kroger.com except by opening the checkout URL in the system browser for the user.
 - Inventory and fulfillment flags mean "approved for," not "in stock." Label them accordingly in the UI.
-- The redirect URI must be an app deep link (`mealplanner://oauth/kroger`) registered in the Kroger app settings; the Edge Function handles the server side exchange so the client secret never ships in the app bundle.
+- The redirect URI must be an app deep link (`souvie://oauth/kroger`) registered in the Kroger app settings; the Edge Function handles the server side exchange so the client secret never ships in the app bundle.
 - Testing cart in production only: use a dedicated developer Kroger account and keep `KROGER_LIVE_TEST` off in CI.
 
 ## Completion report

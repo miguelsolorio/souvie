@@ -93,7 +93,7 @@ SUMMARY 46/50 pass  (jsonld 39, llm 7, blocked 3, failed 1)
 
 ## Acceptance criteria
 1. `supabase db reset` applies `0003` and `0004`; `supabase test db` passes `002_rls_recipes.sql` proving a user cannot read another household's recipes or `import_jobs`.
-2. `pnpm eval --filter @mp/recipe-import` runs the 50 golden cases from recorded HTML fixtures (offline, through `importFromHtml`) and reports ≥45 passing; `pnpm eval:live --filter @mp/recipe-import` re-fetches the URLs and refreshes the fixtures (title match, ingredient count within ±1, ≥1 instruction step). Output pasted in the report.
+2. `pnpm --filter @mp/recipe-import eval` runs the 50 golden cases from recorded HTML fixtures (offline, through `importFromHtml`) and reports ≥45 passing; `pnpm --filter @mp/recipe-import eval:live` re-fetches the URLs and refreshes the fixtures (title match, ingredient count within ±1, ≥1 instruction step). Output pasted in the report.
 3. At least 5 of the 50 URLs lack JSON-LD and are imported via the Sonnet fallback; the eval output marks which path each used.
 4. Importing a URL from the app creates an `import_jobs` row with `status = 'done'`, a `recipes` row with `source_type = 'url'` and `source_url` set, and `recipe_ingredients` rows with `raw_text` filled and `qty`, `unit`, `ingredient_id` null.
 5. Pasting recipe text creates a recipe with `source_type = 'text'`.

@@ -1,0 +1,69 @@
+{
+  "model": "claude-sonnet-5-5",
+  "promptVersion": "recipe-extract.v1",
+  "inputHash": "86ba2d5340e764de187bca4076318d8fc19818bc74cb65dd5e27f75d731a7333",
+  "recordedAt": "2026-10-30T18:27:27.956Z",
+  "output": {
+    "found": true,
+    "title": "Guacamole I",
+    "description": "Guacamole is a Mexican paste made from crushed avocado and various seasonings, usually including onions, peppers, garlic and tomatoes. Guacamole is used as a condiment, an ingredient, and as an appetizer when served with tortilla chips.",
+    "servings": null,
+    "prep_minutes": 10,
+    "cook_minutes": null,
+    "ingredients": [
+      {
+        "text": "4 avocados",
+        "group": null
+      },
+      {
+        "text": "2 tablespoons pico de gallo",
+        "group": null
+      },
+      {
+        "text": "Juice of ½ lime",
+        "group": null
+      },
+      {
+        "text": "2 chopped Jalapeño OR 2 tablespoons of crushed red pepper OR 1 tablespoon of cayenne pepper",
+        "group": null
+      },
+      {
+        "text": "1 teaspoon salt",
+        "group": null
+      },
+      {
+        "text": "4 teaspoons olive oil",
+        "group": null
+      },
+      {
+        "text": "1 ½ teaspoon minced garlic",
+        "group": null
+      },
+      {
+        "text": "½ teaspoon of ground black pepper",
+        "group": null
+      },
+      {
+        "text": "1 minced jalapeño OR 2 minced serrano chiles OR 2 tablespoon minced of any chile pepper like (adjust for spiciness)",
+        "group": null
+      }
+    ],
+    "steps": [
+      "Halve and pit the avocados.",
+      "Score the avocado flesh in a criss-cross pattern without cutting through the skin.",
+      "Scoop out the flesh of one half with a large spoon and place in mixing bowl.",
+      "Add the lime juice and stir to evenly coat the avocados.",
+      "Stir in the pico de gallo, garlic, oil, jalapeño, salt, red pepper, and black pepper, mashing and tossing the avocado pieces until thoroughly mixed.",
+      "Scoop out the remaining avocado chunks and gently mix and toss in the larger pieces. The guacamole is the right consistency when more large pieces than mashed parts remain.",
+      "Garnish with a sprig of cilantro."
+    ],
+    "tags": [
+      "appetizers",
+      "mexican",
+      "tex-mex",
+      "avocado",
+      "guacamole"
+    ],
+    "cuisine": "mexican"
+  }
+}

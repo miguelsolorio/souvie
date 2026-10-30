@@ -1,0 +1,67 @@
+{
+  "model": "claude-sonnet-5-5",
+  "promptVersion": "recipe-extract.v1",
+  "inputHash": "977b0fa9f0dff0fd510a44c9e6c60267a4de7aa21c1faacc6dc11f5f3054e050",
+  "recordedAt": "2026-10-30T18:27:11.305Z",
+  "output": {
+    "found": true,
+    "title": "Banana Bread I",
+    "description": "This is a basic, reliable banana bread recipe. The perfect thing to do with over-ripe bananas!",
+    "servings": null,
+    "prep_minutes": null,
+    "cook_minutes": 60,
+    "ingredients": [
+      {
+        "text": "White sugar 1 cup 200 g",
+        "group": null
+      },
+      {
+        "text": "Butter, softened ½ cup 113 g",
+        "group": null
+      },
+      {
+        "text": "Bananas (the riper the better), mashed 3 ea. 243–456 g",
+        "group": null
+      },
+      {
+        "text": "Eggs 2 ea. 100 g",
+        "group": null
+      },
+      {
+        "text": "All-purpose flour 2 cups 250 g",
+        "group": null
+      },
+      {
+        "text": "Baking soda ½ tsp 2.3 g",
+        "group": null
+      },
+      {
+        "text": "Sour milk or buttermilk ⅓ cup 81 g",
+        "group": null
+      },
+      {
+        "text": "Salt ¼ tsp 1.5 g",
+        "group": null
+      },
+      {
+        "text": "Vanilla extract 1 tsp 4.2 g",
+        "group": null
+      }
+    ],
+    "steps": [
+      "Preheat oven to 350°F (175°C).",
+      "Lightly grease an 8 x 4-inch (20 x 10 cm) loaf pan.",
+      "Combine all ingredients into a large mixing bowl. Beat well.",
+      "Pour batter into pan.",
+      "Bake on middle shelf of oven for 60 minutes, or until a toothpick inserted into the center of the loaf comes out clean."
+    ],
+    "tags": [
+      "banana bread",
+      "bread",
+      "breakfast",
+      "dessert",
+      "baking"
+    ],
+    "cuisine": null
+  }
+}

@@ -9,7 +9,7 @@ export function isValidInviteToken(value: unknown): value is string {
 
 /**
  * Pulls an invite token out of whatever a person pastes: the bare token, an https link ending in
- * /join/<token>, or the mealplanner://join/<token> deep link. Returns null for anything else.
+ * /join/<token>, or the souvie://join/<token> deep link. Returns null for anything else.
  */
 export function parseInviteInput(input: string): string | null {
   const text = input.trim();
@@ -26,7 +26,7 @@ export function parseInviteInput(input: string): string | null {
  */
 export function buildInviteUrl(token: string, webOrigin?: string | null): string {
   const origin = webOrigin?.trim().replace(/\/+$/, "");
-  return origin ? `${origin}/join/${token}` : `mealplanner://join/${token}`;
+  return origin ? `${origin}/join/${token}` : `souvie://join/${token}`;
 }
 
 export interface AuthCallbackParams {

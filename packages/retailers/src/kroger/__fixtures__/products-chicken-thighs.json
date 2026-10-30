@@ -1,0 +1,179 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/products?filter.term=chicken+thighs&filter.locationId=70500999&filter.limit=50"
+  },
+  "status": 200,
+  "headers": {
+    "content-type": "application/json",
+    "date": "Fri, 30 Oct 2026 19:28:41 GMT",
+    "cache-control": "max-age=3600",
+    "x-ratelimit-limit-day": "10000",
+    "x-ratelimit-remaining-day": "9999"
+  },
+  "body": {
+    "data": [
+      {
+        "productId": "0009990001001",
+        "upc": "0009990001001",
+        "productPageURI": "/p/fixture-farms-boneless-skinless-chicken-thighs/0009990001001",
+        "aliasProductIds": [],
+        "aisleLocations": [
+          {
+            "bayNumber": "4",
+            "description": "MEAT",
+            "number": "200",
+            "numberOfFacings": "6",
+            "side": "R",
+            "shelfNumber": "2",
+            "shelfPositionInBay": "1"
+          }
+        ],
+        "brand": "Fixture Farms",
+        "categories": ["Meat & Seafood"],
+        "countryOrigin": "UNITED STATES",
+        "description": "Fixture Farms® Boneless Skinless Chicken Thighs Family Pack",
+        "snapEligible": true,
+        "allergens": [{ "levelOfContainmentName": "Free from", "name": "Milk and its derivates" }],
+        "images": [
+          {
+            "perspective": "back",
+            "sizes": [
+              { "size": "large", "url": "https://images.fixture.test/large/back/0009990001001" }
+            ]
+          },
+          {
+            "perspective": "front",
+            "featured": true,
+            "sizes": [
+              { "size": "xlarge", "url": "https://images.fixture.test/xlarge/front/0009990001001" },
+              { "size": "large", "url": "https://images.fixture.test/large/front/0009990001001" },
+              { "size": "medium", "url": "https://images.fixture.test/medium/front/0009990001001" },
+              {
+                "size": "thumbnail",
+                "url": "https://images.fixture.test/thumbnail/front/0009990001001"
+              }
+            ]
+          }
+        ],
+        "items": [
+          {
+            "itemId": "0009990001001",
+            "inventory": { "stockLevel": "HIGH" },
+            "favorite": false,
+            "fulfillment": {
+              "curbside": true,
+              "delivery": true,
+              "inStore": true,
+              "shipToHome": false
+            },
+            "price": {
+              "regular": 5.99,
+              "promo": 4.49,
+              "regularPerUnitEstimate": 5.99,
+              "promoPerUnitEstimate": 4.49,
+              "expirationDate": { "value": "2026-11-11T04:59:59.999Z", "timezone": "Z" },
+              "effectiveDate": { "value": "2026-10-06T08:13:53.622Z", "timezone": "Z" }
+            },
+            "size": "per lb",
+            "soldBy": "WEIGHT"
+          }
+        ],
+        "itemInformation": { "depth": "9.0", "height": "2.5", "width": "6.0" },
+        "temperature": { "indicator": "Refrigerated", "heatSensitive": false }
+      },
+      {
+        "productId": "0009990001002",
+        "upc": "0009990001002",
+        "brand": "Harborline",
+        "categories": ["Meat & Seafood"],
+        "description": "Harborline Bone-In Chicken Thighs",
+        "allergens": [],
+        "images": [
+          {
+            "perspective": "front",
+            "sizes": [
+              { "size": "medium", "url": "https://images.fixture.test/medium/front/0009990001002" }
+            ]
+          }
+        ],
+        "items": [
+          {
+            "itemId": "0009990001002",
+            "inventory": { "stockLevel": "LOW" },
+            "fulfillment": {
+              "curbside": true,
+              "delivery": false,
+              "inStore": true,
+              "shipToHome": false
+            },
+            "price": {
+              "regular": 11.99,
+              "promo": 0,
+              "expirationDate": { "value": "9999-12-31T00:00:00Z", "timezone": "Z" },
+              "effectiveDate": { "value": "2026-10-28T10:46:21.917Z", "timezone": "Z" }
+            },
+            "size": "2.5 lb",
+            "soldBy": "UNIT"
+          }
+        ]
+      },
+      {
+        "productId": "0009990001003",
+        "upc": "0009990001003",
+        "brand": "Fixture Farms",
+        "categories": ["Frozen", "Meat & Seafood"],
+        "description": "Fixture Farms Breaded Chicken Thigh Bites, Teriyaki",
+        "allergens": [
+          { "levelOfContainmentName": "Contains", "name": "Wheat and its derivatives" },
+          { "levelOfContainmentName": "Contains", "name": "Soybean and its Derivatives" },
+          { "levelOfContainmentName": "May Contain", "name": "Sesame Seeds and its derivatives" }
+        ],
+        "images": [],
+        "items": [
+          {
+            "itemId": "0009990001003",
+            "inventory": { "stockLevel": "TEMPORARILY_OUT_OF_STOCK" },
+            "fulfillment": {
+              "curbside": false,
+              "delivery": false,
+              "inStore": true,
+              "shipToHome": false
+            },
+            "price": { "regular": 8.49 },
+            "size": "24 oz",
+            "soldBy": "UNIT"
+          }
+        ]
+      },
+      {
+        "productId": "0009990001004",
+        "upc": "0009990001004",
+        "brand": "Puget Organics",
+        "categories": ["Natural & Organic", "Meat & Seafood"],
+        "description": "Puget Organics Organic Chicken Thighs ",
+        "images": [
+          {
+            "perspective": "left",
+            "sizes": [
+              { "size": "small", "url": "https://images.fixture.test/small/left/0009990001004" }
+            ]
+          }
+        ],
+        "items": [
+          {
+            "itemId": "0009990001004",
+            "fulfillment": {
+              "curbside": true,
+              "delivery": true,
+              "inStore": true,
+              "shipToHome": false
+            },
+            "size": "1.25 lb"
+          }
+        ]
+      }
+    ],
+    "meta": { "pagination": { "start": 0, "limit": 50, "total": 4 } }
+  }
+}

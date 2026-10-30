@@ -10,7 +10,7 @@ import { clearPendingInvite, setPendingInvite } from "../../src/features/auth/pe
 import { HOME_ROUTE, SIGN_IN_ROUTE } from "../../src/features/auth/routes";
 
 /**
- * mealplanner://join/<token> on native and /join/<token> on web.
+ * souvie://join/<token> on native and /join/<token> on web.
  *
  * Signed out: remember the token, send the person to sign in, and come back here afterwards
  * (the (app) layout resumes the join). Signed in: ask before joining, then redeem the invite.

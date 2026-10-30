@@ -259,9 +259,10 @@ describe("recipe mode", () => {
     expect(h.saved).toHaveLength(1);
     const { updates, inserts } = h.saved[0] ?? { updates: [], inserts: [] };
     expect(updates.map((u) => u.id)).toEqual(["r1", "r2", "r3"]);
-    // A range is stored as its upper bound.
+    // A range keeps both ends: qty is the lower bound, qty_max the upper.
     expect(updates[0]).toMatchObject({
-      qty: 3,
+      qty: 2,
+      qty_max: 3,
       unit: "clove",
       ingredient_id: ingredientId("garlic"),
       prep_note: "minced",
@@ -273,7 +274,7 @@ describe("recipe mode", () => {
       ingredient_id: ingredientId("salt"),
       prep_note: "to taste",
     });
-    expect(updates[2]).toMatchObject({ qty: 1, unit: "tbsp", ingredient_id: null });
+    expect(updates[2]).toMatchObject({ qty: 1, qty_max: null, unit: "tbsp", ingredient_id: null });
     expect(inserts).toHaveLength(1);
     expect(inserts[0]).toMatchObject({
       recipe_id: RECIPE_ID,
@@ -331,11 +332,29 @@ describe("rowValues", () => {
       }),
     ).toEqual({
       qty: 1,
+      qty_max: null,
       unit: "cup",
       ingredient_id: "id-1",
       prep_note: null,
       optional: true,
       parse_confidence: 0.97,
     });
+  });
+
+  it("keeps a range as qty (lower bound) and qty_max (upper bound)", () => {
+    expect(
+      rowValues({
+        rawText: "2-3 cloves garlic",
+        qty: 2,
+        qtyMax: 3,
+        unit: "clove",
+        ingredientId: "id-2",
+        ingredientName: "garlic",
+        prepNote: null,
+        optional: false,
+        confidence: 0.95,
+        stage: "grammar",
+      }),
+    ).toMatchObject({ qty: 2, qty_max: 3 });
   });
 });

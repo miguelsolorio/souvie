@@ -7,7 +7,7 @@
 // and a Supabase Edge Function. See README.md.
 
 import type { IngredientCategory, ParsedIngredient } from "@mp/core";
-import { type CachedParse, cacheKey, type ParseCache } from "./cache.ts";
+import { type CachedParse, cacheKey, isCurrentPromptVersion, type ParseCache } from "./cache.ts";
 import { type GrammarParse, parseGrammar } from "./grammar.ts";
 import { PREP_ADVERBS, PREP_WORDS } from "./lexicon.ts";
 import {
@@ -16,6 +16,7 @@ import {
   type LlmItem,
   type LlmParseClient,
   type LlmUsage,
+  sanitizeItem,
 } from "./llm-fallback.ts";
 import {
   DEFAULT_SIMILARITY_THRESHOLD,
@@ -32,7 +33,6 @@ export * from "./llm-fallback.ts";
 export * from "./lookup.ts";
 export * from "./normalize.ts";
 export * from "./ontology.ts";
-export { buildSystemPrompt, buildUserPrompt, INGREDIENT_PARSE_PROMPT_VERSION } from "./prompt.ts";
 
 /** Lines below this confidence go to the model (docs/03-ai-design.md §5). */
 export const DEFAULT_CONFIDENCE_THRESHOLD = 0.8;
@@ -293,7 +293,8 @@ async function itemsFromLlm(
 ): Promise<ParsedIngredient[]> {
   const similarityThreshold = deps.similarityThreshold ?? DEFAULT_SIMILARITY_THRESHOLD;
   const out: ParsedIngredient[] = [];
-  const usable = items.filter((i) => i.ingredient);
+  // A replacement LlmParseClient need not sanitize; do it here so no client is trusted.
+  const usable = items.map(sanitizeItem).filter((i) => i.ingredient);
   for (const item of usable) {
     const name = cleanPhrase(item.ingredient ?? "");
     if (!name) continue;
@@ -396,7 +397,12 @@ async function applyLlm(
   if (deps.cache) {
     const cache = deps.cache;
     await safely(deps, "parse cache read failed; treating every line as a miss", async () => {
-      cached = await cache.getMany(keys);
+      const rows = await cache.getMany(keys);
+      // An answer written under an older prompt, an empty one included, is a miss: the prompt
+      // that produced it has been replaced, and the line gets asked again.
+      cached = new Map(
+        [...rows].filter(([, row]) => isCurrentPromptVersion(row.promptVersion, llm.promptVersion)),
+      );
     });
   }
   // An entry with no items means the model looked at the line and found no ingredient.

@@ -166,12 +166,12 @@ site_url = "http://localhost:8081"
 # external_url = ""
 # URLs that auth providers and magic links may redirect to after authentication (WS01).
 # Glob patterns are allowed. This is the development list, for the local stack and CI. The
-# production project lists only https://<web-origin>/callback and mealplanner://callback, not
+# production project lists only https://<web-origin>/callback and souvie://callback, not
 # the localhost wildcards or exp://** (supabase/README.md §Auth).
 additional_redirect_urls = [
   "http://localhost:8081/**",       # Expo web dev server: /callback, /join/<token>
   "http://127.0.0.1:8081/**",
-  "mealplanner://**",               # Deep link scheme (apps/mobile app.json): mealplanner://callback
+  "souvie://**",               # Deep link scheme (apps/mobile app.json): souvie://callback
   "exp://**",                       # Expo Go: exp://<lan-ip>:8081/--/callback
   # "https://<web-origin>/**",      # Deployed web build and, later, the Tauri origin (WS13)
 ]

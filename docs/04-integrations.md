@@ -57,16 +57,20 @@ export interface RetailerAdapter {
 }
 ```
 
+**As built (WS07).** The contract lives in `packages/retailers/src/types.ts` and differs from the sketch above in these ways. Optional fields are explicit nulls (`upc: string | null`), and `cacheUntil` is an ISO string so a `Product` survives JSON. `Product` adds `soldBy` (`UNIT` or `WEIGHT`), which the scorer needs for unit-price fit, `mayContain`, the subset of `allergens` declared only as "may contain", and `undeclared`, the subset Kroger lists as "Undeclared" (`allergens` stays the conservative list safety checks read; "Free from" and "Not intentionally nor inherently included" are dropped). `connect` returns `{ authorizeUrl?, handle? }`: OAuth adapters return the URL, the mock returns a handle at once. `ConnectionHandle` carries the connection's `modality`, and `CartItemDelta.modality` falls back to it, then to PICKUP. `checkout` takes `policy: unknown` until WS09 defines `RunPolicy`. `handoffUrl` is kept. The registry (`getAdapter`, `isAdapterAvailable`, `listAdapters`), the typed errors, the capability table, and `ProductRef` are exported from `@mp/retailers`. Adapters sit behind `@mp/retailers/kroger` and `@mp/retailers/mock`, so the app bundle never carries them. `RETAILER_IDS` and `MODALITIES` come from `@mp/core` (`RetailerId`, `AdapterModality`).
+
 The agent and the UI only ever see this contract. Adding a store is a new adapter plus a capabilities row. The UI renders what each store can do ("Cart fills automatically, you pay in the QFC app"). API adapters run in the worker; browser adapters run wherever the browser is (client WebView in Mode A, household-hosted worker in Mode B), so `packages/agent` has no Node-only dependencies. `mock/` ships a `MockRetailer` with fixtures for tests, evals, and replays.
 
 ## Per-retailer adapter plan
 
-| Adapter | Tier | Capabilities | Notes |
-|---|---|---|---|
-| `kroger` | 1 | search api · cartAdd api · cartRead none · slots handoff · checkout handoff · orders none | First and best adapter. OAuth with PKCE and the `banner` parameter during onboarding. Idempotency via the run ledger, not cart reads. Live product lookups every run; nothing cached past response headers. Deep link to kroger.com/checkout or the QFC or Fred Meyer app. Cart calls can only be tested in production |
-| `safeway` (browser) | 3 | all browser | Main path. Mode A on-device. Consent shown once at connect |
-| `costco` (browser) | 3 | all browser | Main path. Mode A on-device. Consent shown once at connect. Membership required; non-members are not supported at Costco |
-| `kroger` browser adapter | 3 | slots browser · checkout browser | WS10. Finishes slot and pay on kroger.com after the API filled the cart; "Finish in app" on a Kroger run |
+| Adapter | Tier | Capabilities | Notes | Implemented |
+|---|---|---|---|---|
+| `kroger` | 1 | search api · cartAdd api · cartRead none · slots handoff · checkout handoff · orders none | First and best adapter. OAuth with PKCE and the `banner` parameter during onboarding. Idempotency via the run ledger, not cart reads. Live product lookups every run; nothing cached past response headers. Deep link to kroger.com/checkout or the QFC or Fred Meyer app. Cart calls can only be tested in production | WS07, 2026-10-30. `packages/retailers/src/kroger/`. OAuth with PKCE S256, a sealed state, and the banner; refresh tokens in Vault, rotated on every refresh. Locations, Products search and batch lookup, Cart add. Daily counts in `retailer_quota_usage`, stopping at 95%. Cache bounded by response headers only; Kroger sends none, so nothing is cached. The terms guard keeps no product data: only a salted hash of each received product's id and display fields, dropped at `cacheUntil` or, with no cache header, when the screen releases the results. Per-member hourly limits in `retailer-oauth` protect the shared quota. Live-tested for stores and search; the cart call waits on the developer's own token |
+| `safeway` (browser) | 3 | all browser | Main path. Mode A on-device. Consent shown once at connect. Serves the Safeway, Albertsons and Haggen banners | Not yet (host WS08, adapter WS10) |
+| `costco` (browser) | 3 | all browser | Main path. Mode A on-device. Consent shown once at connect. Membership required; non-members are not supported at Costco | Not yet (host WS08, adapter WS10) |
+| `kroger` browser adapter | 3 | slots browser · checkout browser | Finishes slot and pay on kroger.com after the API filled the cart; "Finish in app" on a Kroger run | Not yet (WS10) |
+
+`instacart` (Tier 2, retired 2026-10-30) still exists as a value in `RetailerId`, `INSTACART_CAPABILITIES` and the `retailer` Postgres enum as WS07 built them. No adapter is registered for it. The orchestrator removes the value in a contract change with a new migration.
 
 **Cross-store splitting** stays inside Kroger's terms because the only prices we display come from the Kroger API (one retailer family), and other stores are assigned by household rules ("bulk and paper goods → Costco," "produce → QFC") and learned preferences, never by comparing prices across retailers on one screen. Browser adapters read prices during a run for the household's own cart; those prices are never shown next to Kroger prices.
 

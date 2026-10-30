@@ -1,0 +1,10 @@
+{
+  "request": { "method": "PUT", "path": "/v1/cart/add" },
+  "status": 204,
+  "headers": {
+    "date": "Fri, 30 Oct 2026 19:31:10 GMT",
+    "x-ratelimit-limit-day": "5000",
+    "x-ratelimit-remaining-day": "4999"
+  },
+  "body": null
+}

@@ -106,7 +106,7 @@ describe("ProfilePreferences", () => {
       equipment: ["slow cooker"],
       portions: 4,
       leftovers: "prefer",
-      primaryStoreId: "70100123",
+      primary_store_id: "70100123",
       notes: "Kid hates mushrooms",
     };
     expect(ProfilePreferences.parse(prefs)).toEqual(prefs);
@@ -123,6 +123,10 @@ describe("ProfilePreferences", () => {
     expect(ProfilePreferences.safeParse({ leftovers: "sometimes" }).success).toBe(false);
     expect(ProfilePreferences.safeParse({ weeknight_minutes: 0 }).success).toBe(false);
     expect(ProfilePreferences.safeParse({ budget_per_week_usd: -1 }).success).toBe(false);
+    expect(ProfilePreferences.safeParse({ dinners_per_week: 9 }).success).toBe(false);
+    expect(ProfilePreferences.safeParse({ household_size: { adults: 0, kids: 0 } }).success).toBe(
+      false,
+    );
   });
 });
 

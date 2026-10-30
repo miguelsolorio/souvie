@@ -3,9 +3,59 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { tokens } from "../../../packages/ui/src/tokens";
+import { site } from "../src/config";
 
 const script = fileURLToPath(new URL("../scripts/sync-brand.mjs", import.meta.url));
 const read = (path: string) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), "utf8");
+
+// The name the product had before checkpoint 6. Joined from parts so a repo-wide search for the
+// old name finds only places that still use it.
+const PLACEHOLDER = ["meal", "planner"].join(" ");
+
+describe("the product name", () => {
+  const ui = (name: string) => read(`../../../packages/ui/assets/${name}`);
+
+  it("is Souvie in config.ts", () => {
+    expect(site.name).toBe("Souvie");
+    expect(site.description.startsWith("Souvie ")).toBe(true);
+  });
+
+  it("is the same in config.ts, both logo SVGs, the mark titles, and the OG image", () => {
+    for (const file of ["logo.svg", "logo-wordmark.svg"]) {
+      const svg = ui(file);
+      expect(/<title id="title">([^<]*)<\/title>/.exec(svg)?.[1], `${file} title`).toBe(site.name);
+      expect(/<text id="wordmark"[^>]*>([^<]*)<\/text>/.exec(svg)?.[1], `${file} text`).toBe(
+        site.name,
+      );
+    }
+    expect(ui("logo-mark.svg")).toContain(`<title id="title">${site.name}</title>`);
+    expect(ui("favicon.svg")).toContain(`<title>${site.name}</title>`);
+    expect(ui("app-icon.svg")).toContain(`<title>${site.name} app icon</title>`);
+    expect(ui("app-icon-foreground.svg")).toContain(
+      `<title>${site.name} app icon foreground</title>`,
+    );
+    expect(ui("splash-icon.svg")).toContain(`<title>${site.name} splash mark</title>`);
+
+    const og = read("../src/assets/og.svg");
+    expect(og).toContain(`<title>${site.name}: ${site.headline}</title>`);
+    const nameLines = [...og.matchAll(/<!-- NAME -->\s*<text[^>]*>([^<]*)<\/text>/g)].map(
+      (match) => match[1],
+    );
+    expect(nameLines).toEqual([site.name, `${site.name} plans the week and fills your carts.`]);
+  });
+
+  it("the placeholder name is gone from the site, the logos, and the OG source", () => {
+    for (const text of [
+      read("../src/config.ts"),
+      read("../src/assets/og.svg"),
+      ui("logo.svg"),
+      ui("logo-wordmark.svg"),
+      ui("logo-mark.svg"),
+    ]) {
+      expect(text.toLowerCase()).not.toContain(PLACEHOLDER);
+    }
+  });
+});
 
 describe("generated brand files", () => {
   it("are up to date with packages/ui (tokens.css and the public SVGs)", () => {

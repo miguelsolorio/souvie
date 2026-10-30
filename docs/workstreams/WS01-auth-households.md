@@ -18,7 +18,7 @@ Users can sign in with Apple, Google, or an email magic link, create a household
 - Migration `<timestamp>_identity.sql` creating `households`, `household_members`, `profiles` with RLS enabled and policies
 - A SQL helper function `current_household_ids()` returning the caller's household ids, used by every later policy
 - Supabase Auth configuration for Apple (native `expo-apple-authentication` plus OAuth on web), Google, and email magic link
-- Screens in `apps/mobile`: sign-in, create household, join household (deep link `mealplanner://join/<token>` and web `/join/<token>`), household settings (rename, members, leave), profile basics (display name, avatar upload to Storage bucket `avatars`)
+- Screens in `apps/mobile`: sign-in, create household, join household (deep link `souvie://join/<token>` and web `/join/<token>`), household settings (rename, members, leave), profile basics (display name, avatar upload to Storage bucket `avatars`)
 - Invite tokens: table `household_invites` (household_id, token, created_by, expires_at, used_at) with a `redeem_invite(token)` security-definer function
 - `packages/db`: generated Supabase types via `supabase gen types typescript`, a `createClient` wrapper, and typed hooks `useSession`, `useHousehold`, `useHouseholdMembers`
 - `packages/core`: zod schemas `Household`, `HouseholdMember`, `Profile`, `ProfilePreferences` (the preferences shape from `docs/02-data-model.md`; WS06 fills it)
@@ -57,7 +57,7 @@ Users can sign in with Apple, Google, or an email magic link, create a household
 - `redeem_invite(token text) returns uuid` (household id); `create_household(name text) returns uuid` (inserts household and owner membership in one transaction)
 - zod: `Household`, `HouseholdMember`, `Profile`, `ProfilePreferences` in `@mp/core`
 - Hooks in `@mp/db`: `useSession()`, `useHousehold()`, `useHouseholdMembers(householdId)`
-- Deep link scheme `mealplanner://` and route `/join/[token]`
+- Deep link scheme `souvie://` and route `/join/[token]`
 
 **Consumes**
 - supabase-js client and env vars from WS00
@@ -81,7 +81,7 @@ create policy households_update_owner on households for update
 
 **Example invite flow**
 1. Owner taps "Invite": client calls `rpc('create_invite', { household_id })`, receives `token`, shows `https://<web-origin>/join/<token>` and a share sheet.
-2. Invitee opens the link. Web: `/join/[token]` route; native: `mealplanner://join/<token>` via universal link.
+2. Invitee opens the link. Web: `/join/[token]` route; native: `souvie://join/<token>` via universal link.
 3. If signed out, the route stores the token, runs sign-in, then resumes.
 4. Client calls `rpc('redeem_invite', { token })`; on success it navigates to `/plan` with the new household active.
 
@@ -109,7 +109,7 @@ pnpm --filter @mp/mobile start                # manual: Apple sign-in on iOS, Go
 
 ## Risks and notes
 - Apple sign-in on iOS must use `expo-apple-authentication` and pass the identity token to `supabase.auth.signInWithIdToken`; the OAuth redirect flow is for web only.
-- Supabase Auth redirect URLs must include the Expo dev URL, `mealplanner://`, and the web origin; list them in `supabase/config.toml` and `.env.example` comments.
+- Supabase Auth redirect URLs must include the Expo dev URL, `souvie://`, and the web origin; list them in `supabase/config.toml` and `.env.example` comments.
 - Never filter household data on the client as a security boundary. The pgTAP tests are the proof; CI must run them from this WS onward (add `supabase test db` to `ci.yml`).
 - `profiles.preferences` is per user, not per household, because allergies and dislikes belong to a person. Household-wide settings live on `households`.
 - Human checkpoint 2: the orchestrator pauses before merging this WS so the human can approve the first migration and policies.

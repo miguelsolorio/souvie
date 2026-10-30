@@ -114,9 +114,9 @@ describe("check-copy on a tree (criterion 7 and the docs listing)", () => {
 
   it("passes a tree with no logos and clean copy blocks", () => {
     const root = tree({
-      "apps/marketing/public/logo.svg": "<svg><title>Meal Planner</title></svg>",
+      "apps/marketing/public/logo.svg": "<svg><title>Souvie</title></svg>",
       "apps/marketing/src/pages/index.astro": "<h1>Dinner, decided.</h1>",
-      "docs/08-brand.md": doc("- **Title (30):** Meal Planner: plan to cart"),
+      "docs/08-brand.md": doc("- **Title (30):** Souvie: Meal plan to cart"),
     });
     expect(run([], root).code).toBe(0);
   });

@@ -13,7 +13,7 @@ import { completeFromUrl } from "../../src/features/auth/signIn";
 const handled = new Set<string>();
 
 /**
- * Where magic links and OAuth redirects land: mealplanner://callback on native, /callback on web.
+ * Where magic links and OAuth redirects land: souvie://callback on native, /callback on web.
  * Exchanges the one-time code for a session. On success the session changes and the (auth)
  * layout sends the person home, so this screen only has to show failures.
  */
@@ -39,7 +39,7 @@ export default function CallbackScreen() {
       .filter(([, value]) => typeof value === "string" && value.length > 0)
       .map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`)
       .join("&");
-    const url = `mealplanner://callback?${query}${fragment}`;
+    const url = `souvie://callback?${query}${fragment}`;
 
     if (handled.has(url)) return;
     handled.add(url);

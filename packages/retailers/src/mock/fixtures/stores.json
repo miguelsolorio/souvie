@@ -1,0 +1,56 @@
+[
+  {
+    "id": "MOCK0001",
+    "chain": "QFC",
+    "name": "Mock QFC Duvall",
+    "address": "100 Main St NE, Duvall, WA",
+    "zip": "98019",
+    "lat": 47.742,
+    "lng": -121.985
+  },
+  {
+    "id": "MOCK0002",
+    "chain": "FRED",
+    "name": "Mock Fred Meyer Monroe",
+    "address": "200 Chain Lake Rd, Monroe, WA",
+    "zip": "98272",
+    "lat": 47.861,
+    "lng": -121.99
+  },
+  {
+    "id": "MOCK0003",
+    "chain": "QFC",
+    "name": "Mock QFC Redmond",
+    "address": "300 Redmond Way, Redmond, WA",
+    "zip": "98052",
+    "lat": 47.674,
+    "lng": -122.121
+  },
+  {
+    "id": "MOCK0004",
+    "chain": "FRED",
+    "name": "Mock Fred Meyer Kirkland",
+    "address": "400 Totem Lake Blvd, Kirkland, WA",
+    "zip": "98034",
+    "lat": 47.717,
+    "lng": -122.181
+  },
+  {
+    "id": "MOCK0005",
+    "chain": "QFC",
+    "name": "Mock QFC Bellevue",
+    "address": "500 Bellevue Way NE, Bellevue, WA",
+    "zip": "98004",
+    "lat": 47.616,
+    "lng": -122.2
+  },
+  {
+    "id": "MOCK0006",
+    "chain": "FRED",
+    "name": "Mock Fred Meyer Issaquah",
+    "address": "600 Gilman Blvd, Issaquah, WA",
+    "zip": "98027",
+    "lat": 47.544,
+    "lng": -122.045
+  }
+]

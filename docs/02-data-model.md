@@ -84,7 +84,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | user_id | uuid pk → auth.users | |
 | display_name | text | |
 | avatar_url | text | |
-| preferences | jsonb | Validated by `core.ProfilePreferences`: diets[], allergies[] (hard), dislikes[], cuisines[], skill (beginner/comfortable/confident), weeknight_minutes, budget_per_week_usd, equipment[], portions, leftovers (avoid/ok/prefer), primaryStoreId, notes. The zod schema and the DIETS and ALLERGENS enums defined in WS06 are canonical |
+| preferences | jsonb | Validated by `core.ProfilePreferences`, keys snake_case like every column: household_size {adults, kids}, dinners_per_week (1 to 7), diets[], allergies[] (hard), dislikes[] (free text; canonicalized to `ingredients.id` at query time, never stored), cuisines[], skill (beginner/comfortable/confident), weeknight_minutes, budget_per_week_usd, equipment[], portions, leftovers (avoid/ok/prefer), primary_store_id, notes. Every key optional; unknown keys pass through. The DIETS and ALLERGENS enums defined in WS06 are canonical |
 | onboarding_step | smallint default 0 | WS06 |
 | taste_embedding | vector(1024) | Rebuilt weekly from feedback; WS06 |
 | costco_member | boolean | Asked in onboarding step 7; WS06 |
@@ -162,7 +162,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | column | type |
 |---|---|
 | normalized_text | text pk |
-| result | jsonb (`core.ParsedIngredient`) |
+| result | jsonb: `{ items: core.ParsedIngredient[] }`; one line can name several ingredients |
 | source | enum ingredient_parse_cache_source: grammar, llm |
 | model, prompt_version | text |
 
@@ -174,6 +174,8 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | proposed_name | text |
 | proposed_category | text |
 | household_id | uuid → households (nullable) |
+| suggested_ingredient_id | uuid → ingredients (nullable); the closest existing ingredient, when the lookup had one |
+| count | integer ≥ 1, default 1; how many lines proposed the same name |
 | status | enum ingredient_alias_proposals_status: pending, accepted, rejected |
 
 ### Planning
@@ -259,7 +261,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | id | uuid pk | |
 | household_id | uuid → households | |
 | user_id | uuid → auth.users | The member whose retailer account this is |
-| retailer | enum retailer: kroger, safeway, costco | |
+| retailer | enum retailer: kroger, safeway, costco | As built by WS07 the enum also holds `instacart`, retired 2026-10-30 and unused; a later migration drops it |
 | auth_type | enum retailer_connections_auth_type: oauth, browser_session, none | |
 | vault_secret_id | uuid | Supabase Vault secret holding OAuth tokens (Kroger) or the encryption key for an on-device browser session (WS08). Never a password or session state |
 | store_id | text | Kroger locationId or site-specific store id |
@@ -294,6 +296,17 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | pinned | boolean | User said "always this" |
 | last_chosen_at | timestamptz | |
 | unique (household_id, retailer, store_id, ingredient_id, product_id) | | |
+
+**retailer_user_usage**: per-member hourly call counts for the `retailer-oauth` actions a signed-in client may call (`stores` 20, `products` 60, `cart_add` 30 per hour), so one account cannot drain the quota every household shares (WS07 fix round). Service-role only; RLS on with no policies.
+| column | type |
+|---|---|
+| user_id | uuid → auth.users |
+| action | text |
+| window_start | timestamptz |
+| count | int |
+| pk (user_id, action, window_start) | |
+
+As built (WS07, 2026-10-30): `retailer_connections` and `product_matches` carry `created_at` and `updated_at` per the convention above; connections are unique on (household_id, user_id, retailer); `vault_secret_id` is granted to neither anon nor authenticated and is reachable only through service-role functions (`retailer_save_connection`, `retailer_read_refresh_token`, `retailer_rotate_refresh_token`, `retailer_mark_needs_reauth`, `retailer_disconnect`); deleting a connection row deletes its Vault secret by trigger; the connection's own member or a household owner may change `store_id`, `store_name` and `modality` (docs said owner only; the holder manages their own account); `households.default_connection_id` is a foreign key with an index and is set on first connect and cleared on disconnect. `product_matches.ingredient_id` is not null, and client inserts and updates must carry `chosen_by = 'user'`. `retailer_quota_usage` is consumed atomically by `retailer_quota_consume`. Disconnect cannot revoke the grant at Kroger (no public revocation endpoint); it deletes our secret and sets `status = 'revoked'`.
 
 **shopping_runs**
 | column | type | notes |
@@ -467,7 +480,7 @@ Files are created with `supabase migration new <name>` and carry a timestamp pre
 | 6 | ingredients | ingredients, ingredient_aliases, ingredient_parse_cache, ingredient_alias_proposals | WS03 |
 | 7 | planning | meal_plans, meal_plan_entries, recipe_feedback | WS04 |
 | 8 | lists | grocery_lists, grocery_list_items, pantry_items, Realtime publication | WS05 |
-| 9 | retail | retailer_connections, product_matches, retailer_quota_usage, FK `households.default_connection_id` → `retailer_connections` | WS07 |
+| 9 | retail | retailer_connections, product_matches, retailer_quota_usage, retailer_user_usage, FK `households.default_connection_id` → `retailer_connections` | WS07 |
 | 10 | ws06_preferences | profiles.preferences, onboarding_step, taste_embedding, costco_member | WS06 |
 | 11 | runs | shopping_runs, shopping_run_items, pgmq queue `shopping_run` | WS09 |
 | 12 | tier3 | households.tier3_consent, Storage bucket `run-screenshots` | WS08 |

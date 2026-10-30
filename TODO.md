@@ -8,7 +8,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 - [x] Git identity pinned to the Gmail account for this clone (`scripts/setup-git-identity.sh`). Run it again on any fresh clone before the first commit.
 - [x] Create the Supabase project. Put `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `WORKER_DATABASE_URL` in a local `.env.local`. Never commit it.
-- [x] Register the Kroger developer app at developer.kroger.com with redirect URI `mealplanner://oauth/kroger`. Put `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` in `.env.local`. (Gates wave 2.)
+- [x] Register the Kroger developer app at developer.kroger.com with redirect URI `souvie://oauth/kroger`. Put `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` in `.env.local`. (Gates wave 2.)
 - [ ] Create accounts: Expo/EAS, Fly.io or Railway (worker), Cloudflare Pages (web and marketing), Sentry, PostHog. Put `ANTHROPIC_API_KEY`, `SENTRY_DSN`, `EXPO_PUBLIC_POSTHOG_KEY` in `.env.local`.
 - [x] Optional now, required before WS14 finishes: run the name checks in `docs/08-brand.md` §1.3 for Sous and Larder.
 - [x] Decide where `main` lives. Either create a GitHub repository and push `main` (enables PRs and GitHub Actions as the docs assume), or tell the orchestrator you're staying local (then CI is the same commands run locally and merges are local squash merges; no PRs).
@@ -29,20 +29,20 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 - [x] Dispatch WS01 (sonnet), WS03 (sonnet), WS14 (sonnet) in one message, each in its own worktree.
 - [x] Review each as it finishes. WS03 and WS14 can merge on a pass.
-- [ ] **Human checkpoint 2** before WS01 merges: approve the identity migration and RLS policies.
-- [ ] **Human checkpoint 6** before WS14 finishes: the name. If the human isn't ready, let WS14 land everything except the name and leave the row `in review` with a note.
-- [ ] Wave 1 summary in `docs/status.md`.
+- [x] **Human checkpoint 2** before WS01 merges: approve the identity migration and RLS policies. Approved 2026-10-30.
+- [x] **Human checkpoint 6** before WS14 finishes: the name. Souvie, chosen 2026-10-30; the name-swap round is dispatched.
+- [x] Wave 1 summary in `docs/status.md`.
 
 ## 3. Wave 2: recipes and Kroger
 
-- [ ] Dispatch WS02 (sonnet) right away.
-- [ ] **Human checkpoint 3** gates WS07 only: Kroger app registered, credentials in `.env.local`. Then dispatch WS07 (opus).
-- [ ] WS07 reviewer must run the Kroger compliance checklist in `docs/04-integrations.md`.
-- [ ] Review, merge, wave 2 summary.
+- [x] Dispatch WS02 (sonnet) right away.
+- [x] **Human checkpoint 3** gates WS07 only: Kroger app registered, credentials in `.env.local`. Then dispatch WS07 (opus). Met 2026-10-30 (redirect `souvie://oauth/kroger`); WS07 dispatched.
+- [x] WS07 reviewer must run the Kroger compliance checklist in `docs/04-integrations.md`. Done 2026-10-30 (terms retention and quota findings came out of it).
+- [x] Review, merge, wave 2 summary. Closed 2026-10-30.
 
 ## 4. Wave 3: planner, onboarding, assisted-checkout host
 
-- [ ] Dispatch WS04 and WS06 (sonnet) right away.
+- [x] Dispatch WS04 and WS06 (sonnet) right away. Dispatched 2026-10-30.
 - [ ] Draft the Tier 3 consent copy (names each retailer, the terms risk, the account exposure, "stops at pay") and put it in front of Miguel.
 - [ ] **Human checkpoint 4** gates WS08 only: consent copy approved; Tier 3 retailer list confirmed (WS08's `TIER3_RETAILERS` default is Safeway, Albertsons, Haggen, Costco; the Kroger pay adapter is a WS10 adapter, not a consent retailer). Then dispatch WS08 (opus).
 - [ ] WS08 reviewer must run the Tier 3 checklist in `docs/04-integrations.md` and confirm no playwright or puppeteer dependency.

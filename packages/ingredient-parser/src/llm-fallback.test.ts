@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildSystemPrompt,
+  buildUserPrompt,
   createAnthropicParseClient,
   estimateCostUsd,
   HAIKU_MODEL,
+  INGREDIENT_PARSE_PROMPT_VERSION,
   type LlmItem,
   LlmParseError,
   type MessagesParseLike,
   sanitizeItem,
 } from "./llm-fallback";
-import { buildSystemPrompt, buildUserPrompt, INGREDIENT_PARSE_PROMPT_VERSION } from "./prompt";
 
 type ParseParams = Record<string, unknown>;
 type ParseResult = Awaited<ReturnType<MessagesParseLike["messages"]["parse"]>>;

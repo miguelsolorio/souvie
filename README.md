@@ -1,4 +1,4 @@
-# Meal planner
+# Souvie
 
 A cross-platform meal-planning app that does the shopping. It suggests and imports recipes, turns a week's plan into one grocery list, converts that list into real products at your store, and has an agent fill the cart at QFC or Fred Meyer (Kroger API) or drive the Safeway or Costco site inside the app to the pay button.
 
@@ -78,6 +78,6 @@ Expo SDK 58 · React Native 0.88 · Expo Router · NativeWind · TanStack Query 
 
 This repo commits only as the personal Gmail account. After cloning, run `scripts/setup-git-identity.sh` once; it pins the local config and installs a pre-commit hook that rejects any other author or committer.
 
-## Working name
+## Name
 
-"Meal planner" until the name is chosen (see `docs/08-brand.md`).
+Souvie, said "SOO-vee", chosen 2026-10-30. The availability checks and the open trademark note are in `docs/08-brand.md` §1. The deep-link scheme is `souvie://` and the bundle id is `com.miguelsolorio.souvie`.

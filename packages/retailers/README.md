@@ -2,13 +2,38 @@
 
 The `RetailerAdapter` interface (`docs/04-integrations.md` §Adapter contract) and one folder per adapter: `kroger/`, `browser/`, `mock/`. `mock/` ships fixtures for tests and evals.
 
-## Status
+## Entry points
 
-Scaffold from WS00. `src/index.ts` exports only `packageName`. `src/mock/MockRetailer.ts` holds an empty `MockRetailer` class so WS07 has a fixed path. No `RetailerAdapter` type exists yet.
+| Import | What | Who uses it |
+|---|---|---|
+| `@mp/retailers` | Types (`RetailerAdapter`, `Product`, `Store`, `CartItemDelta`, ...), the registry (`getAdapter`, `isAdapterAvailable`, `listAdapters`), typed errors (`RetailerAuthError`, `RetailerQuotaError`, `RetailerNotSupportedError`, ...), the capability table, `ProductRef`, `bannerForChain` | Everyone, the app included. No network, no secrets |
+| `@mp/retailers/kroger` | `KrogerAdapter` and its parts: OAuth, Locations, Products, Cart, quota, cache | The worker (WS09) and the `retailer-oauth` Edge Function. Never the app |
+| `@mp/retailers/kroger/terms` | `assertDisplayUnchanged`, `formatPrice`, `rememberReturned` | Components that render Kroger data |
+| `@mp/retailers/mock` | `MockRetailer` and 224 fictional fixture products | Tests, evals, WS09 replays |
+
+Relative imports carry the `.ts` extension so the Edge Function (Deno) can load these files by path.
+
+## Kroger rules this package enforces
+
+- Catalog calls use the app's `client_credentials` token (`product.compact`). Cart calls use the customer's token (`cart.basic:write`), refreshed from the refresh token in Vault. Kroger reissues the refresh token on every refresh, so every refresh rotates the Vault secret. Access tokens stay in memory.
+- Every Products call sends `filter.locationId`. Batch lookups send at most 50 ids per call.
+- `quota.ts` counts calls per endpoint per UTC day in `retailer_quota_usage` and throws `RetailerQuotaError` at 95% of the budget, before the network.
+- `cache.ts` honors `Cache-Control` and `Expires` only. No TTL of ours. `Product.cacheUntil` carries the result. Kroger sent no cache headers when checked on 2026-10-30, so in practice nothing is cached.
+- `terms.ts` records products the app receives as salted hashes of their display fields, never the values. A record ends at the product's `cacheUntil`, or, when Kroger sent no cache header, when the caller releases the set. `assertDisplayUnchanged` fails when a name, brand, size, price, or image no longer matches, or the record has ended. The adapter and the mock record nothing.
+- Nothing here writes search results or catalog data anywhere.
+
+## Live smoke test
+
+```bash
+pnpm --filter @mp/retailers kroger:login                      # once: your own refresh token into .env.kroger.local
+KROGER_LIVE_TEST=1 pnpm test --filter retailers -- kroger.live # stores near 98019, "milk", one cart add
+```
+
+It reads the Kroger keys from the environment or the repo's `.env.local` (`KROGER_ENV_FILE` points elsewhere). The cart step runs only when a refresh token is present, and adds one real item to your own Kroger cart. CI never sets `KROGER_LIVE_TEST`.
 
 ## Ownership
 
-WS07 defines the interface and builds `MockRetailer` and the Kroger adapter. WS08 adds the `BrowserHost` interface, snapshot types, and shared skills under `browser/`. WS10 adds the Safeway, Costco, and Kroger browser adapters. The interface is a shared contract: only the orchestrator edits it after WS07 lands.
+WS07 built the contract, `MockRetailer`, and the Kroger adapter. WS08 adds the `BrowserHost` interface, snapshot types, and shared skills under `browser/`. WS10 adds the Safeway, Costco, and Kroger browser adapters. The contract is shared: only the orchestrator edits it now. `instacart` still appears in `RetailerId` and `INSTACART_CAPABILITIES` as built by WS07; Instacart was retired on 2026-10-30 and the orchestrator removes the value in a contract change.
 
 ## Scripts
 

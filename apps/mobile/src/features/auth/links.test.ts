@@ -30,7 +30,7 @@ describe("parseInviteInput", () => {
   });
 
   it("extracts the token from the deep link", () => {
-    expect(parseInviteInput(`mealplanner://join/${TOKEN}`)).toBe(TOKEN);
+    expect(parseInviteInput(`souvie://join/${TOKEN}`)).toBe(TOKEN);
   });
 
   it("returns null for anything else", () => {
@@ -53,9 +53,9 @@ describe("buildInviteUrl", () => {
   });
 
   it("falls back to the deep link", () => {
-    expect(buildInviteUrl(TOKEN)).toBe(`mealplanner://join/${TOKEN}`);
-    expect(buildInviteUrl(TOKEN, "  ")).toBe(`mealplanner://join/${TOKEN}`);
-    expect(buildInviteUrl(TOKEN, null)).toBe(`mealplanner://join/${TOKEN}`);
+    expect(buildInviteUrl(TOKEN)).toBe(`souvie://join/${TOKEN}`);
+    expect(buildInviteUrl(TOKEN, "  ")).toBe(`souvie://join/${TOKEN}`);
+    expect(buildInviteUrl(TOKEN, null)).toBe(`souvie://join/${TOKEN}`);
   });
 
   it("round-trips through parseInviteInput", () => {
@@ -66,7 +66,7 @@ describe("buildInviteUrl", () => {
 
 describe("parseAuthCallback", () => {
   it("reads the PKCE code from a deep link", () => {
-    expect(parseAuthCallback("mealplanner://callback?code=abc-123")).toEqual({
+    expect(parseAuthCallback("souvie://callback?code=abc-123")).toEqual({
       code: "abc-123",
       error: null,
       errorDescription: null,
@@ -80,7 +80,7 @@ describe("parseAuthCallback", () => {
 
   it("reads an error from the query", () => {
     const result = parseAuthCallback(
-      "mealplanner://callback?error=access_denied&error_description=User+cancelled",
+      "souvie://callback?error=access_denied&error_description=User+cancelled",
     );
     expect(result.code).toBeNull();
     expect(result.error).toBe("access_denied");
@@ -96,22 +96,20 @@ describe("parseAuthCallback", () => {
   });
 
   it("falls back to error_code when there is no error", () => {
-    expect(parseAuthCallback("mealplanner://callback?error_code=otp_expired").error).toBe(
-      "otp_expired",
-    );
+    expect(parseAuthCallback("souvie://callback?error_code=otp_expired").error).toBe("otp_expired");
   });
 
   it("prefers the query over the fragment and decodes percent escapes", () => {
-    const result = parseAuthCallback("mealplanner://callback?code=from%20query#code=from-fragment");
+    const result = parseAuthCallback("souvie://callback?code=from%20query#code=from-fragment");
     expect(result.code).toBe("from query");
   });
 
   it("returns nulls when there is nothing to read", () => {
-    expect(parseAuthCallback("mealplanner://callback")).toEqual({
+    expect(parseAuthCallback("souvie://callback")).toEqual({
       code: null,
       error: null,
       errorDescription: null,
     });
-    expect(parseAuthCallback("mealplanner://callback?code=")).toMatchObject({ code: null });
+    expect(parseAuthCallback("souvie://callback?code=")).toMatchObject({ code: null });
   });
 });

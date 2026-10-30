@@ -2,7 +2,14 @@ import { isIsoDate, isoDateOf, type MealSlot, shiftWeek, weekStartFor } from "@m
 import { EmptyState } from "@mp/ui/primitives";
 import { Redirect, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useRef, useState } from "react";
-import { RefreshControl, ScrollView, type ScrollViewInstance, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  type ScrollViewInstance,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "../../../src/components/Button";
 import { LoadingScreen } from "../../../src/components/Screen";
@@ -80,7 +87,7 @@ export default function PlanScreen() {
       >
         <WeekHeader
           weekStart={weekStart}
-          isThisWeek={weekStart === thisWeek}
+          thisWeek={thisWeek}
           onPrevious={() => goToWeek(shiftWeek(weekStart, -1))}
           onNext={() => goToWeek(shiftWeek(weekStart, 1))}
           onToday={() => goToWeek(thisWeek)}
@@ -89,10 +96,23 @@ export default function PlanScreen() {
 
         <PlanNoticeBar />
 
+        {data.weekLoading ? (
+          <View testID="plan-week-loading" className="items-center gap-2 py-16">
+            <ActivityIndicator color="#2F6B4F" />
+            <Text className="text-sm text-neutral-500">Loading this week</Text>
+          </View>
+        ) : null}
+
         {data.offline ? (
           <Text testID="plan-offline" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
             You are offline and this week has not been saved on this device yet. Reconnect to load
             it.
+          </Text>
+        ) : null}
+
+        {data.staleCopy ? (
+          <Text testID="plan-stale" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+            Showing the copy saved on this device. Could not refresh just now.
           </Text>
         ) : null}
 
@@ -105,7 +125,7 @@ export default function PlanScreen() {
           </View>
         ) : null}
 
-        {isEmpty && !data.error ? (
+        {isEmpty && !data.error && !data.weekLoading && !data.offline ? (
           <EmptyState
             testID="plan-empty"
             icon="🍽"
@@ -119,15 +139,17 @@ export default function PlanScreen() {
           />
         ) : null}
 
-        <WeekGrid
-          weekStart={weekStart}
-          byDay={data.byDay}
-          today={today}
-          onAdd={addTo}
-          onOpenEntry={(entry) => setOpenId(entry.id)}
-          onOpenDay={(date) => router.push(dayRoute(date))}
-          onTodayOffset={scrollToToday}
-        />
+        {data.weekLoading ? null : (
+          <WeekGrid
+            weekStart={weekStart}
+            byDay={data.byDay}
+            today={today}
+            onAdd={addTo}
+            onOpenEntry={(entry) => setOpenId(entry.id)}
+            onOpenDay={(date) => router.push(dayRoute(date))}
+            onTodayOffset={scrollToToday}
+          />
+        )}
       </ScrollView>
 
       <EntrySheet

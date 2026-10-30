@@ -6,6 +6,7 @@ import {
   entryTitle,
   longDate,
   neighborDay,
+  relativeWeekLabel,
   servingsLabel,
   shortDayName,
   shortMonthDay,
@@ -86,6 +87,21 @@ describe("weekRangeLabel", () => {
 
   it("does not skip or repeat a day across the clock change in November", () => {
     expect(weekRangeLabel("2026-10-26")).toContain("Nov 1");
+  });
+});
+
+describe("relativeWeekLabel", () => {
+  it("says where a week is relative to this one", () => {
+    expect(relativeWeekLabel("2026-10-26", "2026-10-26")).toBe("This week");
+    expect(relativeWeekLabel("2026-11-02", "2026-10-26")).toBe("Next week");
+    expect(relativeWeekLabel("2026-10-19", "2026-10-26")).toBe("Last week");
+    expect(relativeWeekLabel("2026-11-16", "2026-10-26")).toBe("3 weeks ahead");
+    expect(relativeWeekLabel("2026-10-05", "2026-10-26")).toBe("3 weeks ago");
+  });
+
+  it("counts whole weeks across a year boundary and a clock change", () => {
+    expect(relativeWeekLabel("2027-01-04", "2026-12-28")).toBe("Next week");
+    expect(relativeWeekLabel("2026-11-02", "2026-10-26")).toBe("Next week");
   });
 });
 

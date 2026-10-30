@@ -47,24 +47,29 @@ export function WeekGrid({
 
   if (wide) {
     return (
-      <View
-        testID="week-grid"
-        accessibilityLabel="Week plan, seven columns"
-        className="flex-row gap-2"
-      >
-        {days.map((date) => (
-          <View key={date} testID={`day-${date}`} className="min-w-0 flex-1 gap-2">
-            <DayHeader date={date} today={today} onOpenDay={onOpenDay} centered />
-            {MEAL_SLOTS.map((slot) => (
-              <SlotCell
-                key={slot}
-                date={date}
-                slot={slot}
-                entries={byDay[date]?.[slot] ?? []}
-                layout="cell"
-                onAdd={() => onAdd(date, slot)}
-                onOpen={onOpenEntry}
-              />
+      // One row per slot, seven cells across, so breakfast, lunch, dinner and snack line up from
+      // day to day and a tall cell stretches its neighbors.
+      <View testID="week-grid" accessibilityLabel="Week plan, seven columns" className="gap-2">
+        <View className="flex-row gap-2">
+          {days.map((date) => (
+            <View key={date} testID={`day-${date}`} className="min-w-0 flex-1">
+              <DayHeader date={date} today={today} onOpenDay={onOpenDay} centered />
+            </View>
+          ))}
+        </View>
+        {MEAL_SLOTS.map((slot) => (
+          <View key={slot} className="flex-row gap-2">
+            {days.map((date) => (
+              <View key={date} className="min-w-0 flex-1">
+                <SlotCell
+                  date={date}
+                  slot={slot}
+                  entries={byDay[date]?.[slot] ?? []}
+                  layout="cell"
+                  onAdd={() => onAdd(date, slot)}
+                  onOpen={onOpenEntry}
+                />
+              </View>
             ))}
           </View>
         ))}

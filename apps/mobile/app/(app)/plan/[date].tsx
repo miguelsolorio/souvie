@@ -1,7 +1,7 @@
 import { isIsoDate, isoDateOf, MEAL_SLOTS, weekStartFor } from "@mp/core";
 import { Redirect, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "../../../src/components/Button";
 import { LoadingScreen } from "../../../src/components/Screen";
@@ -64,6 +64,12 @@ export default function DayScreen() {
 
         <PlanNoticeBar />
 
+        {data.staleCopy ? (
+          <Text testID="day-stale" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+            Showing the copy saved on this device. Could not refresh just now.
+          </Text>
+        ) : null}
+
         {data.error ? (
           <View className="gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
             <Text accessibilityRole="alert" className="text-base text-red-800">
@@ -73,7 +79,14 @@ export default function DayScreen() {
           </View>
         ) : null}
 
-        {MEAL_SLOTS.map((slot) => {
+        {data.weekLoading ? (
+          <View testID="day-loading" className="items-center gap-2 py-16">
+            <ActivityIndicator color="#2F6B4F" />
+            <Text className="text-sm text-neutral-500">Loading the day</Text>
+          </View>
+        ) : null}
+
+        {(data.weekLoading ? [] : MEAL_SLOTS).map((slot) => {
           const entries = data.byDay[day]?.[slot] ?? [];
           return (
             <View key={slot} testID={`day-slot-${slot}`} className="gap-3">

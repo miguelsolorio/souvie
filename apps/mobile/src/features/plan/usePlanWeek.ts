@@ -8,6 +8,7 @@ import {
 } from "@mp/db";
 import { useCallback, useMemo } from "react";
 import "./ids";
+import "./persistHousehold";
 
 const NO_ENTRIES: PlanEntry[] = [];
 
@@ -19,11 +20,16 @@ export interface PlanWeek {
   plan: MealPlan | null | undefined;
   entries: PlanEntry[];
   byDay: EntriesByDay<PlanEntry>;
-  /** True while the first load of the household, plan, or entries is still running. */
+  /** True while the household itself is still loading: nothing can be shown yet. */
   loading: boolean;
+  /** True while this week's plan or entries load for the first time. Keep the week's controls up. */
+  weekLoading: boolean;
   /** True when that first load cannot finish because the device is offline and nothing is cached. */
   offline: boolean;
+  /** A load failed and there is nothing saved on this device to show instead. */
   error: boolean;
+  /** A refresh failed, but a saved copy of the week is on screen. */
+  staleCopy: boolean;
   refreshing: boolean;
   refetch: () => void;
 }
@@ -55,6 +61,10 @@ export function usePlanWeek(weekStart: string): PlanWeek {
     (waitingOnPlan && plan.fetchStatus === "paused") ||
     (waitingOnEntries && entries.fetchStatus === "paused");
 
+  const failed = household.isError || plan.isError || entries.isError;
+  // plan.data is null for a week known to have no plan, undefined only when nothing was ever loaded.
+  const hasCopy = householdId !== null && plan.data !== undefined;
+
   const refetchHousehold = household.refetch;
   const refetchPlan = plan.refetch;
   const refetchEntries = entries.refetch;
@@ -70,9 +80,11 @@ export function usePlanWeek(weekStart: string): PlanWeek {
     plan: plan.data,
     entries: list,
     byDay,
-    loading: loading && !paused,
+    loading: waitingOnHousehold && !paused,
+    weekLoading: (waitingOnPlan || waitingOnEntries) && !paused,
     offline: loading && paused,
-    error: household.isError || plan.isError || entries.isError,
+    error: failed && !hasCopy,
+    staleCopy: failed && hasCopy,
     refreshing: plan.isRefetching || entries.isRefetching,
     refetch,
   };

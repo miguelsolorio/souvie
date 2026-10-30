@@ -68,6 +68,18 @@ export function weekRangeLabel(weekStart: string): string {
   return `${shortMonthDay(first)} to ${shortMonthDay(last)}, ${b.y}`;
 }
 
+/** "This week", "Next week", "Last week", "3 weeks ahead", "2 weeks ago". Both are Mondays. */
+export function relativeWeekLabel(weekStart: string, thisWeek: string): string {
+  const [ya, ma, da] = weekStart.split("-").map(Number);
+  const [yb, mb, db] = thisWeek.split("-").map(Number);
+  const gap = Date.UTC(ya ?? 0, (ma ?? 1) - 1, da ?? 1) - Date.UTC(yb ?? 0, (mb ?? 1) - 1, db ?? 1);
+  const weeks = Math.round(gap / (7 * 24 * 60 * 60 * 1000));
+  if (weeks === 0) return "This week";
+  if (weeks === 1) return "Next week";
+  if (weeks === -1) return "Last week";
+  return weeks > 0 ? `${weeks} weeks ahead` : `${-weeks} weeks ago`;
+}
+
 /** "Tuesday dinner", for labels and titles. */
 export function slotTitle(date: string, slot: MealSlot): string {
   return `${dayName(date)} ${SLOT_LABELS[slot].toLowerCase()}`;

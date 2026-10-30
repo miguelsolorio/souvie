@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import { Button } from "../../components/Button";
-import { weekRangeLabel } from "./format";
+import { relativeWeekLabel, weekRangeLabel } from "./format";
 import { SyncStatus } from "./PlanNotice";
 import { GROCERY_LIST_PENDING_HINT, GROCERY_LIST_ROUTE } from "./routes";
 
@@ -10,20 +10,22 @@ import { GROCERY_LIST_PENDING_HINT, GROCERY_LIST_ROUTE } from "./routes";
  */
 export function WeekHeader({
   weekStart,
-  isThisWeek,
+  thisWeek,
   onPrevious,
   onNext,
   onToday,
   onGenerateList,
 }: {
   weekStart: string;
-  isThisWeek: boolean;
+  /** The Monday of the current week, to label the shown week and to offer a way back. */
+  thisWeek: string;
   onPrevious: () => void;
   onNext: () => void;
   onToday: () => void;
   onGenerateList: (route: string) => void;
 }) {
   const listReady = GROCERY_LIST_ROUTE !== null;
+  const isThisWeek = weekStart === thisWeek;
 
   return (
     <View className="gap-3">
@@ -37,9 +39,7 @@ export function WeekHeader({
           >
             {weekRangeLabel(weekStart)}
           </Text>
-          <Text className="text-xs text-neutral-500">
-            {isThisWeek ? "This week" : `Week of ${weekStart}`}
-          </Text>
+          <Text className="text-xs text-neutral-500">{relativeWeekLabel(weekStart, thisWeek)}</Text>
         </View>
         <NavButton testID="week-next" label="Next week" glyph="›" onPress={onNext} />
       </View>

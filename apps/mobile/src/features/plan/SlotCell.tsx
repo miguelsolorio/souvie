@@ -29,7 +29,7 @@ export function SlotCell({
   return (
     <View
       testID={`slot-${date}-${slot}`}
-      className={cell ? "gap-2 rounded-xl bg-neutral-50 p-2" : "flex-row items-start gap-3"}
+      className={cell ? "flex-1 gap-2 rounded-xl bg-neutral-50 p-2" : "flex-row items-start gap-3"}
     >
       <Text
         className={

@@ -434,6 +434,12 @@ describe("groupEntries, sortEntries, nextPosition", () => {
     expect(sortEntries([late, early]).map((e) => e.id)).toEqual([ID_B, ID_A]);
   });
 
+  it("keeps whatever else the rows carry, such as a joined recipe", () => {
+    const withRecipe = [{ ...dinner0, recipe: { title: "Lemon chicken" } }];
+    const grouped = groupEntries(withRecipe);
+    expect(grouped["2026-11-03"]?.dinner?.[0]?.recipe.title).toBe("Lemon chicken");
+  });
+
   it("does not mutate its input", () => {
     const input = [dinner1, dinner0];
     sortEntries(input);

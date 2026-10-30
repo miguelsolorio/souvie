@@ -10,6 +10,8 @@ const EXCLUDE = [
   "**/dist/**",
   "**/.expo/**",
   "**/.turbo/**",
+  // Nested git worktrees (agent sessions) hold full copies of the repo.
+  "**/.claude/**",
   "supabase/.temp/**",
 ];
 

@@ -12,7 +12,7 @@ The queue itself is created by the WS09 `runs` migration (`docs/02-data-model.md
 
 | Variable | Required | Notes |
 |---|---|---|
-| `WORKER_DATABASE_URL` | yes | Direct Postgres URL. On a developer machine, the hosted project's connection string. In CI, the DB URL from `supabase status`. |
+| `WORKER_DATABASE_URL` | yes | Postgres URL. Hosted: the Supavisor pooler in session mode, port 5432, which supports the prepared statements postgres.js uses by default. The transaction pooler on 6543 does not; using it needs `prepare: false` in the `postgres()` options in `src/index.ts`. In CI: the DB URL from `supabase status`. |
 | `SENTRY_DSN` | no | Read only. Sentry is wired in WS15. |
 
 `pnpm dev` loads the repo root `.env.local` when it exists. `pnpm start` reads only the process environment, which is what production hosts set.

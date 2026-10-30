@@ -37,6 +37,9 @@ supabase/.env
 # Tauri
 src-tauri/target/
 
+# Agent worktrees (full nested copies of the repo)
+.claude/worktrees/
+
 # OS / editors
 .DS_Store
 Thumbs.db

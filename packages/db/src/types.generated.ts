@@ -5,6 +5,63 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      ai_runs: {
+        Row: {
+          cache_read_tokens: number;
+          cost_usd: number;
+          created_at: string;
+          error: string | null;
+          household_id: string | null;
+          id: string;
+          input_tokens: number;
+          kind: string;
+          latency_ms: number | null;
+          model: string;
+          ok: boolean;
+          output_tokens: number;
+          prompt_version: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          cache_read_tokens?: number;
+          cost_usd?: number;
+          created_at?: string;
+          error?: string | null;
+          household_id?: string | null;
+          id?: string;
+          input_tokens?: number;
+          kind: string;
+          latency_ms?: number | null;
+          model: string;
+          ok: boolean;
+          output_tokens?: number;
+          prompt_version?: string | null;
+        };
+        Update: {
+          cache_read_tokens?: number;
+          cost_usd?: number;
+          created_at?: string;
+          error?: string | null;
+          household_id?: string | null;
+          id?: string;
+          input_tokens?: number;
+          kind?: string;
+          latency_ms?: number | null;
+          model?: string;
+          ok?: boolean;
+          output_tokens?: number;
+          prompt_version?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_runs_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       audit_events: {
         Row: {
           actor_user_id: string | null;
@@ -149,6 +206,58 @@ export type Database = {
           zip?: string | null;
         };
         Relationships: [];
+      };
+      import_jobs: {
+        Row: {
+          created_at: string;
+          error: string | null;
+          finished_at: string | null;
+          household_id: string;
+          id: string;
+          input: NonNullable<Json>;
+          kind: Database["public"]["Enums"]["import_jobs_kind"];
+          result_recipe_id: string | null;
+          status: Database["public"]["Enums"]["import_jobs_status"];
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          error?: string | null;
+          finished_at?: string | null;
+          household_id: string;
+          id?: string;
+          input?: NonNullable<Json>;
+          kind: Database["public"]["Enums"]["import_jobs_kind"];
+          result_recipe_id?: string | null;
+          status?: Database["public"]["Enums"]["import_jobs_status"];
+        };
+        Update: {
+          created_at?: string;
+          error?: string | null;
+          finished_at?: string | null;
+          household_id?: string;
+          id?: string;
+          input?: NonNullable<Json>;
+          kind?: Database["public"]["Enums"]["import_jobs_kind"];
+          result_recipe_id?: string | null;
+          status?: Database["public"]["Enums"]["import_jobs_status"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "import_jobs_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "import_jobs_result_recipe_id_fkey";
+            columns: ["result_recipe_id"];
+            isOneToOne: false;
+            referencedRelation: "recipes";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       ingredient_alias_proposals: {
         Row: {
@@ -337,6 +446,145 @@ export type Database = {
         };
         Relationships: [];
       };
+      recipe_ingredients: {
+        Row: {
+          group_name: string | null;
+          id: string;
+          ingredient_id: string | null;
+          optional: boolean;
+          parse_confidence: number | null;
+          position: number;
+          prep_note: string | null;
+          qty: number | null;
+          qty_max: number | null;
+          raw_text: string;
+          recipe_id: string;
+          unit: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          group_name?: string | null;
+          id?: string;
+          ingredient_id?: string | null;
+          optional?: boolean;
+          parse_confidence?: number | null;
+          position: number;
+          prep_note?: string | null;
+          qty?: number | null;
+          qty_max?: number | null;
+          raw_text: string;
+          recipe_id: string;
+          unit?: string | null;
+        };
+        Update: {
+          group_name?: string | null;
+          id?: string;
+          ingredient_id?: string | null;
+          optional?: boolean;
+          parse_confidence?: number | null;
+          position?: number;
+          prep_note?: string | null;
+          qty?: number | null;
+          qty_max?: number | null;
+          raw_text?: string;
+          recipe_id?: string;
+          unit?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_ingredient_id_fkey";
+            columns: ["ingredient_id"];
+            isOneToOne: false;
+            referencedRelation: "ingredients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey";
+            columns: ["recipe_id"];
+            isOneToOne: false;
+            referencedRelation: "recipes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      recipes: {
+        Row: {
+          cook_min: number | null;
+          created_at: string;
+          created_by: string | null;
+          cuisine: string | null;
+          deleted_at: string | null;
+          description: string | null;
+          embedding: string | null;
+          household_id: string | null;
+          id: string;
+          image_url: string | null;
+          instructions: NonNullable<Json>;
+          nutrition: Json | null;
+          prep_min: number | null;
+          servings: number | null;
+          source_type: Database["public"]["Enums"]["recipes_source_type"];
+          source_url: string | null;
+          tags: string[];
+          title: string;
+          updated_at: string;
+          visibility: Database["public"]["Enums"]["recipes_visibility"];
+        };
+        ComputedFields: never;
+        Insert: {
+          cook_min?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          cuisine?: string | null;
+          deleted_at?: string | null;
+          description?: string | null;
+          embedding?: string | null;
+          household_id?: string | null;
+          id?: string;
+          image_url?: string | null;
+          instructions?: NonNullable<Json>;
+          nutrition?: Json | null;
+          prep_min?: number | null;
+          servings?: number | null;
+          source_type: Database["public"]["Enums"]["recipes_source_type"];
+          source_url?: string | null;
+          tags?: string[];
+          title: string;
+          updated_at?: string;
+          visibility?: Database["public"]["Enums"]["recipes_visibility"];
+        };
+        Update: {
+          cook_min?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          cuisine?: string | null;
+          deleted_at?: string | null;
+          description?: string | null;
+          embedding?: string | null;
+          household_id?: string | null;
+          id?: string;
+          image_url?: string | null;
+          instructions?: NonNullable<Json>;
+          nutrition?: Json | null;
+          prep_min?: number | null;
+          servings?: number | null;
+          source_type?: Database["public"]["Enums"]["recipes_source_type"];
+          source_url?: string | null;
+          tags?: string[];
+          title?: string;
+          updated_at?: string;
+          visibility?: Database["public"]["Enums"]["recipes_visibility"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "recipes_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       waitlist: {
         Row: {
           created_at: string;
@@ -404,9 +652,13 @@ export type Database = {
     };
     Enums: {
       household_members_role: "owner" | "member";
+      import_jobs_kind: "url" | "text" | "photo" | "caption";
+      import_jobs_status: "queued" | "running" | "done" | "failed";
       ingredient_alias_proposals_status: "pending" | "accepted" | "rejected";
       ingredient_aliases_source: "seed" | "llm" | "user";
       ingredient_parse_cache_source: "grammar" | "llm";
+      recipes_source_type: "url" | "text" | "photo" | "video" | "manual" | "ai";
+      recipes_visibility: "household" | "catalog";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -523,9 +775,13 @@ export const Constants = {
   public: {
     Enums: {
       household_members_role: ["owner", "member"],
+      import_jobs_kind: ["url", "text", "photo", "caption"],
+      import_jobs_status: ["queued", "running", "done", "failed"],
       ingredient_alias_proposals_status: ["pending", "accepted", "rejected"],
       ingredient_aliases_source: ["seed", "llm", "user"],
       ingredient_parse_cache_source: ["grammar", "llm"],
+      recipes_source_type: ["url", "text", "photo", "video", "manual", "ai"],
+      recipes_visibility: ["household", "catalog"],
     },
   },
 } as const;

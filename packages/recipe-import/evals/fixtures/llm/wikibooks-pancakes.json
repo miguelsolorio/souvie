@@ -1,0 +1,53 @@
+{
+  "model": "claude-sonnet-5-5",
+  "promptVersion": "recipe-extract.v1",
+  "inputHash": "e35a5034fb087b1f4b3ed764e1b06b6f79796113d67bb254d614736d95ea958b",
+  "recordedAt": "2026-10-30T18:26:59.864Z",
+  "output": {
+    "found": true,
+    "title": "Pancakes (North American)",
+    "description": "North American pancakes are a type of pancake prepared from a batter that is baked on a hot griddle or frying pan. They exist in several variations in many different local cuisines.",
+    "servings": 3,
+    "prep_minutes": null,
+    "cook_minutes": null,
+    "ingredients": [
+      {
+        "text": "120 g (1 cup or 8 oz) wheat flour (white, whole grain or 1:1 mix of white and whole grain)",
+        "group": null
+      },
+      {
+        "text": "1 ½ tsp baking powder",
+        "group": null
+      },
+      {
+        "text": "1 pinch salt",
+        "group": null
+      },
+      {
+        "text": "250 ml (1 cup or 8 fl oz) milk (substitute buttermilk or 1:1 mix of milk and buttermilk)",
+        "group": null
+      },
+      {
+        "text": "1 egg, separated",
+        "group": null
+      },
+      {
+        "text": "1 tbsp white sugar (optional; this will add a sweetness to your pancakes and is recommended if you are not using any sauces, syrups or ingredient such as bananas or blueberries that will add natural sugars to the mix)",
+        "group": null
+      }
+    ],
+    "steps": [
+      "In a large bowl, mix dry ingredients together until well-blended.",
+      "Add milk and mix well until smooth.",
+      "Separate the egg, placing the whites in a medium bowl and the yolks in the batter. Mix batter well.",
+      "Whip whites until stiff and then fold into batter gently (skip this step for heavier pancakes or if 1 cup buttermilk is substituted for milk).",
+      "Pour ladles of the mixture into a non-stick pan, one at a time.",
+      "Cook until the edges are dry and bubbles appear on surface. Flip, then cook until golden."
+    ],
+    "tags": [
+      "pancakes",
+      "breakfast"
+    ],
+    "cuisine": null
+  }
+}

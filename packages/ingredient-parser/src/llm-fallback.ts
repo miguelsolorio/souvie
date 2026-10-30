@@ -1,32 +1,42 @@
 // Model fallback stage (WS03): lines the grammar and lookup are unsure about go to Haiku in
 // batches, with a strict schema. This file defines the client interface the pipeline depends on
-// and a minimal Anthropic implementation behind it. When WS02 lands `@mp/llm`'s `extract`, swap
-// the factory for an adapter over it; nothing else changes.
+// (`LlmParseClient`) and the production implementation behind it. WS02 moved the prompt and the
+// output schema into the `@mp/llm` registry (ingredient-parse.v1) and put the Anthropic call
+// behind `extract`, so retries, logging, and the model id live in one place.
+//
+// What this file still owns: the batch shape, `sanitizeItem` (the pipeline calls it on every
+// model item, whichever client produced it), and the mapping from `@mp/llm` errors to
+// `LlmParseError` with the usage of the calls that were billed.
 
-import { INGREDIENT_CATEGORIES, normalizeUnit } from "@mp/core";
-import { z } from "zod";
-import { buildSystemPrompt, buildUserPrompt, INGREDIENT_PARSE_PROMPT_VERSION } from "./prompt.ts";
+import { normalizeUnit } from "@mp/core";
+import {
+  type AiRunRecord,
+  createAnthropicClient,
+  extract,
+  INGREDIENT_PARSE_V1,
+  IngredientParseItem,
+  IngredientParseOutput,
+  LlmError,
+  type MessagesClient,
+  MODELS,
+  estimateCostUsd as priceCall,
+} from "@mp/llm";
 
-export const HAIKU_MODEL = "claude-haiku-5-5";
+export const HAIKU_MODEL = MODELS.haiku;
 /** Lines per model call (docs/03-ai-design.md §5). */
 export const LLM_BATCH_SIZE = 20;
 
-export const LlmItemSchema = z.object({
-  qty: z.number().nullable(),
-  qty_max: z.number().nullable(),
-  unit: z.string().nullable(),
-  ingredient: z.string().nullable(),
-  category: z.enum(INGREDIENT_CATEGORIES).nullable(),
-  prep: z.string().nullable(),
-  optional: z.boolean(),
-  confidence: z.number(),
-});
-export type LlmItem = z.infer<typeof LlmItemSchema>;
+/** The registry id, "ingredient-parse.v1". It is what the parse cache records. */
+export const INGREDIENT_PARSE_PROMPT_VERSION = INGREDIENT_PARSE_V1.id;
+export const buildSystemPrompt = (): string => INGREDIENT_PARSE_V1.system();
+export const buildUserPrompt = (lines: readonly string[]): string =>
+  INGREDIENT_PARSE_V1.user({ lines });
 
-export const LlmBatchSchema = z.object({
-  lines: z.array(z.object({ index: z.number().int(), items: z.array(LlmItemSchema) })),
-});
-export type LlmBatch = z.infer<typeof LlmBatchSchema>;
+export const LlmItemSchema = IngredientParseItem;
+export type LlmItem = IngredientParseItem;
+
+export const LlmBatchSchema = IngredientParseOutput;
+export type LlmBatch = IngredientParseOutput;
 
 export interface LlmUsage {
   model: string;
@@ -67,21 +77,15 @@ export class LlmParseError extends Error {
   }
 }
 
-// Haiku 5.5 list prices, USD per million tokens (docs/03-ai-design.md §1). Cache reads are 0.1x input.
-const INPUT_USD_PER_MTOK = 0.1;
-const OUTPUT_USD_PER_MTOK = 0.5;
-const CACHE_READ_FACTOR = 0.1;
-
-/** Cost of one call, for the `ai_runs` row. */
+/** Cost of one call at Haiku 5.5 list rates, for the `ai_runs` row. */
 export function estimateCostUsd(
   usage: Pick<LlmUsage, "inputTokens" | "outputTokens" | "cacheReadTokens">,
 ): number {
-  const cost =
-    (usage.inputTokens * INPUT_USD_PER_MTOK +
-      usage.cacheReadTokens * INPUT_USD_PER_MTOK * CACHE_READ_FACTOR +
-      usage.outputTokens * OUTPUT_USD_PER_MTOK) /
-    1_000_000;
-  return Math.round(cost * 1e8) / 1e8;
+  return priceCall(HAIKU_MODEL, {
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+    cacheReadTokens: usage.cacheReadTokens,
+  });
 }
 
 /** Clamp and normalize one model item so the rest of the pipeline can trust it. */
@@ -106,26 +110,14 @@ export function sanitizeItem(item: LlmItem): LlmItem {
 }
 
 // ---------------------------------------------------------------------------
-// Anthropic implementation
+// Anthropic implementation, over @mp/llm's extract
 // ---------------------------------------------------------------------------
 
-/** The slice of the SDK this file uses, so tests can pass a fake. */
-export interface MessagesParseLike {
-  messages: {
-    parse(params: Record<string, unknown>): Promise<{
-      parsed_output: unknown;
-      stop_reason: string | null;
-      usage: {
-        input_tokens: number;
-        output_tokens: number;
-        cache_read_input_tokens?: number | null;
-      };
-    }>;
-  };
-}
+/** The slice of the SDK the client needs. The same type `@mp/llm` calls its own. */
+export type MessagesParseLike = MessagesClient;
 
 export interface AnthropicParseClientOptions {
-  /** Defaults to ANTHROPIC_API_KEY from the environment when the SDK is created lazily. */
+  /** Defaults to ANTHROPIC_API_KEY from the environment. */
   apiKey?: string;
   model?: string;
   maxTokens?: number;
@@ -135,110 +127,84 @@ export interface AnthropicParseClientOptions {
   now?: () => number;
 }
 
+function envApiKey(): string | undefined {
+  const g = globalThis as {
+    process?: { env?: Record<string, string | undefined> };
+    Deno?: { env: { get(name: string): string | undefined } };
+  };
+  try {
+    return g.process?.env?.ANTHROPIC_API_KEY ?? g.Deno?.env.get("ANTHROPIC_API_KEY");
+  } catch {
+    return undefined;
+  }
+}
+
+const CODE_MAP: Record<string, LlmParseErrorCode> = {
+  refusal: "refusal",
+  truncated: "truncated",
+  invalid: "invalid",
+};
+
 export function createAnthropicParseClient(
   options: AnthropicParseClientOptions = {},
 ): LlmParseClient {
   const model = options.model ?? HAIKU_MODEL;
   const maxTokens = options.maxTokens ?? 4096;
   const now = options.now ?? (() => Date.now());
-  let sdk: MessagesParseLike | undefined = options.client;
-  let formatFor: (() => unknown) | undefined;
-
-  async function ensure(): Promise<{ client: MessagesParseLike; format: unknown }> {
-    if (!sdk || !formatFor) {
-      const [{ default: Anthropic }, { zodOutputFormat }] = await Promise.all([
-        import("@anthropic-ai/sdk"),
-        import("@anthropic-ai/sdk/helpers/zod"),
-      ]);
-      if (!sdk) {
-        sdk = new Anthropic(
-          options.apiKey ? { apiKey: options.apiKey } : {},
-        ) as unknown as MessagesParseLike;
-      }
-      formatFor = () => zodOutputFormat(LlmBatchSchema);
-    }
-    return { client: sdk, format: formatFor() };
-  }
+  const promptVersion = INGREDIENT_PARSE_V1.id;
 
   return {
     model,
-    promptVersion: INGREDIENT_PARSE_PROMPT_VERSION,
+    promptVersion,
     async parseBatch(lines) {
       const started = now();
-      const base: Omit<
-        LlmUsage,
-        "ok" | "error" | "inputTokens" | "outputTokens" | "cacheReadTokens"
-      > = {
+      // One record per model call, retries and failures included: all of them were billed.
+      const calls: AiRunRecord[] = [];
+      const usageOf = (ok: boolean, error?: string): LlmUsage => ({
         model,
-        promptVersion: INGREDIENT_PARSE_PROMPT_VERSION,
-        latencyMs: 0,
+        promptVersion,
+        inputTokens: calls.reduce((sum, c) => sum + c.inputTokens, 0),
+        outputTokens: calls.reduce((sum, c) => sum + c.outputTokens, 0),
+        cacheReadTokens: calls.reduce((sum, c) => sum + c.cacheReadTokens, 0),
+        latencyMs: now() - started,
+        ok,
+        ...(error !== undefined ? { error } : {}),
         lines: lines.length,
-      };
-      const fail = (
-        code: LlmParseErrorCode,
-        message: string,
-        tokens?: [number, number, number],
-      ) => {
-        const usage: LlmUsage = {
-          ...base,
-          latencyMs: now() - started,
-          inputTokens: tokens?.[0] ?? 0,
-          outputTokens: tokens?.[1] ?? 0,
-          cacheReadTokens: tokens?.[2] ?? 0,
-          ok: false,
-          error: message,
-        };
-        return new LlmParseError(code, message, usage);
-      };
+      });
 
-      let response: Awaited<ReturnType<MessagesParseLike["messages"]["parse"]>>;
+      let value: IngredientParseOutput;
       try {
-        const { client, format } = await ensure();
-        response = await client.messages.parse({
-          model,
-          max_tokens: maxTokens,
-          system: [
-            { type: "text", text: buildSystemPrompt(), cache_control: { type: "ephemeral" } },
-          ],
-          messages: [{ role: "user", content: buildUserPrompt(lines) }],
-          // Low effort: this is extraction, not reasoning. Haiku 5.5 rejects sampling parameters.
-          output_config: { effort: "low", format },
-        });
+        const client =
+          options.client ??
+          (await createAnthropicClient({ apiKey: options.apiKey ?? envApiKey() }));
+        const result = await extract(
+          IngredientParseOutput,
+          {
+            system: INGREDIENT_PARSE_V1.system(),
+            user: INGREDIENT_PARSE_V1.user({ lines }),
+            model,
+            maxTokens,
+            // Parsing is extraction, not reasoning.
+            effort: "low",
+            kind: INGREDIENT_PARSE_V1.kind,
+            promptVersion,
+          },
+          { client, log: (record) => void calls.push(record) },
+        );
+        value = result.value;
       } catch (err) {
-        throw fail("api", err instanceof Error ? err.message : String(err));
+        const message = err instanceof Error ? err.message : String(err);
+        const code = err instanceof LlmError ? (CODE_MAP[err.code] ?? "api") : "api";
+        throw new LlmParseError(code, message, usageOf(false, message));
       }
 
-      const tokens: [number, number, number] = [
-        response.usage.input_tokens,
-        response.usage.output_tokens,
-        response.usage.cache_read_input_tokens ?? 0,
-      ];
-      if (response.stop_reason === "refusal")
-        throw fail("refusal", "model refused the request", tokens);
-      if (response.stop_reason === "max_tokens")
-        throw fail("truncated", "response hit max_tokens", tokens);
-
-      const parsed = LlmBatchSchema.safeParse(response.parsed_output);
-      if (!parsed.success)
-        throw fail("invalid", `response did not match the schema: ${parsed.error.message}`, tokens);
-
       const byIndex = new Map<number, LlmItem[]>();
-      for (const line of parsed.data.lines) {
+      for (const line of value.lines) {
         if (line.index >= 0 && line.index < lines.length && !byIndex.has(line.index)) {
           byIndex.set(line.index, line.items.map(sanitizeItem));
         }
       }
-      return {
-        byIndex,
-        usage: {
-          ...base,
-          latencyMs: now() - started,
-          inputTokens: tokens[0],
-          outputTokens: tokens[1],
-          cacheReadTokens: tokens[2],
-          ok: true,
-        },
-      };
+      return { byIndex, usage: usageOf(true) };
     },
   };
 }

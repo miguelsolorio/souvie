@@ -1,0 +1,581 @@
+{
+  "description": "Golden set for URL recipe import (WS02). 50 public recipe pages across 25 domains. `expect` holds the title, ingredient count (the eval allows +/-1), and minimum step count. `expectPath` is the stage that should read the page: jsonld (schema.org data) or llm (no structured data, so the Sonnet fallback reads the page text). A llm case must name an open `license`: its page text is kept as a fixture, and only openly licensed text may be (see README, Fixtures and licensing). `recorder: deno` marks a site that refuses Node's fetch; record-deno.ts records it. `blocked` is for a site that refuses every client and counts as a failure.",
+  "cases": [
+    {
+      "id": "bbcgoodfood-white-sourdough",
+      "url": "https://www.bbcgoodfood.com/recipes/white-sourdough",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "White sourdough",
+        "ingredients": 6,
+        "minSteps": 13,
+        "maxSteps": 14
+      }
+    },
+    {
+      "id": "bbcgoodfood-focaccia",
+      "url": "https://www.bbcgoodfood.com/recipes/focaccia",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Focaccia",
+        "ingredients": 6,
+        "minSteps": 8,
+        "maxSteps": 9
+      }
+    },
+    {
+      "id": "tasty-chicken-sausage-gumbo",
+      "url": "https://tasty.co/recipe/chicken-and-sausage-gumbo",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Chicken and Sausage Gumbo Recipe by Tasty",
+        "ingredients": 24,
+        "minSteps": 16,
+        "maxSteps": 17
+      }
+    },
+    {
+      "id": "tasty-creamy-lemon-chicken",
+      "url": "https://tasty.co/recipe/creamy-lemon-chicken",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Creamy Lemon Chicken Recipe by Tasty",
+        "ingredients": 13,
+        "minSteps": 15,
+        "maxSteps": 16
+      }
+    },
+    {
+      "id": "delish-snickers-apple-salad",
+      "url": "https://www.delish.com/cooking/recipe-ideas/a27960942/snickers-apple-salad-recipe/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Snickers Apple Salad",
+        "ingredients": 8,
+        "minSteps": 6,
+        "maxSteps": 7
+      }
+    },
+    {
+      "id": "delish-turkey-noodle-soup",
+      "url": "https://www.delish.com/cooking/recipe-ideas/a29089192/best-turkey-noodle-soup-recipe/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Turkey Noodle Soup",
+        "ingredients": 17,
+        "minSteps": 3,
+        "maxSteps": 4
+      }
+    },
+    {
+      "id": "epicurious-zucchini-skillet",
+      "url": "https://www.epicurious.com/recipes/food/views/ba-syn-lasagna-vibes-zucchini-skillet",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Lasagna-Vibes Zucchini Skillet",
+        "ingredients": 13,
+        "minSteps": 3,
+        "maxSteps": 4
+      }
+    },
+    {
+      "id": "epicurious-apple-juice-bread",
+      "url": "https://www.epicurious.com/recipes/food/views/ba-syn-apple-juice-bread",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Apple Juice Bread",
+        "ingredients": 6,
+        "minSteps": 5,
+        "maxSteps": 6
+      }
+    },
+    {
+      "id": "bonappetit-kheer",
+      "url": "https://www.bonappetit.com/recipe/bruleed-kheer-rice-pudding-with-mango-sorbet",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Brûléed Kheer (Rice Pudding) With Mango Sorbet",
+        "ingredients": 8,
+        "minSteps": 2,
+        "maxSteps": 3
+      }
+    },
+    {
+      "id": "bonappetit-sweet-potato-chaat",
+      "url": "https://www.bonappetit.com/recipe/japanese-sweet-potato-chaat",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Japanese Sweet Potato Chaat",
+        "ingredients": 21,
+        "minSteps": 5,
+        "maxSteps": 6
+      }
+    },
+    {
+      "id": "tasteofhome-pinwheel-cookies",
+      "url": "https://www.tasteofhome.com/recipes/halloween-pinwheel-cookies/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Halloween Pinwheel Cookies",
+        "ingredients": 12,
+        "minSteps": 4,
+        "maxSteps": 5
+      }
+    },
+    {
+      "id": "tasteofhome-minestrone",
+      "url": "https://www.tasteofhome.com/recipes/fall-harvest-minestrone/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Fall Harvest Minestrone",
+        "ingredients": 12,
+        "minSteps": 4,
+        "maxSteps": 5
+      }
+    },
+    {
+      "id": "kingarthur-chocolate-cupcakes",
+      "url": "https://www.kingarthurbaking.com/recipes/chocolate-cupcakes-with-whipped-caramel-frosting-recipe",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Chocolate Cupcakes with Whipped Caramel Frosting",
+        "ingredients": 18,
+        "minSteps": 17,
+        "maxSteps": 18
+      }
+    },
+    {
+      "id": "recipetineats-chicken-fritters",
+      "url": "https://www.recipetineats.com/chicken-mince-recipes-ground-chicken/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Cheesy Chicken Mince Fritters with Broccoli",
+        "ingredients": 16,
+        "minSteps": 6,
+        "maxSteps": 7
+      }
+    },
+    {
+      "id": "recipetineats-sweet-potato-bake",
+      "url": "https://www.recipetineats.com/spiral-sweet-potato-bake/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Sweet Potato Bake",
+        "ingredients": 7,
+        "minSteps": 8,
+        "maxSteps": 9
+      }
+    },
+    {
+      "id": "natashaskitchen-slow-cooker-lasagna",
+      "url": "https://natashaskitchen.com/slow-cooker-lasagna-recipe/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Crockpot Lasagna",
+        "ingredients": 18,
+        "minSteps": 5,
+        "maxSteps": 6
+      }
+    },
+    {
+      "id": "natashaskitchen-chicken-pot-pie",
+      "url": "https://natashaskitchen.com/chicken-pot-pie-recipe/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Chicken Pot Pie",
+        "ingredients": 15,
+        "minSteps": 6,
+        "maxSteps": 7
+      }
+    },
+    {
+      "id": "food-big-mac-sauce",
+      "url": "https://www.food.com/recipe/mcdonalds-big-mac-sauce-copycat-recipe-429438",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Mcdonald's Big Mac Sauce Copycat Recipe",
+        "ingredients": 10,
+        "minSteps": 3,
+        "maxSteps": 4
+      }
+    },
+    {
+      "id": "woksoflife-steamed-broccoli",
+      "url": "https://thewoksoflife.com/steamed-broccoli-recipe/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Steamed Broccoli",
+        "ingredients": 8,
+        "minSteps": 4,
+        "maxSteps": 5
+      }
+    },
+    {
+      "id": "wellplated-potato-soup",
+      "url": "https://www.wellplated.com/crockpot-potato-soup-recipe/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Crockpot Potato Soup",
+        "ingredients": 14,
+        "minSteps": 6,
+        "maxSteps": 7
+      }
+    },
+    {
+      "id": "wellplated-stuffed-pepper-casserole",
+      "url": "https://www.wellplated.com/stuffed-pepper-casserole/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Stuffed Pepper Casserole",
+        "ingredients": 19,
+        "minSteps": 5,
+        "maxSteps": 6
+      }
+    },
+    {
+      "id": "jamieoliver-golden-chicken",
+      "url": "https://www.jamieoliver.com/recipes/chicken/golden-chicken-and-garlickly-beans/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Golden chicken & garlicky beans",
+        "ingredients": 10,
+        "minSteps": 5,
+        "maxSteps": 6
+      }
+    },
+    {
+      "id": "jamieoliver-trout",
+      "url": "https://www.jamieoliver.com/recipes/fish/fragrant-trout-and-green-veg/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Fragrant trout & green veg",
+        "ingredients": 10,
+        "minSteps": 5,
+        "maxSteps": 6
+      }
+    },
+    {
+      "id": "pinchofyum-breakfast-burritos",
+      "url": "https://pinchofyum.com/sheet-pan-breakfast-burritos-with-creamy-chipotle-sauce",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Sheet Pan Breakfast Burritos with Creamy Chipotle Sauce",
+        "ingredients": 14,
+        "minSteps": 9,
+        "maxSteps": 10
+      }
+    },
+    {
+      "id": "pinchofyum-shrimp-tacos",
+      "url": "https://pinchofyum.com/spicy-shrimp-tacos-with-garlic-cilantro-lime-slaw",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Spicy Shrimp Tacos with Garlic Cilantro Lime Slaw",
+        "ingredients": 18,
+        "minSteps": 4,
+        "maxSteps": 5
+      }
+    },
+    {
+      "id": "skinnytaste-pork-chops",
+      "url": "https://www.skinnytaste.com/crispy-breaded-pork-chops-in-the-air-fryer/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Crispy Air Fryer Pork Chops",
+        "ingredients": 12,
+        "minSteps": 6,
+        "maxSteps": 7
+      }
+    },
+    {
+      "id": "skinnytaste-chicken-curry",
+      "url": "https://www.skinnytaste.com/chicken-curry-with-coconut-milk-43-pts/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Chicken Curry",
+        "ingredients": 13,
+        "minSteps": 7,
+        "maxSteps": 8
+      }
+    },
+    {
+      "id": "onceuponachef-rice-krispies",
+      "url": "https://www.onceuponachef.com/recipes/best-ever-rice-krispies-treats.html",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Best Rice Krispie Treats",
+        "ingredients": 5,
+        "minSteps": 9,
+        "maxSteps": 10
+      }
+    },
+    {
+      "id": "onceuponachef-beef-stew",
+      "url": "https://www.onceuponachef.com/recipes/beef-stew-with-carrots-potatoes.html",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Beef Stew Recipe (Fall-Apart Tender)",
+        "ingredients": 18,
+        "minSteps": 8,
+        "maxSteps": 9
+      }
+    },
+    {
+      "id": "spendwithpennies-mac-and-cheese",
+      "url": "https://www.spendwithpennies.com/ultra-cream-mac-n-cheese-in-the-slow-cooker/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Crock Pot Mac and Cheese",
+        "ingredients": 9,
+        "minSteps": 3,
+        "maxSteps": 4
+      }
+    },
+    {
+      "id": "spendwithpennies-mongolian-beef",
+      "url": "https://www.spendwithpennies.com/restaurant-style-mongolian-beef-easy-and-amazing/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Easy Mongolian Beef",
+        "ingredients": 9,
+        "minSteps": 6,
+        "maxSteps": 7
+      }
+    },
+    {
+      "id": "cafedelites-chocolate-chip-cookies",
+      "url": "https://cafedelites.com/easy-soft-chewy-chocolate-chip-cookies/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Soft Chewy Crisp Chocolate Chip Cookies",
+        "ingredients": 10,
+        "minSteps": 7,
+        "maxSteps": 8
+      }
+    },
+    {
+      "id": "cafedelites-slow-cooker-turkey",
+      "url": "https://cafedelites.com/crispy-skin-slow-cooker-turkey/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Crispy Skin Slow Cooker Turkey (& Homemade Gravy)",
+        "ingredients": 16,
+        "minSteps": 17,
+        "maxSteps": 18
+      }
+    },
+    {
+      "id": "recipegirl-chicken-rice-casserole",
+      "url": "https://www.recipegirl.com/creamy-chicken-and-rice-casserole-with-peas-carrots-and-cheddar/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Creamy Chicken and Rice Casserole with Peas, Carrots and Cheddar",
+        "ingredients": 18,
+        "minSteps": 9,
+        "maxSteps": 10
+      }
+    },
+    {
+      "id": "recipegirl-apple-cinnamon-rolls",
+      "url": "https://www.recipegirl.com/no-yeast-apple-cinnamon-rolls-with-maple-icing/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "No Yeast Apple Cinnamon Rolls",
+        "ingredients": 19,
+        "minSteps": 5,
+        "maxSteps": 6
+      }
+    },
+    {
+      "id": "mybakingaddiction-snack-cake",
+      "url": "https://www.mybakingaddiction.com/pumpkin-chocolate-chip-snack-cake/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Pumpkin Chocolate Chip Snack Cake",
+        "ingredients": 13,
+        "minSteps": 5,
+        "maxSteps": 6
+      }
+    },
+    {
+      "id": "mybakingaddiction-dump-cake",
+      "url": "https://www.mybakingaddiction.com/caramel-apple-dump-cake/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Caramel Apple Dump Cake",
+        "ingredients": 7,
+        "minSteps": 8,
+        "maxSteps": 9
+      }
+    },
+    {
+      "id": "food-beef-broccoli",
+      "url": "https://www.food.com/recipe/the-best-easy-beef-and-broccoli-stir-fry-99476",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "The Best Easy Beef and Broccoli Stir-Fry",
+        "ingredients": 13,
+        "minSteps": 7,
+        "maxSteps": 8
+      }
+    },
+    {
+      "id": "food-oven-baked-ribs",
+      "url": "https://www.food.com/recipe/low-slow-oven-baked-ribs-super-simple-303245",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Low & Slow Oven Baked Ribs - Super Simple!",
+        "ingredients": 2,
+        "minSteps": 8,
+        "maxSteps": 9
+      }
+    },
+    {
+      "id": "minimalistbaker-brownies",
+      "url": "https://minimalistbaker.com/fudgy-crackly-top-brownies-vegan-gluten-free/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Fudgy Crackly Top Brownies (Vegan + GF)",
+        "ingredients": 10,
+        "minSteps": 5,
+        "maxSteps": 6
+      }
+    },
+    {
+      "id": "minimalistbaker-coffee-cake",
+      "url": "https://minimalistbaker.com/1-bowl-pumpkin-coffee-cake-vegan-gf/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "1-Bowl Pumpkin Coffee Cake (Vegan + GF)",
+        "ingredients": 16,
+        "minSteps": 6,
+        "maxSteps": 7
+      }
+    },
+    {
+      "id": "bettycrocker-pumpkin-praline-cake",
+      "url": "https://www.bettycrocker.com/recipes/pumpkin-praline-cake/2dcc51b5-2706-4ed8-974f-cd1e51b7bf95",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Pumpkin-Praline Cake",
+        "ingredients": 13,
+        "minSteps": 4,
+        "maxSteps": 5
+      }
+    },
+    {
+      "id": "wikibooks-pancakes",
+      "url": "https://en.wikibooks.org/wiki/Cookbook:Pancakes_(North_American)",
+      "expectPath": "llm",
+      "expect": {
+        "title": "Pancakes",
+        "ingredients": 6,
+        "minSteps": 5
+      },
+      "license": {
+        "name": "CC BY-SA 4.0",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "attribution": "Wikibooks contributors, \"Cookbook:Pancakes (North American)\", Wikibooks, https://en.wikibooks.org/wiki/Cookbook:Pancakes_(North_American), CC BY-SA 4.0"
+      }
+    },
+    {
+      "id": "wikibooks-hummus",
+      "url": "https://en.wikibooks.org/wiki/Cookbook:Hummus_I",
+      "expectPath": "llm",
+      "expect": {
+        "title": "Hummus",
+        "ingredients": 9,
+        "minSteps": 8
+      },
+      "license": {
+        "name": "CC BY-SA 4.0",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "attribution": "Wikibooks contributors, \"Cookbook:Hummus I\", Wikibooks, https://en.wikibooks.org/wiki/Cookbook:Hummus_I, CC BY-SA 4.0"
+      }
+    },
+    {
+      "id": "wikibooks-banana-bread",
+      "url": "https://en.wikibooks.org/wiki/Cookbook:Banana_Bread_I",
+      "expectPath": "llm",
+      "expect": {
+        "title": "Banana Bread",
+        "ingredients": 9,
+        "minSteps": 4
+      },
+      "license": {
+        "name": "CC BY-SA 4.0",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "attribution": "Wikibooks contributors, \"Cookbook:Banana Bread I\", Wikibooks, https://en.wikibooks.org/wiki/Cookbook:Banana_Bread_I, CC BY-SA 4.0"
+      }
+    },
+    {
+      "id": "allrecipes-chocolate-chip-cookies",
+      "url": "https://www.allrecipes.com/recipe/10813/best-chocolate-chip-cookies/",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "Best Chocolate Chip Cookies",
+        "ingredients": 11,
+        "minSteps": 9,
+        "maxSteps": 10
+      },
+      "recorder": "deno"
+    },
+    {
+      "id": "seriouseats-bolognese",
+      "url": "https://www.seriouseats.com/the-best-slow-cooked-bolognese-sauce-recipe",
+      "expectPath": "jsonld",
+      "expect": {
+        "title": "The Best Slow-Cooked Bolognese Sauce Recipe",
+        "ingredients": 24,
+        "minSteps": 9,
+        "maxSteps": 10
+      },
+      "recorder": "deno"
+    },
+    {
+      "id": "wikibooks-cornbread",
+      "url": "https://en.wikibooks.org/wiki/Cookbook:Cornbread_I",
+      "expectPath": "llm",
+      "expect": {
+        "title": "Cornbread",
+        "ingredients": 10,
+        "minSteps": 8
+      },
+      "license": {
+        "name": "CC BY-SA 4.0",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "attribution": "Wikibooks contributors, \"Cookbook:Cornbread I\", Wikibooks, https://en.wikibooks.org/wiki/Cookbook:Cornbread_I, CC BY-SA 4.0"
+      }
+    },
+    {
+      "id": "wikibooks-pico-de-gallo",
+      "url": "https://en.wikibooks.org/wiki/Cookbook:Pico_de_Gallo",
+      "expectPath": "llm",
+      "expect": {
+        "title": "Pico de Gallo",
+        "ingredients": 9,
+        "minSteps": 5
+      },
+      "license": {
+        "name": "CC BY-SA 4.0",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "attribution": "Wikibooks contributors, \"Cookbook:Pico de Gallo\", Wikibooks, https://en.wikibooks.org/wiki/Cookbook:Pico_de_Gallo, CC BY-SA 4.0"
+      }
+    },
+    {
+      "id": "wikibooks-guacamole",
+      "url": "https://en.wikibooks.org/wiki/Cookbook:Guacamole_I",
+      "expectPath": "llm",
+      "expect": {
+        "title": "Guacamole",
+        "ingredients": 9,
+        "minSteps": 7
+      },
+      "license": {
+        "name": "CC BY-SA 4.0",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "attribution": "Wikibooks contributors, \"Cookbook:Guacamole I\", Wikibooks, https://en.wikibooks.org/wiki/Cookbook:Guacamole_I, CC BY-SA 4.0"
+      }
+    }
+  ]
+}

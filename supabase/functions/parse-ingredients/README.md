@@ -39,7 +39,8 @@ Parses every `recipe_ingredients` row of the recipe whose `parse_confidence` is 
 
 | Column | Value |
 |---|---|
-| `qty` | The amount. For a range, the upper bound, so a list never comes up short. `recipe_ingredients` has no `qty_max` yet; see the WS03 report. |
+| `qty` | The amount. For a range, the lower bound. |
+| `qty_max` | The upper bound of a range such as "2-3 cloves", else null. |
 | `unit` | Canonical code from `@mp/core` `units.ts`. |
 | `ingredient_id` | The ontology id, or null for an unknown name. |
 | `prep_note` | "diced", "packed, divided", "to taste". |
@@ -64,7 +65,7 @@ Parses every `recipe_ingredients` row of the recipe whose `parse_confidence` is 
 | `ingredients`, `ingredient_aliases`, `match_ingredient_alias` | service role | ontology lookup |
 | `ingredient_parse_cache` | service role | never parse a line twice |
 | `record_ingredient_alias_proposal` | service role | names the ontology lacks |
-| `ai_runs` | service role | one row per model call. Skipped with a warning until WS02 creates the table |
+| `ai_runs` | service role | one row per model call (the table is created by WS02's `ai_runs` migration) |
 
 ## Configuration
 
@@ -84,7 +85,7 @@ The container-based commands (`supabase functions serve`) need a container runti
 supabase functions deploy parse-ingredients --use-api
 ```
 
-`deno.json` maps `@mp/core` to `packages/core/src/index.ts` and pins `zod`, the Anthropic SDK, and supabase-js. The function imports the parser by relative path, so the bundler must be able to read `packages/`. That path has not been exercised by the Supabase bundler; see Open issues in the WS03 report. `deno check` and a `deno run` of the handler against the real parser both pass.
+`deno.json` maps `@mp/core` and `@mp/llm` to their sources and pins `zod`, the Anthropic SDK, and supabase-js. The function imports the parser by relative path, so the bundler must be able to read `packages/`. That path has not been exercised by the Supabase bundler; see Open issues in the WS03 report. `deno check` and a `deno run` of the handler against the real parser both pass.
 
 ## Tests
 

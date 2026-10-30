@@ -15,6 +15,29 @@ export interface CachedParse {
   promptVersion: string | null;
 }
 
+/** "ingredient-parse.v2" -> { name: "ingredient-parse", version: 2 }. Null when it has no version. */
+function splitPromptVersion(
+  id: string | null | undefined,
+): { name: string; version: number } | null {
+  const match = /^(.+)\.v(\d+)$/.exec(id ?? "");
+  return match?.[1] && match[2] ? { name: match[1], version: Number(match[2]) } : null;
+}
+
+/**
+ * True when a cached answer may be used under the current prompt: the same prompt at the same or
+ * a newer version. An older version, a different prompt, or no recorded version is stale, so a
+ * prompt change stops old answers (including "this line is not an ingredient") from living on.
+ */
+export function isCurrentPromptVersion(
+  cached: string | null | undefined,
+  current: string | null | undefined,
+): boolean {
+  if (cached === current) return true;
+  const entry = splitPromptVersion(cached);
+  const now = splitPromptVersion(current);
+  return entry !== null && now !== null && entry.name === now.name && entry.version >= now.version;
+}
+
 export interface ParseCache {
   getMany(keys: readonly string[]): Promise<ReadonlyMap<string, CachedParse>>;
   putMany(entries: ReadonlyMap<string, CachedParse>): Promise<void>;

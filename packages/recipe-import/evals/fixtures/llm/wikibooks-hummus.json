@@ -1,0 +1,70 @@
+{
+  "model": "claude-sonnet-5-5",
+  "promptVersion": "recipe-extract.v1",
+  "inputHash": "98936c3beeace5ff8e134e62c63ce3e266fe382557d8b146b0cb6d5b357a441b",
+  "recordedAt": "2026-10-30T18:27:07.022Z",
+  "output": {
+    "found": true,
+    "title": "Hummus I",
+    "description": null,
+    "servings": null,
+    "prep_minutes": null,
+    "cook_minutes": null,
+    "ingredients": [
+      {
+        "text": "1 cup dry chickpeas",
+        "group": null
+      },
+      {
+        "text": "Water",
+        "group": null
+      },
+      {
+        "text": "1 teaspoon baking soda",
+        "group": null
+      },
+      {
+        "text": "2–3 cloves of garlic",
+        "group": null
+      },
+      {
+        "text": "1 teaspoon salt",
+        "group": null
+      },
+      {
+        "text": "Tahini and water, to make a paste",
+        "group": null
+      },
+      {
+        "text": "Ground cumin",
+        "group": null
+      },
+      {
+        "text": "Fresh, coarsely-cut coriander leaves",
+        "group": null
+      },
+      {
+        "text": "Salt to taste",
+        "group": null
+      }
+    ],
+    "steps": [
+      "The night before you plan to cook, combine the chickpeas, 2.5 cups of water, and baking soda. Leave to soak for 6–12 hours.",
+      "Rinse.",
+      "Add the rinsed chickpeas to 3 cups of water, along with the garlic and 1 teaspoon of salt. Bring to a boil. After about 45 minutes, they should swell enough for their skins to come off. Give it a stir, and use a slotted spoon to remove as many of the skins as you can from the water.",
+      "Cover the pot and continue cooking for about 2 hours, or until they almost dissolve to a paste.",
+      "Pour out the water. If desired, some can be reserved to add later, for extra flavor.",
+      "Mash the chickpeas by pressing them through a pasta sieve or use a food processor.",
+      "Let it cool for 10 minutes.",
+      "Add tahini and water until you get the right consistency.",
+      "Season with salt, ground cumin, and coriander leaves."
+    ],
+    "tags": [
+      "hummus",
+      "side dish",
+      "chickpea",
+      "tahini"
+    ],
+    "cuisine": "middle eastern"
+  }
+}

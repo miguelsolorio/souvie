@@ -4,11 +4,48 @@ The Anthropic client wrapper, the versioned prompt registry, structured-output h
 
 ## Status
 
-Scaffold from WS00. `src/index.ts` exports only `packageName`.
+WS02 created the package: `extract`, the prompt registry, `logAiRun`, and the daily cost cap. `recipe-extract.v1` is the first prompt; `ingredient-parse.v1` (WS03's) moved in unchanged. WS06 and WS09 add theirs.
 
-## Ownership
+## `extract`
 
-WS02 creates the client, `extract<T>()`, and the registry. WS03, WS06, and WS09 add prompts.
+```ts
+import { extract, RECIPE_EXTRACT_V1, RecipeExtractOutput, createAnthropicClient, logAiRun } from "@mp/llm";
+
+const client = await createAnthropicClient({ apiKey: process.env.ANTHROPIC_API_KEY });
+const { value } = await extract(
+  RecipeExtractOutput,
+  {
+    system: RECIPE_EXTRACT_V1.system(),
+    user: RECIPE_EXTRACT_V1.user({ source: "pasted_text", text }),
+    kind: RECIPE_EXTRACT_V1.kind,         // ai_runs.kind
+    promptVersion: RECIPE_EXTRACT_V1.id,  // "recipe-extract.v1"
+    householdId,
+  },
+  { client, log: (run) => logAiRun(serviceDb.from("ai_runs"), run) },
+);
+```
+
+What it does on every call:
+
+- Sends `claude-sonnet-5-5` unless `model` says otherwise, with `output_config.format` built from the zod schema and `output_config.effort` (default `low`; extraction is not reasoning). It sends no `thinking` and no sampling parameters: Sonnet 5.5 runs adaptive thinking when `thinking` is omitted, and rejects `{type: "disabled"}` and non-default `temperature`.
+- Puts `system` in a cacheable block and the untrusted content in the user message.
+- Checks the cost guard first, if one is given.
+- Validates the answer with the schema and the optional `check` callback. A failure retries once with the problem described. A second failure throws `LlmError("invalid")`.
+- Calls `log` once per model call, retries and failures included, with tokens, estimated cost, latency, `kind`, and `promptVersion`.
+
+`LlmError.code` is one of `refusal`, `truncated`, `invalid`, `api`, `cost_cap`, `not_configured`.
+
+Pass `images` (base64 JPEG, PNG, WebP, or GIF) for vision. Pass `client` to use a fake in tests; the SDK loads lazily.
+
+`serverFallback: true` adds `betas: ["server-side-fallback-2026-07-01"]` and `fallbacks: "default"` through `client.beta.messages.parse`, so a policy refusal is retried on a substitute model inside the same call. It is off by default: it is a beta path that has not been exercised against a live key here, and recipe text rarely trips a safeguard.
+
+## Prompts
+
+`src/prompts/<name>.v<n>.ts` defines a prompt with `definePrompt({ name, version, kind, model, system, user })`. The registry rejects a duplicate id. The id (`recipe-extract.v1`) goes in `ai_runs.prompt_version`. To change a shipped prompt, add `v2` beside it; never edit `v1` in place. A prompt change comes with eval results (docs/03 §10).
+
+## Cost and the daily cap
+
+`estimateCostUsd(model, usage)` prices a call from the table in `log.ts` (Haiku $0.10/$0.50, Sonnet $2/$10, Opus $4/$20 per million tokens; cache reads at a fraction of input, cache writes at 1.25x). `createDailyCapGuard({ capUsd, spentTodayUsd })` returns the guard to pass as `context.guard`. The `recipe-import` Edge Function sums today's `ai_runs.cost_usd` for the household and caps it with `AI_DAILY_CAP_USD`.
 
 ## Scripts
 

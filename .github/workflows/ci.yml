@@ -40,9 +40,13 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
-      # Passes with zero eval files. WS15 adds score thresholds.
+      # Golden sets run from recorded fixtures. A model-path case with no committed recording
+      # counts as a failure here (EVAL_REQUIRE_RECORDINGS), so the gate cannot pass on pending cases.
+      # WS15 adds score thresholds for the other sets.
       - name: Evals
         run: pnpm eval
+        env:
+          EVAL_REQUIRE_RECORDINGS: "1"
 
       # pnpm typecheck does not cover supabase/functions (Deno). Check every function's entry
       # point with its own deno.json, if it has one. No lockfile: versions are pinned in deno.json.

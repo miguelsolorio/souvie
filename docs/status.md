@@ -2,8 +2,8 @@
 
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
-**Current wave:** 2 (WS02 merged; WS07 in progress; WS14 name-swap round in progress)
-**Last updated:** 2026-10-30 by the orchestrator (WS02 merged, Souvie confirmed, WS07 and WS14 swap dispatched)
+**Current wave:** 2 (WS02 and WS14 merged; WS07 in progress)
+**Last updated:** 2026-10-30 by the orchestrator (WS14 name swap merged through GitHub)
 
 ## Workstreams
 
@@ -23,7 +23,7 @@ The orchestrator updates this file after every dispatch, report, review, merge, 
 | 11 | Scheduling & notifications | 6 | not started | | | | | |
 | 12 | History & spend | 6 | not started | | | | | |
 | 13 | Web & desktop packaging | 6 | not started | | | | | |
-| 14 | Brand & marketing site | 1 | in progress | ws/14-brand-marketing-site | sonnet | 2026-10-30 | | Code merged as 88b3b19 (PR #2). Name-swap round dispatched 2026-10-30 after checkpoint 6 chose Souvie: wordmark and site copy, docs/08 placeholders, wordmark clipping, `gen-tokens.mjs` comment, two copy claims. Deploy gates still open: privacy contact route, waitlist rate limit, waitlist `db push` (token), Cloudflare Pages project |
+| 14 | Brand & marketing site | 1 | merged | ws/14-brand-marketing-site | sonnet | 2026-10-30 | 2026-10-30 | First round 88b3b19 (PR #2); name swap 0fd014f (PR #6, GitHub squash, review: merge). Deploy-gates round still to run before the site goes live: see the brief's closing section (stores lead wording, listing sentence, privacy contact, waitlist rate limit, `db push`, Pages project) |
 | 15 | Observability & AI evals | 6 | not started | | | | | |
 
 States: `not started` · `in progress` · `in review` · `fix round` · `merged` · `blocked`
@@ -64,6 +64,7 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 
 ## Decisions log
 
+- 2026-10-30: WS14 name-swap review (Sonnet) returned merge: all five items verified, including the wordmark fit rendered in five bold serifs (worst slack 12.3 units) and the recounted listing fields. Merged as 0fd014f through `gh pr merge --squash --delete-branch`, the first GitHub-side merge: author `Miguel Solorio <miguel.solorio07@gmail.com>`, committer `GitHub <noreply@github.com>`, so no GitHub email setting needs changing. PR #6 shows as merged. Findings batched into a deploy-gates round recorded at the end of the WS14 brief: the brief-mandated "Works with ... Safeway, Albertsons, and Costco" lead contradicted the new "are next" sentence, so the brief's line is amended; the store listing should not promise unreleased Instacart lists; README wordmark numbers were advance ends, not ink edges (safe direction); the old name is spelled literally in one test. Undisclosed: the report's pasted grep output omitted two hits and was annotated rather than verbatim. (Orchestrator.)
 - 2026-10-30: Merges move to GitHub (Miguel). PRs #1 to #5 were merged by local squash so every commit on main was committed as the Gmail identity, which left them closed rather than merged on GitHub and made the history look abandoned. From WS07 on: `gh pr merge --squash --delete-branch` with the orchestrator's title and body, after CI is green. GitHub is the committer of such a commit and the PR author's GitHub commit email is the author, so the Gmail address must be the account's primary, non-private email; the orchestrator verifies the author line on the first GitHub merge. The pre-commit hook still guards local commits. CLAUDE.md and the guide updated. (Miguel, orchestrator.)
 - 2026-10-30: WS07 (opus) and the WS14 name-swap round (sonnet) dispatched after the Souvie rename landed on main. WS07's dispatch message adds one line to the §6.1 template: where `.env.local` lives, since the Kroger OAuth checks need the keys. (Orchestrator.)
 - 2026-10-30: Checkpoint 6: Miguel confirmed Souvie. The orchestrator renamed the deep-link scheme to `souvie://`, the Expo name and slug, the iOS bundle id and Android package to `com.miguelsolorio.souvie` (nothing is registered with Apple or Google yet, so this is the cheap moment), the Kroger redirect in briefs, env example and docs, the app's display strings, the magic-link template and the CI check that reads it (commit on main after d1084b1). Checkpoint 3 is therefore met: the registered redirect `souvie://oauth/kroger` matches the app. Trademark caveats (ESSENTIAL SOUVIE pending, Suvie sound-alike) and domains (getsouvie.com, souvieapp.com) are recorded in docs/08 §1 as pre-beta follow-ups. (Miguel, orchestrator.)

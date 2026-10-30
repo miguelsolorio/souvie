@@ -16,7 +16,7 @@
 // The parser was tuned against this set, so its scores are in-sample. README.md records what the
 // untouched first runs of the two blind tranches (178 lines) scored before any fix.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, writeSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -43,6 +43,11 @@ import {
 } from "./score.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+
+/** Straight to stdout, so the report shows under any Vitest reporter, passing or not. */
+function emit(text: string): void {
+  writeSync(1, `${text}\n`);
+}
 const golden = JSON.parse(readFileSync(join(HERE, "lines.json"), "utf8")) as GoldenLine[];
 const seed = readSeed();
 const ontology = new InMemoryOntology({
@@ -113,8 +118,8 @@ function printFailures(
 ): void {
   const failed = scores.filter((s) => !pick(s));
   if (failed.length === 0) return;
-  console.log(`\n${title}: ${failed.length} line(s)`);
-  for (const s of failed.slice(0, 60)) console.log(describeFailure(s));
+  emit(`\n${title}: ${failed.length} line(s)`);
+  for (const s of failed.slice(0, 60)) emit(describeFailure(s));
 }
 
 describe("ingredient parser golden set", () => {
@@ -128,7 +133,7 @@ describe("ingredient parser golden set", () => {
   it("deterministic path meets the thresholds with no model and no network", async () => {
     const scores = await score({ ontology });
     const report = summarize(scores);
-    console.log(`\n${formatReport("Deterministic path (grammar + lookup, no model)", report)}`);
+    emit(`\n${formatReport("Deterministic path (grammar + lookup, no model)", report)}`);
     printFailures("qty/unit mismatches", scores, (s) => s.qtyUnit);
     printFailures("ingredient mismatches", scores, (s) => s.ingredient);
     printFailures("below 0.8 confidence", scores, (s) => s.confident);
@@ -153,7 +158,7 @@ describe("ingredient parser golden set", () => {
     expect(cache.size).toBeGreaterThan(0);
 
     const second = summarize(await score(deps));
-    console.log(
+    emit(
       `\nCache proof (stand-in model, not an accuracy measure)\n` +
         `  pass 1: ${callsFirst} model calls, ${linesFirst} lines sent (batches of 20)\n` +
         `  pass 2: ${model.calls - callsFirst} model calls\n` +
@@ -191,7 +196,7 @@ describe("ingredient parser golden set", () => {
 
       const scores = await score(deps);
       const report = summarize(scores);
-      console.log(
+      emit(
         `\n${formatReport("Live pipeline (grammar + lookup + Haiku)", report)}\n  model calls this pass: ${calls}`,
       );
       printFailures("live: qty/unit mismatches", scores, (s) => s.qtyUnit);

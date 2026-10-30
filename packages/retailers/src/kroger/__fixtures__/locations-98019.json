@@ -1,0 +1,80 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/locations?filter.zipCode.near=98019&filter.radiusInMiles=10&filter.limit=50"
+  },
+  "status": 200,
+  "headers": {
+    "content-type": "application/json",
+    "date": "Fri, 30 Oct 2026 19:28:40 GMT",
+    "ratelimit-limit": "5000",
+    "ratelimit-remaining": "4999",
+    "ratelimit-reset": "16280",
+    "x-ratelimit-limit-day": "5000",
+    "x-ratelimit-remaining-day": "4999"
+  },
+  "body": {
+    "data": [
+      {
+        "locationId": "70500999",
+        "storeNumber": "00999",
+        "divisionNumber": "705",
+        "chain": "QFC",
+        "address": {
+          "addressLine1": "100 Fixture Ridge Rd NE",
+          "city": "Duvall",
+          "state": "WA",
+          "zipCode": "98019",
+          "county": "KING COUNTY"
+        },
+        "geolocation": {
+          "latitude": 47.7401,
+          "longitude": -121.9862,
+          "latLng": "47.7401,-121.9862"
+        },
+        "name": "Quality Food Center - Fixture Ridge",
+        "hours": { "timezone": "America/Los_Angeles", "open24": false },
+        "phone": "5550100100",
+        "departments": [{ "departmentId": "94", "name": "Pickup" }]
+      },
+      {
+        "locationId": "70100999",
+        "storeNumber": "00999",
+        "divisionNumber": "701",
+        "chain": "FRED",
+        "address": {
+          "addressLine1": "200 Fixture Lake Way",
+          "addressLine2": "Suite B",
+          "city": "Monroe",
+          "state": "WA",
+          "zipCode": "98272",
+          "county": "SNOHOMISH COUNTY"
+        },
+        "geolocation": {
+          "latitude": 47.8611,
+          "longitude": -121.9903,
+          "latLng": "47.8611,-121.9903"
+        },
+        "name": "Fred Meyer - Fixture Lake",
+        "hours": { "timezone": "America/Los_Angeles", "open24": false },
+        "phone": "5550100200",
+        "departments": []
+      },
+      {
+        "locationId": "70199999",
+        "storeNumber": "99999",
+        "divisionNumber": "701",
+        "chain": "JEWELRY",
+        "address": {
+          "addressLine1": "200 Fixture Lake Way",
+          "city": "Monroe",
+          "state": "WA",
+          "zipCode": "98272"
+        },
+        "geolocation": { "latitude": 47.8611, "longitude": -121.9903 },
+        "name": "Fixture Jewelers"
+      }
+    ],
+    "meta": { "pagination": { "start": 1, "limit": 50, "total": 3 } }
+  }
+}

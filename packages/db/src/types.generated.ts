@@ -205,7 +205,15 @@ export type Database = {
           updated_at?: string;
           zip?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "households_default_connection_id_fkey";
+            columns: ["default_connection_id"];
+            isOneToOne: false;
+            referencedRelation: "retailer_connections";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       import_jobs: {
         Row: {
@@ -418,6 +426,76 @@ export type Database = {
         };
         Relationships: [];
       };
+      product_matches: {
+        Row: {
+          chosen_by: Database["public"]["Enums"]["product_matches_chosen_by"];
+          confidence: number | null;
+          created_at: string;
+          household_id: string;
+          id: string;
+          ingredient_id: string;
+          last_chosen_at: string;
+          pinned: boolean;
+          product_id: string;
+          product_name: string;
+          retailer: Database["public"]["Enums"]["retailer"];
+          size: string | null;
+          store_id: string;
+          upc: string | null;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          chosen_by: Database["public"]["Enums"]["product_matches_chosen_by"];
+          confidence?: number | null;
+          created_at?: string;
+          household_id: string;
+          id?: string;
+          ingredient_id: string;
+          last_chosen_at?: string;
+          pinned?: boolean;
+          product_id: string;
+          product_name: string;
+          retailer: Database["public"]["Enums"]["retailer"];
+          size?: string | null;
+          store_id: string;
+          upc?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          chosen_by?: Database["public"]["Enums"]["product_matches_chosen_by"];
+          confidence?: number | null;
+          created_at?: string;
+          household_id?: string;
+          id?: string;
+          ingredient_id?: string;
+          last_chosen_at?: string;
+          pinned?: boolean;
+          product_id?: string;
+          product_name?: string;
+          retailer?: Database["public"]["Enums"]["retailer"];
+          size?: string | null;
+          store_id?: string;
+          upc?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "product_matches_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "product_matches_ingredient_id_fkey";
+            columns: ["ingredient_id"];
+            isOneToOne: false;
+            referencedRelation: "ingredients";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -585,6 +663,110 @@ export type Database = {
           },
         ];
       };
+      retailer_connections: {
+        Row: {
+          auth_type: Database["public"]["Enums"]["retailer_connections_auth_type"];
+          created_at: string;
+          household_id: string;
+          id: string;
+          last_verified_at: string | null;
+          modality: Database["public"]["Enums"]["retailer_connections_modality"];
+          retailer: Database["public"]["Enums"]["retailer"];
+          status: Database["public"]["Enums"]["retailer_connections_status"];
+          store_id: string | null;
+          store_name: string | null;
+          updated_at: string;
+          user_id: string;
+          vault_secret_id: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          auth_type: Database["public"]["Enums"]["retailer_connections_auth_type"];
+          created_at?: string;
+          household_id: string;
+          id?: string;
+          last_verified_at?: string | null;
+          modality?: Database["public"]["Enums"]["retailer_connections_modality"];
+          retailer: Database["public"]["Enums"]["retailer"];
+          status?: Database["public"]["Enums"]["retailer_connections_status"];
+          store_id?: string | null;
+          store_name?: string | null;
+          updated_at?: string;
+          user_id: string;
+          vault_secret_id?: string | null;
+        };
+        Update: {
+          auth_type?: Database["public"]["Enums"]["retailer_connections_auth_type"];
+          created_at?: string;
+          household_id?: string;
+          id?: string;
+          last_verified_at?: string | null;
+          modality?: Database["public"]["Enums"]["retailer_connections_modality"];
+          retailer?: Database["public"]["Enums"]["retailer"];
+          status?: Database["public"]["Enums"]["retailer_connections_status"];
+          store_id?: string | null;
+          store_name?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          vault_secret_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "retailer_connections_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      retailer_quota_usage: {
+        Row: {
+          count: number;
+          day: string;
+          endpoint: string;
+          retailer: Database["public"]["Enums"]["retailer"];
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          count?: number;
+          day: string;
+          endpoint: string;
+          retailer: Database["public"]["Enums"]["retailer"];
+          updated_at?: string;
+        };
+        Update: {
+          count?: number;
+          day?: string;
+          endpoint?: string;
+          retailer?: Database["public"]["Enums"]["retailer"];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      retailer_user_usage: {
+        Row: {
+          action: string;
+          count: number;
+          user_id: string;
+          window_start: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          action: string;
+          count?: number;
+          user_id: string;
+          window_start: string;
+        };
+        Update: {
+          action?: string;
+          count?: number;
+          user_id?: string;
+          window_start?: string;
+        };
+        Relationships: [];
+      };
       waitlist: {
         Row: {
           created_at: string;
@@ -649,6 +831,58 @@ export type Database = {
         Returns: string;
       };
       redeem_invite: { Args: { token: string }; Returns: string };
+      retailer_disconnect: {
+        Args: { p_actor_user_id: string; p_connection_id: string };
+        Returns: undefined;
+      };
+      retailer_mark_needs_reauth: { Args: { p_connection_id: string }; Returns: undefined };
+      retailer_quota_consume: {
+        Args: {
+          p_amount?: number;
+          p_ceiling: number;
+          p_day: string;
+          p_endpoint: string;
+          p_retailer: Database["public"]["Enums"]["retailer"];
+        };
+        Returns: {
+          allowed: boolean;
+          used: number;
+        }[];
+      };
+      retailer_quota_raise: {
+        Args: {
+          p_count: number;
+          p_day: string;
+          p_endpoint: string;
+          p_retailer: Database["public"]["Enums"]["retailer"];
+        };
+        Returns: undefined;
+      };
+      retailer_read_refresh_token: { Args: { p_connection_id: string }; Returns: string };
+      retailer_rotate_refresh_token: {
+        Args: { p_connection_id: string; p_refresh_token: string };
+        Returns: undefined;
+      };
+      retailer_save_oauth_connection: {
+        Args: {
+          p_household_id: string;
+          p_modality?: Database["public"]["Enums"]["retailer_connections_modality"];
+          p_refresh_token: string;
+          p_retailer: Database["public"]["Enums"]["retailer"];
+          p_store_id?: string;
+          p_store_name?: string;
+          p_user_id: string;
+        };
+        Returns: string;
+      };
+      retailer_user_consume: {
+        Args: { p_action: string; p_limit: number; p_user_id: string };
+        Returns: {
+          allowed: boolean;
+          resets_at: string;
+          used: number;
+        }[];
+      };
     };
     Enums: {
       household_members_role: "owner" | "member";
@@ -657,8 +891,13 @@ export type Database = {
       ingredient_alias_proposals_status: "pending" | "accepted" | "rejected";
       ingredient_aliases_source: "seed" | "llm" | "user";
       ingredient_parse_cache_source: "grammar" | "llm";
+      product_matches_chosen_by: "agent" | "user";
       recipes_source_type: "url" | "text" | "photo" | "video" | "manual" | "ai";
       recipes_visibility: "household" | "catalog";
+      retailer: "kroger" | "instacart" | "safeway" | "costco";
+      retailer_connections_auth_type: "oauth" | "browser_session" | "none";
+      retailer_connections_modality: "pickup" | "delivery";
+      retailer_connections_status: "active" | "needs_reauth" | "revoked";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -780,8 +1019,13 @@ export const Constants = {
       ingredient_alias_proposals_status: ["pending", "accepted", "rejected"],
       ingredient_aliases_source: ["seed", "llm", "user"],
       ingredient_parse_cache_source: ["grammar", "llm"],
+      product_matches_chosen_by: ["agent", "user"],
       recipes_source_type: ["url", "text", "photo", "video", "manual", "ai"],
       recipes_visibility: ["household", "catalog"],
+      retailer: ["kroger", "instacart", "safeway", "costco"],
+      retailer_connections_auth_type: ["oauth", "browser_session", "none"],
+      retailer_connections_modality: ["pickup", "delivery"],
+      retailer_connections_status: ["active", "needs_reauth", "revoked"],
     },
   },
 } as const;

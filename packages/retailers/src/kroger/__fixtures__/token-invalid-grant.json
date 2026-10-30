@@ -1,0 +1,12 @@
+{
+  "request": { "method": "POST", "path": "/v1/connect/oauth2/token" },
+  "status": 400,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "date": "Fri, 30 Oct 2026 20:05:11 GMT"
+  },
+  "body": {
+    "error": "invalid_grant",
+    "error_description": "The provided authorization grant is invalid, expired, or revoked."
+  }
+}

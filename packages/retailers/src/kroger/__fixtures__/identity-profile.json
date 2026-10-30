@@ -1,0 +1,14 @@
+{
+  "request": { "method": "GET", "path": "/v1/identity/profile" },
+  "status": 200,
+  "headers": {
+    "content-type": "application/json",
+    "date": "Fri, 30 Oct 2026 19:30:03 GMT",
+    "x-ratelimit-limit-day": "5000",
+    "x-ratelimit-remaining-day": "4999"
+  },
+  "body": {
+    "data": { "id": "00000000-0000-4000-8000-00000000f1f0" },
+    "meta": {}
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "request": { "method": "PUT", "path": "/v1/cart/add" },
+  "status": 401,
+  "headers": {
+    "content-type": "application/json",
+    "date": "Fri, 30 Oct 2026 19:29:35 GMT",
+    "www-authenticate": "Bearer realm=\"api.kroger.com\", error=\"invalid_token\""
+  },
+  "body": { "message": "Unauthorized" }
+}

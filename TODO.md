@@ -38,12 +38,12 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 - [x] Dispatch WS02 (sonnet) right away.
 - [x] **Human checkpoint 3** gates WS07 only: Kroger app registered, credentials in `.env.local`. Then dispatch WS07 (opus). Met 2026-10-30 (redirect `souvie://oauth/kroger`); WS07 dispatched.
-- [ ] WS07 reviewer must run the Kroger compliance checklist in `docs/04-integrations.md`.
-- [ ] Review, merge, wave 2 summary.
+- [x] WS07 reviewer must run the Kroger compliance checklist in `docs/04-integrations.md`. Done 2026-10-30 (terms retention and quota findings came out of it).
+- [x] Review, merge, wave 2 summary. Closed 2026-10-30.
 
 ## 4. Wave 3: planner, onboarding, Instacart
 
-- [ ] Dispatch WS04 and WS06 (sonnet) right away.
+- [x] Dispatch WS04 and WS06 (sonnet) right away. Dispatched 2026-10-30.
 - [ ] **Human checkpoint 4** gates WS08 only: Instacart application status known; `INSTACART_API_KEY` (dev) in `.env.local`. Then dispatch WS08 (sonnet).
 - [ ] WS08 reviewer must run the Instacart compliance checklist.
 - [ ] Review, merge, wave 3 summary.

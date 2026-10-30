@@ -1,0 +1,420 @@
+{
+  "allrecipes-chocolate-chip-cookies": {
+    "status": 200,
+    "finalUrl": "https://www.allrecipes.com/recipe/10813/best-chocolate-chip-cookies/",
+    "fetchedAt": "2026-10-30T17:01:57.337Z",
+    "bytes": 1364,
+    "kind": "redacted",
+    "recordedWith": "deno"
+  },
+  "bbcgoodfood-focaccia": {
+    "status": 200,
+    "finalUrl": "https://www.bbcgoodfood.com/recipes/focaccia",
+    "fetchedAt": "2026-10-30T16:01:39.260Z",
+    "bytes": 1185,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "bbcgoodfood-white-sourdough": {
+    "status": 200,
+    "finalUrl": "https://www.bbcgoodfood.com/recipes/white-sourdough",
+    "fetchedAt": "2026-10-30T16:01:38.250Z",
+    "bytes": 1517,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "bettycrocker-pumpkin-praline-cake": {
+    "status": 200,
+    "finalUrl": "https://www.bettycrocker.com/recipes/pumpkin-praline-cake/2dcc51b5-2706-4ed8-974f-cd1e51b7bf95",
+    "fetchedAt": "2026-10-30T16:02:22.214Z",
+    "bytes": 1355,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "bonappetit-kheer": {
+    "status": 200,
+    "finalUrl": "https://www.bonappetit.com/recipe/bruleed-kheer-rice-pudding-with-mango-sorbet",
+    "fetchedAt": "2026-10-30T16:01:46.650Z",
+    "bytes": 1121,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "bonappetit-sweet-potato-chaat": {
+    "status": 200,
+    "finalUrl": "https://www.bonappetit.com/recipe/japanese-sweet-potato-chaat",
+    "fetchedAt": "2026-10-30T16:01:47.812Z",
+    "bytes": 1920,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "cafedelites-chocolate-chip-cookies": {
+    "status": 200,
+    "finalUrl": "https://cafedelites.com/easy-soft-chewy-chocolate-chip-cookies/",
+    "fetchedAt": "2026-10-30T16:02:11.081Z",
+    "bytes": 1553,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "cafedelites-slow-cooker-turkey": {
+    "status": 200,
+    "finalUrl": "https://cafedelites.com/crispy-skin-slow-cooker-turkey/",
+    "fetchedAt": "2026-10-30T16:02:12.099Z",
+    "bytes": 2088,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "delish-snickers-apple-salad": {
+    "status": 200,
+    "finalUrl": "https://www.delish.com/cooking/recipe-ideas/a27960942/snickers-apple-salad-recipe/",
+    "fetchedAt": "2026-10-30T16:01:42.208Z",
+    "bytes": 1357,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "delish-turkey-noodle-soup": {
+    "status": 200,
+    "finalUrl": "https://www.delish.com/cooking/recipe-ideas/a29089192/best-turkey-noodle-soup-recipe/",
+    "fetchedAt": "2026-10-30T16:01:43.256Z",
+    "bytes": 1461,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "epicurious-apple-juice-bread": {
+    "status": 200,
+    "finalUrl": "https://www.epicurious.com/recipes/food/views/ba-syn-apple-juice-bread",
+    "fetchedAt": "2026-10-30T16:01:45.449Z",
+    "bytes": 1075,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "epicurious-zucchini-skillet": {
+    "status": 200,
+    "finalUrl": "https://www.epicurious.com/recipes/food/views/ba-syn-lasagna-vibes-zucchini-skillet",
+    "fetchedAt": "2026-10-30T16:01:44.383Z",
+    "bytes": 1318,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "food-beef-broccoli": {
+    "status": 200,
+    "finalUrl": "https://www.food.com/recipe/the-best-easy-beef-and-broccoli-stir-fry-99476",
+    "fetchedAt": "2026-10-30T16:02:17.804Z",
+    "bytes": 1445,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "food-big-mac-sauce": {
+    "status": 200,
+    "finalUrl": "https://www.food.com/recipe/mcdonalds-big-mac-sauce-copycat-recipe-429438",
+    "fetchedAt": "2026-10-30T16:01:56.216Z",
+    "bytes": 1055,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "food-oven-baked-ribs": {
+    "status": 200,
+    "finalUrl": "https://www.food.com/recipe/low-slow-oven-baked-ribs-super-simple-303245",
+    "fetchedAt": "2026-10-30T16:02:18.802Z",
+    "bytes": 1185,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "jamieoliver-golden-chicken": {
+    "status": 200,
+    "finalUrl": "https://www.jamieoliver.com/recipes/chicken/golden-chicken-and-garlickly-beans/",
+    "fetchedAt": "2026-10-30T16:02:00.420Z",
+    "bytes": 1170,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "jamieoliver-trout": {
+    "status": 200,
+    "finalUrl": "https://www.jamieoliver.com/recipes/fish/fragrant-trout-and-green-veg/",
+    "fetchedAt": "2026-10-30T16:02:01.570Z",
+    "bytes": 1201,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "kingarthur-chocolate-cupcakes": {
+    "status": 200,
+    "finalUrl": "https://www.kingarthurbaking.com/recipes/chocolate-cupcakes-with-whipped-caramel-frosting-recipe",
+    "fetchedAt": "2026-10-30T16:01:50.974Z",
+    "bytes": 2194,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "minimalistbaker-brownies": {
+    "status": 200,
+    "finalUrl": "https://minimalistbaker.com/fudgy-crackly-top-brownies-vegan-gluten-free/",
+    "fetchedAt": "2026-10-30T16:02:19.890Z",
+    "bytes": 1367,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "minimalistbaker-coffee-cake": {
+    "status": 200,
+    "finalUrl": "https://minimalistbaker.com/1-bowl-pumpkin-coffee-cake-vegan-gf/",
+    "fetchedAt": "2026-10-30T16:02:20.902Z",
+    "bytes": 1576,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "mybakingaddiction-dump-cake": {
+    "status": 200,
+    "finalUrl": "https://www.mybakingaddiction.com/caramel-apple-dump-cake/",
+    "fetchedAt": "2026-10-30T16:02:16.786Z",
+    "bytes": 1305,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "mybakingaddiction-snack-cake": {
+    "status": 200,
+    "finalUrl": "https://www.mybakingaddiction.com/pumpkin-chocolate-chip-snack-cake/",
+    "fetchedAt": "2026-10-30T16:02:15.749Z",
+    "bytes": 1311,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "natashaskitchen-chicken-pot-pie": {
+    "status": 200,
+    "finalUrl": "https://natashaskitchen.com/chicken-pot-pie-recipe/",
+    "fetchedAt": "2026-10-30T16:01:55.112Z",
+    "bytes": 1489,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "natashaskitchen-slow-cooker-lasagna": {
+    "status": 200,
+    "finalUrl": "https://natashaskitchen.com/slow-cooker-lasagna-recipe/",
+    "fetchedAt": "2026-10-30T16:01:54.075Z",
+    "bytes": 1554,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "onceuponachef-beef-stew": {
+    "status": 200,
+    "finalUrl": "https://www.onceuponachef.com/recipes/beef-stew-with-carrots-potatoes.html",
+    "fetchedAt": "2026-10-30T16:02:07.920Z",
+    "bytes": 1677,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "onceuponachef-rice-krispies": {
+    "status": 200,
+    "finalUrl": "https://www.onceuponachef.com/recipes/best-ever-rice-krispies-treats.html",
+    "fetchedAt": "2026-10-30T16:02:06.902Z",
+    "bytes": 1334,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "pinchofyum-breakfast-burritos": {
+    "status": 200,
+    "finalUrl": "https://pinchofyum.com/sheet-pan-breakfast-burritos-with-creamy-chipotle-sauce",
+    "fetchedAt": "2026-10-30T16:02:02.633Z",
+    "bytes": 1956,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "pinchofyum-shrimp-tacos": {
+    "status": 200,
+    "finalUrl": "https://pinchofyum.com/spicy-shrimp-tacos-with-garlic-cilantro-lime-slaw",
+    "fetchedAt": "2026-10-30T16:02:03.575Z",
+    "bytes": 1564,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "recipegirl-apple-cinnamon-rolls": {
+    "status": 200,
+    "finalUrl": "https://www.recipegirl.com/no-yeast-apple-cinnamon-rolls-with-maple-icing/",
+    "fetchedAt": "2026-10-30T16:02:14.562Z",
+    "bytes": 1767,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "recipegirl-chicken-rice-casserole": {
+    "status": 200,
+    "finalUrl": "https://www.recipegirl.com/creamy-chicken-and-rice-casserole-with-peas-carrots-and-cheddar/",
+    "fetchedAt": "2026-10-30T16:02:13.438Z",
+    "bytes": 1996,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "recipetineats-chicken-fritters": {
+    "status": 200,
+    "finalUrl": "https://www.recipetineats.com/chicken-mince-recipes-ground-chicken/",
+    "fetchedAt": "2026-10-30T16:01:52.023Z",
+    "bytes": 1615,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "recipetineats-sweet-potato-bake": {
+    "status": 200,
+    "finalUrl": "https://www.recipetineats.com/spiral-sweet-potato-bake/",
+    "fetchedAt": "2026-10-30T16:01:52.975Z",
+    "bytes": 1325,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "seriouseats-bolognese": {
+    "status": 200,
+    "finalUrl": "https://www.seriouseats.com/the-best-slow-cooked-bolognese-sauce-recipe",
+    "fetchedAt": "2026-10-30T17:01:58.649Z",
+    "bytes": 2305,
+    "kind": "redacted",
+    "recordedWith": "deno"
+  },
+  "skinnytaste-chicken-curry": {
+    "status": 200,
+    "finalUrl": "https://www.skinnytaste.com/chicken-curry-with-coconut-milk-43-pts/",
+    "fetchedAt": "2026-10-30T16:02:05.826Z",
+    "bytes": 1461,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "skinnytaste-pork-chops": {
+    "status": 200,
+    "finalUrl": "https://www.skinnytaste.com/crispy-breaded-pork-chops-in-the-air-fryer/",
+    "fetchedAt": "2026-10-30T16:02:04.752Z",
+    "bytes": 1341,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "spendwithpennies-mac-and-cheese": {
+    "status": 200,
+    "finalUrl": "https://www.spendwithpennies.com/ultra-cream-mac-n-cheese-in-the-slow-cooker/",
+    "fetchedAt": "2026-10-30T16:02:08.986Z",
+    "bytes": 1175,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "spendwithpennies-mongolian-beef": {
+    "status": 200,
+    "finalUrl": "https://www.spendwithpennies.com/restaurant-style-mongolian-beef-easy-and-amazing/",
+    "fetchedAt": "2026-10-30T16:02:09.990Z",
+    "bytes": 1298,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "tasteofhome-minestrone": {
+    "status": 200,
+    "finalUrl": "https://www.tasteofhome.com/recipes/fall-harvest-minestrone/",
+    "fetchedAt": "2026-10-30T16:01:49.928Z",
+    "bytes": 1388,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "tasteofhome-pinwheel-cookies": {
+    "status": 200,
+    "finalUrl": "https://www.tasteofhome.com/recipes/halloween-pinwheel-cookies/",
+    "fetchedAt": "2026-10-30T16:01:48.948Z",
+    "bytes": 1227,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "tasty-chicken-sausage-gumbo": {
+    "status": 200,
+    "finalUrl": "https://tasty.co/recipe/chicken-and-sausage-gumbo",
+    "fetchedAt": "2026-10-30T16:01:40.235Z",
+    "bytes": 2127,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "tasty-creamy-lemon-chicken": {
+    "status": 200,
+    "finalUrl": "https://tasty.co/recipe/creamy-lemon-chicken",
+    "fetchedAt": "2026-10-30T16:01:41.133Z",
+    "bytes": 1598,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "wellplated-potato-soup": {
+    "status": 200,
+    "finalUrl": "https://www.wellplated.com/crockpot-potato-soup-recipe/",
+    "fetchedAt": "2026-10-30T16:01:58.265Z",
+    "bytes": 1628,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "wellplated-stuffed-pepper-casserole": {
+    "status": 200,
+    "finalUrl": "https://www.wellplated.com/stuffed-pepper-casserole/",
+    "fetchedAt": "2026-10-30T16:01:59.276Z",
+    "bytes": 1802,
+    "kind": "redacted",
+    "recordedWith": "node"
+  },
+  "wikibooks-banana-bread": {
+    "status": 200,
+    "finalUrl": "https://en.wikibooks.org/wiki/Cookbook:Banana_Bread_I",
+    "fetchedAt": "2026-10-30T16:02:25.148Z",
+    "bytes": 20826,
+    "kind": "licensed",
+    "recordedWith": "node",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "attribution": "Wikibooks contributors, \"Cookbook:Banana Bread I\", Wikibooks, https://en.wikibooks.org/wiki/Cookbook:Banana_Bread_I, CC BY-SA 4.0"
+  },
+  "wikibooks-cornbread": {
+    "status": 200,
+    "finalUrl": "https://en.wikibooks.org/wiki/Cookbook:Cornbread_I",
+    "fetchedAt": "2026-10-30T17:01:59.921Z",
+    "bytes": 19787,
+    "kind": "licensed",
+    "recordedWith": "deno",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "attribution": "Wikibooks contributors, \"Cookbook:Cornbread I\", Wikibooks, https://en.wikibooks.org/wiki/Cookbook:Cornbread_I, CC BY-SA 4.0"
+  },
+  "wikibooks-guacamole": {
+    "status": 200,
+    "finalUrl": "https://en.wikibooks.org/wiki/Cookbook:Guacamole_I",
+    "fetchedAt": "2026-10-30T17:02:01.735Z",
+    "bytes": 25936,
+    "kind": "licensed",
+    "recordedWith": "deno",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "attribution": "Wikibooks contributors, \"Cookbook:Guacamole I\", Wikibooks, https://en.wikibooks.org/wiki/Cookbook:Guacamole_I, CC BY-SA 4.0"
+  },
+  "wikibooks-hummus": {
+    "status": 200,
+    "finalUrl": "https://en.wikibooks.org/wiki/Cookbook:Hummus_I",
+    "fetchedAt": "2026-10-30T16:02:24.268Z",
+    "bytes": 18985,
+    "kind": "licensed",
+    "recordedWith": "node",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "attribution": "Wikibooks contributors, \"Cookbook:Hummus I\", Wikibooks, https://en.wikibooks.org/wiki/Cookbook:Hummus_I, CC BY-SA 4.0"
+  },
+  "wikibooks-pancakes": {
+    "status": 200,
+    "finalUrl": "https://en.wikibooks.org/wiki/Cookbook:Pancakes_(North_American)",
+    "fetchedAt": "2026-10-30T16:02:23.378Z",
+    "bytes": 22845,
+    "kind": "licensed",
+    "recordedWith": "node",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "attribution": "Wikibooks contributors, \"Cookbook:Pancakes (North American)\", Wikibooks, https://en.wikibooks.org/wiki/Cookbook:Pancakes_(North_American), CC BY-SA 4.0"
+  },
+  "wikibooks-pico-de-gallo": {
+    "status": 200,
+    "finalUrl": "https://en.wikibooks.org/wiki/Cookbook:Pico_de_Gallo",
+    "fetchedAt": "2026-10-30T17:02:00.832Z",
+    "bytes": 17794,
+    "kind": "licensed",
+    "recordedWith": "deno",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "attribution": "Wikibooks contributors, \"Cookbook:Pico de Gallo\", Wikibooks, https://en.wikibooks.org/wiki/Cookbook:Pico_de_Gallo, CC BY-SA 4.0"
+  },
+  "woksoflife-steamed-broccoli": {
+    "status": 200,
+    "finalUrl": "https://thewoksoflife.com/steamed-broccoli-recipe/",
+    "fetchedAt": "2026-10-30T16:01:57.249Z",
+    "bytes": 1100,
+    "kind": "redacted",
+    "recordedWith": "node"
+  }
+}

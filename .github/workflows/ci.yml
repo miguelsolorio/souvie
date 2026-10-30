@@ -87,8 +87,10 @@ jobs:
             grep -qw "$ext" extensions.txt || { echo "missing extension: $ext"; exit 1; }
           done
 
+      # Lint our own schemas only. The `extensions` schema holds third-party functions
+      # (pgTAP) that plpgsql_check flags; add schemas here as migrations create them.
       - name: Lint schema
-        run: pnpm supabase db lint --local --fail-on error
+        run: pnpm supabase db lint --local --schema public --fail-on error
 
       # Criterion 10 (CI part)
       - name: Health function answers

@@ -13,6 +13,7 @@ import { Avatar } from "../../src/components/Avatar";
 import { Button } from "../../src/components/Button";
 import { ErrorText, LoadingScreen, Screen, Section } from "../../src/components/Screen";
 import { TextField } from "../../src/components/TextField";
+import { useSignOut } from "../../src/features/auth/useSignOut";
 import { chooseAndUploadAvatar } from "../../src/features/profile/pickAvatar";
 
 export default function ProfileScreen() {
@@ -61,13 +62,8 @@ export default function ProfileScreen() {
       ),
   });
 
-  const signOut = useMutation({
-    mutationFn: async () => {
-      const { error: signOutError } = await client.auth.signOut();
-      if (signOutError) throw signOutError;
-    },
-    onError: () => setError("Could not sign out. Try again."),
-  });
+  // This device only: signing out here does not end the session on the person's other devices.
+  const signOut = useSignOut({ onError: () => setError("Could not sign out. Try again.") });
 
   if (profile.isPending) return <LoadingScreen />;
 

@@ -1,5 +1,5 @@
 import { CreateHouseholdInput } from "@mp/core";
-import { createHousehold, identityErrorMessage, useSupabase } from "@mp/db";
+import { createHousehold, identityErrorMessage, useSession, useSupabase } from "@mp/db";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -9,6 +9,7 @@ import { ErrorText, Screen } from "../../../src/components/Screen";
 import { TextField } from "../../../src/components/TextField";
 import { parseInviteInput } from "../../../src/features/auth/links";
 import { HOME_ROUTE, joinRoute } from "../../../src/features/auth/routes";
+import { useSignOut } from "../../../src/features/auth/useSignOut";
 
 export default function CreateHouseholdScreen() {
   const client = useSupabase();
@@ -18,6 +19,10 @@ export default function CreateHouseholdScreen() {
   const [inviteText, setInviteText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+  const { user } = useSession();
+  // A person who signed in with the wrong account must not be stuck on this screen.
+  const signOut = useSignOut({ onError: () => setSignOutError("Could not sign out. Try again.") });
 
   const create = useMutation({
     mutationFn: (householdName: string) => createHousehold(client, householdName),
@@ -96,6 +101,20 @@ export default function CreateHouseholdScreen() {
           disabled={inviteText.trim().length === 0}
           onPress={joinWithLink}
         />
+      </View>
+
+      <View className="gap-1 border-t border-neutral-200 pt-6">
+        <Text className="text-sm text-neutral-500">
+          Signed in as {user?.email ?? "your account"}. Wrong account?
+        </Text>
+        <Button
+          testID="sign-out"
+          label="Sign out"
+          variant="ghost"
+          loading={signOut.isPending}
+          onPress={() => signOut.mutate()}
+        />
+        <ErrorText>{signOutError}</ErrorText>
       </View>
     </Screen>
   );

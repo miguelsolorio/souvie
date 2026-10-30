@@ -2,8 +2,8 @@
 
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
-**Current wave:** 2 (WS02 in progress; WS07 held at checkpoint 3)
-**Last updated:** 2026-10-30 by the orchestrator (WS02 report received, evidence round sent)
+**Current wave:** 2 (WS02 in review; WS07 held at checkpoint 3)
+**Last updated:** 2026-10-30 by the orchestrator (WS02 in review, PR #5 open, reviewer dispatched)
 
 ## Workstreams
 
@@ -11,7 +11,7 @@ The orchestrator updates this file after every dispatch, report, review, merge, 
 |---|---|---|---|---|---|---|---|---|
 | 00 | Repo & infra scaffold | 0 | merged | ws/00-scaffold | opus | 2026-10-29 | 2026-10-30 | Squash 7713b7f, PR #1. Checkpoint 1 approved 2026-10-30. Still to verify once Miguel unblocks: criterion 7 (Xcode license) and the hosted halves of 9-11 (`SUPABASE_ACCESS_TOKEN`) |
 | 01 | Auth & households | 1 | merged | ws/01-auth-households | sonnet | 2026-10-30 | 2026-10-30 | Squash bdd23f3, PR #4. Checkpoint 2 approved 2026-10-30. Criterion 3 partial until Apple and Google providers exist. Hosted `db push` pending `SUPABASE_ACCESS_TOKEN` |
-| 02 | Recipe domain & import | 2 | in progress | ws/02-recipes-import | sonnet | 2026-10-30 | | Report received 2026-10-30. Evidence round sent: merge main, move migrations off version `20261030080000` (collides with the proposals FK), redact fixtures to facts and openly licensed pages (public repo, R5), `parse-ingredients` writes `qty_max`. Eval gate 42/50 offline; 6 model cases need `ANTHROPIC_API_KEY` |
+| 02 | Recipe domain & import | 2 | in review | ws/02-recipes-import | sonnet | 2026-10-30 | | Second report accepted 2026-10-30: 44/50 offline, 864 tests, fixtures redacted to facts (207 KB; model path on CC BY-SA Wikibooks), migrations `090000`/`090100`, main merged. PR #5 for CI; reviewer (sonnet) dispatched. The 45 gate needs one keyed `eval:live` run (`ANTHROPIC_API_KEY`) |
 | 03 | Ingredient ontology & parser | 1 | merged | ws/03-ingredient-ontology-parser | sonnet | 2026-10-30 | 2026-10-30 | Squash 4270dac, PR #3. Reviewer: merge after one fix round. Hosted `db push` pending `SUPABASE_ACCESS_TOKEN`. Follow-ups in the WS02, WS05 and WS15 briefs; FK to `households` landed on main 2026-10-30 |
 | 04 | Planner UI | 3 | not started | | | | | |
 | 05 | Grocery list & in-store mode | 4 | not started | | | | | |
@@ -64,6 +64,7 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 
 ## Decisions log
 
+- 2026-10-30: WS02 second report accepted. All four round items verified in the repo: branch rebuilt on main's tip, migrations at `20261030090000` and `20261030090100`, 52 fixtures totalling 207 KB with placeholder steps and no trace of the old pages on any ref, `parse-ingredients` writing `qty` and `qty_max`, every commit as the Gmail identity. Offline eval 44/50 (the two blocked sites recorded through Deno); the 45 gate waits on one keyed run. The orchestrator's `8268c7b` had broken Biome formatting in two core files; fixed on main (`df81240`), main merged into the branch (`c29b44e`), branch pushed and PR #5 opened for CI. Decision: CC BY-SA attribution for the six Wikibooks fixtures lives in `fixtures/index.json` and the package README; no repo-level NOTICE file for now. Reviewer dispatched per §6.3. (Orchestrator.)
 - 2026-10-30: `ProfilePreferences` naming resolved, docs first: keys stay snake_case (`weeknight_minutes`, `budget_per_week_usd`), `primaryStoreId` is renamed `primary_store_id` before anyone writes it, and `household_size {adults, kids}` and `dinners_per_week` join the shape as optional keys. WS06 extends `ProfilePreferences` in place (DIETS and ALLERGENS enums, `preferences.ts` for the vocabularies) instead of a parallel `Preferences` schema; `neverFoods` is `dislikes` (free text, canonicalized at query time), `freeText` is `notes`, and `leftovers` keeps docs/02's `avoid/ok/prefer`. docs/02 and the WS06 brief updated; contract change in `packages/core` by the orchestrator. (Orchestrator.)
 - 2026-10-30: WS02 completion report received. Typecheck, lint and 802 unit tests pass; 82 RLS assertions ran in a PGlite stand-in and the Edge Function ran end to end under Deno against mocks; the `supabase` commands wait on CI. Three things went back before review. (1) The branch was cut before the proposals FK commit and its `20261030080000_recipes.sql` shares that version, so the builder merges main and renames to `20261030090000` and `20261030090100`. (2) The 48 recorded recipe pages keep instruction prose and the repo is public, which R5 and docs/05 forbid, so fixtures are redacted to facts (title, ingredient lines, step counts with placeholder text), model-path cases use only public-domain or CC pages, and the branch history is rewritten so the prose is never pushed. (3) `parse-ingredients` now writes `qty` as the lower bound and `qty_max` as the upper, since the column exists. Eval gate is 42/50 offline (44 reachable); 6 model cases wait on `ANTHROPIC_API_KEY`. Rule going forward: a builder dispatched before a contract commit merges main before review, and migration versions are checked for uniqueness at report time.
 - 2026-10-29: Stack: Expo + React Native (TypeScript), Supabase, separate Node worker. Audience v1: household first. Checkout tiers 1, 2, and 3 all allowed; Tier 3 is on-device assisted mode first. (Planning session.)

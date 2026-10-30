@@ -3,7 +3,7 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 2 (WS02 in progress; WS07 held at checkpoint 3)
-**Last updated:** 2026-10-30 by the orchestrator (release attempt, checkpoint 3 pending scheme decision)
+**Last updated:** 2026-10-30 by the orchestrator (WS02 report received, evidence round sent)
 
 ## Workstreams
 
@@ -11,7 +11,7 @@ The orchestrator updates this file after every dispatch, report, review, merge, 
 |---|---|---|---|---|---|---|---|---|
 | 00 | Repo & infra scaffold | 0 | merged | ws/00-scaffold | opus | 2026-10-29 | 2026-10-30 | Squash 7713b7f, PR #1. Checkpoint 1 approved 2026-10-30. Still to verify once Miguel unblocks: criterion 7 (Xcode license) and the hosted halves of 9-11 (`SUPABASE_ACCESS_TOKEN`) |
 | 01 | Auth & households | 1 | merged | ws/01-auth-households | sonnet | 2026-10-30 | 2026-10-30 | Squash bdd23f3, PR #4. Checkpoint 2 approved 2026-10-30. Criterion 3 partial until Apple and Google providers exist. Hosted `db push` pending `SUPABASE_ACCESS_TOKEN` |
-| 02 | Recipe domain & import | 2 | in progress | ws/02-recipes-import | sonnet | 2026-10-30 | | `ANTHROPIC_API_KEY` is not in `.env.local`; the model-backed import path and live evals will report as pending the key |
+| 02 | Recipe domain & import | 2 | in progress | ws/02-recipes-import | sonnet | 2026-10-30 | | Report received 2026-10-30. Evidence round sent: merge main, move migrations off version `20261030080000` (collides with the proposals FK), redact fixtures to facts and openly licensed pages (public repo, R5), `parse-ingredients` writes `qty_max`. Eval gate 42/50 offline; 6 model cases need `ANTHROPIC_API_KEY` |
 | 03 | Ingredient ontology & parser | 1 | merged | ws/03-ingredient-ontology-parser | sonnet | 2026-10-30 | 2026-10-30 | Squash 4270dac, PR #3. Reviewer: merge after one fix round. Hosted `db push` pending `SUPABASE_ACCESS_TOKEN`. Follow-ups in the WS02, WS05 and WS15 briefs; FK to `households` landed on main 2026-10-30 |
 | 04 | Planner UI | 3 | not started | | | | | |
 | 05 | Grocery list & in-store mode | 4 | not started | | | | | |
@@ -64,6 +64,7 @@ States: `not started` · `in progress` · `in review` · `fix round` · `merged`
 
 ## Decisions log
 
+- 2026-10-30: WS02 completion report received. Typecheck, lint and 802 unit tests pass; 82 RLS assertions ran in a PGlite stand-in and the Edge Function ran end to end under Deno against mocks; the `supabase` commands wait on CI. Three things went back before review. (1) The branch was cut before the proposals FK commit and its `20261030080000_recipes.sql` shares that version, so the builder merges main and renames to `20261030090000` and `20261030090100`. (2) The 48 recorded recipe pages keep instruction prose and the repo is public, which R5 and docs/05 forbid, so fixtures are redacted to facts (title, ingredient lines, step counts with placeholder text), model-path cases use only public-domain or CC pages, and the branch history is rewritten so the prose is never pushed. (3) `parse-ingredients` now writes `qty` as the lower bound and `qty_max` as the upper, since the column exists. Eval gate is 42/50 offline (44 reachable); 6 model cases wait on `ANTHROPIC_API_KEY`. Rule going forward: a builder dispatched before a contract commit merges main before review, and migration versions are checked for uniqueness at report time.
 - 2026-10-29: Stack: Expo + React Native (TypeScript), Supabase, separate Node worker. Audience v1: household first. Checkout tiers 1, 2, and 3 all allowed; Tier 3 is on-device assisted mode first. (Planning session.)
 - 2026-10-29: `main` lives on GitHub in a repository Miguel creates. Merges go through PRs and GitHub Actions. The orchestrator session runs in an app-made worktree on branch `claude/repo-orchestration-setup-4365a5`, which mirrors `origin/main`. Ledger and contract commits are made there and pushed with `git push origin HEAD:main`. The primary checkout's local `main` is refreshed by Miguel with `git pull`. (Orchestrator, confirmed with Miguel.)
 - 2026-10-29: `main` is at https://github.com/miguelsolorio/souvie, default branch `main`, public. PRs from `ws/*` branches target it; GitHub Actions runs CI. (Miguel created and pushed; orchestrator recorded.)

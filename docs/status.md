@@ -3,7 +3,7 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 1 (in progress)
-**Last updated:** 2026-10-30 by the orchestrator (WS03 fix round, checkpoint 2 due)
+**Last updated:** 2026-10-30 by the orchestrator (WS03 re-review, checkpoint 2 due)
 
 ## Workstreams
 
@@ -12,7 +12,7 @@ The orchestrator updates this file after every dispatch, report, review, merge, 
 | 00 | Repo & infra scaffold | 0 | merged | ws/00-scaffold | opus | 2026-10-29 | 2026-10-30 | Squash 7713b7f, PR #1. Checkpoint 1 approved 2026-10-30. Still to verify once Miguel unblocks: criterion 7 (Xcode license) and the hosted halves of 9-11 (`SUPABASE_ACCESS_TOKEN`) |
 | 01 | Auth & households | 1 | in review | ws/01-auth-households | sonnet | 2026-10-30 | | Re-review verdict: merge (nits only) at 82e815e; CI green, pgTAP 130/130. Waiting on human checkpoint 2 (approve the identity migrations and RLS). Then merge main into the branch (conflicts with WS03 in core index and lockfile), squash, hosted `db push`. Criterion 3 partial pending provider setup |
 | 02 | Recipe domain & import | 2 | not started | | | | | |
-| 03 | Ingredient ontology & parser | 1 | fix round | ws/03-ingredient-ontology-parser | sonnet | 2026-10-30 | | Review verdict: fix round, no blockers, all criteria pass. Fixing: `T`/`t` cache-key collision, headers re-sent to the model, size words scaling pack counts (12 large eggs = 2 dozen), prototype-key crash, plus three cheap items and a merge of main. Re-review after |
+| 03 | Ingredient ontology & parser | 1 | in review | ws/03-ingredient-ontology-parser | sonnet | 2026-10-30 | | Fix landed at 814bbfd with main (WS14) merged in; CI green: https://github.com/miguelsolorio/souvie/actions/runs/41028321306 (pgTAP 59/59, `deno check` step added). Re-review by the same reviewer running |
 | 04 | Planner UI | 3 | not started | | | | | |
 | 05 | Grocery list & in-store mode | 4 | not started | | | | | |
 | 06 | Onboarding & suggestions | 3 | not started | | | | | |

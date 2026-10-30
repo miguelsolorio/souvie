@@ -3,13 +3,13 @@
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
 **Current wave:** 0 (in progress)
-**Last updated:** 2026-10-30 by the orchestrator (WS00 fix round)
+**Last updated:** 2026-10-30 by the orchestrator (WS00 fix landed, re-review running)
 
 ## Workstreams
 
 | WS | Name | Wave | State | Branch | Model | Started | Merged | Notes |
 |---|---|---|---|---|---|---|---|---|
-| 00 | Repo & infra scaffold | 0 | fix round | ws/00-scaffold | opus | 2026-10-29 | | Review verdict: merge, no blockers. One fix round running for five small findings (pgmq read path in CI, Vitest worktree exclude, Metro env scoping, `.node-version`, pooler docs). Hosted halves of 9-11 need `SUPABASE_ACCESS_TOKEN`; criterion 7 needs the Xcode license. Checkpoint 1 after merge |
+| 00 | Repo & infra scaffold | 0 | in review | ws/00-scaffold | opus | 2026-10-29 | | Fix commit 73db72f landed; CI green: https://github.com/miguelsolorio/souvie/actions/runs/41010562175. Re-review by the same reviewer running. Hosted halves of 9-11 need `SUPABASE_ACCESS_TOKEN`; criterion 7 needs the Xcode license. Checkpoint 1 after merge |
 | 01 | Auth & households | 1 | not started | | | | | Human checkpoint 2 before merge (migration + RLS) |
 | 02 | Recipe domain & import | 2 | not started | | | | | |
 | 03 | Ingredient ontology & parser | 1 | not started | | | | | |

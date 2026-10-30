@@ -46,6 +46,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] Dispatch WS04 and WS06 (sonnet) right away. Dispatched 2026-10-30.
 - [ ] **Human checkpoint 4** gates WS08 only: Instacart application status known; `INSTACART_API_KEY` (dev) in `.env.local`. Then dispatch WS08 (sonnet).
 - [ ] WS08 reviewer must run the Instacart compliance checklist.
+- [ ] **Human decision:** recipe catalog cold start (docs/09, Product). Gates the value of onboarding, not its merge.
 - [ ] Review, merge, wave 3 summary.
 
 ## 5. Wave 4: grocery list

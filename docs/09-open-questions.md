@@ -53,6 +53,7 @@ Facts the research could not confirm as of 2026-10-29, who can resolve each, and
 |---|---|---|---|
 | Name | Branding, domains, store listing | Human picks after checks (checkpoint 6) | WS14 |
 | Tier 3 deployment: Mode A only, or also Mode B on a home server | Unattended scheduled checkout | Human decides during WS10 | WS10 |
+- **Recipe catalog cold start.** A new household has no recipes. The catalog holds only our own or licensed recipes and no workstream seeds it, so calibration shows zero cards and the first draft returns `no_candidates`. Onboarding completes and says so (WS06). Options: (a) a starter catalog of about 60 house recipes drafted through the WS02 AI path, reviewed by Miguel, stored as `visibility: catalog` and `source_type: ai`; (b) an import-first step before calibration that asks for a few recipe links; (c) both. Recommendation: (a) before beta, with (b) as the fallback when the catalog is thin. Who resolves: Miguel. Raised 2026-10-30 by the WS06 builder.
 
 ## Recipe import
 

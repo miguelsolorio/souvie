@@ -1,0 +1,23 @@
+{
+  "name": "household-01-shellfish",
+  "description": "Shellfish allergy, the acceptance criterion 6 household.",
+  "preferences": {
+    "allergies": ["shellfish"],
+    "diets": [],
+    "dislikes": [],
+    "cuisines": ["italian", "mexican"],
+    "weeknight_minutes": 45,
+    "dinners_per_week": 5
+  },
+  "expect": {
+    "minCandidates": 8,
+    "mustExclude": [
+      "shrimp-spaghetti",
+      "prawn-skewers-unparsed",
+      "crab-cakes",
+      "pad-thai",
+      "catalog-shrimp-tacos"
+    ],
+    "mustInclude": ["beef-broccoli", "black-bean-tacos"]
+  }
+}

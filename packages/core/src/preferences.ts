@@ -400,8 +400,8 @@ export const SuggestEntry = z.object({
   slot: z.literal("dinner"),
   recipeId: z.uuid(),
   servings: z.number().int().min(1),
-  /** One line, at most 139 characters. */
-  why: z.string().min(1).max(WHY_MAX_CHARS),
+  /** One line, at most 139 characters. Empty only for a dinner someone added by hand. */
+  why: z.string().max(WHY_MAX_CHARS),
 });
 export type SuggestEntry = z.infer<typeof SuggestEntry>;
 
@@ -426,6 +426,8 @@ export const SuggestPlanResponse = z.object({
   composedBy: z.enum(["model", "fallback", "existing"]),
   /** The composer's note about shared ingredients, when it wrote one. */
   notes: z.string().optional(),
+  /** How many dinners short of the request the plan is, when too few recipes fit. */
+  shortBy: z.number().int().min(1).optional(),
 });
 export type SuggestPlanResponse = z.infer<typeof SuggestPlanResponse>;
 
@@ -451,7 +453,6 @@ export const SUGGEST_ERROR_CODES = [
   "not_a_member",
   "allergies_not_set",
   "no_candidates",
-  "not_enough_candidates",
   "week_not_monday",
   "cost_cap",
   "embedding_unavailable",
@@ -467,8 +468,6 @@ export const SUGGEST_ERROR_MESSAGES: Record<SuggestErrorCode, string> = {
   allergies_not_set: "Tell us about allergies in your profile before we suggest meals.",
   no_candidates:
     "We have no recipes that fit your diet, allergies, and time yet. Add a few recipes and try again.",
-  not_enough_candidates:
-    "We found fewer recipes that fit than the dinners you asked for. Add more recipes and try again.",
   week_not_monday: "A week starts on a Monday.",
   cost_cap: "You have reached today's limit for suggestions. Try again tomorrow.",
   embedding_unavailable: "Recipe matching is not available right now.",

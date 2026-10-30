@@ -1,0 +1,24 @@
+{
+  "name": "household-02-nut-free",
+  "description": "Peanut and tree nut allergy; an unparsed pesto line and a nut flour must be caught.",
+  "preferences": {
+    "allergies": ["peanut", "tree_nut"],
+    "diets": [],
+    "dislikes": [],
+    "cuisines": ["thai"],
+    "weeknight_minutes": 60,
+    "dinners_per_week": 5
+  },
+  "expect": {
+    "minCandidates": 8,
+    "mustExclude": [
+      "pad-thai",
+      "tofu-peanut-noodles",
+      "pesto-pasta",
+      "almond-crusted-chicken",
+      "walnut-quinoa-salad",
+      "catalog-peanut-chicken"
+    ],
+    "mustInclude": ["black-bean-tacos", "coconut-chickpea-curry"]
+  }
+}

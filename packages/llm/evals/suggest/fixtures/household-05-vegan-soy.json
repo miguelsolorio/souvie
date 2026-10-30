@@ -1,0 +1,30 @@
+{
+  "name": "household-05-vegan-soy",
+  "description": "Vegan with a soy allergy; tamari and tofu are soy.",
+  "preferences": {
+    "allergies": ["soy"],
+    "diets": ["vegan"],
+    "dislikes": [],
+    "cuisines": [],
+    "weeknight_minutes": 45,
+    "dinners_per_week": 4
+  },
+  "expect": {
+    "minCandidates": 5,
+    "mustExclude": [
+      "tofu-peanut-noodles",
+      "veggie-stir-fry",
+      "margherita-pizza",
+      "shakshuka",
+      "tahini-noodles",
+      "mushroom-risotto"
+    ],
+    "mustInclude": [
+      "black-bean-tacos",
+      "coconut-chickpea-curry",
+      "lentil-soup",
+      "gazpacho",
+      "plain-roasted-vegetables"
+    ]
+  }
+}

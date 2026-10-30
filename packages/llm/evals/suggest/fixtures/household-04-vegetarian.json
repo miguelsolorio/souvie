@@ -1,0 +1,33 @@
+{
+  "name": "household-04-vegetarian",
+  "description": "Vegetarian; cauliflower steaks and celery ribs are not meat.",
+  "preferences": {
+    "allergies": [],
+    "diets": ["vegetarian"],
+    "dislikes": [],
+    "cuisines": ["italian"],
+    "weeknight_minutes": 60,
+    "dinners_per_week": 5
+  },
+  "expect": {
+    "minCandidates": 8,
+    "mustExclude": [
+      "lemon-chicken-sheet-pan",
+      "beef-broccoli",
+      "bacon-pasta-carbonara",
+      "miso-salmon-unparsed",
+      "pulled-pork-tacos",
+      "shrimp-spaghetti",
+      "prawn-skewers-unparsed",
+      "catalog-sheet-pan-sausage",
+      "caesar-chicken-salad"
+    ],
+    "mustInclude": [
+      "cauliflower-steaks",
+      "celery-ribs-stew",
+      "black-bean-tacos",
+      "mushroom-risotto",
+      "shakshuka"
+    ]
+  }
+}

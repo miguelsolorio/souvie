@@ -1,0 +1,28 @@
+{
+  "name": "household-09-kosher-quick",
+  "description": "Kosher, 30 minute limit, no blue cheese or olives.",
+  "preferences": {
+    "allergies": [],
+    "diets": ["kosher"],
+    "dislikes": ["blue cheese", "olives"],
+    "cuisines": [],
+    "weeknight_minutes": 30,
+    "dinners_per_week": 5
+  },
+  "expect": {
+    "minCandidates": 5,
+    "mustExclude": [
+      "shrimp-spaghetti",
+      "bacon-pasta-carbonara",
+      "sausage-peppers",
+      "pulled-pork-tacos",
+      "blue-cheese-burgers",
+      "olive-tapenade-pasta",
+      "slow-braise-long",
+      "lemon-chicken-sheet-pan",
+      "beef-stew-red-wine",
+      "crab-cakes"
+    ],
+    "mustInclude": ["black-bean-tacos", "salmon-rice-bowl", "jackfruit-no-times"]
+  }
+}

@@ -421,7 +421,7 @@ describe("suggest contract", () => {
     expect(SuggestEntry.safeParse({ ...entry, why: "x".repeat(WHY_MAX_CHARS + 1) }).success).toBe(
       false,
     );
-    expect(SuggestEntry.safeParse({ ...entry, why: "" }).success).toBe(false);
+    expect(SuggestEntry.safeParse({ ...entry, why: "" }).success).toBe(true);
   });
 
   it("returns at most twelve calibration cards", () => {

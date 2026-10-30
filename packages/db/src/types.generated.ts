@@ -499,26 +499,35 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null;
+          costco_member: boolean | null;
           created_at: string;
           display_name: string | null;
+          onboarding_step: number;
           preferences: NonNullable<Json>;
+          taste_embedding: string | null;
           updated_at: string;
           user_id: string;
         };
         ComputedFields: never;
         Insert: {
           avatar_url?: string | null;
+          costco_member?: boolean | null;
           created_at?: string;
           display_name?: string | null;
+          onboarding_step?: number;
           preferences?: NonNullable<Json>;
+          taste_embedding?: string | null;
           updated_at?: string;
           user_id: string;
         };
         Update: {
           avatar_url?: string | null;
+          costco_member?: boolean | null;
           created_at?: string;
           display_name?: string | null;
+          onboarding_step?: number;
           preferences?: NonNullable<Json>;
+          taste_embedding?: string | null;
           updated_at?: string;
           user_id?: string;
         };

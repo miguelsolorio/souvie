@@ -107,7 +107,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | column | type | notes |
 |---|---|---|
 | id | uuid pk | |
-| household_id | uuid → households | Nullable when visibility = catalog |
+| household_id | uuid → households | Null when visibility = catalog (the starter catalog, WS16) |
 | title | text | |
 | description | text | |
 | image_url | text | Storage path or external URL |
@@ -120,7 +120,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | tags | text[] | |
 | cuisine | text | |
 | embedding | vector(1024) | HNSW index; built from title + tags + ingredient names |
-| visibility | enum recipes_visibility: household, catalog | Catalog holds only our own or licensed recipes |
+| visibility | enum recipes_visibility: household, catalog | Catalog holds only our own or licensed recipes. In v1 that is the starter catalog (WS16): at least 60 original recipes drafted for the app, `source_type = ai`, loaded by `supabase/seed/20_catalog.sql`. Every signed-in member reads catalog rows and their ingredient lines (policies added 2026-10-30 by the orchestrator); only the seed writes them |
 
 **recipe_ingredients**
 | column | type | notes |

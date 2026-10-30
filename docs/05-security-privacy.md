@@ -42,6 +42,7 @@ The app holds retailer credentials by proxy, moves money by handing off to retai
 - Analytics (PostHog) receive event names and anonymous ids, never recipe titles, product names, or dollar amounts in v1.
 - Push notifications contain the subtotal but no item names on the lock screen.
 - No personal data in URL query strings. Deep links carry opaque ids.
+- The device cache (TanStack Query persister) holds what the signed-in member can already read: the active household row, including its `zip` and `default_connection_id`, plus the plans and entries the planner opens offline. It never holds retailer tokens, catalog data or prices. Sign-out clears it. Added 2026-10-30 from the WS04 review.
 
 ## Recipe content
 

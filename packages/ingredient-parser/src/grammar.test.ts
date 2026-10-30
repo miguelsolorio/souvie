@@ -202,3 +202,41 @@ describe("qualifiers and preparation", () => {
     expect(g("2 cups flour").strayQuantity).toBe(false);
   });
 });
+
+describe("quantities that are not numbers", () => {
+  it("treats a zero denominator as no quantity, not Infinity", () => {
+    const p = g("1/0 cup flour");
+    expect(p.qty).toBeNull();
+    expect(p.qtyMax).toBeNull();
+    expect(p.unit).toBeNull();
+    expect(p.strayQuantity).toBe(true);
+  });
+
+  it.each([
+    "1 1/0 cups flour",
+    "0/0 cup flour",
+    "1/0 to 2 cups flour",
+    "2-1/0 cups flour",
+    "1 (1/0 oz) can beans",
+    "1 tablespoon plus 1/0 teaspoon oil",
+    `${"9".repeat(400)} cups flour`,
+    `1 ${"9".repeat(400)} cups flour`,
+  ])("never yields a non-finite number for %s", (line) => {
+    const p = g(line);
+    for (const n of [p.qty, p.qtyMax]) {
+      if (n !== null) expect(Number.isFinite(n), `${line}: ${n}`).toBe(true);
+    }
+  });
+
+  it("keeps the low end when only the high end of a range is unusable", () => {
+    const p = g("2 to 1/0 cups flour");
+    expect(p.qty).toBe(2);
+    expect(p.qtyMax).toBeNull();
+  });
+
+  it("still reads ordinary fractions and mixed numbers", () => {
+    expect(g("1/2 cup flour").qty).toBe(0.5);
+    expect(g("1 1/2 cups flour").qty).toBe(1.5);
+    expect(g("1 tablespoon plus 1 teaspoon oil").qty).toBe(4);
+  });
+});

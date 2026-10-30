@@ -40,6 +40,24 @@ describe("cacheKey", () => {
     expect(cacheKey("½ cup  Sugar.")).toBe(cacheKey("1/2 cup sugar"));
     expect(cacheKey("1 CUP Milk")).toBe("1 cup milk");
   });
+
+  it("keeps a lone T (tablespoon) and t (teaspoon) apart", () => {
+    expect(cacheKey("1 T gochugaru")).not.toBe(cacheKey("1 t gochugaru"));
+    expect(cacheKey("1 T gochugaru")).toBe("1 T gochugaru");
+    expect(cacheKey("1 t gochugaru")).toBe("1 t gochugaru");
+  });
+
+  it("treats 'T.' like 'T' and still lowercases everything else", () => {
+    expect(cacheKey("1 T. Gochugaru")).toBe(cacheKey("1 T gochugaru"));
+    expect(cacheKey("1 t. GOCHUGARU")).toBe(cacheKey("1 t gochugaru"));
+    expect(cacheKey("1 TBSP gochugaru")).toBe(cacheKey("1 tbsp gochugaru"));
+    expect(cacheKey("1 TSP gochugaru")).toBe(cacheKey("1 tsp gochugaru"));
+  });
+
+  it("only lone T and t keep their case, not letters inside other words", () => {
+    expect(cacheKey("2 Tomatoes")).toBe("2 tomatoes");
+    expect(cacheKey("2 TART apples")).toBe("2 tart apples");
+  });
 });
 
 describe("cleanPhrase and singularize", () => {
@@ -59,6 +77,14 @@ describe("cleanPhrase and singularize", () => {
     expect(singularizeWord("oats")).toBe("oats");
     expect(singularizePhrase("yellow onions")).toBe("yellow onion");
   });
+
+  it.each(["constructor", "toString", "__proto__", "hasOwnProperty", "valueOf"])(
+    "does not mistake the word %s for a table entry",
+    (word) => {
+      expect(typeof singularizeWord(word)).toBe("string");
+      expect(singularizePhrase(`1 ${word}`)).toMatch(/^1 /);
+    },
+  );
 });
 
 describe("trigram similarity matches pg_trgm", () => {

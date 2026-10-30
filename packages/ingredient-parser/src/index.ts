@@ -12,6 +12,7 @@ import { type GrammarParse, parseGrammar } from "./grammar.ts";
 import { PREP_ADVERBS, PREP_WORDS } from "./lexicon.ts";
 import {
   LLM_BATCH_SIZE,
+  type LlmBatchResult,
   type LlmItem,
   type LlmParseClient,
   type LlmUsage,
@@ -58,6 +59,11 @@ export interface ParserDeps {
   onLlmRun?: (usage: LlmUsage) => void | Promise<void>;
   /** Called when a model call fails; the affected lines keep their deterministic guess. */
   onLlmError?: (error: unknown, lines: readonly string[]) => void;
+  /**
+   * Called when a side effect fails after the parse has already been paid for (cache read or
+   * write, proposal sink, run logging). The parse carries on. Defaults to console.warn.
+   */
+  onWarning?: (message: string, error: unknown) => void;
   confidenceThreshold?: number;
   similarityThreshold?: number;
   batchSize?: number;
@@ -75,6 +81,16 @@ function round2(n: number): number {
 
 function clamp01(n: number): number {
   return Math.min(1, Math.max(0, n));
+}
+
+/** Run a side effect that must not abort the parse: log the failure and move on. */
+async function safely(deps: ParserDeps, what: string, fn: () => unknown): Promise<void> {
+  try {
+    await fn();
+  } catch (err) {
+    if (deps.onWarning) deps.onWarning(what, err);
+    else console.warn(`ingredient-parser: ${what}`, err);
+  }
 }
 
 const isPrepWord = (w: string): boolean => PREP_WORDS.has(w) || PREP_ADVERBS.has(w);
@@ -207,24 +223,33 @@ function splitConjunction(noun: string): string[] {
     .filter(Boolean);
 }
 
-async function parseDeterministic(rawText: string, deps: ParserDeps): Promise<ParsedIngredient[]> {
+interface Deterministic {
+  items: ParsedIngredient[];
+  /** Headers and blank lines are not ingredients, so the model never sees them. */
+  skipModel: boolean;
+}
+
+async function parseDeterministic(rawText: string, deps: ParserDeps): Promise<Deterministic> {
   const similarityThreshold = deps.similarityThreshold ?? DEFAULT_SIMILARITY_THRESHOLD;
   const g = parseGrammar(rawText);
   if (g.header || !g.noun) {
-    return [
-      {
-        rawText,
-        qty: g.qty,
-        qtyMax: g.qtyMax,
-        unit: g.unit,
-        ingredientId: null,
-        ingredientName: null,
-        prepNote: joinPrep(g.prep),
-        optional: g.optional,
-        confidence: 0,
-        stage: "grammar",
-      },
-    ];
+    return {
+      skipModel: g.header || g.text === "",
+      items: [
+        {
+          rawText,
+          qty: g.qty,
+          qtyMax: g.qtyMax,
+          unit: g.unit,
+          ingredientId: null,
+          ingredientName: null,
+          prepNote: joinPrep(g.prep),
+          optional: g.optional,
+          confidence: 0,
+          stage: "grammar",
+        },
+      ],
+    };
   }
 
   let whole = await resolveNoun(g.noun, deps.ontology, { similarityThreshold });
@@ -241,16 +266,19 @@ async function parseDeterministic(rawText: string, deps: ParserDeps): Promise<Pa
         parts.map((p) => resolveNoun(p, deps.ontology, { similarityThreshold })),
       );
       if (resolved.every((r) => r.match !== null && EXACTISH.has(r.kind))) {
-        return resolved.map((r) =>
-          buildItem(g, { ...r, kind: "alternative" }, similarityThreshold, {
-            splitFrom: rawText,
-            cap: 0.85,
-          }),
-        );
+        return {
+          skipModel: false,
+          items: resolved.map((r) =>
+            buildItem(g, { ...r, kind: "alternative" }, similarityThreshold, {
+              splitFrom: rawText,
+              cap: 0.85,
+            }),
+          ),
+        };
       }
     }
   }
-  return [buildItem(g, whole, similarityThreshold)];
+  return { skipModel: false, items: [buildItem(g, whole, similarityThreshold)] };
 }
 
 // ---------------------------------------------------------------------------
@@ -364,24 +392,35 @@ async function applyLlm(
   }
   const keys = [...firstRaw.keys()];
 
-  const cached = (await deps.cache?.getMany(keys)) ?? new Map<string, CachedParse>();
+  let cached: ReadonlyMap<string, CachedParse> = new Map();
+  if (deps.cache) {
+    const cache = deps.cache;
+    await safely(deps, "parse cache read failed; treating every line as a miss", async () => {
+      cached = await cache.getMany(keys);
+    });
+  }
+  // An entry with no items means the model looked at the line and found no ingredient.
   const fresh = new Map<string, LlmItem[]>();
   const misses = keys.filter((k) => !cached.has(k));
 
   for (const batch of chunk(misses, batchSize)) {
     const lines = batch.map((k) => firstRaw.get(k) ?? k);
+    let response: LlmBatchResult;
     try {
-      const response = await llm.parseBatch(lines);
-      await deps.onLlmRun?.(response.usage);
-      batch.forEach((key, idx) => {
-        const items = response.byIndex.get(idx);
-        if (items && items.length > 0) fresh.set(key, [...items]);
-      });
+      response = await llm.parseBatch(lines);
     } catch (err) {
       const usage = (err as { usage?: LlmUsage }).usage;
-      if (usage) await deps.onLlmRun?.(usage);
-      deps.onLlmError?.(err, lines);
+      if (usage) await safely(deps, "onLlmRun failed", () => deps.onLlmRun?.(usage));
+      await safely(deps, "onLlmError failed", () => deps.onLlmError?.(err, lines));
+      continue;
     }
+    const usage = response.usage;
+    await safely(deps, "onLlmRun failed", () => deps.onLlmRun?.(usage));
+    batch.forEach((key, idx) => {
+      const items = response.byIndex.get(idx);
+      // A missing index means the model skipped the line: not an answer, so not cached.
+      if (items) fresh.set(key, [...items]);
+    });
   }
 
   const toCache = new Map<string, CachedParse>();
@@ -396,8 +435,8 @@ async function applyLlm(
     const items = fresh.get(key);
     if (!items) continue;
     const parsed = await itemsFromLlm(raw, items, deps, categories);
-    if (parsed.length === 0) continue;
     parsedByKey.set(key, parsed);
+    // An empty result is cached too, so a line the model rejects is not sent again.
     toCache.set(key, {
       items: parsed,
       source: "llm",
@@ -405,7 +444,10 @@ async function applyLlm(
       promptVersion: llm.promptVersion,
     });
   }
-  if (toCache.size > 0) await deps.cache?.putMany(toCache);
+  if (toCache.size > 0 && deps.cache) {
+    const cache = deps.cache;
+    await safely(deps, "parse cache write failed", () => cache.putMany(toCache));
+  }
 
   for (const i of needs) {
     const key = keyOf.get(i);
@@ -433,13 +475,14 @@ export async function parseLinesGrouped(
   deps: ParserDeps,
 ): Promise<ParsedIngredient[][]> {
   const threshold = deps.confidenceThreshold ?? DEFAULT_CONFIDENCE_THRESHOLD;
-  const results = await mapLimit(rawTexts, deps.concurrency ?? 8, (raw) =>
+  const deterministic = await mapLimit(rawTexts, deps.concurrency ?? 8, (raw) =>
     parseDeterministic(raw, deps),
   );
+  const results = deterministic.map((d) => d.items);
 
   const needs: number[] = [];
-  results.forEach((items, i) => {
-    if (items.some((item) => item.confidence < threshold)) needs.push(i);
+  deterministic.forEach((d, i) => {
+    if (!d.skipModel && d.items.some((item) => item.confidence < threshold)) needs.push(i);
   });
   const categories = new Map<string, IngredientCategory>();
   await applyLlm(rawTexts, results, needs, deps, categories);
@@ -452,11 +495,15 @@ export async function parseLinesGrouped(
         const key = item.ingredientName;
         if (proposed.has(key)) continue;
         proposed.add(key);
-        await deps.proposals.record({
+        const sink = deps.proposals;
+        const proposal = {
           rawText: rawTexts[i] ?? item.rawText,
           proposedName: item.ingredientName,
           proposedCategory: categories.get(item.ingredientName) ?? null,
-        });
+        };
+        await safely(deps, `recording alias proposal "${item.ingredientName}" failed`, () =>
+          sink.record(proposal),
+        );
       }
     }
   }

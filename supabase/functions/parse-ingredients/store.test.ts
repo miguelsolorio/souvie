@@ -253,6 +253,21 @@ describe("SupabaseParseCache", () => {
     });
   });
 
+  it("keeps a rejection (an entry with no items) so the line is not sent again", async () => {
+    const db = new FakeDb();
+    const cache = new SupabaseParseCache(db.asClient());
+    await cache.putMany(
+      new Map([
+        [
+          "for the sauce",
+          { items: [], source: "llm" as const, model: "claude-haiku-5-5", promptVersion: "v1" },
+        ],
+      ]),
+    );
+    const got = await cache.getMany(["for the sauce"]);
+    expect(got.get("for the sauce")).toMatchObject({ items: [], source: "llm" });
+  });
+
   it("ignores rows whose result is not a parse", async () => {
     const db = new FakeDb();
     db.table("ingredient_parse_cache").push(

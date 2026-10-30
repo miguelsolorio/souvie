@@ -50,12 +50,17 @@ export function normalizeLine(raw: string): string {
 /**
  * Cache key for a raw line: normalized, lowercase, no trailing punctuation.
  * Two spellings of the same line ("½ cup" and "1/2 cup") share a key.
+ *
+ * Lone "T" and "t" keep their case. The grammar reads them as tablespoon and teaspoon, so
+ * "1 T salt" and "1 t salt" are different lines and must not share a cached result.
  */
 export function cacheKey(raw: string): string {
   return normalizeLine(raw)
-    .toLowerCase()
     .replace(/[.;:!]+$/, "")
-    .trim();
+    .trim()
+    .split(" ")
+    .map((token) => (/^[Tt]\.?$/.test(token) ? token.slice(0, 1) : token.toLowerCase()))
+    .join(" ");
 }
 
 // ---------------------------------------------------------------------------
@@ -110,7 +115,10 @@ const SINGULAR_EXCEPTIONS: Readonly<Record<string, string>> = {
 
 /** Best-guess singular of one lowercase word. Returns the word itself when it looks singular. */
 export function singularizeWord(word: string): string {
-  const exception = SINGULAR_EXCEPTIONS[word];
+  // Own keys only: "constructor" and "toString" are words too, and must not hit Object.prototype.
+  const exception = Object.hasOwn(SINGULAR_EXCEPTIONS, word)
+    ? SINGULAR_EXCEPTIONS[word]
+    : undefined;
   if (exception) return exception;
   if (word.length <= 3) return word;
   if (/(ss|us|is)$/.test(word)) return word;

@@ -60,13 +60,25 @@ const WORD_QTY_RE = new RegExp(
   "i",
 );
 
-function evalQty(token: string): number {
+/**
+ * Value of a quantity token, or null when it is not a usable number: a zero denominator
+ * ("1/0") or a run of numerals too long to be finite. Callers treat null as "no quantity here".
+ */
+function evalQty(token: string): number | null {
   const t = token.trim();
+  let value: number;
   const mixed = t.match(/^(\d+)(?:\s+|-)(\d+)\s*\/\s*(\d+)$/);
-  if (mixed) return Number(mixed[1]) + Number(mixed[2]) / Number(mixed[3]);
   const frac = t.match(/^(\d+)\s*\/\s*(\d+)$/);
-  if (frac) return Number(frac[1]) / Number(frac[2]);
-  return Number(t);
+  if (mixed) {
+    if (Number(mixed[3]) === 0) return null;
+    value = Number(mixed[1]) + Number(mixed[2]) / Number(mixed[3]);
+  } else if (frac) {
+    if (Number(frac[2]) === 0) return null;
+    value = Number(frac[1]) / Number(frac[2]);
+  } else {
+    value = Number(t);
+  }
+  return Number.isFinite(value) ? value : null;
 }
 
 function round(n: number): number {
@@ -84,6 +96,8 @@ function readQuantity(s: string): QtyRead | null {
   const m = s.match(QTY_RE);
   if (m?.[1]) {
     const lo = evalQty(m[1]);
+    // "1/0 cup flour": no usable quantity. The line stays unparsed and gets low confidence.
+    if (lo === null) return null;
     const hi = m[2] ? evalQty(m[2]) : null;
     // "1-0" style noise, or a "range" that goes down, is not a range: keep the first number.
     const range = hi != null && hi > lo ? hi : null;
@@ -142,6 +156,7 @@ function sizeFrom(content: string): Size | null {
   const unit = normalizeUnit(m[3].replace(/\.$/, ""));
   if (!unit || unitDimension(unit) === "count") return null;
   const lo = evalQty(m[1]);
+  if (lo === null) return null;
   const hi = m[2] ? evalQty(m[2]) : null;
   return { qty: round(lo), qtyMax: hi != null && hi > lo ? round(hi) : null, unit };
 }
@@ -450,9 +465,10 @@ export function parseGrammar(rawText: string): GrammarParse {
           const biggerFirst = (convert(1, unit, second) ?? 0) > 1;
           const target = biggerFirst ? second : unit;
           const a = convert(q.qty, unit, target);
-          if (a != null) {
+          const addend = evalQty(more[1]);
+          if (a != null && addend != null) {
             out.unit = target;
-            q.qty = round(a + evalQty(more[1]));
+            q.qty = round(a + addend);
             rest = more[3] ?? "";
           }
         }

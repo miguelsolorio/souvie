@@ -353,3 +353,74 @@ describe("toPurchasable", () => {
     expect(toPurchasable(0, "lb", chicken)?.qty).toBe(0);
   });
 });
+
+describe("size words do not scale purchase counts", () => {
+  it("12 large eggs is one dozen, not two", () => {
+    expect(toPurchasable(12, "large", egg)).toEqual({ qty: 1, unit: "dozen", basis: "pack" });
+  });
+  it("11 large eggs is one dozen", () => {
+    expect(toPurchasable(11, "large", egg)).toEqual({ qty: 1, unit: "dozen", basis: "pack" });
+  });
+  it("13 large eggs needs a second dozen", () => {
+    expect(toPurchasable(13, "large", egg)?.qty).toBe(2);
+  });
+  it("small and medium eggs count the same as large", () => {
+    expect(toPurchasable(12, "small", egg)?.qty).toBe(1);
+    expect(toPurchasable(12, "medium", egg)?.qty).toBe(1);
+  });
+  it("a dozen eggs is one dozen", () => {
+    expect(toPurchasable(1, "dozen", egg)).toEqual({ qty: 1, unit: "dozen", basis: "pack" });
+  });
+  it("1 large onion is 1 each", () => {
+    expect(toPurchasable(1, "large", onion)).toEqual({ qty: 1, unit: "each", basis: "count" });
+  });
+  it("2.2 small onions round up to 3 each", () => {
+    expect(toPurchasable(2.2, "small", onion)).toEqual({ qty: 3, unit: "each", basis: "count" });
+  });
+  it("zero of a size word is zero each", () => {
+    expect(toPurchasable(0, "large", onion)).toEqual({ qty: 0, unit: "each", basis: "count" });
+  });
+  it("still weighs a large item heavier when converting to grams", () => {
+    expect(convert(1, "large", "g", onion)).toBeCloseTo(187.5, 6);
+  });
+});
+
+describe("keys that are also Object.prototype properties", () => {
+  const odd = [
+    "constructor",
+    "toString",
+    "__proto__",
+    "hasOwnProperty",
+    "valueOf",
+    "isPrototypeOf",
+  ];
+
+  it.each(odd)("normalizeUnit(%s) is null", (word) => {
+    expect(normalizeUnit(word)).toBeNull();
+    expect(normalizeUnit(`${word}.`)).toBeNull();
+    expect(normalizeUnit(word.toUpperCase())).toBeNull();
+  });
+
+  it("convert and toPurchasable refuse them instead of throwing", () => {
+    for (const word of odd) {
+      expect(convert(1, word, "g", flour)).toBeNull();
+      expect(convert(1, "cup", word, flour)).toBeNull();
+      expect(toPurchasable(1, word, flour)).toBeNull();
+    }
+  });
+
+  it("an ingredient or category named like a prototype property is not a table hit", () => {
+    for (const word of odd) {
+      const strange: UnitIngredient = {
+        name: word,
+        category: word,
+        defaultUnit: "each",
+        densityGPerMl: null,
+        typicalUnitWeightG: null,
+      };
+      expect(() => toPurchasable(2, "clove", strange)).not.toThrow();
+      expect(convert(1, "clove", "g", strange)).toBeNull();
+      expect(toPurchasable(2, "each", strange)).toEqual({ qty: 2, unit: "each", basis: "count" });
+    }
+  });
+});

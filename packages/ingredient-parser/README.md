@@ -14,10 +14,14 @@ const p = await parseLine("2 cups diced yellow onion", { ontology });
 
 1. **Grammar** (`grammar.ts`). Quantities (integers, decimals, ASCII and unicode fractions, mixed numbers, ranges like "2-3" and "1 to 2", number words, "a"). Units and their abbreviations (`@mp/core` `normalizeUnit`). Package sizes ("1 (14 oz) can", "two 15-ounce cans", "2 x 400g tins"). Sums ("1 tablespoon plus 1 teaspoon"). Preparation after a comma or in parentheses. Qualifiers: "to taste", "divided", "optional", "plus more for serving", "for garnish". "Juice of 1 lemon".
 2. **Lookup** (`lookup.ts`). The noun phrase is tried against the ontology as written, then with leading modifiers dropped ("fresh", "large", "finely chopped"), then singularized, then by trigram similarity of 0.85 or more (`docs/03-ai-design.md` §5). "salt and pepper" with no amount splits into two ingredients when each part is known.
-3. **Model fallback** (`llm-fallback.ts`). Lines under 0.8 confidence go to `claude-haiku-5-5` in batches of 20 with a strict zod schema. Results are cached by normalized text (`cache.ts`), so a line is never sent twice. The cache holds the model's answer; the ontology lookup of its ingredient name runs again on every hit.
+3. **Model fallback** (`llm-fallback.ts`). Lines under 0.8 confidence go to `claude-haiku-5-5` in batches of 20 with a strict zod schema. Results are cached by normalized text (`cache.ts`), so a line is never sent twice. The cache holds the model's answer; the ontology lookup of its ingredient name runs again on every hit. A line the model looked at and rejected is cached as an entry with no items, so it is not asked again. A line the model skipped is not cached.
 4. **Unknowns.** A name the ontology lacks comes back with `ingredientId: null` and is reported to the `ProposalSink` (the Edge Function writes `ingredient_alias_proposals`).
 
-If no model client is given, or a call fails, a line keeps its deterministic best guess. Nothing throws on a bad line.
+Section headers ("For the sauce:") and blank lines are not ingredients. They come back with confidence 0 and never go to the model, so a caller can drop them.
+
+The cache key is the lowercased, normalized line, except that a lone `T` (tablespoon) and `t` (teaspoon) keep their case. "1 T salt" and "1 t salt" are different lines.
+
+If no model client is given, or a call fails, a line keeps its deterministic best guess. Nothing throws on a bad line. A side effect that fails after the model was paid for (cache read or write, proposal sink, run logging) is reported to `onWarning` (default `console.warn`) and the parse carries on. A quantity with a zero denominator ("1/0 cup") or too many numerals to be finite is read as no quantity, with low confidence.
 
 ## Result shape
 

@@ -248,6 +248,15 @@ export const MAX_UNIT_ALIAS_WORDS = Math.max(
   ...Object.keys(UNIT_ALIASES).map((a) => a.split(" ").length),
 );
 
+/**
+ * Own-key lookup on a plain object. A bare `table[key]` also finds inherited properties, so
+ * `table["constructor"]` is a function. Anything that indexes a table by text from a recipe
+ * or a database row goes through this.
+ */
+function own<T>(table: Readonly<Record<string, T>>, key: string): T | undefined {
+  return Object.hasOwn(table, key) ? table[key] : undefined;
+}
+
 export function isUnitCode(value: string): value is UnitCode {
   return Object.hasOwn(UNIT_DEFS, value);
 }
@@ -263,7 +272,7 @@ export function normalizeUnit(raw: string | null | undefined): UnitCode | null {
   if (trimmed === "T" || trimmed === "T.") return "tbsp";
   if (trimmed === "t") return "tsp";
   const key = trimmed.toLowerCase().replace(/\s+/g, " ");
-  return UNIT_ALIASES[key] ?? UNIT_ALIASES[key.replace(/\.$/, "")] ?? null;
+  return own(UNIT_ALIASES, key) ?? own(UNIT_ALIASES, key.replace(/\.$/, "")) ?? null;
 }
 
 export function unitDimension(unit: UnitCode): UnitDimension {
@@ -320,7 +329,7 @@ const VOLUME_OR_WEIGHT = new Set<UnitDimension>(["volume", "weight"]);
 
 /** Grams in one "each", or null when unknown. */
 function eachWeightG(ing: UnitIngredient): number | null {
-  const table = CONTAINER_WEIGHTS_G[ing.name]?.each;
+  const table = own(CONTAINER_WEIGHTS_G, ing.name)?.each;
   const defaultCode = normalizeUnit(ing.defaultUnit);
   if (ing.typicalUnitWeightG != null && defaultCode != null) {
     const dim = unitDimension(defaultCode);
@@ -342,7 +351,9 @@ function countUnitWeightG(unit: UnitCode, ing: UnitIngredient): number | null {
   const defaultCode = normalizeUnit(ing.defaultUnit);
   if (defaultCode === unit && ing.typicalUnitWeightG != null) return ing.typicalUnitWeightG;
   return (
-    CONTAINER_WEIGHTS_G[ing.name]?.[unit] ?? CATEGORY_UNIT_WEIGHTS_G[ing.category]?.[unit] ?? null
+    own(CONTAINER_WEIGHTS_G, ing.name)?.[unit] ??
+    own(CATEGORY_UNIT_WEIGHTS_G, ing.category)?.[unit] ??
+    null
   );
 }
 
@@ -483,6 +494,7 @@ function ceilTo(value: number, step: number): number {
 }
 
 const WEIGHTY_CATEGORIES = new Set(["meat", "seafood", "produce"]);
+const SIZE_UNITS: ReadonlySet<UnitCode> = new Set<UnitCode>(["small", "medium", "large"]);
 const GRAMS_PER_LB = 453.59237;
 const GRAMS_PER_OZ = 28.349523125;
 /** A pack may fall this far short of the need before we buy another (a 15 oz can for 14.5 oz). */
@@ -507,10 +519,12 @@ export function toPurchasable(
 ): PurchasableQuantity | null {
   const code = normalizeUnit(unit);
   if (code == null || !Number.isFinite(qty) || qty < 0) return null;
-  if (qty === 0) return { qty: 0, unit: code, basis: "count" };
+  // A size word describes the item, not how many to buy: 12 large eggs is still 12 eggs.
+  const countUnit: UnitCode = SIZE_UNITS.has(code) ? "each" : code;
+  if (qty === 0) return { qty: 0, unit: countUnit, basis: "count" };
 
   const pack = ingredient
-    ? (PACK_SIZES[ingredient.name] ?? CATEGORY_PACKS[ingredient.category])
+    ? (own(PACK_SIZES, ingredient.name) ?? own(CATEGORY_PACKS, ingredient.category))
     : undefined;
   if (ingredient && pack) {
     const packs = packsNeeded(qty, code, ingredient, pack);
@@ -528,7 +542,7 @@ export function toPurchasable(
     return { qty: ceilTo(oz, 1), unit: "oz", basis: "weight" };
   }
   if (dim === "volume") return { qty: ceilTo(qty, 0.25), unit: code, basis: "volume" };
-  return { qty: Math.ceil(qty - 1e-9), unit: code, basis: "count" };
+  return { qty: Math.ceil(qty - 1e-9), unit: countUnit, basis: "count" };
 }
 
 function packsNeeded(
@@ -539,7 +553,8 @@ function packsNeeded(
 ): number | null {
   let needed: number | null = null;
   if (pack.items != null) {
-    const items = convert(qty, code, "each", ingredient);
+    // Packs of items (a dozen eggs) count items. Size words do not scale the count.
+    const items = convert(qty, SIZE_UNITS.has(code) ? "each" : code, "each", ingredient);
     needed = items == null ? null : items / pack.items;
   } else if (pack.ml != null) {
     needed = convert(qty, code, "ml", ingredient);

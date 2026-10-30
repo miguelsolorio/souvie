@@ -27,7 +27,7 @@ Parses the lines and returns them. Writes nothing except the parse cache, alias 
 }
 ```
 
-`results[i]` belongs to `lines[i]`. A line that names several ingredients has several entries.
+`results[i]` belongs to `lines[i]`. A line that names several ingredients has several entries. Headers ("For the sauce:") and blank lines come back with `confidence: 0` and `ingredientName: null`; they never go to the model.
 
 ### `{ "recipeId": "<uuid>" }`
 

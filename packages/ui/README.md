@@ -59,7 +59,18 @@ The preset is ESM that imports TypeScript, so loading it needs Node 22.18 or new
 | `logo.svg` | Mark plus wordmark |
 | `app-icon.svg`, `app-icon-foreground.svg`, `splash-icon.svg`, `favicon.svg` | Sources for the PNGs in `apps/mobile/assets/` |
 
-The wordmark is the placeholder "Meal Planner". To swap the name, change the text inside `<text id="wordmark">` and the `<title>` in `logo.svg` and `logo-wordmark.svg`. Widen the `viewBox` if the new name is longer.
+The name is Souvie, said "SOO-vee" (docs/08-brand.md §1). It appears as text in `logo.svg` and `logo-wordmark.svg` and as the `<title>` of every SVG here. Only those two files carry the wordmark. The mark, the icons, and the splash are the bowl alone, so a rename never needs new PNGs in `apps/mobile/assets/`.
+
+### Wordmark fit
+
+The wordmark is live `<text>`, so the font is the reader's: Charter, then Georgia and the rest of the stack in the `font-family` attribute, then whatever `serif` is. A box sized for Charter clips the last letters in Georgia, which is about 14% wider (the placeholder name did exactly that). The `viewBox` has to hold the widest serif the stack can reach.
+
+To change the name:
+
+1. Change the text inside `<text id="wordmark">` and the `<title>` in `logo.svg` and `logo-wordmark.svg`. Also change `apps/marketing/src/config.ts` and `apps/marketing/src/assets/og.svg`.
+2. Size the box. `src/assets.test.ts` computes where the text ends in the widest bold serif (Georgia, DejaVu Serif, or Noto Serif, whichever is widest per letter) and fails if it plus 4 units does not fit. Raise the `viewBox` width until it passes. In `logo.svg`, also set the `width` and `height` of the logo `<img>` in `apps/marketing/src/layouts/Base.astro` to the new `viewBox` size.
+3. Look at it. Render each system serif on a canvas wider than the box and check that no ink passes the edge. For `Souvie` the ink ends at 103 in Charter, 116 in Georgia, and about 124 in DejaVu Serif Bold, inside a 132-unit wordmark.
+4. Run `pnpm --filter marketing tokens` to copy the SVGs into `apps/marketing/public/`, and re-render `og.png` (see `apps/marketing/README.md`).
 
 Regenerate the PNGs with `rsvg-convert` (`brew install librsvg`):
 

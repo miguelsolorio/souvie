@@ -1,8 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 describe("@mp/core", () => {
-  it("loads and exports nothing until the orchestrator adds the first contract", async () => {
+  it("exports the WS03 contracts", async () => {
     const mod = await import("./index");
-    expect(Object.keys(mod)).toEqual([]);
+    for (const name of [
+      "convert",
+      "toPurchasable",
+      "normalizeUnit",
+      "UNIT_ALIASES",
+      "IngredientSchema",
+      "ParsedIngredientSchema",
+    ]) {
+      expect(mod).toHaveProperty(name);
+    }
   });
 });

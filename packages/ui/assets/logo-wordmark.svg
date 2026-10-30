@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 212 64" width="212" height="64" role="img" aria-labelledby="title">
+  <title id="title">Meal Planner</title>
+  <!-- The name is the text inside <text id="wordmark"> and the <title> above. Swap both when the
+       name is chosen. Widen the viewBox if the new name is longer (about 17 units per letter). -->
+  <style>
+    .word { fill: #1A1814; }
+    @media (prefers-color-scheme: dark) { .word { fill: #FAF8F5; } }
+  </style>
+  <text id="wordmark" class="word" x="0" y="43" font-family="Charter, 'Bitstream Charter', 'Sitka Text', Cambria, 'Iowan Old Style', Georgia, serif" font-size="34" font-weight="700" letter-spacing="-0.6">Meal Planner</text>
+</svg>

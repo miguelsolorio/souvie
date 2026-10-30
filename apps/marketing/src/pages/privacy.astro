@@ -1,0 +1,41 @@
+---
+import Footer from "../components/Footer.astro";
+import { site } from "../config";
+import Base from "../layouts/Base.astro";
+---
+
+<Base title={`Privacy policy | ${site.name}`} description={`How the ${site.name} waitlist handles your email.`}>
+  <article class="band">
+    <div class="container narrow prose">
+      <h1>Privacy policy</h1>
+      <p class="lead">
+        This is a placeholder. The full policy publishes before {site.name} opens to anyone outside the first
+        households.
+      </p>
+      <h2>What the waitlist stores</h2>
+      <p>
+        Your email, your zip code if you gave one, which link brought you here, and when you signed up. We use
+        it to tell you when {site.name} opens in your area. Nothing else.
+      </p>
+      <h2>What we don't collect</h2>
+      <p>
+        No card numbers, no store logins, no cookies on this page. This site may count page visits without
+        identifying you, and it respects Do Not Track.
+      </p>
+      <h2>Removing your email</h2>
+      <p>You can ask to have your sign-up deleted at any time. Contact details are added with the full policy.</p>
+      <p><a href="/">Back to the home page</a></p>
+    </div>
+  </article>
+  <Footer slot="footer" />
+</Base>
+
+<style>
+  .prose > * + * {
+    margin-top: var(--space-4);
+  }
+
+  .prose h2 {
+    margin-top: var(--space-8);
+  }
+</style>

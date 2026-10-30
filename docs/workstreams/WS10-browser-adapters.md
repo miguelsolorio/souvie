@@ -143,6 +143,7 @@ pnpm --filter mobile start                                    # manual: ConsentS
 ```
 
 ## Risks and notes
+- From the WS01 review (2026-10-30): `households` has column-level UPDATE grants for `authenticated` (`name`, `zip` only). A column you add is not client-editable unless your migration grants `update (<column>)` on it explicitly; otherwise write it through a security-definer function. Add a pgTAP assertion either way. Applies to `tier3_consent`.
 - R16: bot detection. Mode A runs in a real WebView on the user's device with the user's cookies and IP, which is the lowest-risk posture available. Still expect challenges; the design pauses and lets the human clear them. Never add evasion.
 - R17: terms. Costco and Albertsons both prohibit this in their terms; the exposure is the user's account. Consent copy must say so plainly, name each retailer, and be versioned. Default off. Per-retailer kill switch.
 - R19: this is the only route to hands-off checkout and the product should say "with your final tap" unless `autoCheckout` is on.

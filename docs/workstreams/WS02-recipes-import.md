@@ -115,6 +115,7 @@ psql "$WORKER_DATABASE_URL" -c "select kind, model, ok from ai_runs order by cre
 ```
 
 ## Risks and notes
+- From the WS03 report (2026-10-30): add `qty_max numeric` (nullable) to `recipe_ingredients`; `qty` is the lower bound of a range and `qty_max` the upper (docs/02). The orchestrator updates the `parse-ingredients` store mapping for `qtyMax` in the same contract commit. Create `ai_runs` exactly as docs/02 specifies; `parse-ingredients` already writes to it when the table exists. Move `packages/ingredient-parser/src/prompt.ts` into the `@mp/llm` prompt registry and replace its direct Anthropic client with `extract` once `@mp/llm` exists. Your `recipe_ingredients.ingredient_id` FK references `ingredients` from the WS03 migration, which sorts before yours.
 - `recipe-scrapers` does not bypass bot protection. Some sites return 403 to non-browser user agents; the eval should mark these as "blocked" rather than "failed" and they still count against the 45.
 - Store recipes private to the household and keep `source_url`. Instruction prose and images are copyrightable; the shared catalog (v2) will hold only licensed or original content (R5).
 - Caption-only video import is a product rule, not a shortcut: YouTube captions require owning the video, Instagram oEmbed forbids persisting metadata, TikTok embed returns no description, and all three ToS forbid download (R11).

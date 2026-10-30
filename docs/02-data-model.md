@@ -118,7 +118,8 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | position | int | |
 | group_name | text | "For the sauce" |
 | raw_text | text | As imported |
-| qty | numeric | Nullable ("to taste") |
+| qty | numeric | Nullable ("to taste"). Lower bound when the source line gives a range |
+| qty_max | numeric | Nullable. Upper bound of a range ("1 to 2 cups"). List aggregation uses it when present so a list never comes up short. Added 2026-10-30 from the WS03 report |
 | unit | text | Canonical unit code from `core/units` |
 | ingredient_id | uuid → ingredients | Nullable until parsed |
 | prep_note | text | "diced" |
@@ -454,7 +455,7 @@ Files are created with `supabase migration new <name>` and carry a timestamp pre
 | 6 | ingredients | ingredients, ingredient_aliases, ingredient_parse_cache, ingredient_alias_proposals | WS03 |
 | 7 | planning | meal_plans, meal_plan_entries, recipe_feedback | WS04 |
 | 8 | lists | grocery_lists, grocery_list_items, pantry_items, Realtime publication | WS05 |
-| 9 | retail | retailer_connections, product_matches, retailer_quota_usage | WS07 |
+| 9 | retail | retailer_connections, product_matches, retailer_quota_usage, FK `households.default_connection_id` → `retailer_connections` | WS07 |
 | 10 | ws06_preferences | profiles.preferences, onboarding_step, taste_embedding, costco_member | WS06 |
 | 11 | runs | shopping_runs, shopping_run_items, pgmq queue `shopping_run` | WS09 |
 | 12 | tier3 | households.tier3_consent, Storage bucket `run-screenshots` | WS10 |

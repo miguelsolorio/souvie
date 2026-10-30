@@ -87,6 +87,7 @@ pnpm --filter mobile start                  # manual: History tabs render; confi
 ```
 
 ## Risks and notes
+- From the WS01 review (2026-10-30): `export-data` pages every table with `.range()` and requires a total `ORDER` entry per table in `supabase/functions/export-data/handler.ts`; add one for each table you export. Exported `household_invites` redact `token`; redact any bearer or secret column you add the same way.
 - R21: Kroger's developer terms prohibit storing data derived from customer searches or cart adds and building a cached catalog. `orders` records what the household bought, entered with the user's confirmation, which is the household's own purchase record. Keep it to that: no product descriptions beyond `product_name`, no images, no cached prices beyond the run. Price-over-time is deferred.
 - R19: never show an order as "placed" without the user's confirmation. The run reaching `cart_ready` is not an order.
 - Purchase history is sensitive. Views use `security_invoker = true` so RLS applies. Export must filter by the caller's household through RLS, not by a parameter.

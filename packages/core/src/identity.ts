@@ -64,6 +64,8 @@ export const LEFTOVER_STANCES = ["avoid", "ok", "prefer"] as const;
  * deterministic code, never by a model alone (CLAUDE.md).
  */
 export const ProfilePreferences = z.looseObject({
+  household_size: z.object({ adults: z.number().int().min(1), kids: z.number().int().min(0) }).optional(),
+  dinners_per_week: z.number().int().min(1).max(7).optional(),
   diets: z.array(z.string()).optional(),
   allergies: z.array(z.string()).optional(),
   dislikes: z.array(z.string()).optional(),
@@ -74,7 +76,7 @@ export const ProfilePreferences = z.looseObject({
   equipment: z.array(z.string()).optional(),
   portions: z.number().positive().optional(),
   leftovers: z.enum(LEFTOVER_STANCES).optional(),
-  primaryStoreId: z.string().optional(),
+  primary_store_id: z.string().optional(),
   notes: z.string().optional(),
 });
 export type ProfilePreferences = z.infer<typeof ProfilePreferences>;

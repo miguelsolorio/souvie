@@ -1,0 +1,66 @@
+# 05 · Security and privacy
+
+The app holds retailer credentials by proxy, moves money by handing off to retailers, and knows what a household eats and buys. These controls are not optional polish; several are preconditions for the retailer terms in `04-integrations.md`.
+
+## Access control
+
+- Row Level Security on every household-scoped table using `current_household_ids()` (see `02-data-model.md`). Owner-only actions check `role = 'owner'`.
+- The anon key is the only key in the app bundle. The service-role key exists only in the worker and Edge Functions and is never logged.
+- Service-role code filters by `household_id` explicitly on every query. A helper in `packages/db` refuses to run a household-scoped query without one.
+- pgTAP tests in `supabase/tests/` assert, for every household-scoped table, that a member of household A reads zero rows of household B and cannot insert into B. CI runs them from WS01 onward.
+- Invite links expire in 7 days and are single-use.
+
+## Retailer credentials and sessions
+
+- Kroger OAuth refresh tokens live in Supabase Vault; `retailer_connections.vault_secret_id` points at them. Tokens are rotated on every refresh (Kroger reissues refresh tokens) and the old secret version is deleted.
+- Tier 3 browser sessions store cookies and local storage state only, encrypted in Vault, scoped to one connection. Retailer passwords are never stored, logged, or transmitted to our servers. Sign-in happens in the retailer's own page inside the WebView.
+- A "Disconnect" action revokes the Kroger token where the API allows, deletes the Vault secret, and sets `status = 'revoked'`. For browser sessions it deletes the stored state and clears the WebView cookie store.
+- Connections flip to `needs_reauth` on a 401 and the app prompts the owning user; the agent never retries auth in a loop.
+
+## Money
+
+- No card number, CVV, or bank detail ever touches our systems. Payment happens inside the retailer (Tiers 1 and 2) or inside the retailer's own checkout page driven in the WebView (Tier 3).
+- Spending controls enforced in code: `budget_cap_usd` per run, `item_ceiling_usd` per item, a daily maximum number of runs per household, and `auto_checkout` off by default. The agent cannot change policy; only a household owner can, in settings, and the change is logged.
+- Tier 3 checkout requires an approved review or an owner-set `auto_checkout_cap_usd`. The confirmation page total is captured into `orders.total_usd` and shown in the run summary.
+
+## Audit
+
+- `shopping_runs.transcript` records every tool call with timestamp, tool, input, output summary, and screenshot path for browser steps. The review screen can show it. Transcripts are retained 90 days, then screenshots are deleted and the transcript summarized.
+- `ai_runs` records every model call. A per-household daily cost cap is enforced in `packages/llm`.
+- Policy changes, connection changes, and household membership changes write an `audit_events` row (WS01 adds the table; other WS write to it).
+
+## Allergen safety
+
+- Allergies are hard filters in SQL during suggestion and a deterministic check on the proposed cart using `Product.allergens` where present and Open Food Facts ingredient text for UPCs that lack it.
+- A model output that includes an allergen is dropped and logged, never shown. The model never gets the last word.
+- Where allergen data is missing for a product, the item is flagged `needs_review` with the reason "allergen data unavailable."
+
+## Privacy
+
+- Purchase and dietary history is sensitive. Household members see shared plans, lists, and orders. Personal preference details (`profiles.preferences`) are visible only to that user and to the suggestion function.
+- Export-my-data (JSON of everything the user and their households own) and delete-my-account exist from v1. Cheap now, mandatory for any public launch and for Kroger's data-portability clause.
+- Analytics (PostHog) receive event names and anonymous ids, never recipe titles, product names, or dollar amounts in v1.
+- Push notifications contain the subtotal but no item names on the lock screen.
+- No personal data in URL query strings. Deep links carry opaque ids.
+
+## Recipe content
+
+- Imported recipes are stored for the household's private use with `source_url` and attribution. Ingredient lists are facts; instruction prose and images are copyrightable. The shared `catalog` contains only our own or licensed recipes. Nothing scraped is republished publicly.
+- Video import is caption-only and never downloads media (see `03-ai-design.md` §4).
+
+## Retailer-terms controls that are also security controls
+
+- No cached catalog data beyond cache headers; no stored search results. This limits what a breach could expose and keeps Kroger access alive.
+- `cart_snapshot` cleared 24 hours after a run closes.
+- Browser automation is opt-in per household with consent copy approved by the human, feature-flagged, and never run from cloud IPs.
+
+## Secrets handling in the repo
+
+- `.env.example` lists every variable with a placeholder. `.env.local` is gitignored. CI uses GitHub Actions secrets.
+- Builders and reviewers never paste secret values into completion reports, commits, or docs. A pre-commit check greps for common key patterns.
+
+## Incident basics (v1 scale)
+
+- Kill switches: PostHog flags `tier3_browser_checkout` and `shopping_agent_enabled`.
+- A retailer lockout or terms complaint: disable the adapter via flag, notify the household, record in `docs/status.md` decisions log.
+- A suspected token leak: rotate Vault secrets, force `needs_reauth` on all connections, rotate the service-role key.

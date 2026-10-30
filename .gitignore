@@ -1,0 +1,46 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+.turbo/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Expo / React Native
+.expo/
+.expo-shared/
+web-build/
+ios/Pods/
+ios/build/
+android/build/
+android/app/build/
+*.ipa
+*.apk
+*.aab
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+
+# Tauri
+src-tauri/target/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*

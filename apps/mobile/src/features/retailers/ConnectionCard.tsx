@@ -1,3 +1,4 @@
+import { automates, KROGER_CAPABILITIES, type RetailerAdapter } from "@mp/retailers";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Button } from "../../components/Button";
@@ -13,6 +14,18 @@ const STATUS_TEXT: Record<RetailerConnection["status"], string> = {
   needs_reauth: "Needs you to sign in again",
   revoked: "Disconnected",
 };
+
+/** What happens with this store, from its capability row (docs/04 §Per-retailer adapter plan). */
+export function capabilityLine(capabilities: RetailerAdapter["capabilities"]): string {
+  const fills = automates(capabilities, "cartAdd")
+    ? "Your list goes straight into your Kroger cart."
+    : "You get a list to add to your cart yourself.";
+  const pays =
+    capabilities.checkout === "handoff"
+      ? "You pick a time and pay in the QFC or Fred Meyer app, or on the website."
+      : "Checkout happens here once you approve it.";
+  return `${fills} ${pays}`;
+}
 
 /**
  * A Kroger connection: its status, store, and pickup or delivery, with the actions the account
@@ -62,6 +75,7 @@ export function ConnectionCard({
         <Text className="text-sm text-neutral-700">
           {connection.storeName ?? "No store chosen yet"}
         </Text>
+        <Text className="text-xs text-neutral-500">{capabilityLine(KROGER_CAPABILITIES)}</Text>
       </View>
 
       {canManage && connection.status !== "revoked" ? (

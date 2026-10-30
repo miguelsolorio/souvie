@@ -143,6 +143,8 @@ export class QuotaGuard {
   readonly #now: () => Date;
   readonly #limits: Record<KrogerEndpoint, number>;
   readonly #threshold: number;
+  /** The day's count as of our last reserve, so headers only cost a write when they say more. */
+  readonly #known = new Map<string, number>();
 
   constructor(options: QuotaGuardOptions) {
     this.#store = options.store;
@@ -165,13 +167,9 @@ export class QuotaGuard {
   async reserve(endpoint: KrogerEndpoint, amount = 1): Promise<void> {
     const now = this.#now();
     const ceiling = this.ceiling(endpoint);
-    const result = await this.#store.consume(
-      this.#retailer,
-      endpoint,
-      utcDay(now),
-      ceiling,
-      amount,
-    );
+    const day = utcDay(now);
+    const result = await this.#store.consume(this.#retailer, endpoint, day, ceiling, amount);
+    this.#known.set(`${endpoint}|${day}`, result.used);
     if (!result.allowed) {
       throw new RetailerQuotaError(
         this.#retailer,
@@ -201,7 +199,11 @@ export class QuotaGuard {
     }
     if (Number.isFinite(headerLimit) && headerLimit > 0 && Number.isFinite(remaining)) {
       const used = Math.max(0, headerLimit - remaining);
-      if (used > 0) await this.#store.raiseTo(this.#retailer, endpoint, day, used);
+      const key = `${endpoint}|${day}`;
+      if (used > (this.#known.get(key) ?? 0)) {
+        await this.#store.raiseTo(this.#retailer, endpoint, day, used);
+        this.#known.set(key, used);
+      }
     }
   }
 

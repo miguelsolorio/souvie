@@ -1,6 +1,5 @@
 // Test helper: a fetch that answers from recorded responses and logs every request. No network.
-import type { Product, Store } from "../../types.ts";
-import { InMemoryQuotaStore } from "../quota.ts";
+import type { Store } from "../../types.ts";
 
 export interface RecordedResponse {
   request?: { method: string; path: string };
@@ -102,11 +101,3 @@ export const TEST_CONFIG = {
   clientSecret: "fixture-client-secret",
   redirectUri: "souvie://oauth/kroger",
 };
-
-export function freshQuota(): InMemoryQuotaStore {
-  return new InMemoryQuotaStore();
-}
-
-export function names(products: Product[]): string[] {
-  return products.map((p) => p.name);
-}

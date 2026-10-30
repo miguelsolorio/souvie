@@ -12,6 +12,7 @@ import {
 } from "../../../packages/core/src/index.ts";
 import type { ExtractImage, ImageMediaType } from "../../../packages/llm/src/index.ts";
 import {
+  cleanSourceUrl,
   type ImportResult,
   importFromCaption,
   importFromImage,
@@ -275,11 +276,19 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
   }
 }
 
+/**
+ * A link as the database stores it: no fragment and no tracking parameters. This is the cleaning
+ * `recipes.source_url` gets, so import_jobs.input never keeps more of a link than the recipe does.
+ */
+function storedLink(raw: string): string {
+  return cleanSourceUrl(raw).slice(0, 500);
+}
+
 /** What goes in import_jobs.input: enough to debug, never the pasted text or a caption. */
 function jobInput(request: ImportRecipeRequest): Record<string, unknown> {
   switch (request.kind) {
     case "url":
-      return { url: request.input.slice(0, 500) };
+      return { url: storedLink(request.input) };
     case "text":
       return { length: request.input.length };
     case "image":
@@ -287,7 +296,7 @@ function jobInput(request: ImportRecipeRequest): Record<string, unknown> {
     case "caption":
       return {
         length: request.input.length,
-        ...(request.sourceUrl ? { sourceUrl: request.sourceUrl.slice(0, 500) } : {}),
+        ...(request.sourceUrl ? { sourceUrl: storedLink(request.sourceUrl) } : {}),
       };
   }
 }
@@ -313,7 +322,7 @@ function saveFields(
       // With the shared post's link it is a video import (attribution is required); without one
       // it is just text.
       return request.sourceUrl
-        ? { sourceType: "video", sourceUrl: request.sourceUrl }
+        ? { sourceType: "video", sourceUrl: recipe.sourceUrl ?? storedLink(request.sourceUrl) }
         : { sourceType: "text" };
   }
 }
@@ -322,7 +331,7 @@ function saveFields(
 function draftFor(request: ImportRecipeRequest, recipe: NormalizedRecipe): NormalizedRecipe {
   if (request.kind === "image") return { ...recipe, imageUrl: request.input.path };
   if (request.kind === "caption" && request.sourceUrl) {
-    return { ...recipe, sourceUrl: request.sourceUrl };
+    return { ...recipe, sourceUrl: recipe.sourceUrl ?? storedLink(request.sourceUrl) };
   }
   return recipe;
 }

@@ -58,6 +58,15 @@ export function runtimeFromEnv(env: Env, deno?: DenoLike): Runtime {
   const store = new SupabaseImportStore(serviceDb, userClient);
   const capUsd = dailyCap(env);
 
+  if (!deno?.resolveDns) {
+    // The runtime is built once per cold start, so this logs once. Without a resolver the fetch
+    // guard still rejects IP literals and internal-looking names, but not a public name that
+    // resolves to a private address.
+    console.warn(
+      "recipe-import: Deno.resolveDns is not available, so the DNS check on page URLs is skipped",
+    );
+  }
+
   let anthropic: MessagesClient | undefined;
 
   return {

@@ -251,7 +251,8 @@ describe("url imports", () => {
     expect(store.jobs[0]?.job).toEqual({
       householdId: HOUSEHOLD,
       kind: "url",
-      input: { url: "https://example.test/lemon-chicken?utm_source=x" },
+      // The cleaned link, as recipes.source_url gets it: no tracking parameters survive in the job.
+      input: { url: "https://example.test/lemon-chicken" },
     });
     expect(store.jobs[0]?.update).toEqual({
       status: "done",
@@ -377,6 +378,36 @@ describe("text and caption imports", () => {
       sourceUrl: "https://www.tiktok.com/@cook/video/1",
     });
     expect(store.jobs[0]?.job.kind).toBe("caption");
+  });
+
+  it("stores a caption's post link without tracking parameters or fragment, in the job, the recipe, and the draft", async () => {
+    const link =
+      "https://www.instagram.com/reel/abc/?igsh=SECRET123&utm_source=ig_web_copy_link#top";
+    const clean = "https://www.instagram.com/reel/abc/";
+    const input = "Pancakes\n2 cups flour\n1 cup milk\n1 egg";
+
+    const saved = runtime();
+    await call(saved.rt, { kind: "caption", input, sourceUrl: link });
+    expect(saved.store.jobs[0]?.job.input).toEqual({ length: input.length, sourceUrl: clean });
+    expect(saved.store.saved[0]).toMatchObject({ sourceType: "video", sourceUrl: clean });
+    expect(JSON.stringify(saved.store.jobs[0]?.job)).not.toContain("SECRET123");
+
+    const draft = runtime();
+    const { body } = await call(draft.rt, { kind: "caption", input, sourceUrl: link, save: false });
+    expect(body).toMatchObject({ ok: true, draft: { sourceUrl: clean } });
+    expect(JSON.stringify(draft.store.jobs[0]?.job)).not.toContain("SECRET123");
+  });
+
+  it("keeps a url import's job input free of tracking parameters too", async () => {
+    const { rt, store } = runtime();
+    await call(rt, {
+      kind: "url",
+      input: "https://example.test/lemon-chicken?fbclid=SECRET456&gclid=SECRET789&page=2#reviews",
+    });
+    const input = JSON.stringify(store.jobs[0]?.job.input);
+    expect(input).not.toContain("SECRET");
+    expect(input).toContain("https://example.test/lemon-chicken?page=2");
+    expect(input).not.toContain("#reviews");
   });
 
   it("saves a caption without a link as a text recipe", async () => {

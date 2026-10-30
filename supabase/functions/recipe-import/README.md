@@ -71,7 +71,7 @@ The messages in `IMPORT_ERROR_MESSAGES` (`@mp/core`) are written for the person 
 
 | Table | Client | What |
 |---|---|---|
-| `import_jobs` | service role | One row per call that passes the checks: `kind` (`url`, `text`, `photo`, `caption`), a small `input` (the URL, the photo path, or the length of pasted text, never the text), `status` running then `done` or `failed`, `result_recipe_id`, a short `error` |
+| `import_jobs` | service role | One row per call that passes the checks: `kind` (`url`, `text`, `photo`, `caption`), a small `input` (the URL without tracking parameters or fragment, which is the cleaning `recipes.source_url` gets; the photo path; or the length of pasted text, never the text), `status` running then `done` or `failed`, `result_recipe_id`, a short `error` |
 | `recipes` | the caller (RLS) | `source_type` `url`, `text`, `photo`, or `video` (a caption with a post link; without one it is `text`), `source_url` for url and video, `visibility = 'household'`, `created_by` from the JWT |
 | `recipe_ingredients` | the caller (RLS) | One row per line with `position`, `group_name`, and `raw_text`. `qty`, `unit`, and `ingredient_id` stay null: WS03's `parse-ingredients` fills them |
 | `ai_runs` | service role | One row per model call, `kind = extract_recipe`, `prompt_version = recipe-extract.v1`, tokens, cost, latency, ok |
@@ -83,6 +83,7 @@ If the ingredient lines fail to insert, the half-saved recipe is deleted (servic
 
 - **Video platforms.** Never fetched. Captions arrive as text and are never turned into a request.
 - **Fetching.** Desktop user agent, 10 s total, 4 MiB, ports 80 and 443 only, no private, loopback, or link-local address (including after a redirect and after DNS resolution), at most 5 redirects.
+- **DNS rebinding is a known limitation.** The host name is resolved in a separate lookup (`Deno.resolveDns`) before each request, and the fetch then resolves it again on its own. An attacker's DNS server could answer differently the second time. The check cannot pin the connection to the address it looked at. The function runs with no access to private networks, which is the control that matters. When `Deno.resolveDns` is missing, the check is skipped: the function logs one warning when it starts and then rejects only IP literals and internal-looking names.
 - **Daily model budget.** `AI_DAILY_CAP_USD` per household per UTC day (default 2). The function sums today's `ai_runs.cost_usd` before each model call and returns `cost_cap` at or over the limit. Imports that need no model are not counted.
 - **Hourly import limit.** 120 `import_jobs` per household per hour.
 - **Photos.** `input.path` must sit in the caller's household folder of the bucket; the download runs as the caller, so Storage policies apply as well.

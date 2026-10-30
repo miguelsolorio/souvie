@@ -61,6 +61,7 @@ export default function Home() {
       subtitle={household.data.role === "owner" ? "You are the owner." : "You are a member."}
     >
       <View className="gap-3">
+        <Button testID="open-recipes" label="Recipes" onPress={() => router.push("/recipes")} />
         <Button
           testID="open-household-settings"
           label="Household and members"

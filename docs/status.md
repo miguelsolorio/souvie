@@ -2,17 +2,17 @@
 
 The orchestrator updates this file after every dispatch, report, review, merge, or block. It is the resume point for a fresh session: read it before anything else except the implementation guide.
 
-**Current wave:** 1 (dispatching)
-**Last updated:** 2026-10-30 by the orchestrator (checkpoint 1 approved)
+**Current wave:** 1 (in progress)
+**Last updated:** 2026-10-30 by the orchestrator (wave 1 dispatched)
 
 ## Workstreams
 
 | WS | Name | Wave | State | Branch | Model | Started | Merged | Notes |
 |---|---|---|---|---|---|---|---|---|
 | 00 | Repo & infra scaffold | 0 | merged | ws/00-scaffold | opus | 2026-10-29 | 2026-10-30 | Squash 7713b7f, PR #1. Checkpoint 1 approved 2026-10-30. Still to verify once Miguel unblocks: criterion 7 (Xcode license) and the hosted halves of 9-11 (`SUPABASE_ACCESS_TOKEN`) |
-| 01 | Auth & households | 1 | not started | | | | | Human checkpoint 2 before merge (migration + RLS) |
+| 01 | Auth & households | 1 | in progress | ws/01-auth-households | sonnet | 2026-10-30 | | Human checkpoint 2 before merge (migration + RLS). Hosted `db push` needs `SUPABASE_ACCESS_TOKEN`; pgTAP runs in CI |
 | 02 | Recipe domain & import | 2 | not started | | | | | |
-| 03 | Ingredient ontology & parser | 1 | not started | | | | | |
+| 03 | Ingredient ontology & parser | 1 | in progress | ws/03-ingredient-ontology-parser | sonnet | 2026-10-30 | | |
 | 04 | Planner UI | 3 | not started | | | | | |
 | 05 | Grocery list & in-store mode | 4 | not started | | | | | |
 | 06 | Onboarding & suggestions | 3 | not started | | | | | |
@@ -23,7 +23,7 @@ The orchestrator updates this file after every dispatch, report, review, merge, 
 | 11 | Scheduling & notifications | 6 | not started | | | | | |
 | 12 | History & spend | 6 | not started | | | | | |
 | 13 | Web & desktop packaging | 6 | not started | | | | | |
-| 14 | Brand & marketing site | 1 | not started | | | | | Human checkpoint 6 before finish (name) |
+| 14 | Brand & marketing site | 1 | in progress | ws/14-brand-marketing-site | sonnet | 2026-10-30 | | Human checkpoint 6 before finish (name). Working name Souvie; its §1.3 checks are still open |
 | 15 | Observability & AI evals | 6 | not started | | | | | |
 
 States: `not started` · `in progress` · `in review` · `fix round` · `merged` · `blocked`

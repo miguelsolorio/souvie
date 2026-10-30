@@ -190,6 +190,13 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: "ingredient_alias_proposals_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "ingredient_alias_proposals_suggested_ingredient_id_fkey";
             columns: ["suggested_ingredient_id"];
             isOneToOne: false;

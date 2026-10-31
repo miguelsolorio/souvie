@@ -167,6 +167,9 @@ export const RecipeIngredient = z.object({
   prep_note: z.string().nullable(),
   optional: z.boolean(),
   parse_confidence: z.number().min(0).max(1).nullable(),
+  /** CCR5: how many containers the line names and the container word, as in "2 (14 oz) cans". Null when the line names none. Optional until every writer sends them. */
+  container_count: z.number().int().positive().nullable().optional(),
+  container: z.string().nullable().optional(),
 });
 export type RecipeIngredient = z.infer<typeof RecipeIngredient>;
 

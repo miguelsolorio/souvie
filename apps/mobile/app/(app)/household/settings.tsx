@@ -21,6 +21,7 @@ import { MemberRow } from "../../../src/features/household/MemberRow";
 import { RecheckNoticeLine } from "../../../src/features/onboarding/components";
 import { KrogerSettingsSection } from "../../../src/features/onboarding/KrogerSettingsSection";
 import { EDIT_START_HREF } from "../../../src/features/onboarding/onboardingState";
+import { Tier3SettingsSection } from "../../../src/features/tier3/Tier3SettingsSection";
 import { confirmAction } from "../../../src/lib/confirm";
 
 export default function HouseholdSettingsScreen() {
@@ -172,6 +173,10 @@ export default function HouseholdSettingsScreen() {
 
       <Section title="Kroger (QFC and Fred Meyer)">
         <KrogerSettingsSection householdId={current.id} isOwner={isOwner} zip={current.zip} />
+      </Section>
+
+      <Section title="Safeway, Albertsons, Haggen and Costco">
+        <Tier3SettingsSection householdId={current.id} />
       </Section>
 
       <ErrorText>{error}</ErrorText>

@@ -12,7 +12,9 @@
     "export:web": "expo export --platform web",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "tier3:bridge": "node src/features/tier3/build-bridge.mts",
+    "tier3:test-page": "node src/features/tier3/test-page/serve.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~58.0.15",

@@ -63,6 +63,8 @@ export interface BridgeHost extends BrowserHost {
   notifyNavigation(url: string): void;
   /** This origin's localStorage and sessionStorage, for saving a session. */
   readStorage(): Promise<StorageDump>;
+  /** Empties this origin's storage once the session is saved, so none of it stays in plaintext. */
+  clearPageStorage(): void;
   /** True between the bridge's `ready` and the next load start. */
   isReady(): boolean;
   close(): void;
@@ -385,6 +387,13 @@ export function createBridgeHost(
       return request<StorageDump>({ type: "storage.read", requestId: nextId() });
     },
 
+    clearPageStorage() {
+      if (closed) return;
+      transport.evaluate(
+        "(function(){try{localStorage.clear();}catch(e){}try{sessionStorage.clear();}catch(e){}})();true;",
+      );
+    },
+
     close() {
       closed = true;
       for (const [, p] of pending) {
@@ -406,23 +415,4 @@ export function createBridgeHost(
     },
   };
   return host;
-}
-
-/** Bytes from base64 (react-native-view-shot returns base64). No Buffer on Hermes. */
-export function base64ToBytes(b64: string): Uint8Array {
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  const clean = b64.replace(/[^A-Za-z0-9+/]/g, "");
-  const out = new Uint8Array(Math.floor((clean.length * 3) / 4));
-  let buffer = 0;
-  let bits = 0;
-  let index = 0;
-  for (const ch of clean) {
-    buffer = (buffer << 6) | alphabet.indexOf(ch);
-    bits += 6;
-    if (bits >= 8) {
-      bits -= 8;
-      out[index++] = (buffer >> bits) & 0xff;
-    }
-  }
-  return out.subarray(0, index);
 }

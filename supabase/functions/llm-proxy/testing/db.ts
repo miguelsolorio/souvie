@@ -47,6 +47,11 @@ export interface Tier3TestDb {
   db: PGlite;
   query<T = Record<string, unknown>>(text: string, params?: readonly unknown[]): Promise<T[]>;
   exec(text: string): Promise<void>;
+  /** Runs `fn` as a signed-in user (or the service role), and keeps what it wrote. */
+  run<T>(
+    who: { sub: string } | "service_role",
+    fn: (q: Tier3TestDb["query"]) => Promise<T>,
+  ): Promise<T>;
   /** Runs `fn` as a signed-in user (or the service role), inside a transaction rolled back after. */
   as<T>(
     who: { sub: string } | "service_role",
@@ -79,6 +84,20 @@ export async function createTier3TestDb(options: { pgtap?: boolean } = {}): Prom
     query,
     exec: async (text) => {
       await db.exec(text);
+    },
+    async run(who, fn) {
+      const claims =
+        who === "service_role" ? { role: "service_role" } : { sub: who.sub, role: "authenticated" };
+      await db.query("select set_config('request.jwt.claims', $1, false)", [
+        JSON.stringify(claims),
+      ]);
+      await db.exec(`set role ${who === "service_role" ? "service_role" : "authenticated"}`);
+      try {
+        return await fn(query);
+      } finally {
+        await db.exec("reset role");
+        await db.query("select set_config('request.jwt.claims', '', false)");
+      }
     },
     async as(who, fn) {
       let out: unknown;

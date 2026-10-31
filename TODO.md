@@ -47,7 +47,8 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [ ] **Human checkpoint 4** gates WS08 only: Instacart application status known; `INSTACART_API_KEY` (dev) in `.env.local`. Then dispatch WS08 (sonnet).
 - [ ] WS08 reviewer must run the Instacart compliance checklist.
 - [x] **Human decision:** recipe catalog cold start. Miguel chose a starter catalog 2026-10-30; WS16 brief written and dispatched.
-- [ ] WS16 (starter catalog, sonnet): review, merge. Miguel skims `supabase/seed/catalog/README.md` before the catalog loads into the hosted project.
+- [x] WS16 (starter catalog, sonnet): reviewed and merged as 4fb32da (PR #13), 2026-10-30.
+- [ ] **Human:** Miguel skims `supabase/seed/catalog/README.md` before the catalog loads into the hosted project (with the hosted release).
 - [x] Orchestrator migration `20261030140000_recipes_catalog_read.sql` (catalog read policies) merged as c152769 (PR #11).
 - [ ] Review, merge, wave 3 summary.
 

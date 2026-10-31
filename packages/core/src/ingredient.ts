@@ -69,6 +69,13 @@ export const ParsedIngredientSchema = z.object({
   ingredientId: z.uuid().nullable(),
   ingredientName: z.string().nullable(),
   prepNote: z.string().nullable().optional(),
+  /**
+   * Containers the line names, when it gives one with a size: "2 (14 oz) cans" is 2 cans holding
+   * 28 oz in total, so `qty` and `unit` stay the total contents and these two keep the count and
+   * the container word. Null or absent when the line has no container. Added 2026-10-30 (CCR5).
+   */
+  containerCount: z.number().int().positive().nullable().optional(),
+  container: z.string().trim().min(1).max(40).nullable().optional(),
   optional: z.boolean(),
   confidence: z.number().min(0).max(1),
   stage: ParseStageSchema,

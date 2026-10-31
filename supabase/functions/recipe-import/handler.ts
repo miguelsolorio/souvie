@@ -13,14 +13,26 @@ import {
 import type { ExtractImage, ImageMediaType } from "../../../packages/llm/src/index.ts";
 import {
   cleanSourceUrl,
+  DUPLICATE_ERROR,
+  DUPLICATE_MESSAGE,
+  dedupeIngredientLines,
   type ImportResult,
   importFromCaption,
   importFromImage,
   importFromText,
   importFromUrl,
   type ModelExtract,
+  normalizeSourceUrl,
+  normalizeTitle,
+  titleSearchPattern,
 } from "../../../packages/recipe-import/src/index.ts";
-import type { DownloadedImage, ImportStore } from "./store.ts";
+import {
+  type DownloadedImage,
+  type DuplicateCheck,
+  DuplicateSaveError,
+  type ExistingRecipe,
+  type ImportStore,
+} from "./store.ts";
 
 /** Imports one household may start in an hour. A cap on fetches from our infrastructure. */
 export const HOURLY_IMPORT_LIMIT = 120;
@@ -54,16 +66,44 @@ function json(body: unknown, status = 200): Response {
   return Response.json(body, { status, headers: { ...CORS_HEADERS, "Cache-Control": "no-store" } });
 }
 
-function fail(error: ImportErrorCode, status: number, jobId?: string, message?: string): Response {
+/**
+ * `duplicate` is part of the contract the app reads but not yet of `ImportErrorCode` in `@mp/core`
+ * (contract change request in the WS02 follow-up report). Until it is, the handler widens the code
+ * type here.
+ */
+type FailureCode = ImportErrorCode | typeof DUPLICATE_ERROR;
+
+const FAILURE_MESSAGES: Record<FailureCode, string> = {
+  ...IMPORT_ERROR_MESSAGES,
+  [DUPLICATE_ERROR]: DUPLICATE_MESSAGE,
+};
+
+function fail(error: FailureCode, status: number, jobId?: string, message?: string): Response {
   return json(
     {
       ok: false,
       error,
-      message: message ?? IMPORT_ERROR_MESSAGES[error],
+      message: message ?? FAILURE_MESSAGES[error],
       ...(jobId ? { jobId } : {}),
     },
     status,
   );
+}
+
+/**
+ * The household already has this recipe. HTTP 200 like every other import outcome, with the
+ * existing recipe's id so the app can open it, and how it was recognised: a same-title match can
+ * be overridden with `allowDuplicate`, a same-link match cannot.
+ */
+function duplicate(existing: ExistingRecipe, jobId?: string): Response {
+  return json({
+    ok: false,
+    error: DUPLICATE_ERROR,
+    message: DUPLICATE_MESSAGE,
+    recipeId: existing.recipeId,
+    matchedBy: existing.matchedBy,
+    ...(jobId ? { jobId } : {}),
+  });
 }
 
 /** Request-level problems get an HTTP error; import-level outcomes are a 200 with `ok: false`. */
@@ -153,6 +193,8 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
     return fail("invalid_request", 400, undefined, `${where}: ${issue?.message ?? "invalid"}`);
   }
   const request = parsed.data;
+  // Not in ImportRecipeRequest yet (contract change request), so read from the body itself.
+  const allowDuplicate = (raw as { allowDuplicate?: unknown } | null)?.allowDuplicate === true;
 
   try {
     const household = await runtime.store.resolveHousehold(
@@ -173,6 +215,16 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
       );
     }
 
+    // The link the person sent, before anything is fetched or read: a recipe the household
+    // already has costs no page fetch, no model call, and no import job.
+    const sentKey = linkKey(sentLink(request));
+    if (sentKey) {
+      const existing = await findExisting(runtime.store, authHeader, householdId, {
+        sourceUrlNormalized: sentKey,
+      });
+      if (existing) return duplicate(existing);
+    }
+
     const hourAgo = new Date(runtime.now().getTime() - 60 * 60 * 1000).toISOString();
     if ((await runtime.store.recentJobCount(householdId, hourAgo)) >= HOURLY_IMPORT_LIMIT) {
       return fail("rate_limited", 200);
@@ -184,7 +236,7 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
       input: jobInput(request),
     });
 
-    const finishFailed = async (code: ImportErrorCode, message?: string) => {
+    const finishFailed = async (code: FailureCode, message?: string) => {
       try {
         await runtime.store.finishJob(jobId, householdId, {
           status: "failed",
@@ -242,8 +294,14 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
       return fail(result.reason, REQUEST_STATUS[result.reason] ?? 200, jobId, result.message);
     }
 
+    // A page, a model, or a person repeating themselves can list a line twice. The first stays.
+    const recipe: NormalizedRecipe = {
+      ...result.recipe,
+      ingredients: dedupeIngredientLines(result.recipe.ingredients),
+    };
+
     // Photos and captions are saved only after the person edits and confirms them, unless the
-    // caller explicitly asks to save.
+    // caller explicitly asks to save. The app checks a draft for duplicates when it saves it.
     const save = request.save ?? true;
     if (!save) {
       await runtime.store.finishJob(jobId, householdId, { status: "done" });
@@ -251,19 +309,50 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
         ok: true,
         jobId,
         path: result.path,
-        draft: draftFor(request, result.recipe),
+        draft: draftFor(request, recipe),
         warnings: result.warnings,
       });
     }
 
+    // What the recipe will be stored under. A link decides: the page's own address after
+    // redirects can differ from the one sent. With no link, the title does, unless the person
+    // said "add anyway". A same-link match is never overridden: the database keeps one live
+    // recipe per link and would refuse the insert.
+    const fields = saveFields(request, recipe);
+    const storedKey = linkKey(fields.sourceUrl ?? recipe.sourceUrl);
+    const existing = storedKey
+      ? storedKey === sentKey
+        ? null
+        : await findExisting(runtime.store, authHeader, householdId, {
+            sourceUrlNormalized: storedKey,
+          })
+      : allowDuplicate
+        ? null
+        : await findExisting(runtime.store, authHeader, householdId, {
+            title: {
+              pattern: titleSearchPattern(recipe.title),
+              isSame: (candidate) => normalizeTitle(candidate) === normalizeTitle(recipe.title),
+            },
+          });
+    if (existing) {
+      await finishFailed(DUPLICATE_ERROR);
+      return duplicate(existing, jobId);
+    }
+
     let recipeId: string;
     try {
-      recipeId = await runtime.store.saveRecipe(authHeader, {
-        householdId,
-        recipe: result.recipe,
-        ...saveFields(request, result.recipe),
-      });
+      recipeId = await runtime.store.saveRecipe(authHeader, { householdId, recipe, ...fields });
     } catch (err) {
+      if (err instanceof DuplicateSaveError && storedKey) {
+        // Two saves of one link raced; the database's index caught the second.
+        const raced = await findExisting(runtime.store, authHeader, householdId, {
+          sourceUrlNormalized: storedKey,
+        });
+        if (raced) {
+          await finishFailed(DUPLICATE_ERROR);
+          return duplicate(raced, jobId);
+        }
+      }
       console.error("recipe-import: save failed", err);
       await finishFailed("save_failed");
       return fail("save_failed", 500, jobId);
@@ -273,6 +362,41 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
   } catch (err) {
     console.error("recipe-import failed", err);
     return fail("internal_error", 500);
+  }
+}
+
+/** The link in a request: the page to import, or the post a caption was shared from. */
+function sentLink(request: ImportRecipeRequest): string | undefined {
+  if (request.kind === "url") return request.input;
+  if (request.kind === "caption") return request.sourceUrl;
+  return undefined;
+}
+
+/**
+ * A link as the database will key it: cleaned the way `recipes.source_url` is, then normalized
+ * (`recipes.source_url_normalized` is the same function in SQL). Undefined for no link.
+ */
+function linkKey(link: string | undefined): string | undefined {
+  if (!link) return undefined;
+  return normalizeSourceUrl(cleanSourceUrl(link)) ?? undefined;
+}
+
+/**
+ * Looks for a recipe the household already has. This is a safeguard, not a gate: when the lookup
+ * itself fails the import carries on, because the unique index on the link still refuses a second
+ * copy (DuplicateSaveError) and a missed title match only means a copy the person can delete.
+ */
+async function findExisting(
+  store: ImportStore,
+  authHeader: string,
+  householdId: string,
+  check: DuplicateCheck,
+): Promise<ExistingRecipe | null> {
+  try {
+    return await store.findDuplicate(authHeader, householdId, check);
+  } catch (err) {
+    console.error("recipe-import: duplicate lookup failed", err);
+    return null;
   }
 }
 

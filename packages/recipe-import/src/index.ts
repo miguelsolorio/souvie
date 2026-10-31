@@ -13,6 +13,7 @@
 export const packageName = "@mp/recipe-import";
 
 export * from "./caption.ts";
+export * from "./dedupe.ts";
 export { hasJsonLdRecipe, looksLikeChallenge, pageImage, readableText } from "./html.ts";
 export { importFromImage } from "./image.ts";
 export * from "./normalize.ts";

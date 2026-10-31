@@ -6,7 +6,8 @@
   "description": "URL, text, photo, or caption to a normalized recipe.",
   "exports": {
     ".": "./src/index.ts",
-    "./share": "./src/share.ts"
+    "./share": "./src/share.ts",
+    "./dedupe": "./src/dedupe.ts"
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",

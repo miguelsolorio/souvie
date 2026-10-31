@@ -2,9 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LIST_ROUTE } from "../list/routes";
 import { clearPlanNotice, getPlanNotice, NOTICE_DURATION_MS, showPlanNotice } from "./notice";
 import {
+  afterRecipeSaved,
   dayRoute,
   GROCERY_LIST_PENDING_HINT,
   GROCERY_LIST_ROUTE,
+  NEW_RECIPE_ROUTE,
+  newRecipeFromPickerRoute,
+  parsePickerReturn,
   pickRoute,
   planRoute,
   recipeRoute,
@@ -28,6 +32,91 @@ describe("routes", () => {
     // The list screen builds the list on arrival when the week has none: one tap, as the brief says.
     expect(GROCERY_LIST_ROUTE).toBe(`${LIST_ROUTE}?build=1`);
     expect(GROCERY_LIST_PENDING_HINT.length).toBeGreaterThan(0);
+  });
+});
+
+describe("recipe entry points in the picker", () => {
+  const target = { date: "2026-11-03", slot: "dinner" as const };
+
+  it("opens the picker on a just-added recipe", () => {
+    expect(pickRoute({ ...target, added: "r9" })).toBe(
+      "/plan/pick?date=2026-11-03&slot=dinner&added=r9",
+    );
+    expect(pickRoute({ ...target, entry: "e1", added: "r9" })).toBe(
+      "/plan/pick?date=2026-11-03&slot=dinner&entry=e1&added=r9",
+    );
+  });
+
+  it("sends the picker's date, slot and swap target along to the add-recipe screen", () => {
+    expect(NEW_RECIPE_ROUTE).toBe("/recipes/new");
+    expect(newRecipeFromPickerRoute(target)).toBe(
+      "/recipes/new?returnTo=pick&date=2026-11-03&slot=dinner",
+    );
+    expect(newRecipeFromPickerRoute({ ...target, slot: "lunch", entry: "e1" })).toBe(
+      "/recipes/new?returnTo=pick&date=2026-11-03&slot=lunch&entry=e1",
+    );
+  });
+
+  it("reads those params back into the picker's target", () => {
+    expect(parsePickerReturn({ returnTo: "pick", date: "2026-11-03", slot: "dinner" })).toEqual(
+      target,
+    );
+    expect(
+      parsePickerReturn({ returnTo: "pick", date: "2026-11-03", slot: "snack", entry: "e1" }),
+    ).toEqual({ date: "2026-11-03", slot: "snack", entry: "e1" });
+    // An empty entry is no entry.
+    expect(
+      parsePickerReturn({ returnTo: "pick", date: "2026-11-03", slot: "dinner", entry: "" }),
+    ).toEqual(target);
+  });
+
+  it("treats a missing or malformed return target as coming from somewhere else", () => {
+    const ok = { returnTo: "pick", date: "2026-11-03", slot: "dinner" };
+    expect(parsePickerReturn({})).toBeNull();
+    expect(parsePickerReturn({ ...ok, returnTo: undefined })).toBeNull();
+    expect(parsePickerReturn({ ...ok, returnTo: "day" })).toBeNull();
+    expect(parsePickerReturn({ ...ok, date: undefined })).toBeNull();
+    expect(parsePickerReturn({ ...ok, date: "next tuesday" })).toBeNull();
+    expect(parsePickerReturn({ ...ok, date: "2026-02-31" })).toBeNull();
+    expect(parsePickerReturn({ ...ok, slot: "brunch" })).toBeNull();
+    expect(parsePickerReturn({ ...ok, slot: undefined })).toBeNull();
+    // A repeated param arrives as an array: not a date, so not a return target.
+    expect(parsePickerReturn({ ...ok, date: ["2026-11-03", "2026-11-04"] })).toBeNull();
+  });
+
+  it("round-trips: what the picker sends is what the add-recipe screen reads", () => {
+    for (const entry of [undefined, "9a2b7c1e-0000-4000-8000-000000000001"]) {
+      const sent = { date: "2026-12-31", slot: "breakfast" as const, entry };
+      const url = new URL(newRecipeFromPickerRoute(sent), "https://app.test");
+      const params = Object.fromEntries(url.searchParams);
+      expect(url.pathname).toBe(NEW_RECIPE_ROUTE);
+      expect(parsePickerReturn(params)).toEqual(
+        entry ? sent : { date: sent.date, slot: sent.slot },
+      );
+    }
+  });
+
+  describe("after a recipe is saved", () => {
+    it("goes back to the picker it came from, same date, slot and swap target", () => {
+      expect(afterRecipeSaved("r9", target)).toEqual({
+        action: "dismissTo",
+        href: "/plan/pick?date=2026-11-03&slot=dinner&added=r9",
+      });
+      expect(afterRecipeSaved("r9", { ...target, entry: "e1" })).toEqual({
+        action: "dismissTo",
+        href: "/plan/pick?date=2026-11-03&slot=dinner&entry=e1&added=r9",
+      });
+    });
+
+    it("opens the recipe's own page for anyone who did not come from the picker", () => {
+      // The Recipes tab, a share, a deep link: unchanged from before the picker had the control.
+      expect(afterRecipeSaved("r9", null)).toEqual({ action: "replace", href: "/recipes/r9" });
+      expect(afterRecipeSaved("r9", undefined)).toEqual({ action: "replace", href: "/recipes/r9" });
+      expect(afterRecipeSaved("r9", parsePickerReturn({ date: "2026-11-03" }))).toEqual({
+        action: "replace",
+        href: recipeRoute("r9"),
+      });
+    });
   });
 });
 

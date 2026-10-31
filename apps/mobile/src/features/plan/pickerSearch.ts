@@ -13,6 +13,22 @@ export const PICKER_TABS: ReadonlyArray<{ value: PickerTab; label: string }> = [
   { value: "all", label: "All" },
 ];
 
+/**
+ * What an empty Recent or Favorites tab says. Both sit next to a "Show all recipes" action. A tab
+ * can be empty while the household has recipes, so the words say what the tab is, not that the
+ * household has nothing.
+ */
+export const TAB_EMPTY = {
+  recent: {
+    title: "Nothing planned yet",
+    message: "Recipes you have planned before show up here.",
+  },
+  favorites: {
+    title: "No favorites yet",
+    message: "Thumb a recipe up on its meal to find it here.",
+  },
+} as const;
+
 function words(query: string): string[] {
   return query
     .toLowerCase()
@@ -65,9 +81,41 @@ export function byTitle(recipes: readonly RecipeSummary[]): RecipeSummary[] {
 }
 
 /**
+ * The tab the picker opens on: Recent when the household has planned a recipe it still has, so
+ * the usual repeat meals are one tap away; otherwise All, since an empty Recent would be the
+ * first thing a person sees. Pass `recipes` to count only recent ids that are still listed
+ * (a recipe deleted since it was planned does not fill Recent). The tabs stay switchable.
+ */
+export function initialTab(
+  recentIds: readonly string[],
+  recipes?: readonly Pick<RecipeSummary, "id">[],
+): PickerTab {
+  if (!recipes) return recentIds.length > 0 ? "recent" : "all";
+  const listed = new Set(recipes.map((recipe) => recipe.id));
+  return recentIds.some((id) => listed.has(id)) ? "recent" : "all";
+}
+
+/** The recipe with this id, or null for no id or an id the list does not hold (yet). */
+export function recipeWithId(
+  recipes: readonly RecipeSummary[],
+  id: string | null | undefined,
+): RecipeSummary | null {
+  if (!id) return null;
+  return recipes.find((recipe) => recipe.id === id) ?? null;
+}
+
+/** The list with the recipe of this id moved to the front; unchanged when it is not in it. */
+function withFirst(recipes: RecipeSummary[], id: string | null | undefined): RecipeSummary[] {
+  const first = recipeWithId(recipes, id);
+  if (!first) return recipes;
+  return [first, ...recipes.filter((recipe) => recipe.id !== first.id)];
+}
+
+/**
  * The list for the current tab and search box. A search looks through every recipe, whatever the
  * tab, because typing means "I know what I want". Recent and Favorites skip recipes that are
- * gone from the household's list (deleted since).
+ * gone from the household's list (deleted since). `firstId` is a recipe the person just added:
+ * under All, with no search, it goes first so it is the first thing they see.
  */
 export function pickerRecipes(args: {
   recipes: readonly RecipeSummary[];
@@ -75,10 +123,11 @@ export function pickerRecipes(args: {
   query: string;
   recentIds: readonly string[];
   favoriteIds: readonly string[];
+  firstId?: string | null | undefined;
 }): RecipeSummary[] {
-  const { recipes, tab, query, recentIds, favoriteIds } = args;
+  const { recipes, tab, query, recentIds, favoriteIds, firstId } = args;
   if (words(query).length > 0) return searchRecipes(byTitle(recipes), query);
   if (tab === "recent") return inOrder(recipes, recentIds);
   if (tab === "favorites") return inOrder(recipes, favoriteIds);
-  return byTitle(recipes);
+  return withFirst(byTitle(recipes), firstId);
 }

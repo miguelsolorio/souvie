@@ -17,11 +17,14 @@ import { LoadingScreen } from "../../../src/components/Screen";
 import { CREATE_HOUSEHOLD_ROUTE } from "../../../src/features/auth/routes";
 import { dayName, SLOT_LABELS, slotTitle } from "../../../src/features/plan/format";
 import {
+  initialTab,
   PICKER_TABS,
   type PickerTab,
   pickerRecipes,
+  recipeWithId,
+  TAB_EMPTY,
 } from "../../../src/features/plan/pickerSearch";
-import { planRoute } from "../../../src/features/plan/routes";
+import { newRecipeFromPickerRoute, planRoute } from "../../../src/features/plan/routes";
 import { ServingsStepper } from "../../../src/features/plan/ServingsStepper";
 import { useDefaultServings, usePlanActions } from "../../../src/features/plan/usePlanActions";
 import { usePlanWeek } from "../../../src/features/plan/usePlanWeek";
@@ -32,16 +35,42 @@ import { RecipeImage } from "../../../src/features/recipes/RecipeImage";
  * The recipe picker, opened over the planner for `?date=&slot=`. Search the household's recipes,
  * or browse Recent and Favorites. Choosing one asks how many servings, then adds it to the slot.
  * With `&entry=` it swaps that meal's recipe instead and keeps its servings and notes.
+ *
+ * "Add a recipe" is always on screen. It opens the add-recipe screen with this picker's date,
+ * slot and swap target as params, and saving there comes back here with `&added=<recipe id>`:
+ * the new recipe goes first under All and, when adding, its servings sheet opens.
  */
 export default function PickRecipeScreen() {
-  const params = useLocalSearchParams<{ date?: string; slot?: string; entry?: string }>();
+  const params = useLocalSearchParams<{
+    date?: string;
+    slot?: string;
+    entry?: string;
+    added?: string;
+  }>();
   const slot = MealSlot.safeParse(params.slot);
   const date = params.date && isIsoDate(params.date) ? params.date : null;
   if (!date || !slot.success) return <Redirect href={planRoute()} />;
-  return <Picker date={date} slot={slot.data} entryId={params.entry ?? null} />;
+  return (
+    <Picker
+      date={date}
+      slot={slot.data}
+      entryId={params.entry ?? null}
+      addedId={params.added ? params.added : null}
+    />
+  );
 }
 
-function Picker({ date, slot, entryId }: { date: string; slot: MealSlot; entryId: string | null }) {
+function Picker({
+  date,
+  slot,
+  entryId,
+  addedId,
+}: {
+  date: string;
+  slot: MealSlot;
+  entryId: string | null;
+  addedId: string | null;
+}) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const household = useHousehold();
@@ -55,13 +84,17 @@ function Picker({ date, slot, entryId }: { date: string; slot: MealSlot; entryId
   // Keep the week's entries warm so a swap target is in the cache.
   useMealPlanEntries(week.plan?.id);
 
-  const [tab, setTab] = useState<PickerTab>("recent");
+  // Null until the lists have loaded, so the first tab is chosen once, from real data.
+  const [pickedTab, setPickedTab] = useState<PickerTab | null>(null);
   const [query, setQuery] = useState("");
   const [chosen, setChosen] = useState<RecipeSummary | null>(null);
   const [servings, setServings] = useState(4);
+  // The `added` recipe the picker already reacted to, so closing its sheet leaves it closed.
+  const [handledAdded, setHandledAdded] = useState<string | null>(null);
 
   const swapTarget = entryId ? (week.entries.find((entry) => entry.id === entryId) ?? null) : null;
   const swapping = entryId !== null;
+  const tab: PickerTab = pickedTab ?? "all";
 
   const shown = useMemo(
     () =>
@@ -71,15 +104,40 @@ function Picker({ date, slot, entryId }: { date: string; slot: MealSlot; entryId
         query,
         recentIds: recent.data ?? [],
         favoriteIds: favorites.data ?? [],
+        firstId: addedId,
       }),
-    [recipes.data, tab, query, recent.data, favorites.data],
+    [recipes.data, tab, query, recent.data, favorites.data, addedId],
   );
 
-  if (household.isPending || recipes.isPending) return <LoadingScreen />;
+  function offerAdd(recipe: RecipeSummary) {
+    setServings(defaultServings(recipe.servings));
+    setChosen(recipe);
+  }
+
+  // The two blocks below adjust state while rendering, which React allows when the update is
+  // guarded by the state it sets. There is no effect, so no frame shows the wrong tab or no sheet.
+  //
+  // First load: open on Recent only if it has something to show, else on All.
+  if (pickedTab === null && !household.isPending && !recipes.isPending && !recent.isLoading) {
+    setPickedTab(addedId ? "all" : initialTab(recent.data ?? [], recipes.data ?? []));
+  }
+  // Back from the add-recipe screen: the new recipe goes first under All, and when adding (not
+  // swapping) its servings sheet opens. A swap stays one tap on the recipe, not a surprise.
+  const added =
+    addedId && addedId !== handledAdded ? recipeWithId(recipes.data ?? [], addedId) : null;
+  if (added) {
+    setHandledAdded(added.id);
+    setPickedTab("all");
+    setQuery("");
+    if (!swapping) offerAdd(added);
+  }
+
+  if (household.isPending || recipes.isPending || recent.isLoading) return <LoadingScreen />;
   if (!householdId) return <Redirect href={CREATE_HOUSEHOLD_ROUTE} />;
 
   const total = recipes.data?.length ?? 0;
   const searching = query.trim().length > 0;
+  const tabEmpty = tab === "recent" ? TAB_EMPTY.recent : TAB_EMPTY.favorites;
 
   function choose(recipe: RecipeSummary) {
     if (swapping) {
@@ -88,8 +146,11 @@ function Picker({ date, slot, entryId }: { date: string; slot: MealSlot; entryId
       router.back();
       return;
     }
-    setServings(defaultServings(recipe.servings));
-    setChosen(recipe);
+    offerAdd(recipe);
+  }
+
+  function addNewRecipe() {
+    router.push(newRecipeFromPickerRoute({ date, slot, entry: entryId ?? undefined }));
   }
 
   function confirmAdd() {
@@ -114,6 +175,14 @@ function Picker({ date, slot, entryId }: { date: string; slot: MealSlot; entryId
           presentation: "modal",
         }}
       />
+      <View className="mx-auto w-full max-w-2xl px-4 pt-4">
+        <Button
+          testID="picker-add-recipe"
+          label="Add a recipe"
+          variant="secondary"
+          onPress={addNewRecipe}
+        />
+      </View>
       <FlatList
         data={shown}
         keyExtractor={(item) => item.id}
@@ -154,7 +223,7 @@ function Picker({ date, slot, entryId }: { date: string; slot: MealSlot; entryId
                 testID="picker-tabs"
                 label="Recipe list"
                 value={tab}
-                onChange={setTab}
+                onChange={setPickedTab}
                 options={PICKER_TABS.map((t) => ({
                   value: t.value,
                   label: t.label,
@@ -182,10 +251,6 @@ function Picker({ date, slot, entryId }: { date: string; slot: MealSlot; entryId
               icon="📖"
               title="No recipes yet"
               message="Add a recipe first, then plan it here."
-              action={{
-                label: "Add a recipe",
-                onPress: () => router.replace("/recipes/new"),
-              }}
             />
           ) : searching ? (
             <EmptyState
@@ -196,13 +261,9 @@ function Picker({ date, slot, entryId }: { date: string; slot: MealSlot; entryId
           ) : (
             <EmptyState
               testID="picker-tab-empty"
-              title={tab === "recent" ? "Nothing planned yet" : "No favorites yet"}
-              message={
-                tab === "recent"
-                  ? "Recipes you plan show up here. Try All to browse everything."
-                  : "Thumb a recipe up on its meal to find it here."
-              }
-              action={{ label: "Show all recipes", onPress: () => setTab("all") }}
+              title={tabEmpty.title}
+              message={tabEmpty.message}
+              action={{ label: "Show all recipes", onPress: () => setPickedTab("all") }}
             />
           )
         }

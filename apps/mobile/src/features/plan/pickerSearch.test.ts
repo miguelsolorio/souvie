@@ -1,6 +1,6 @@
 import type { RecipeSummary } from "@mp/db";
 import { describe, expect, it } from "vitest";
-import { byTitle, pickerRecipes, searchRecipes } from "./pickerSearch";
+import { byTitle, initialTab, pickerRecipes, recipeWithId, searchRecipes } from "./pickerSearch";
 
 const recipe = (id: string, title: string, over: Partial<RecipeSummary> = {}): RecipeSummary => ({
   id,
@@ -84,6 +84,115 @@ describe("pickerRecipes", () => {
     expect(pickerRecipes({ ...base, tab: "favorites", query: "soup" }).map((r) => r.id)).toEqual([
       "r4",
     ]);
+  });
+
+  describe("a recipe the person just added", () => {
+    const fresh = recipe("r9", "Zucchini fritters");
+
+    it("goes first under All and leaves the rest A to Z", () => {
+      const ids = pickerRecipes({
+        ...base,
+        recipes: [...all, fresh],
+        tab: "all",
+        firstId: "r9",
+      }).map((r) => r.id);
+      expect(ids).toEqual(["r9", "r3", "r2", "r1", "r4"]);
+    });
+
+    it("is listed once, and A to Z again without it", () => {
+      const withFresh = { ...base, recipes: [...all, fresh], tab: "all" as const };
+      expect(
+        pickerRecipes({ ...withFresh, firstId: "r9" }).filter((r) => r.id === "r9"),
+      ).toHaveLength(1);
+      expect(pickerRecipes({ ...withFresh, firstId: null }).map((r) => r.id)).toEqual([
+        "r3",
+        "r2",
+        "r1",
+        "r4",
+        "r9",
+      ]);
+    });
+
+    it("changes nothing for an id the list does not hold, or on the other tabs, or in a search", () => {
+      const plain = pickerRecipes({ ...base, tab: "all" }).map((r) => r.id);
+      expect(pickerRecipes({ ...base, tab: "all", firstId: "nope" }).map((r) => r.id)).toEqual(
+        plain,
+      );
+      expect(pickerRecipes({ ...base, tab: "recent", firstId: "r2" }).map((r) => r.id)).toEqual([
+        "r4",
+        "r1",
+      ]);
+      expect(
+        pickerRecipes({ ...base, tab: "all", query: "chicken", firstId: "r4" }).map((r) => r.id),
+      ).toEqual(["r3", "r1"]);
+    });
+  });
+
+  describe("catalog recipes", () => {
+    // The starter catalog: household_id is null. The picker does not look at the owner, so
+    // whatever useRecipes returns is listed, searchable and pickable.
+    const catalog = recipe("c1", "Sheet-pan salmon", {
+      household_id: null,
+      source_type: "ai",
+      tags: ["weeknight"],
+    });
+    const withCatalog = [...all, catalog];
+    const args = { recipes: withCatalog, query: "", recentIds: [], favoriteIds: [] };
+
+    it("are listed under All with the household's own", () => {
+      expect(pickerRecipes({ ...args, tab: "all" }).map((r) => r.id)).toEqual([
+        "r3",
+        "r2",
+        "r1",
+        "c1",
+        "r4",
+      ]);
+    });
+
+    it("are found by search, and picked by id like any other recipe", () => {
+      expect(pickerRecipes({ ...args, tab: "recent", query: "salmon" }).map((r) => r.id)).toEqual([
+        "c1",
+      ]);
+      expect(recipeWithId(withCatalog, "c1")).toBe(catalog);
+    });
+
+    it("show under Recent once planned", () => {
+      const recentIds = ["c1", "r2"];
+      expect(pickerRecipes({ ...args, tab: "recent", recentIds }).map((r) => r.id)).toEqual([
+        "c1",
+        "r2",
+      ]);
+    });
+  });
+});
+
+describe("initialTab", () => {
+  it("opens on Recent when the household has planned something before", () => {
+    expect(initialTab(["r4", "r1"])).toBe("recent");
+  });
+
+  it("opens on All when nothing was planned before", () => {
+    expect(initialTab([])).toBe("all");
+  });
+
+  it("counts only recent recipes the list still holds", () => {
+    expect(initialTab(["gone"], all)).toBe("all");
+    expect(initialTab(["gone", "r2"], all)).toBe("recent");
+    expect(initialTab(["r2"], [])).toBe("all");
+    expect(initialTab([], all)).toBe("all");
+  });
+});
+
+describe("recipeWithId", () => {
+  it("finds a recipe by id", () => {
+    expect(recipeWithId(all, "r3")).toBe(chili);
+  });
+
+  it("is null for no id, or one the list does not hold yet", () => {
+    expect(recipeWithId(all, null)).toBeNull();
+    expect(recipeWithId(all, undefined)).toBeNull();
+    expect(recipeWithId(all, "")).toBeNull();
+    expect(recipeWithId(all, "new")).toBeNull();
   });
 });
 

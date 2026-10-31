@@ -159,3 +159,18 @@ Merged as b9522ce (PR #16). Nits from the re-review of 8321739, none blocking, f
 - From the builder: WS03 fills `container_count` and `container` in the parser and adds densities so "1 cup diced onion" and "2 onions" can be summed; the orchestrator deploys `list-build` at the hosted release.
 
 Criteria 3 (HTTP timing), 8 (two real devices on Realtime) and 10 (a real 1280 px render) rest on stand-ins until the hosted stack exists.
+
+## Follow-up round (2026-10-31): jsonb parameters double-encoded on real Postgres
+
+Found by Miguel on the hosted project: "Build grocery list" failed with the offline message. The orchestrator ran `SqlListStore.build` from this machine against the hosted database for the real plan and got `PostgresError 22023: cannot call jsonb_to_recordset on a non-array` from the insert in `store.ts` (the `jsonb_to_recordset($1::jsonb)` statements at about lines 372 and 397). Mechanism: the store passes `JSON.stringify(rows)` as `$1`; postgres.js runs the statement unprepared, Postgres reports the parameter type as jsonb because of the cast, and postgres.js then applies its jsonb serializer (`JSON.stringify`) to the string, so Postgres receives a JSON string scalar, not an array. The PGlite harness passes the string through untouched, which is why every store test passed. The handler catches the error and answers 500 `internal_error`, which the client shows as "You are offline or the connection dropped."
+
+Branch `ws/05b-jsonb-params`, Sonnet. Small and urgent: it blocks Miguel's testing.
+
+1. **Fix the binding.** Pass the rows as the JavaScript value (`changes.inserts`, the mapped updates) and let the driver serialize once, or cast from text in SQL (`$1::text::jsonb`) and keep the string. Pick one and apply it to every jsonb parameter in `store.ts`. Whichever you pick must behave the same on postgres.js and on the PGlite harness; say which you chose and why.
+2. **Make the harness honest.** The PGlite runner in `supabase/functions/list-build/testing/db.ts` must serialize parameters the way postgres.js does for a statement whose parameter is typed jsonb by a cast: a string parameter bound to `::jsonb` is JSON-encoded again. Reproduce the hosted failure as a failing test first (the old binding under the new harness must throw 22023), then make it pass with the fix.
+3. **Real Postgres in CI.** Add a store test file that runs only when `LIST_BUILD_TEST_DATABASE_URL` is set, connecting with postgres.js (`prepare: false`, like `client.ts`) against that database, and running the five-dinner fixture build plus a rebuild. Wire it into the `supabase` job of `.github/workflows/ci.yml`, after `db reset`, with the local stack's database URL, next to the worker smoke step. This is the test that would have caught the bug.
+4. **Audit the other functions.** `suggest` (WS06) uses postgres.js the same way; `recipe-import`, `parse-ingredients`, `retailer-oauth` and `export-data` may bind JSON too. List every statement in `supabase/functions/*` that binds a parameter under a `::jsonb` or `::json` cast or into a json function, and fix any that pre-stringify. Report the list, including the ones that were already right.
+5. **Verification.** `pnpm typecheck && pnpm lint && pnpm test`, the new harness test red-then-green, CI green with the new real-Postgres step visible in the `supabase` job log, and nothing else changed. The orchestrator redeploys `list-build` (and any other function you fix) after the merge and asks Miguel to retry.
+
+Deliverables for this round: `supabase/functions/list-build/store.ts`, `testing/db.ts`, the new real-Postgres test file, `.github/workflows/ci.yml` (one step), and any other function file the audit requires, each with its test. Nothing under `packages/` or `apps/`.
+

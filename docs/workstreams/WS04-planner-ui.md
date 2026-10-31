@@ -129,3 +129,35 @@ psql "$WORKER_DATABASE_URL" -c "select signal, count(*) from recipe_feedback gro
 
 ## Completion report
 End with the completion report from `docs/implementation-guide.md` §6.2 (Message templates). Include the realtime evidence and the two responsive screenshots under Verification output.
+
+## Follow-up round (2026-10-31): recipe entry points in the picker
+
+Reported by Miguel while testing against the hosted project: in the "Add to Monday dinner" picker, after adding one recipe, there was no way to add another, and the screen opened on an empty "Recent" tab reading "Nothing planned yet". Causes in `apps/mobile/app/(app)/plan/pick.tsx`: the "Add a recipe" action lives only in the `total === 0` empty state, and `tab` always starts as `"recent"`, which lists only recipes planned before.
+
+Branch `ws/04b-picker-entry-points`, Sonnet. Scope is this round only; nothing else in WS04 changes.
+
+1. **Always a way to add.** The picker shows an "Add a recipe" control whatever the recipe count: a row pinned at the top of the list (above the tabs is fine) or a header action, visible on every tab and while searching. It opens `/recipes/new`. When a recipe is saved from there, the app returns to the picker it came from (same date, slot and swap target) with the new recipe shown first under All and its servings sheet already open, so the person finishes planning in one tap. Carry the return target as route params; do not change `GROCERY_LIST_ROUTE` or the planner's own routes beyond adding what the picker needs in `routes.ts`.
+2. **Open on a tab that has something.** Start on Recent only when the household has at least one recently planned recipe; otherwise start on All. Put the rule in a pure function in `pickerSearch.ts` (`initialTab(recentIds)` or similar) with tests. The tabs stay; a person can still switch to an empty Recent and read its explanation.
+3. **Copy.** Recent's empty message becomes "Recipes you have planned before show up here." with the "Show all recipes" action kept. The zero-recipe state keeps its copy. No em dashes.
+4. **Catalog recipes** (visibility `catalog`, `household_id` null) already appear under All through `useRecipes`; confirm with a test that a catalog recipe is listed and pickable, since the hosted project will carry 62 of them.
+5. **Tests.** `pickerSearch.test.ts` covers the default-tab rule. A screen test (or the existing picker test file, if one exists) covers: one household recipe, picker opens on All showing it and the add control; tapping the add control navigates to `/recipes/new` with the return params; returning with a new recipe id opens its servings sheet. Add the save-and-return path to the AddRecipe tests.
+6. **Verification.** `pnpm typecheck && pnpm lint && pnpm test`, plus a 390 px web screenshot of the picker with one household recipe and the add control visible, saved to the scratchpad path the orchestrator gives you.
+
+Deliverables for this round: `apps/mobile/app/(app)/plan/pick.tsx`, `apps/mobile/app/(app)/recipes/new.tsx`, `apps/mobile/src/features/recipes/AddRecipe.tsx` (the return-after-save hook only), `apps/mobile/src/features/plan/pickerSearch.ts` and its test, `apps/mobile/src/features/plan/routes.ts` and its test, and any screen tests. Nothing under `packages/`, `supabase/` or other features.
+
+## Follow-up round (queued 2026-10-31): simple mode, one meal a day
+
+Requested by Miguel: most households plan dinners only, so the planner should offer a "simple" mode that plans one meal per day, on by default, chosen during onboarding and changeable later. Today `MEAL_SLOTS` is breakfast, lunch, dinner and snack, and the week grid and the day screen render all four for every day.
+
+Dispatch after the picker round (`ws/04b-picker-entry-points`) merges, since both edit the plan screens. Branch `ws/04c-simple-mode`, Sonnet.
+
+**Orchestrator work before dispatch (contracts, not yours):** `PlanMode = z.enum(["simple", "full"])` and `slotsForMode(mode): readonly MealSlot[]` (`["dinner"]` for simple, `MEAL_SLOTS` for full) in `packages/core/src/planning.ts`; migration `20261031120000_households_plan_mode.sql` adding `households.plan_mode` (enum `households_plan_mode`, not null, default `simple`), extending the client update grant to `(name, zip, plan_mode)` so the existing "households: owners update" policy covers it, and the generated types; docs/02 row.
+
+1. **Onboarding.** Step 1 "Your household" (`apps/mobile/app/(onboarding)/01-household.tsx` and its feature code) gains the question "How much do you want to plan?" with two choices: "Just dinners" (recommended, preselected) and "Every meal". The answer writes `households.plan_mode` through the normal household update, only when the person is the household's owner; a member who joins an existing household does not see the question. Copy follows docs/08 §10.
+2. **Household settings.** `apps/mobile/app/(app)/household/settings.tsx` gets the same choice as a setting, owner-editable, with one sentence under it: "Simple plans one dinner a day. Every meal adds breakfast, lunch and snacks." Switching never deletes entries.
+3. **Planner in simple mode.** `WeekGrid.tsx` shows one cell per day (dinner); the day screen (`plan/[date].tsx`) shows the dinner slot; the picker opens for dinner without asking for a slot; `pickRoute` and `dayRoute` keep working for every slot so deep links and existing entries survive. Entries that exist in other slots (planned earlier in full mode, or by another member before the switch) stay visible under a collapsed "More meals" row for that day, never hidden or dropped, and "Generate list" still aggregates them.
+4. **Suggestions and the list.** `suggest` already plans dinners and `list-build` reads whatever is planned, so neither changes; confirm with a test that a simple-mode week with a stray lunch entry builds a list containing both.
+5. **Tests.** `slotsForMode` is covered in core by the orchestrator; you cover: the onboarding step writes the mode for an owner and hides the question for a member; the settings toggle round-trips; the grid renders one row in simple mode and four in full; the "More meals" row appears only when such entries exist; the picker's default slot. `pnpm typecheck && pnpm lint && pnpm test`, plus 390 px web screenshots of the week grid in both modes.
+
+Deliverables for this round: the onboarding step 1 screen and its feature code, `household/settings.tsx`, `WeekGrid.tsx`, `SlotCell.tsx`, `plan/[date].tsx`, `plan/index.tsx`, `plan/pick.tsx` (default slot only), `routes.ts`, `@mp/db` hooks that read or write the household row (`useHousehold` and the update hook, if the column needs adding to their selects), and their tests. Nothing under `packages/core` or `supabase/` beyond what the orchestrator lands first.
+

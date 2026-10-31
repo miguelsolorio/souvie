@@ -255,20 +255,20 @@ jobs:
       # Postgres: the five-dinner build and a rebuild. The PGlite store tests bind JSON parameters
       # through a model of the driver, and an earlier version of that model let a double-encoded
       # jsonb parameter through, so "Build grocery list" failed on the hosted project. The file
-      # skips itself when LIST_BUILD_TEST_DATABASE_URL is empty, so the step also fails if nothing
-      # ran.
+      # skips itself when LIST_BUILD_TEST_DATABASE_URL is empty, so the step reads the JSON report
+      # and fails if any test was skipped instead of run.
       - name: list-build store on the stack's Postgres (postgres.js)
         env:
           LIST_BUILD_TEST_DATABASE_URL: ${{ env.DB_URL }}
         run: |
           set -euo pipefail
           test -n "$LIST_BUILD_TEST_DATABASE_URL"
-          pnpm exec vitest run --project unit --reporter=verbose \
-            supabase/functions/list-build/store.postgres.test.ts | tee store-postgres.log
-          grep -Eq "Tests +[0-9]+ passed" store-postgres.log
-          if grep -Eq "Tests .*skipped" store-postgres.log; then
-            echo "the real-Postgres tests were skipped"; exit 1
-          fi
+          pnpm exec vitest run --project unit --reporter=verbose --reporter=json \
+            --outputFile.json=store-postgres.json \
+            supabase/functions/list-build/store.postgres.test.ts
+          jq '{numTotalTests, numPassedTests, numFailedTests, numPendingTests}' store-postgres.json
+          jq -e '.numPassedTests >= 4 and .numFailedTests == 0 and .numPendingTests == 0' \
+            store-postgres.json > /dev/null || { echo "the real-Postgres tests did not all run and pass"; exit 1; }
 
       # The committed packages/db/src/types.generated.ts must match the migrated schema. A new
       # migration that changes a table or function fails here until the regenerated file (the

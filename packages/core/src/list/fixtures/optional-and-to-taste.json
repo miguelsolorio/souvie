@@ -1,0 +1,85 @@
+{
+  "description": "Optional lines still count (the contribution says so), and a 'to taste' line gives an item with a name and no amount. A recipe that does not say what it serves is used as written, with a note.",
+  "recipes": [
+    {
+      "id": "garnish",
+      "title": "Garnished Rice",
+      "servings": null,
+      "lines": [
+        {
+          "text": "1 tbsp chopped parsley, optional",
+          "qty": 1,
+          "unit": "tbsp",
+          "ingredient": "parsley",
+          "optional": true
+        },
+        {
+          "text": "fresh cilantro, to taste",
+          "qty": null,
+          "unit": null,
+          "ingredient": "cilantro"
+        },
+        {
+          "text": "2 cups jasmine rice",
+          "qty": 2,
+          "unit": "cup",
+          "ingredient": "jasmine rice"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "garnish",
+      "servings": 8
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Cilantro",
+        "qty": null,
+        "unit": null,
+        "section": "produce",
+        "attention": false,
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": null
+          }
+        ]
+      },
+      {
+        "name": "Parsley",
+        "qty": 1,
+        "unit": "tbsp",
+        "section": "produce",
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 1,
+            "unit": "tbsp",
+            "servings": 8
+          }
+        ]
+      },
+      {
+        "name": "Jasmine rice",
+        "qty": 2,
+        "unit": "cup",
+        "section": "pantry",
+        "rounding": null,
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 2,
+            "unit": "cup",
+            "servings": 8
+          }
+        ]
+      }
+    ]
+  }
+}

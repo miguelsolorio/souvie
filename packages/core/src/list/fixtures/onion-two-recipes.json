@@ -1,0 +1,73 @@
+{
+  "description": "Two recipes each need 1 cup diced onion at their own servings: one item of 2 cups, no rounding. An onion has no density, so cups stay cups.",
+  "recipes": [
+    {
+      "id": "tikka",
+      "title": "Chicken Tikka",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 cup diced onion",
+          "qty": 1,
+          "unit": "cup",
+          "ingredient": "yellow onion",
+          "prep": "diced"
+        }
+      ]
+    },
+    {
+      "id": "soup",
+      "title": "French Onion Soup",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 cup diced onion",
+          "qty": 1,
+          "unit": "cup",
+          "ingredient": "yellow onion",
+          "prep": "diced"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "tikka",
+      "servings": 4
+    },
+    {
+      "id": "e2",
+      "recipe": "soup",
+      "servings": 4
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Yellow onion",
+        "qty": 2,
+        "unit": "cup",
+        "section": "produce",
+        "attention": false,
+        "entries": ["e1", "e2"],
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 1,
+            "unit": "cup",
+            "servings": 4
+          },
+          {
+            "entry": "e2",
+            "qty": 1,
+            "unit": "cup",
+            "servings": 4
+          }
+        ],
+        "rounding": null
+      }
+    ]
+  }
+}

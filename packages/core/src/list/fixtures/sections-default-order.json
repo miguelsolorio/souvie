@@ -1,0 +1,134 @@
+{
+  "description": "Items come out grouped by section in docs/03 section 6 order: produce, bakery, meat, seafood, dairy, eggs, pantry, canned, baking, spices, international, snacks, frozen, beverages, household, other.",
+  "recipes": [
+    {
+      "id": "feast",
+      "title": "Everything Night",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 tsp ground cumin",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "cumin"
+        },
+        {
+          "text": "1 tsp baking powder",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "baking powder"
+        },
+        {
+          "text": "1 can diced tomatoes",
+          "qty": 1,
+          "unit": "can",
+          "ingredient": "diced tomatoes"
+        },
+        {
+          "text": "8 oz pasta",
+          "qty": 8,
+          "unit": "oz",
+          "ingredient": "pasta"
+        },
+        {
+          "text": "4 eggs",
+          "qty": 4,
+          "unit": "each",
+          "ingredient": "egg"
+        },
+        {
+          "text": "1 cup milk",
+          "qty": 1,
+          "unit": "cup",
+          "ingredient": "milk"
+        },
+        {
+          "text": "1 lb shrimp",
+          "qty": 1,
+          "unit": "lb",
+          "ingredient": "shrimp"
+        },
+        {
+          "text": "1 lb chicken breast",
+          "qty": 1,
+          "unit": "lb",
+          "ingredient": "chicken breast"
+        },
+        {
+          "text": "4 flour tortillas",
+          "qty": 4,
+          "unit": "each",
+          "ingredient": "flour tortilla"
+        },
+        {
+          "text": "1 lemon",
+          "qty": 1,
+          "unit": "each",
+          "ingredient": "lemon"
+        },
+        {
+          "text": "1 mystery item",
+          "qty": null,
+          "unit": null,
+          "ingredient": null
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "feast",
+      "servings": 4
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 1,
+    "items": [
+      {
+        "name": "Lemon",
+        "section": "produce"
+      },
+      {
+        "name": "Flour tortilla",
+        "section": "bakery"
+      },
+      {
+        "name": "Chicken breast",
+        "section": "meat"
+      },
+      {
+        "name": "Shrimp",
+        "section": "seafood"
+      },
+      {
+        "name": "Milk",
+        "section": "dairy"
+      },
+      {
+        "name": "Egg",
+        "section": "eggs"
+      },
+      {
+        "name": "Pasta",
+        "section": "pantry"
+      },
+      {
+        "name": "Diced tomatoes",
+        "section": "canned"
+      },
+      {
+        "name": "Baking powder",
+        "section": "baking"
+      },
+      {
+        "name": "Cumin",
+        "section": "spices"
+      },
+      {
+        "name": "1 mystery item",
+        "section": "other"
+      }
+    ]
+  }
+}

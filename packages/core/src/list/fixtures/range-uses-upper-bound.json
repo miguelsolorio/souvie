@@ -1,0 +1,71 @@
+{
+  "description": "A range uses its upper bound so the list never comes up short: '1 to 2 cups spinach' is 2 cups, '2-3 cloves garlic' is 3 cloves, one head.",
+  "recipes": [
+    {
+      "id": "salad",
+      "title": "Spinach Salad",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 to 2 cups baby spinach",
+          "qty": 1,
+          "unit": "cup",
+          "ingredient": "spinach",
+          "qtyMax": 2
+        },
+        {
+          "text": "2-3 cloves garlic",
+          "qty": 2,
+          "unit": "clove",
+          "ingredient": "garlic",
+          "qtyMax": 3
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "salad",
+      "servings": 4
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Garlic",
+        "qty": 1,
+        "unit": "head",
+        "section": "produce",
+        "rounding": {
+          "from": 3,
+          "fromUnit": "clove",
+          "to": 1,
+          "toUnit": "head"
+        },
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 3,
+            "unit": "clove"
+          }
+        ]
+      },
+      {
+        "name": "Spinach",
+        "qty": 2,
+        "unit": "cup",
+        "section": "produce",
+        "rounding": null,
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 2,
+            "unit": "cup"
+          }
+        ]
+      }
+    ]
+  }
+}

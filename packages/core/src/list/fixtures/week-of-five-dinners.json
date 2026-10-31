@@ -1,0 +1,479 @@
+{
+  "description": "A week of five dinners from the starter catalog, planned at 4, 6, 4, 2 and 4 servings. Four lines are left unparsed on purpose; needsAttentionCount must equal that number, and no other item may need attention.",
+  "recipes": [
+    {
+      "id": "baked-chicken-parmesan",
+      "title": "Baked Chicken Parmesan with Spaghetti",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 1/2 lb boneless skinless chicken breasts, sliced in half horizontally into 4 cutlets",
+          "qty": 1.5,
+          "unit": "lb",
+          "ingredient": "chicken breast",
+          "prep": "sliced in half horizontally into 4 cutlets"
+        },
+        {
+          "text": "1/2 cup all-purpose flour",
+          "qty": 0.5,
+          "unit": "cup",
+          "ingredient": "all-purpose flour"
+        },
+        {
+          "text": "2 eggs, beaten",
+          "qty": 2,
+          "unit": "each",
+          "ingredient": "egg",
+          "prep": "beaten"
+        },
+        {
+          "text": "1 cup plain breadcrumbs",
+          "qty": 1,
+          "unit": "cup",
+          "ingredient": "bread crumbs"
+        },
+        {
+          "text": "1/4 cup grated Parmesan cheese",
+          "qty": 0.25,
+          "unit": "cup",
+          "ingredient": "parmesan",
+          "prep": "grated"
+        },
+        {
+          "text": "1 tsp garlic powder",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "garlic powder"
+        },
+        {
+          "text": "1 tsp kosher salt",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "kosher salt"
+        },
+        {
+          "text": "3 tbsp olive oil",
+          "qty": 3,
+          "unit": "tbsp",
+          "ingredient": "olive oil"
+        },
+        {
+          "text": "1 jar (24 oz) marinara sauce",
+          "qty": 24,
+          "unit": "oz",
+          "ingredient": "marinara sauce"
+        },
+        {
+          "text": "1 1/2 cups shredded mozzarella cheese",
+          "qty": 1.5,
+          "unit": "cup",
+          "ingredient": "mozzarella",
+          "prep": "shredded"
+        },
+        {
+          "text": "12 oz spaghetti",
+          "qty": 12,
+          "unit": "oz",
+          "ingredient": "spaghetti"
+        },
+        {
+          "text": "1 tbsp kosher salt",
+          "qty": 1,
+          "unit": "tbsp",
+          "ingredient": "kosher salt"
+        },
+        {
+          "text": "4 quarts water",
+          "qty": 4,
+          "unit": "quart",
+          "ingredient": "water"
+        }
+      ]
+    },
+    {
+      "id": "black-bean-tacos",
+      "title": "Black Bean Tacos with Cabbage Slaw",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "2 tbsp olive oil",
+          "qty": 2,
+          "unit": "tbsp",
+          "ingredient": "olive oil"
+        },
+        {
+          "text": "2 cans (15 oz each) black beans, drained and rinsed",
+          "qty": 2,
+          "unit": "can",
+          "ingredient": "black beans",
+          "prep": "drained and rinsed"
+        },
+        {
+          "text": "1 tsp ground cumin",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "cumin",
+          "prep": "ground"
+        },
+        {
+          "text": "1/2 tsp paprika",
+          "qty": 0.5,
+          "unit": "tsp",
+          "ingredient": "paprika"
+        },
+        {
+          "text": "1/2 tsp garlic powder",
+          "qty": 0.5,
+          "unit": "tsp",
+          "ingredient": "garlic powder"
+        },
+        {
+          "text": "1/2 tsp kosher salt",
+          "qty": 0.5,
+          "unit": "tsp",
+          "ingredient": "kosher salt"
+        },
+        {
+          "text": "1/4 cup water",
+          "qty": 0.25,
+          "unit": "cup",
+          "ingredient": "water"
+        },
+        {
+          "text": "3 cups shredded green cabbage",
+          "qty": 3,
+          "unit": "cup",
+          "ingredient": "cabbage",
+          "prep": "shredded"
+        },
+        {
+          "text": "1 tbsp lime juice",
+          "qty": 1,
+          "unit": "tbsp",
+          "ingredient": null
+        },
+        {
+          "text": "1 tbsp olive oil",
+          "qty": 1,
+          "unit": "tbsp",
+          "ingredient": "olive oil"
+        },
+        {
+          "text": "1/4 tsp kosher salt",
+          "qty": 0.25,
+          "unit": "tsp",
+          "ingredient": "kosher salt"
+        },
+        {
+          "text": "8 corn tortillas (6 inch)",
+          "qty": 8,
+          "unit": "each",
+          "ingredient": "corn tortilla"
+        },
+        {
+          "text": "2 ripe avocados, sliced",
+          "qty": 2,
+          "unit": "each",
+          "ingredient": null,
+          "prep": "sliced"
+        }
+      ]
+    },
+    {
+      "id": "beef-and-broccoli-stir-fry",
+      "title": "Beef and Broccoli Stir Fry",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 1/2 cups long-grain white rice",
+          "qty": 1.5,
+          "unit": "cup",
+          "ingredient": "white rice"
+        },
+        {
+          "text": "3 cups water",
+          "qty": 3,
+          "unit": "cup",
+          "ingredient": "water"
+        },
+        {
+          "text": "1 lb flank steak, thinly sliced against the grain",
+          "qty": 1,
+          "unit": "lb",
+          "ingredient": "flank steak",
+          "prep": "thinly sliced against the grain"
+        },
+        {
+          "text": "1 tbsp cornstarch",
+          "qty": 1,
+          "unit": "tbsp",
+          "ingredient": "cornstarch"
+        },
+        {
+          "text": "1/2 cup coconut aminos",
+          "qty": 0.5,
+          "unit": "cup",
+          "ingredient": "coconut aminos"
+        },
+        {
+          "text": "1/2 cup water",
+          "qty": 0.5,
+          "unit": "cup",
+          "ingredient": "water"
+        },
+        {
+          "text": "1 tsp ground ginger",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "ground ginger"
+        },
+        {
+          "text": "1 tsp cornstarch",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "cornstarch"
+        },
+        {
+          "text": "1 tsp maple syrup",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "maple syrup"
+        },
+        {
+          "text": "3 tbsp olive oil",
+          "qty": 3,
+          "unit": "tbsp",
+          "ingredient": "olive oil"
+        },
+        {
+          "text": "4 cups small broccoli florets",
+          "qty": 4,
+          "unit": "cup",
+          "ingredient": "broccoli"
+        },
+        {
+          "text": "3 cloves garlic, minced",
+          "qty": 3,
+          "unit": "clove",
+          "ingredient": "garlic",
+          "prep": "minced"
+        },
+        {
+          "text": "1/2 tsp kosher salt",
+          "qty": 0.5,
+          "unit": "tsp",
+          "ingredient": "kosher salt"
+        }
+      ]
+    },
+    {
+      "id": "chicken-tikka-masala",
+      "title": "Chicken Tikka Masala with Basmati Rice",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 1/2 cups basmati rice",
+          "qty": 1.5,
+          "unit": "cup",
+          "ingredient": "basmati rice"
+        },
+        {
+          "text": "2 1/4 cups water",
+          "qty": 2.25,
+          "unit": "cup",
+          "ingredient": "water"
+        },
+        {
+          "text": "1/2 tsp kosher salt",
+          "qty": 0.5,
+          "unit": "tsp",
+          "ingredient": "kosher salt"
+        },
+        {
+          "text": "1 1/2 lb boneless skinless chicken thighs, cut into 1 inch pieces",
+          "qty": 1.5,
+          "unit": "lb",
+          "ingredient": "chicken thigh",
+          "prep": "cut into 1 inch pieces"
+        },
+        {
+          "text": "1 tsp kosher salt",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "kosher salt"
+        },
+        {
+          "text": "2 tbsp vegetable oil",
+          "qty": 2,
+          "unit": "tbsp",
+          "ingredient": "vegetable oil"
+        },
+        {
+          "text": "1 yellow onion, finely diced",
+          "qty": 1,
+          "unit": "each",
+          "ingredient": "yellow onion",
+          "prep": "finely diced"
+        },
+        {
+          "text": "3 cloves garlic, minced",
+          "qty": 3,
+          "unit": "clove",
+          "ingredient": "garlic",
+          "prep": "minced"
+        },
+        {
+          "text": "1 tbsp grated fresh ginger",
+          "qty": 1,
+          "unit": "tbsp",
+          "ingredient": "ginger",
+          "prep": "grated"
+        },
+        {
+          "text": "2 tsp garam masala",
+          "qty": 2,
+          "unit": "tsp",
+          "ingredient": null
+        },
+        {
+          "text": "1 tsp ground cumin",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "cumin",
+          "prep": "ground"
+        },
+        {
+          "text": "1 tsp paprika",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "paprika"
+        },
+        {
+          "text": "1 can (15 oz) tomato sauce",
+          "qty": 15,
+          "unit": "oz",
+          "ingredient": "tomato sauce"
+        },
+        {
+          "text": "3/4 cup heavy cream",
+          "qty": 0.75,
+          "unit": "cup",
+          "ingredient": "heavy cream"
+        }
+      ]
+    },
+    {
+      "id": "sheet-pan-lemon-chicken-thighs",
+      "title": "Sheet Pan Lemon Garlic Chicken Thighs",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 1/2 lb baby potatoes, halved",
+          "qty": 1.5,
+          "unit": "lb",
+          "ingredient": "baby potato",
+          "prep": "halved"
+        },
+        {
+          "text": "1 lb green beans, trimmed",
+          "qty": 1,
+          "unit": "lb",
+          "ingredient": null,
+          "prep": "trimmed"
+        },
+        {
+          "text": "2 lb boneless skinless chicken thighs",
+          "qty": 2,
+          "unit": "lb",
+          "ingredient": "chicken thigh"
+        },
+        {
+          "text": "4 tbsp olive oil",
+          "qty": 4,
+          "unit": "tbsp",
+          "ingredient": "olive oil"
+        },
+        {
+          "text": "4 cloves garlic, minced",
+          "qty": 4,
+          "unit": "clove",
+          "ingredient": "garlic",
+          "prep": "minced"
+        },
+        {
+          "text": "1 lemon, zested",
+          "qty": 1,
+          "unit": "each",
+          "ingredient": "lemon",
+          "prep": "zested"
+        },
+        {
+          "text": "3 tbsp lemon juice",
+          "qty": 3,
+          "unit": "tbsp",
+          "ingredient": "lemon juice"
+        },
+        {
+          "text": "1 tsp dried oregano",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "dried oregano"
+        },
+        {
+          "text": "1 tsp paprika",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "paprika"
+        },
+        {
+          "text": "1 1/4 tsp kosher salt",
+          "qty": 1.25,
+          "unit": "tsp",
+          "ingredient": "kosher salt"
+        },
+        {
+          "text": "1/2 tsp black pepper",
+          "qty": 0.5,
+          "unit": "tsp",
+          "ingredient": "black pepper"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e-baked-chicken-parmesan",
+      "recipe": "baked-chicken-parmesan",
+      "servings": 4
+    },
+    {
+      "id": "e-black-bean-tacos",
+      "recipe": "black-bean-tacos",
+      "servings": 6
+    },
+    {
+      "id": "e-beef-and-broccoli-stir-fry",
+      "recipe": "beef-and-broccoli-stir-fry",
+      "servings": 4
+    },
+    {
+      "id": "e-chicken-tikka-masala",
+      "recipe": "chicken-tikka-masala",
+      "servings": 2
+    },
+    {
+      "id": "e-sheet-pan-lemon-chicken-thighs",
+      "recipe": "sheet-pan-lemon-chicken-thighs",
+      "servings": 4
+    }
+  ],
+  "pantry": [
+    {
+      "ingredient": "olive oil",
+      "status": "have"
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 4
+  }
+}

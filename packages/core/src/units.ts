@@ -416,7 +416,17 @@ export interface PurchasableQuantity {
   qty: number;
   unit: UnitCode;
   /** How the number was reached, so a UI can explain "why this amount" (risk R2). */
-  basis: "pack" | "weight" | "volume" | "count";
+  basis: "pack" | "weight" | "volume" | "count" | "container";
+}
+
+/**
+ * Containers a recipe line names with a size ("2 (14 oz) cans" is 2 cans). The count may be
+ * fractional when the recipe was scaled (1.5 cans for 1 can at 1.5 times the servings).
+ */
+export interface KnownContainers {
+  count: number;
+  /** The container word or unit code: can, jar, package, bag. */
+  container: string;
 }
 
 interface Pack {
@@ -477,6 +487,19 @@ export const PACK_SIZES: Readonly<Record<string, Pack>> = {
   "beef broth": { unit: "package", ml: 946 },
   "tomato paste": { unit: "can", grams: 170 },
   "bread crumbs": { unit: "package", grams: 425 },
+  // Can sizes that differ from the 14.5 oz default below (WS05). The common US size of each.
+  "crushed tomatoes": { unit: "can", grams: 794 },
+  "whole peeled tomatoes": { unit: "can", grams: 794 },
+  "tomato sauce": { unit: "can", grams: 425 },
+  "coconut milk": { unit: "can", grams: 400 },
+  "coconut cream": { unit: "can", grams: 400 },
+  "evaporated milk": { unit: "can", grams: 354 },
+  "sweetened condensed milk": { unit: "can", grams: 397 },
+  "chipotle peppers in adobo": { unit: "can", grams: 198 },
+  "canned green chiles": { unit: "can", grams: 113 },
+  "cream of mushroom soup": { unit: "can", grams: 298 },
+  "cream of chicken soup": { unit: "can", grams: 298 },
+  "cream of celery soup": { unit: "can", grams: 298 },
 };
 
 /** Default pack by store section when the ingredient has no entry of its own. */
@@ -510,13 +533,26 @@ const PACK_TOLERANCE = 0.05;
  *    (1.3 lb becomes 1.5 lb), whole ounces elsewhere.
  * 3. Counts round up to whole items. Volumes round up to a quarter of their unit.
  *
+ * `known` is for a line that names its containers. "2 (14 oz) cans" arrives as 28 oz, and sizing
+ * a pack from 28 oz would guess a can size (the canned default is 14.5 oz) and buy three cans;
+ * "1 (28 oz) can" would buy two. With `known` the answer is that many containers, rounded up
+ * when the count is fractional after scaling, and the quantity and unit are not used to size a
+ * pack. Basis `container`.
+ *
  * Returns null when the unit is unknown or a needed conversion is impossible.
  */
 export function toPurchasable(
   qty: number,
   unit: string,
   ingredient: UnitIngredient | null | undefined,
+  known?: KnownContainers | null,
 ): PurchasableQuantity | null {
+  if (known) {
+    const container = normalizeUnit(known.container);
+    if (container != null && Number.isFinite(known.count) && known.count > 0) {
+      return { qty: ceilCount(known.count), unit: container, basis: "container" };
+    }
+  }
   const code = normalizeUnit(unit);
   if (code == null || !Number.isFinite(qty) || qty < 0) return null;
   // A size word describes the item, not how many to buy: 12 large eggs is still 12 eggs.
@@ -545,12 +581,20 @@ export function toPurchasable(
   return { qty: Math.ceil(qty - 1e-9), unit: countUnit, basis: "count" };
 }
 
+/** Whole units for a count, ignoring float noise (2.0000000001 cans is 2). */
+function ceilCount(value: number): number {
+  return Math.max(1, Math.ceil(value - 1e-9));
+}
+
 function packsNeeded(
   qty: number,
   code: UnitCode,
   ingredient: UnitIngredient,
   pack: Pack,
 ): number | null {
+  // Already counted in the pack's own unit: 2 cans of tomato paste is 2 cans, not 2 times the
+  // canned default weight divided by this pack's weight.
+  if (code === pack.unit) return ceilCount(qty);
   let needed: number | null = null;
   if (pack.items != null) {
     // Packs of items (a dozen eggs) count items. Size words do not scale the count.

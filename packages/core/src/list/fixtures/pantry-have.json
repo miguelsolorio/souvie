@@ -1,0 +1,125 @@
+{
+  "description": "A pantry row of have covers an item (excluded_reason pantry), and so does a staple with no row. Low and out put an item back, and a row can cover a non-staple.",
+  "recipes": [
+    {
+      "id": "kitchen",
+      "title": "Kitchen Sink Chicken",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 tsp salt",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "salt"
+        },
+        {
+          "text": "2 tbsp olive oil",
+          "qty": 2,
+          "unit": "tbsp",
+          "ingredient": "olive oil"
+        },
+        {
+          "text": "1 lb chicken breast",
+          "qty": 1,
+          "unit": "lb",
+          "ingredient": "chicken breast"
+        },
+        {
+          "text": "1 tsp ground cumin",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "cumin"
+        },
+        {
+          "text": "1 cup all-purpose flour",
+          "qty": 1,
+          "unit": "cup",
+          "ingredient": "all-purpose flour"
+        },
+        {
+          "text": "1 tsp black pepper",
+          "qty": 1,
+          "unit": "tsp",
+          "ingredient": "black pepper"
+        },
+        {
+          "text": "1 lemon",
+          "qty": 1,
+          "unit": "each",
+          "ingredient": "lemon"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "kitchen",
+      "servings": 4
+    }
+  ],
+  "pantry": [
+    {
+      "ingredient": "olive oil",
+      "status": "out"
+    },
+    {
+      "ingredient": "chicken breast",
+      "status": "have"
+    },
+    {
+      "ingredient": "cumin",
+      "status": "low"
+    },
+    {
+      "ingredient": "all-purpose flour",
+      "status": "have"
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Lemon",
+        "qty": 1,
+        "unit": "each",
+        "section": "produce",
+        "excluded": null
+      },
+      {
+        "name": "Chicken breast",
+        "section": "meat",
+        "excluded": "pantry"
+      },
+      {
+        "name": "Olive oil",
+        "qty": 1,
+        "unit": "bottle",
+        "section": "pantry",
+        "excluded": null
+      },
+      {
+        "name": "All-purpose flour",
+        "section": "baking",
+        "excluded": "pantry"
+      },
+      {
+        "name": "Black pepper",
+        "section": "spices",
+        "excluded": "pantry"
+      },
+      {
+        "name": "Cumin",
+        "qty": 1,
+        "unit": "jar",
+        "section": "spices",
+        "excluded": null
+      },
+      {
+        "name": "Salt",
+        "section": "spices",
+        "excluded": "pantry"
+      }
+    ]
+  }
+}

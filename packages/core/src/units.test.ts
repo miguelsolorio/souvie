@@ -424,3 +424,105 @@ describe("keys that are also Object.prototype properties", () => {
     }
   });
 });
+
+describe("known containers (WS05)", () => {
+  const diced: UnitIngredient = {
+    name: "diced tomatoes",
+    category: "canned",
+    defaultUnit: "can",
+    densityGPerMl: 1.0,
+    typicalUnitWeightG: null,
+  };
+
+  it("sizing a pack from 28 oz double-buys: the trap the known count avoids", () => {
+    // 28 oz is 794 g; the canned default pack is 411 g, so by weight it is 2 cans.
+    expect(toPurchasable(28, "oz", diced)).toEqual({ qty: 2, unit: "can", basis: "pack" });
+  });
+
+  it("1 (28 oz) can is 1 can, not 2", () => {
+    expect(toPurchasable(28, "oz", diced, { count: 1, container: "can" })).toEqual({
+      qty: 1,
+      unit: "can",
+      basis: "container",
+    });
+  });
+
+  it("2 (14 oz) cans is 2 cans, however the contents weigh", () => {
+    expect(toPurchasable(28, "oz", diced, { count: 2, container: "can" })).toEqual({
+      qty: 2,
+      unit: "can",
+      basis: "container",
+    });
+  });
+
+  it("rounds a scaled count up to whole containers and ignores float noise", () => {
+    expect(toPurchasable(42, "oz", diced, { count: 1.5, container: "cans" })?.qty).toBe(2);
+    expect(toPurchasable(28, "oz", diced, { count: 2.0000000001, container: "can" })?.qty).toBe(2);
+    expect(toPurchasable(1, "oz", diced, { count: 0.2, container: "can" })?.qty).toBe(1);
+  });
+
+  it("works for other containers and falls back when the container is unusable", () => {
+    expect(toPurchasable(24, "oz", flour, { count: 1, container: "jar" })).toEqual({
+      qty: 1,
+      unit: "jar",
+      basis: "container",
+    });
+    const plain = toPurchasable(1, "lb", chicken);
+    expect(toPurchasable(1, "lb", chicken, { count: 2, container: "furlong" })).toEqual(plain);
+    expect(toPurchasable(1, "lb", chicken, { count: 0, container: "can" })).toEqual(plain);
+    expect(toPurchasable(1, "lb", chicken, null)).toEqual(plain);
+  });
+});
+
+describe("counts in the pack's own unit (WS05)", () => {
+  const paste: UnitIngredient = {
+    name: "tomato paste",
+    category: "canned",
+    defaultUnit: "tbsp",
+    densityGPerMl: 1.1,
+    typicalUnitWeightG: null,
+  };
+
+  it("2 cans of tomato paste is 2 cans, not 2 default cans divided by a 6 oz pack", () => {
+    expect(toPurchasable(2, "can", paste)).toEqual({ qty: 2, unit: "can", basis: "pack" });
+  });
+
+  it("a fraction of a pack unit rounds up to a whole one", () => {
+    expect(toPurchasable(0.5, "can", paste)).toEqual({ qty: 1, unit: "can", basis: "pack" });
+    expect(toPurchasable(2.0000000001, "can", paste)?.qty).toBe(2);
+  });
+
+  it("garlic by the head stays by the head", () => {
+    expect(toPurchasable(3, "head", garlic)).toEqual({ qty: 3, unit: "head", basis: "pack" });
+  });
+});
+
+describe("can sizes (WS05)", () => {
+  const crushed: UnitIngredient = {
+    name: "crushed tomatoes",
+    category: "canned",
+    defaultUnit: "can",
+    densityGPerMl: 1.04,
+    typicalUnitWeightG: null,
+  };
+  const coconut: UnitIngredient = {
+    name: "coconut milk",
+    category: "canned",
+    defaultUnit: "can",
+    densityGPerMl: 0.97,
+    typicalUnitWeightG: null,
+  };
+
+  it("a 28 oz need for crushed tomatoes is one 28 oz can", () => {
+    expect(toPurchasable(28, "oz", crushed)).toEqual({ qty: 1, unit: "can", basis: "pack" });
+  });
+
+  it("13.5 oz of coconut milk is one can and 27 oz is two", () => {
+    expect(toPurchasable(13.5, "oz", coconut)).toEqual({ qty: 1, unit: "can", basis: "pack" });
+    expect(toPurchasable(27, "oz", coconut)).toEqual({ qty: 2, unit: "can", basis: "pack" });
+  });
+
+  it("an ingredient without its own size keeps the 14.5 oz canned default", () => {
+    expect(toPurchasable(28, "oz", blackBeans)?.qty).toBe(2);
+  });
+});

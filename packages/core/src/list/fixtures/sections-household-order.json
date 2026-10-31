@@ -1,0 +1,77 @@
+{
+  "description": "A household's own order puts its sections first and keeps the default order for the rest.",
+  "options": {
+    "sectionOrder": ["meat", "produce", "seafood"]
+  },
+  "recipes": [
+    {
+      "id": "feast",
+      "title": "Everything Night",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 lemon",
+          "qty": 1,
+          "unit": "each",
+          "ingredient": "lemon"
+        },
+        {
+          "text": "1 lb chicken breast",
+          "qty": 1,
+          "unit": "lb",
+          "ingredient": "chicken breast"
+        },
+        {
+          "text": "1 lb shrimp",
+          "qty": 1,
+          "unit": "lb",
+          "ingredient": "shrimp"
+        },
+        {
+          "text": "1 cup milk",
+          "qty": 1,
+          "unit": "cup",
+          "ingredient": "milk"
+        },
+        {
+          "text": "4 flour tortillas",
+          "qty": 4,
+          "unit": "each",
+          "ingredient": "flour tortilla"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "feast",
+      "servings": 4
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Chicken breast",
+        "section": "meat"
+      },
+      {
+        "name": "Lemon",
+        "section": "produce"
+      },
+      {
+        "name": "Shrimp",
+        "section": "seafood"
+      },
+      {
+        "name": "Flour tortilla",
+        "section": "bakery"
+      },
+      {
+        "name": "Milk",
+        "section": "dairy"
+      }
+    ]
+  }
+}

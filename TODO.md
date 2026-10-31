@@ -93,7 +93,7 @@ Collected from the ledger so one list is enough. Each unblocks something named.
 - [ ] Kroger sign-in: after `git pull` in the primary checkout, `pnpm --filter @mp/retailers kroger:login`. Unblocks WS07 criterion 12 (live cart add) and WS09 criterion 13 (real QFC run).
 - [ ] `VOYAGE_API_KEY` in `.env.local`. Unblocks live embeddings for `suggest`.
 - [x] `git pull` in `/Users/miguelsolorio/dev/meal-planner`. Current at b946a60 on 2026-10-31.
-- [ ] The `sous-brand-naming-493e8f` worktree now sits on `docs/ledger-souvie-rows`, merged as PR #18 (b946a60). Its old local branch `claude/sous-brand-naming-493e8f` (a27faa1, "pick Souvie as the working name") is superseded and on no PR: drop it with `git branch -D claude/sous-brand-naming-493e8f` when that session is done, or keep it.
+- [x] The `sous-brand-naming-493e8f` worktree (session archived, PR #18 merged) was removed on 2026-10-31 along with its merged branch `docs/ledger-souvie-rows` and the superseded `claude/sous-brand-naming-493e8f` (a27faa1), at Miguel's request.
 - [ ] Apple and Google sign-in providers in Supabase Auth (WS01 criterion 3).
 - [ ] Cloudflare Pages project for `apps/marketing` (WS14 deploy) and later the Tier 3 test page.
 - [ ] Privacy contact address and route for the marketing footer (WS14 deploy-gates round).

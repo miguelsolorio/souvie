@@ -7,6 +7,7 @@
 // Pure: no I/O. Relative imports carry the .ts extension so Deno (Edge Functions) can load it.
 import { z } from "zod";
 import { INGREDIENT_CATEGORIES, IngredientCategorySchema } from "../ingredient.ts";
+import { IsoDate, isWeekStart } from "../planning.ts";
 
 /** Timestamps as PostgREST returns them, for example 2026-10-30T07:12:14.123456+00:00. */
 const Timestamp = z.iso.datetime({ offset: true });
@@ -281,3 +282,60 @@ export function itemDetailOf(item: DraftItem): ItemDetail {
     attention: item.attention ?? null,
   };
 }
+
+// ---------------------------------------------------------------------------------------
+// The list-build Edge Function contract (supabase/functions/list-build/README.md)
+// ---------------------------------------------------------------------------------------
+
+export const ListBuildRequest = z.object({
+  /** The Monday of the plan's week. */
+  weekStart: IsoDate.refine(isWeekStart, "must be a Monday"),
+  /** Defaults to the caller's most recently joined household. The caller must be a member. */
+  householdId: z.uuid().optional(),
+});
+export type ListBuildRequest = z.infer<typeof ListBuildRequest>;
+
+export const LIST_BUILD_ERROR_CODES = [
+  "unauthorized",
+  "invalid_request",
+  "not_a_member",
+  "no_household",
+  "no_plan",
+  "internal_error",
+] as const;
+export const ListBuildErrorCode = z.enum(LIST_BUILD_ERROR_CODES);
+export type ListBuildErrorCode = z.infer<typeof ListBuildErrorCode>;
+
+export const LIST_BUILD_ERROR_MESSAGES: Record<ListBuildErrorCode, string> = {
+  unauthorized: "Sign in to build a list.",
+  invalid_request: "That request is not valid. Send a weekStart that is a Monday.",
+  not_a_member: "You are not a member of that household.",
+  no_household: "Join or create a household first.",
+  no_plan: "Nothing is planned for that week yet.",
+  internal_error: "Something went wrong building the list. Try again.",
+};
+
+export const ListBuildResponse = z.object({
+  ok: z.literal(true),
+  listId: z.uuid(),
+  /** Items to buy: everything the pantry does not cover. */
+  itemCount: z.number().int().min(0),
+  /** Items to buy that need a person's eye: unparsed lines and amounts that could not be added. */
+  needsAttentionCount: z.number().int().min(0),
+  /** Items the pantry covers, shown under "Already have". */
+  alreadyHaveCount: z.number().int().min(0),
+  /** The build counter after this build: 1 for the first, +1 on every rebuild. */
+  planVersion: z.number().int().min(1),
+  /** Entries whose recipe is gone and so added nothing. */
+  skippedEntryCount: z.number().int().min(0),
+  /** True when the plan already had a list and this build refreshed it. */
+  rebuilt: z.boolean(),
+});
+export type ListBuildResponse = z.infer<typeof ListBuildResponse>;
+
+export const ListBuildFailure = z.object({
+  ok: z.literal(false),
+  error: ListBuildErrorCode,
+  message: z.string(),
+});
+export type ListBuildFailure = z.infer<typeof ListBuildFailure>;

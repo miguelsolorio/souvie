@@ -215,4 +215,24 @@ describe("row schemas", () => {
       }).success,
     ).toBe(true);
   });
+
+  it("accepts the CCR5 container columns and rejects a zero count", () => {
+    const line = {
+      id: "0c000000-0000-4000-8000-00000000000c",
+      recipe_id: "0a000000-0000-4000-8000-00000000000a",
+      position: 0,
+      group_name: null,
+      raw_text: "2 (14 oz) cans diced tomatoes",
+      qty: 28,
+      qty_max: null,
+      unit: "oz",
+      ingredient_id: null,
+      prep_note: null,
+      optional: false,
+      parse_confidence: 0.9,
+    };
+    expect(RecipeIngredient.safeParse({ ...line, container_count: 2, container: "can" }).success).toBe(true);
+    expect(RecipeIngredient.safeParse({ ...line, container_count: null, container: null }).success).toBe(true);
+    expect(RecipeIngredient.safeParse({ ...line, container_count: 0, container: "can" }).success).toBe(false);
+  });
 });

@@ -200,6 +200,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | status | enum meal_plan_entries_status: planned, cooked, skipped | |
 | notes | text | |
 | position | int | Order within a slot |
+| why | text | Nullable, no default, 200 characters at most. The one-line reason for a suggested meal; null when a person picked it |
 
 **recipe_feedback**
 | column | type | notes |
@@ -210,6 +211,14 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | recipe_id | uuid → recipes | |
 | signal | enum recipe_feedback_signal: like, dislike, cooked, skipped, saved | |
 | rating | smallint | 1–5, nullable |
+
+As built (WS04, 2026-10-30): the tables match the shapes above, with these specifics. `servings` is `numeric` with a check of 1000 or less (the WS04 brief said `int`; the docs win). The three enums are Postgres enums named `meal_plan_entries_slot`, `meal_plan_entries_status` and `recipe_feedback_signal`. `meal_plans` and `meal_plan_entries` carry `created_at` and `updated_at` (maintained by `set_updated_at`); `recipe_feedback` carries `created_at` only and is append-only. `meal_plan_entries.recipe_id` is not null, and there is no `deleted_at`: an entry is removed with a real delete. `meal_plans.week_start` must be a Monday (check constraint) and is unique per household.
+
+Two triggers keep entries consistent. `meal_plan_entries_sync` runs for every writer, including the service role. It copies `household_id` from the plan (so a client cannot forge it), rejects a `date` outside the plan's week (`date_outside_plan_week`), and rejects a recipe that is deleted or belongs to another household (`recipe_not_found`; catalog recipes pass). `meal_plan_entries_feedback` writes the planner's feedback signals in the same transaction as the entry change: `saved` when an entry is inserted or its recipe is swapped, `cooked` or `skipped` when its status changes to that value. It writes nothing when `auth.uid()` is null, so the service role's drafts (WS06) are not counted as a person's saves.
+
+Grants and policies: members of a household read all three tables and insert and delete entries. Clients may insert a plan with `(id, household_id, week_start)` and never update or delete one. On entries they insert `(id, plan_id, household_id, date, slot, recipe_id, servings, status, notes, position, why)` and update only `(date, slot, recipe_id, servings, status, notes, position, why)`; `id`, `plan_id` and `household_id` are fixed once the row exists. The client writes `why` when it applies a suggested swap, and `suggest` writes it as the service role. On `recipe_feedback` clients insert only `like` and `dislike`, only for themselves (`user_id` defaults to `auth.uid()` and is not grantable), only for a live recipe of their own household or a catalog recipe (never a deleted one), and delete only their own thumbs. The recipe check runs under the caller's row level security on `recipes`, so a catalog recipe passes only where clients can read catalog rows (the `recipes_catalog_read` migration). The service role writes all three tables.
+
+Realtime: `meal_plans` and `meal_plan_entries` are in the `supabase_realtime` publication. `meal_plan_entries` has `replica identity full`, because Realtime applies no row level security to deletes and can filter a delete by `household_id` only when the old row is fully logged. Delete exposure: because no row level security applies to deletes, a client that knows another household's UUID can subscribe with a `household_id` filter for that UUID and receive primary-key-only delete notices for that household's entries. The notice carries no row content (no recipe, date, or notes), and the UUID is not guessable, but the exposure is real and is the price of delete events reaching the other members' screens. Inserts and updates are not affected: Realtime checks row level security on those. Query keys: `['meal-plan', householdId, weekStart]` for the plan, `['meal-plan', householdId, 'entries', planId]` for its entries; WS05 listens to the first.
 
 ### Lists and pantry
 

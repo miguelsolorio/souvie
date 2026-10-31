@@ -48,7 +48,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [ ] WS08 reviewer must run the Tier 3 checklist in `docs/04-integrations.md` and confirm no playwright or puppeteer dependency.
 - [x] **Human decision:** recipe catalog cold start. Miguel chose a starter catalog 2026-10-30; WS16 brief written and dispatched.
 - [ ] WS16 (starter catalog, sonnet): review, merge. Miguel skims `supabase/seed/catalog/README.md` before the catalog loads into the hosted project.
-- [ ] Orchestrator migration `20261030140000_recipes_catalog_read.sql` (catalog read policies) merges through its own PR.
+- [x] Orchestrator migration `20261030140000_recipes_catalog_read.sql` (catalog read policies) merged as c152769 (PR #11).
 - [ ] Review, merge, wave 3 summary.
 
 ## 5. Wave 4: grocery list

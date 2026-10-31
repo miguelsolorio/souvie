@@ -149,3 +149,5 @@ Requested by Miguel while testing against the hosted project: adding a recipe mu
 
 Deliverables for this round: `supabase/functions/recipe-import/` (handler, store, tests), a new migration and pgTAP file, `packages/recipe-import/src/` (normalization and line dedupe with tests), `apps/mobile/src/features/recipes/AddRecipe.tsx` and its tests, `packages/db/src/types.generated.ts` for the new column. Nothing under `packages/core` or other features.
 
+Addendum (2026-10-31, from the WS04 picker round): `AddRecipe.tsx` now takes a `returnTo` prop and finishes through `afterRecipeSaved(id, returnTo)`, which sends a picker visitor back to the picker. Route the duplicate sheet's "Open it" and "Add anyway" outcomes through that same function, and extend `apps/mobile/src/features/recipes/AddRecipe.test.tsx` rather than starting another test file.
+

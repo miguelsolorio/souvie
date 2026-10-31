@@ -21,7 +21,7 @@ describe("ws08_tier3_rls.sql on PGlite", () => {
     const report = await runPgTapFile(t as never, join(TESTS_DIR, "ws08_tier3_rls.sql"));
     expect(report.failures).toEqual([]);
     expect(report.summary).toEqual([]);
-    expect(report.planned).toBe(66);
+    expect(report.planned).toBe(68);
     expect(report.ran).toBe(report.planned);
   }, 120_000);
 });

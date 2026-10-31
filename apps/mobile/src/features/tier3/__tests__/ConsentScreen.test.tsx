@@ -14,7 +14,7 @@ vi.mock("react-native", () => ({
   ActivityIndicator: "ActivityIndicator",
 }));
 
-import type { RpcClient } from "../api";
+import { type RpcClient, recordTier3Consent } from "../api";
 import { ConsentScreen } from "../ConsentScreen";
 import { CONSENT_VERSION, renderConsentCopy } from "../consent";
 import { tier3Store } from "../stores";
@@ -207,6 +207,15 @@ describe("ConsentScreen", () => {
     );
     expect(stored[0]?.c.retailers).toEqual(["costco", "safeway"]);
     expect(stored[0]?.c.copy_version).toBe(CONSENT_VERSION);
+  });
+
+  it("fix round item 5: a newer copy version replaces retailers[] with the ones just accepted", async () => {
+    // The household holds costco and safeway at CONSENT_VERSION (the test above). A bumped copy
+    // accepted for costco covers costco only: safeway was never accepted at the new copy.
+    const next = await recordTier3Consent(databaseClient(), HOUSEHOLD, ["costco"], "2026-12-01");
+    expect(next).toMatchObject({ retailers: ["costco"], copy_version: "2026-12-01" });
+    const back = await recordTier3Consent(databaseClient(), HOUSEHOLD, ["safeway"]);
+    expect(back).toMatchObject({ retailers: ["safeway"], copy_version: CONSENT_VERSION });
   });
 
   it("shows the server's refusal and stays on the screen", async () => {

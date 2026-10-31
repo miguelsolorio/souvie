@@ -3,7 +3,9 @@
 // consent.test.ts compares this file with docs/08 §11, so the two cannot drift apart.
 //
 // Changing a word here is a new copy version: bump CONSENT_VERSION, and every household is asked
-// again the next time it connects (and tier3Gate refuses runs until it has).
+// again the next time it connects (and tier3Gate refuses runs until it has). The database holds the
+// same value in public.tier3_consent_version(), which connect_browser_session checks; bump it in a
+// new migration in the same change (llm-proxy/tier3-sql.test.ts and the pgTAP file compare them).
 import { TIER3_RETAILER_IDS, type Tier3Consent, type Tier3RetailerId } from "@mp/retailers";
 
 export const CONSENT_VERSION = "2026-10-31";

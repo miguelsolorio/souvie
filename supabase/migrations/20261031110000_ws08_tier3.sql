@@ -5,9 +5,12 @@
 --   households.tier3_consent        {accepted_at, by_user_id, retailers[], copy_version}. Written
 --                                   only by record_tier3_consent; no client UPDATE grant.
 --   record_tier3_consent            a member accepts the consent copy for one or more Tier 3
---                                   retailers; the stored list is a union, never replaced.
+--                                   retailers. At the stored copy version the list is a union; at
+--                                   another version it is replaced by the retailers just accepted.
+--   tier3_consent_version           the copy version the app shows now (consent.ts CONSENT_VERSION).
 --   connect_browser_session         creates (or re-activates) the member's browser_session
---                                   connection after consent, with its on-device session key in Vault.
+--                                   connection after consent at the current copy version, with its
+--                                   on-device session key in Vault.
 --   connection_session_key          the connection's own member fetches that key to encrypt or
 --                                   decrypt the session blob kept on the phone. Nobody else can.
 --   revoke_browser_connection       Disconnect: deletes the Vault key and marks the row revoked.
@@ -79,13 +82,27 @@ comment on column public.households.tier3_consent is
 -- written through record_tier3_consent only. The revoke is a no-op today and states the intent.
 revoke update (tier3_consent) on public.households from anon, authenticated;
 
+-- The consent copy version the app shows now: apps/mobile/src/features/tier3/consent.ts
+-- CONSENT_VERSION (a test keeps the two equal). Changing the copy means a new CONSENT_VERSION and a
+-- migration that replaces this function, so the database and the app agree on what is current.
+create or replace function public.tier3_consent_version()
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select '2026-10-31'::text
+$$;
+
 -- ---------------------------------------------------------------------------------------
 -- record_tier3_consent
 -- ---------------------------------------------------------------------------------------
 
--- A member of the household accepts the consent copy at `copy_version` for `retailers`. The stored
--- list becomes the union of what was there and what was passed; accepted_at, by_user_id and
--- copy_version are set to this acceptance. Returns the new column value.
+-- A member of the household accepts the consent copy at `copy_version` for `retailers`. When the
+-- stored copy_version is the same, the stored list becomes the union of what was there and what
+-- was passed. When it differs, the list is replaced by the retailers just accepted: the others were
+-- accepted only at another copy, so they are not consented at this one (decided 2026-10-31).
+-- accepted_at, by_user_id and copy_version are set to this acceptance. Returns the new column value.
 create or replace function public.record_tier3_consent(
   household_id uuid,
   retailers text[],
@@ -134,12 +151,17 @@ begin
     raise exception 'household_not_found' using errcode = 'P0002';
   end if;
 
-  select coalesce(array_agg(distinct r order by r), array[]::text[]) into v_merged
-  from (
-    select jsonb_array_elements_text(coalesce(v_existing -> 'retailers', '[]'::jsonb)) as r
-    union
-    select unnest(record_tier3_consent.retailers)
-  ) as all_retailers;
+  if v_existing is not null and (v_existing ->> 'copy_version') = record_tier3_consent.copy_version then
+    select coalesce(array_agg(distinct r order by r), array[]::text[]) into v_merged
+    from (
+      select jsonb_array_elements_text(coalesce(v_existing -> 'retailers', '[]'::jsonb)) as r
+      union
+      select unnest(record_tier3_consent.retailers)
+    ) as all_retailers;
+  else
+    select coalesce(array_agg(distinct r order by r), array[]::text[]) into v_merged
+    from unnest(record_tier3_consent.retailers) as t(r);
+  end if;
 
   v_value := jsonb_build_object(
     'accepted_at', to_jsonb(now()),
@@ -196,7 +218,8 @@ revoke all on function public.tier3_new_session_key(uuid) from public, anon, aut
 
 -- After the person signs in on the retailer's page inside the app: creates the member's
 -- browser_session connection, or re-activates a revoked or needs_reauth one, with a new key.
--- Requires the household's consent for the retailer. Returns the connection id.
+-- Requires the household's consent for the retailer at the current copy version (the gate's rule,
+-- packages/retailers browser/gating.ts). Returns the connection id.
 create or replace function public.connect_browser_session(
   household_id uuid,
   retailer public.retailer
@@ -235,6 +258,9 @@ begin
     or not (v_consent -> 'retailers') ? connect_browser_session.retailer::text
   then
     raise exception 'consent_required' using errcode = '42501';
+  end if;
+  if (v_consent ->> 'copy_version') is distinct from public.tier3_consent_version() then
+    raise exception 'stale_consent' using errcode = '42501';
   end if;
 
   select c.id, c.vault_secret_id, c.status, c.auth_type

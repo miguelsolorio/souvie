@@ -1267,6 +1267,7 @@ export type Database = {
       run_screenshots_max_age: { Args: Record<PropertyKey, never>; Returns: string };
       section_order_is_valid: { Args: { names: string[] }; Returns: boolean };
       tier3_consent_is_valid: { Args: { c: Json }; Returns: boolean };
+      tier3_consent_version: { Args: Record<PropertyKey, never>; Returns: string };
       tier3_new_session_key: { Args: { p_connection_id: string }; Returns: string };
       tier3_retailer_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
     };

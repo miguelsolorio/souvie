@@ -19,7 +19,7 @@
 
 begin;
 
-select plan(66);
+select plan(68);
 
 -- ---------------------------------------------------------------------------------------
 -- Fixtures (as the postgres role, which bypasses RLS)
@@ -106,6 +106,7 @@ select ok(not has_function_privilege('anon', 'public.connection_session_key(uuid
 select ok(not has_function_privilege('authenticated', 'public.household_ai_spend_since(uuid, timestamptz)', 'EXECUTE'), 'household_ai_spend_since is service role only');
 select ok(not has_function_privilege('authenticated', 'public.expire_run_screenshots()', 'EXECUTE'), 'expire_run_screenshots is service role only');
 
+select is(public.tier3_consent_version(), '2026-10-31', 'the current consent copy version is consent.ts''s CONSENT_VERSION');
 select is((select public from storage.buckets where id = 'run-screenshots'), false, 'the run-screenshots bucket is private');
 select is((select allowed_mime_types from storage.buckets where id = 'run-screenshots'), array['image/jpeg']::text[], 'run-screenshots takes JPEG only');
 select is((select count(*)::int from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname like 'run-screenshots:%'), 3, 'run-screenshots has a member read policy and service role write and delete policies');
@@ -136,11 +137,16 @@ select is(
 select is((select tier3_consent ->> 'copy_version' from public.households where id = '0a000000-0000-4000-8000-00000000000a'), '2026-10-31', 'copy_version is the version accepted');
 select is(
   public.record_tier3_consent('0a000000-0000-4000-8000-00000000000a', array['safeway', 'safeway'], '2026-11-15') -> 'retailers',
-  '["costco", "safeway"]'::jsonb,
-  'a newer copy version keeps the union and has no duplicates'
+  '["safeway"]'::jsonb,
+  'another copy version replaces the list with only the retailers just accepted, without duplicates'
 );
 select is((select tier3_consent ->> 'copy_version' from public.households where id = '0a000000-0000-4000-8000-00000000000a'), '2026-11-15', 'the newer copy version is stored');
-select lives_ok($$select public.record_tier3_consent('0a000000-0000-4000-8000-00000000000a', array['safeway'], '2026-10-31')$$, 'consent at the current version again, for the steps below');
+select throws_ok($$select public.connect_browser_session('0a000000-0000-4000-8000-00000000000a', 'safeway')$$, '42501', 'stale_consent', 'no browser connection while the consent is at another copy version than the current one');
+select is(
+  public.record_tier3_consent('0a000000-0000-4000-8000-00000000000a', array['safeway'], '2026-10-31') -> 'retailers',
+  '["safeway"]'::jsonb,
+  'consent at the current version again replaces the list again, for the steps below'
+);
 select throws_ok($$select public.record_tier3_consent('0a000000-0000-4000-8000-00000000000a', array['kroger'], '2026-10-31')$$, '22023', 'invalid_retailers', 'kroger is not a Tier 3 retailer');
 select throws_ok($$select public.record_tier3_consent('0a000000-0000-4000-8000-00000000000a', array[]::text[], '2026-10-31')$$, '22023', 'invalid_retailers', 'an empty retailer list is refused');
 select throws_ok($$select public.record_tier3_consent('0a000000-0000-4000-8000-00000000000a', array['safeway'], 'v 1; drop')$$, '22023', 'invalid_copy_version', 'a malformed copy version is refused');

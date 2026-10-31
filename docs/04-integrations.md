@@ -161,6 +161,40 @@ Costco runs Kasada and Safeway runs Imperva. Both block headless browsers from c
 
 Common to all modes: no retailer passwords stored (session cookies and storage state only, encrypted on the device with a key held in Vault, revocable); every step screenshotted into the run transcript; consent copy shown once when the household connects a Tier 3 store, naming the terms risk and the account exposure, recorded in `households.tier3_consent`; PostHog flag `tier3_browser_checkout` on by default and used as a kill switch, per retailer; spending caps in code; `checkout` never runs without an approved review or an explicit auto-approve cap.
 
+### Mode A host as built (WS08, 2026-10-31)
+
+Every browser adapter drives `BrowserHost` (`packages/retailers/src/browser/host.ts`): `navigate`, `url`, `snapshot`, `click`, `type`, `select`, `waitFor`, `screenshot`, `onUserRequired`. On the phone it is `WebViewHost` (`apps/mobile/src/features/tier3/`): `react-native-webview` with the WebView's own user agent, http(s) pages only, and `bridge.js` injected before content loads and again on every load end (it ignores a second copy on the same document). The page is read as a `SnapshotTree` whose contract is in `snapshot.ts`: role, accessible name, text, value (never for a password field), href, bbox, and ids hashed from the parent id, role, name and index among same-role siblings, so ids stay the same across snapshots and reloads of an unchanged page and a banner inserted above a tile does not move the ids inside it. `maxNodes` caps a tree and marks `truncated`. Shared page skills (`skills.ts`) find nodes by role and text, the button nearest a node, a quantity stepper, and parse shelf prices.
+
+Bridge message protocol (`packages/retailers/src/browser/protocol.ts`). Page messages carry an envelope marker and a per-WebView token kept in the bridge's closure; the host ignores anything else, so the retailer's own scripts cannot answer for the bridge. Host messages reach the page as a JSON string the bridge parses, never as code.
+
+| Direction | Message | Payload |
+|---|---|---|
+| host → page | `navigate` | Not a page message: the host changes the WebView source; the bridge is injected on the new document and sends `ready` |
+| page → host | `ready` | `{ url, title }` when the bridge is installed on a document; queued host calls go out then |
+| host → page | `snapshot` | `{ requestId, maxNodes }` |
+| page → host | `snapshot.result` | `{ requestId, tree }` |
+| host → page | `click` / `type` / `select` | `{ requestId, nodeId, text?, clear?, value? }`. Real pointer, mouse, key, input and change events; typing into a password field is refused with `password_field` |
+| page → host | `action.result` | `{ requestId, ok, error?: { code, message } }`. Codes: `stale_node`, `not_actionable`, `password_field`, `no_such_option` |
+| host → page | `waitFor` / `waitFor.stop` | `{ requestId, timeoutMs, maxNodes }`. The bridge streams `snapshot.result` every 250 ms; the host runs the predicate and sends `waitFor.stop`. A wait outlives a navigation |
+| host → page | `storage.read` | `{ requestId }`, for saving a session |
+| page → host | `storage.result` | `{ requestId, origin, localStorage, sessionStorage }` |
+| page → host | `userRequired` | `{ reason, nodeId?, url }`, once per reason per URL |
+| page → host | `navigated` | `{ url, title }` on pushState, replaceState, popstate and hashchange |
+
+Screenshots are taken by the host with `react-native-view-shot` (JPEG, quality 60); the page is not involved. Calls in flight when a new document starts fail with `bridge_unavailable` rather than being sent twice.
+
+User-required reasons, as built: `login` when a visible password field appears or the path is a sign-in path (`sign-in`, `login`, `logon`, `signon`, `authenticate`); `captcha` when an iframe's title, name, label or source, or any visible label or text, matches `captcha`, "verify you are human", "press and hold", "are you a robot" or "human verification"; `mfa` when an input has `autocomplete="one-time-code"` or a name, id, label or placeholder naming a one-time, verification or security code; `unexpected` when the page leaves the hosts the adapter allows (raised by the host, not the bridge). `pay` and `membership` are WS10 recipe reasons. The host never clears a human check; it hands the phone to the person.
+
+Sessions, consent and gating: the session is the retailer's own-domain cookies (`safeway.com`, `albertsons.com`, `haggen.com` for `safeway`; `costco.com` for `costco`) plus that origin's storage, sealed with AES-256-GCM under the connection's Vault key and kept in one `expo-secure-store` entry; at the end of a run the plaintext copy is cleared from the WebView (docs/05). Consent is the checkpoint 4 copy (`consent.ts`, `CONSENT_VERSION` `2026-10-31`), recorded per retailer id (`safeway`, `costco`; Albertsons and Haggen are `safeway` banners) through `record_tier3_consent`, which keeps the union of retailers. `tier3Gate(householdId, retailer)` throws `Tier3GateError` (a `RetailerNotSupportedError`) with `flag_off`, `no_consent` or `stale_consent`; `installTier3Gate` puts it in front of `AdapterRegistry.getAdapter` through the registry's `setGate` hook. The flag `tier3_browser_checkout` is off only when PostHog says `false` or its payload lists the retailer (`{ "off": ["costco"] }`); a missing key or an unreachable PostHog reads as on. The on-device agent's model calls go through the `llm-proxy` Edge Function, which holds the Anthropic key and enforces the daily and per-run caps.
+
+### Mode B: household-hosted worker (documented, not built)
+
+A Mac mini or home server the household owns would run the same adapters with Playwright and a persistent browser profile. It would implement `BrowserHost` with Playwright's page API: `navigate` as `page.goto`, `snapshot` by injecting the same `bridge.js` with `page.addInitScript` and reading its messages through `page.exposeBinding`, `click`, `type` and `select` through the same bridge messages so ids mean the same thing on both hosts, `screenshot` as `page.screenshot`, and `onUserRequired` from the same `userRequired` messages, pushed to the household's phones so a person clears the check on the worker's screen or through a remote view. Sessions would live in the profile directory on the household's own disk, encrypted at rest, with the same Vault-held key.
+
+It is not built now: there is no second host to test against, no story for installing and updating software on a household's own machine, and the terms exposure moves off the person's phone and away from the person watching, which weakens the posture the consent copy describes. It may come after v1.
+
+A cloud headless host (Mode C: Playwright, Puppeteer or a hosted browser on servers we run, with or without residential proxies) is forbidden. It trips Kasada and Imperva, it puts us rather than the person at the controls, and no code path for it may exist in this repo.
+
 ## Compliance checklists (reviewers verify these)
 
 **Kroger adapter and any UI that shows Kroger data**

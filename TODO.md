@@ -92,12 +92,14 @@ Collected from the ledger so one list is enough. Each unblocks something named.
 - [ ] Skim `supabase/seed/catalog/README.md` before the catalog seed loads into the hosted project.
 - [ ] Kroger sign-in: after `git pull` in the primary checkout, `pnpm --filter @mp/retailers kroger:login`. Unblocks WS07 criterion 12 (live cart add) and WS09 criterion 13 (real QFC run).
 - [ ] `VOYAGE_API_KEY` in `.env.local`. Unblocks live embeddings for `suggest`.
-- [ ] `git pull` in `/Users/miguelsolorio/dev/meal-planner` (local `main` is 31 commits behind origin/main).
-- [ ] Decide the `sous-brand-naming-493e8f` worktree: its one commit (a27faa1, "pick Souvie as the working name") is on no PR and not in `main`; keep, open a PR, or drop.
+- [x] `git pull` in `/Users/miguelsolorio/dev/meal-planner`. Current at b946a60 on 2026-10-31.
+- [ ] The `sous-brand-naming-493e8f` worktree now sits on `docs/ledger-souvie-rows`, merged as PR #18 (b946a60). Its old local branch `claude/sous-brand-naming-493e8f` (a27faa1, "pick Souvie as the working name") is superseded and on no PR: drop it with `git branch -D claude/sous-brand-naming-493e8f` when that session is done, or keep it.
 - [ ] Apple and Google sign-in providers in Supabase Auth (WS01 criterion 3).
 - [ ] Cloudflare Pages project for `apps/marketing` (WS14 deploy) and later the Tier 3 test page.
 - [ ] Privacy contact address and route for the marketing footer (WS14 deploy-gates round).
 - [ ] Optional: re-pin the repo's git origin in the desktop app (Help → Troubleshooting → Review Pinned Git Origins) so Auto-fix can merge main into PR branches.
+
+- [x] `pnpm` on this Mac: `corepack enable --install-directory /opt/homebrew/bin pnpm` and `corepack prepare pnpm@9.15.9 --activate` run 2026-10-31, so `pnpm dev` works in a plain shell (README "Getting started" says why).
 
 ## Standing rules while working
 

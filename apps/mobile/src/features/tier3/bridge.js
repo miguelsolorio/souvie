@@ -6,14 +6,20 @@
 //
 // Protocol: packages/retailers/src/browser/protocol.ts and docs/04-integrations.md §Tier 3. Every
 // message to the host carries the envelope marker and the per-injection token. The token lives only
-// in this closure; the receiver the host calls has a separate random name, and postMessage is
-// captured, bound, at install. That is defence in depth against the page's own scripts, which share
-// this JavaScript realm: it raises the bar, it is not a guarantee.
+// in this closure, and the receiver the host calls has a separate random name. Messages go out
+// through a native postMessage bound at install: on iOS the WebKit message handler's own method
+// (window.webkit.messageHandlers.ReactNativeWebView.postMessage), because react-native-webview's
+// window.ReactNativeWebView.postMessage looks that method up at call time; elsewhere (Android,
+// tests) window.ReactNativeWebView.postMessage. A page script that later replaces either method
+// neither reads nor blocks our messages. All of this is defence in depth against the page's own
+// scripts, which share this JavaScript realm and run after us: it raises the bar, it is not a
+// guarantee.
 //
 // Rules this file keeps:
 //   * It never reads, serializes, or types a password, and never fills a sign-in form. A field is a
 //     password when its type is password, its autocomplete names a password, or its name, id,
-//     label or placeholder says password, passcode or pwd, whatever its type attribute says now.
+//     label or placeholder contains password, passcode or pwd, or has pass as a word of its own,
+//     whatever its type attribute says now ("Search passion fruit" is not a password).
 //   * It never changes the user agent, hides automation, or touches a human check. A human check is
 //     reported and left for the person.
 //   * Nothing here is sent anywhere but the host on the same device.
@@ -36,12 +42,20 @@
   const MAX_NAME = 200;
   const MAX_TEXT = 300;
 
-  // Captured at install so later page code cannot swap them out from under us. postMessage is bound
-  // now: replacing window.ReactNativeWebView.postMessage later neither reads nor blocks our messages.
+  // Captured at install so later page code cannot swap them out from under us.
   const stringify = JSON.stringify;
   const parse = JSON.parse;
   const hasOwn = Object.hasOwn;
+  // The native end, bound now. On iOS react-native-webview's window.ReactNativeWebView.postMessage
+  // calls window.webkit.messageHandlers.ReactNativeWebView.postMessage at call time, so binding the
+  // wrapper would still route through whatever the page puts there later: bind the WebKit handler's
+  // own method instead. Android (and the default test harness) has no webkit handler and uses the
+  // wrapper's method.
   function capturePost() {
+    const handler = window.webkit?.messageHandlers?.ReactNativeWebView;
+    if (handler && typeof handler.postMessage === "function") {
+      return Function.prototype.bind.call(handler.postMessage, handler);
+    }
     const target = window.ReactNativeWebView;
     if (!target || typeof target.postMessage !== "function") return null;
     return Function.prototype.bind.call(target.postMessage, target);
@@ -275,8 +289,11 @@
 
   // A password, whatever its type attribute says now (the person may have made it visible): the
   // type is password, the autocomplete names a password, or the name, id, label or placeholder
-  // says password, passcode or pwd. Its value is never serialized and it is never typed into.
-  const SECRET_HINT = /pass(word|code)?|pwd/i;
+  // contains password, passcode or pwd (so user_password, currentPassword, newpassword and
+  // passcode1 count), or has pass as a word of its own ("Pass code"). Words that only start with
+  // pass (passion, passport, passenger) do not. Its value is never serialized and it is never typed
+  // into. scrub.ts SECRET_FIELD_HINT is the same rule; a test keeps them equal.
+  const SECRET_HINT = /password|passcode|pwd|(^|[^a-z])pass([^a-z]|$)/i;
   const NOT_TEXT = {
     checkbox: 1,
     radio: 1,

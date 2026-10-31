@@ -36,6 +36,13 @@ export interface HarnessOptions {
   html?: string;
   allowedHosts?: readonly string[];
   requestTimeoutMs?: number;
+  /**
+   * How the native channel looks in the page. "android" (default): window.ReactNativeWebView with
+   * its own postMessage. "ios": react-native-webview's iOS shape, a window.ReactNativeWebView
+   * wrapper that calls window.webkit.messageHandlers.ReactNativeWebView.postMessage at call time
+   * (apple/RNCWebViewImpl.m), with the WebKit message handler as the native end.
+   */
+  platform?: "android" | "ios";
 }
 
 export function createPageHarness(options: HarnessOptions = {}): PageHarness {
@@ -60,12 +67,29 @@ export function createPageHarness(options: HarnessOptions = {}): PageHarness {
         runScripts: "dangerously",
         pretendToBeVisual: true,
         beforeParse(window) {
-          (window as unknown as { ReactNativeWebView: unknown }).ReactNativeWebView = {
+          const native = {
             postMessage(data: string) {
               posted.push(JSON.parse(data) as Record<string, unknown>);
               setTimeout(() => host.receive(data), 0);
             },
           };
+          const w = window as unknown as {
+            ReactNativeWebView: unknown;
+            webkit: unknown;
+            eval(code: string): unknown;
+          };
+          if (options.platform === "ios") {
+            w.webkit = { messageHandlers: { ReactNativeWebView: native } };
+            // react-native-webview's postMessageScript, in shape.
+            w.eval(`
+              window.ReactNativeWebView = window.ReactNativeWebView || {};
+              window.ReactNativeWebView.postMessage = function (data) {
+                window.webkit.messageHandlers.ReactNativeWebView.postMessage(String(data));
+              };
+            `);
+          } else {
+            w.ReactNativeWebView = native;
+          }
           // injectedJavaScriptBeforeContentLoaded
           window.eval(host.bridgeScript);
         },

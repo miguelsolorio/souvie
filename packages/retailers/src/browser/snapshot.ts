@@ -28,9 +28,10 @@
 //   6. Stop at `maxNodes` nodes in document order and set `truncated: true`.
 //   7. Never read, serialize, or type a password. A field is a password when its type is password,
 //      its autocomplete names a password (current-password, new-password), or its name, id, label,
-//      aria-label, title or placeholder matches /pass(word|code)?|pwd/i, whatever its type attribute
-//      says at the moment: a person may have toggled it visible. Such a field has no `value`, and
-//      typing into it fails with `password_field`.
+//      aria-label, title or placeholder matches /password|passcode|pwd|(^|[^a-z])pass([^a-z]|$)/i
+//      (password, passcode or pwd anywhere, pass only as a word of its own, so "Search passion
+//      fruit" is not one), whatever its type attribute says at the moment: a person may have toggled
+//      it visible. Such a field has no `value`, and typing into it fails with `password_field`.
 
 export interface SnapshotNode {
   /** Stable across snapshots of an unchanged DOM (contract rule 5). */

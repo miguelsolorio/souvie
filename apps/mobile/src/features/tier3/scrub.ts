@@ -73,7 +73,13 @@ const RULES: Rule[] = [
 ];
 
 const PERSONAL_FIELD =
-  /name|address|street|city|zip|postal|phone|mobile|email|card|cvv|birth|code|pass|pwd/i;
+  /name|address|street|city|zip|postal|phone|mobile|email|card|cvv|birth|code/i;
+
+/**
+ * The bridge's password rule for names (bridge.js SECRET_HINT; a test keeps them equal): contains
+ * password, passcode or pwd, or has pass as a word of its own. "Search passion fruit" is not one.
+ */
+export const SECRET_FIELD_HINT = /password|passcode|pwd|(^|[^a-z])pass([^a-z]|$)/i;
 
 function scrubText(s: string): { text: string; kinds: ScrubKind[] } {
   let text = s;
@@ -137,7 +143,7 @@ export function findPersonalData(tree: SnapshotTree): Replacement[] {
     }
     if (n.value) {
       const isForm = n.role === "textbox" || n.role === "searchbox" || n.role === "combobox";
-      if (isForm && PERSONAL_FIELD.test(n.name)) {
+      if (isForm && (PERSONAL_FIELD.test(n.name) || SECRET_FIELD_HINT.test(n.name))) {
         push({
           nodeId: n.id,
           field: "value",

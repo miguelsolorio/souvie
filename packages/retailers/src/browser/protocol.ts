@@ -4,10 +4,14 @@
 //
 // Every page -> host message carries the envelope marker and the per-injection token, and the host
 // drops anything without them. The token lives only in the bridge's closure; the receiver the host
-// calls has a separate random name, so enumerating `window` reveals the receiver, not the token, and
-// the bridge posts through a postMessage it captured, bound, at install. This is defence in depth:
-// the retailer's own scripts share the page's JavaScript realm, so it raises the bar for a page that
-// tries to answer for the bridge; it is not a guarantee.
+// calls has a separate random name, so enumerating `window` reveals the receiver, not the token.
+// The bridge posts through a native postMessage it bound at install: on iOS the WebKit message
+// handler's own method (window.webkit.messageHandlers.ReactNativeWebView.postMessage), since
+// react-native-webview's window.ReactNativeWebView.postMessage looks that method up at call time;
+// elsewhere window.ReactNativeWebView.postMessage. A page that replaces either method later neither
+// reads nor blocks the bridge's messages. This is defence in depth: the retailer's own scripts share
+// the page's JavaScript realm, so it raises the bar for a page that tries to answer for the bridge;
+// it is not a guarantee.
 import type { UserRequiredReason } from "./host.ts";
 import type { SnapshotTree } from "./snapshot.ts";
 

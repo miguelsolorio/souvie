@@ -120,6 +120,7 @@ These are the "stay on task" rules. They repeat the guide on purpose.
 5. Stop at the seven human checkpoints and nowhere else, unless something is `blocked`.
 6. No feature code by the orchestrator. The only code you write is shared-contract changes (`packages/core`, `RetailerAdapter`, cross-cutting migrations) in small commits on `main`. If you catch yourself writing anything else, stop and dispatch a builder.
 7. When your context feels long, write the wave summary, tick this file, and tell the human to start a fresh session with the resume prompt below.
+8. Usage pacing (Miguel, 2026-10-31): before dispatching or resuming any agent, read the plan usage (the desktop app's `get_usage` tool). At 95 percent of any window, dispatch and resume nothing, let running agents finish, and schedule a one-shot wake-up for two minutes after that window resets to resume whatever stopped. An agent stopped by a rate limit is resumed with a message, never redispatched. A fresh session recreates the 20-minute usage check, which expires after seven days.
 
 ## Kickoff prompt (new session, model: Fable)
 

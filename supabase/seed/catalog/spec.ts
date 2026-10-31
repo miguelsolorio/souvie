@@ -1159,6 +1159,40 @@ export function analyzeRecipe(
 }
 
 /**
+ * The lines that stop a recipe from earning a diet tag (or from being allergen free), as the
+ * drafting script's feedback to the model. Each entry is the raw line and why it counts.
+ */
+export function offendingLines(
+  goal: DietTag | "allergen_free",
+  lines: readonly LineInput[],
+  categoryOf: (name: string) => string | undefined,
+): string[] {
+  const out: string[] = [];
+  for (const line of lines) {
+    const f = analyzeLine(line, categoryOf);
+    const why: string[] = [];
+    const meaty = f.flesh.length > 0 || f.animal;
+    if ((goal === "vegetarian" || goal === "vegan") && meaty) {
+      why.push("contains meat, fish, or an animal product");
+    }
+    if (goal === "vegan") {
+      if (f.dairy) why.push("contains dairy");
+      if (f.egg) why.push("contains egg");
+      if (f.honey) why.push("contains honey");
+      if (f.notVegan) why.push("may contain animal products");
+    }
+    if (goal === "dairy_free" && f.dairy) why.push("contains dairy");
+    if (goal === "gluten_free" && f.gluten) why.push("may contain gluten");
+    if (goal === "allergen_free" && f.allergens.length > 0) {
+      why.push(`carries ${f.allergens.join(", ")}`);
+    }
+    if (f.unknown) why.push("is not a known ingredient, so it cannot be cleared");
+    if (why.length > 0) out.push(`"${line.rawText}" ${why.join(" and ")}`);
+  }
+  return out;
+}
+
+/**
  * Kinds of flesh a recipe holds that its protein tag does not name. Empty when honest: a chicken
  * recipe holds chicken only, and a recipe with a non-meat protein holds no flesh at all.
  */

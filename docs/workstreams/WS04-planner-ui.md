@@ -145,3 +145,19 @@ Branch `ws/04b-picker-entry-points`, Sonnet. Scope is this round only; nothing e
 
 Deliverables for this round: `apps/mobile/app/(app)/plan/pick.tsx`, `apps/mobile/app/(app)/recipes/new.tsx`, `apps/mobile/src/features/recipes/AddRecipe.tsx` (the return-after-save hook only), `apps/mobile/src/features/plan/pickerSearch.ts` and its test, `apps/mobile/src/features/plan/routes.ts` and its test, and any screen tests. Nothing under `packages/`, `supabase/` or other features.
 
+## Follow-up round (queued 2026-10-31): simple mode, one meal a day
+
+Requested by Miguel: most households plan dinners only, so the planner should offer a "simple" mode that plans one meal per day, on by default, chosen during onboarding and changeable later. Today `MEAL_SLOTS` is breakfast, lunch, dinner and snack, and the week grid and the day screen render all four for every day.
+
+Dispatch after the picker round (`ws/04b-picker-entry-points`) merges, since both edit the plan screens. Branch `ws/04c-simple-mode`, Sonnet.
+
+**Orchestrator work before dispatch (contracts, not yours):** `PlanMode = z.enum(["simple", "full"])` and `slotsForMode(mode): readonly MealSlot[]` (`["dinner"]` for simple, `MEAL_SLOTS` for full) in `packages/core/src/planning.ts`; migration `20261031120000_households_plan_mode.sql` adding `households.plan_mode` (enum `households_plan_mode`, not null, default `simple`), extending the client update grant to `(name, zip, plan_mode)` so the existing "households: owners update" policy covers it, and the generated types; docs/02 row.
+
+1. **Onboarding.** Step 1 "Your household" (`apps/mobile/app/(onboarding)/01-household.tsx` and its feature code) gains the question "How much do you want to plan?" with two choices: "Just dinners" (recommended, preselected) and "Every meal". The answer writes `households.plan_mode` through the normal household update, only when the person is the household's owner; a member who joins an existing household does not see the question. Copy follows docs/08 §10.
+2. **Household settings.** `apps/mobile/app/(app)/household/settings.tsx` gets the same choice as a setting, owner-editable, with one sentence under it: "Simple plans one dinner a day. Every meal adds breakfast, lunch and snacks." Switching never deletes entries.
+3. **Planner in simple mode.** `WeekGrid.tsx` shows one cell per day (dinner); the day screen (`plan/[date].tsx`) shows the dinner slot; the picker opens for dinner without asking for a slot; `pickRoute` and `dayRoute` keep working for every slot so deep links and existing entries survive. Entries that exist in other slots (planned earlier in full mode, or by another member before the switch) stay visible under a collapsed "More meals" row for that day, never hidden or dropped, and "Generate list" still aggregates them.
+4. **Suggestions and the list.** `suggest` already plans dinners and `list-build` reads whatever is planned, so neither changes; confirm with a test that a simple-mode week with a stray lunch entry builds a list containing both.
+5. **Tests.** `slotsForMode` is covered in core by the orchestrator; you cover: the onboarding step writes the mode for an owner and hides the question for a member; the settings toggle round-trips; the grid renders one row in simple mode and four in full; the "More meals" row appears only when such entries exist; the picker's default slot. `pnpm typecheck && pnpm lint && pnpm test`, plus 390 px web screenshots of the week grid in both modes.
+
+Deliverables for this round: the onboarding step 1 screen and its feature code, `household/settings.tsx`, `WeekGrid.tsx`, `SlotCell.tsx`, `plan/[date].tsx`, `plan/index.tsx`, `plan/pick.tsx` (default slot only), `routes.ts`, `@mp/db` hooks that read or write the household row (`useHousehold` and the update hook, if the column needs adding to their selects), and their tests. Nothing under `packages/core` or `supabase/` beyond what the orchestrator lands first.
+

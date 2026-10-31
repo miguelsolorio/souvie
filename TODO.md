@@ -49,6 +49,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [ ] WS05 follow-up round (jsonb parameters double-encoded on real Postgres; blocks "Build grocery list" on the hosted project; brief section at the end of WS05's file): review, merge, redeploy `list-build`, Miguel retries.
 - [ ] WS04 follow-up round (picker entry points, from Miguel's test 2026-10-31): review, merge.
 - [ ] WS02 follow-up round (validation on add, no duplicate recipes or ingredient lines; brief section at the end of WS02's file, requested by Miguel 2026-10-31): dispatch after the WS04 round merges, review, merge.
+- [ ] WS04 simple-mode round (one meal a day, household setting `plan_mode` default simple, asked in onboarding step 1; brief section at the end of WS04's file, requested by Miguel 2026-10-31): orchestrator lands `PlanMode`, `slotsForMode` and the `households.plan_mode` migration first, then dispatch after the picker round merges, review, merge.
 - [ ] WS08: review, merge, append to the wave 3 summary. Then `pnpm install` in the orchestrator worktree (native modules change the lockfile) and a `git pull` in the primary checkout.
 - [x] **Human decision:** recipe catalog cold start. Miguel chose a starter catalog 2026-10-30; WS16 brief written and dispatched.
 - [x] WS16 (starter catalog, sonnet): reviewed and merged as 4fb32da (PR #13), 2026-10-30.
@@ -119,6 +120,7 @@ These are the "stay on task" rules. They repeat the guide on purpose.
 5. Stop at the seven human checkpoints and nowhere else, unless something is `blocked`.
 6. No feature code by the orchestrator. The only code you write is shared-contract changes (`packages/core`, `RetailerAdapter`, cross-cutting migrations) in small commits on `main`. If you catch yourself writing anything else, stop and dispatch a builder.
 7. When your context feels long, write the wave summary, tick this file, and tell the human to start a fresh session with the resume prompt below.
+8. Usage pacing (Miguel, 2026-10-31): before dispatching or resuming any agent, read the plan usage (the desktop app's `get_usage` tool). At 98 percent of any window, dispatch and resume nothing, let running agents finish, and schedule a one-shot wake-up for two minutes after that window resets to resume whatever stopped. An agent stopped by a rate limit is resumed with a message, never redispatched. A fresh session recreates the 20-minute usage check, which expires after seven days.
 
 ## Kickoff prompt (new session, model: Fable)
 

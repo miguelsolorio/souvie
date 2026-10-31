@@ -54,7 +54,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 ## 5. Wave 4: grocery list
 
-- [x] CCR5: `containerCount` and `container` in `packages/core` (orchestrator) before dispatch. Merged 2026-10-30 as 6fde545 (PR #14); row-schema addendum on its own PR.
+- [x] CCR5: `containerCount` and `container` in `packages/core` (orchestrator) before dispatch. Merged 2026-10-30 as 6fde545 (PR #14); row-schema addendum merged as a1f37c4 (PR #15).
 - [x] Dispatch WS05 (sonnet). Dispatched 2026-10-30.
 - [ ] WS05: review, merge, wave 4 summary.
 

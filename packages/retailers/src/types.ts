@@ -5,8 +5,9 @@
 // Relative imports in this package carry the .ts extension so Supabase Edge Functions (Deno) can
 // load these modules by path. The retailer and modality vocabularies come from @mp/core
 // (retail.ts), so there is one source for them.
-import { AdapterModality, RetailerId as RetailerIdEnum } from "@mp/core";
+
 import type { RunPolicy } from "@mp/core";
+import { AdapterModality, RetailerId as RetailerIdEnum } from "@mp/core";
 
 /** How a store does one thing: our API call, a driven browser, a hand-off to the user, or not at all. */
 export type Capability = "api" | "browser" | "handoff" | "none";

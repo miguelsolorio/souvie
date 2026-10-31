@@ -19,7 +19,7 @@ See `docs/status.md` for the live ledger.
 
 ## Getting started
 
-You need Node 22 (22.23 or later, which Astro 7 requires; `.node-version` pins 22.23.4, because a bare major let CI runners pick a patch Astro rejects), pnpm 9 (`corepack enable` picks the version pinned in `package.json`), and Xcode with an iOS Simulator for iOS. If `corepack` is not available, install pnpm under your Node 22 with `npm install -g pnpm@9`. Development runs against the hosted Supabase project. The local Supabase stack (`supabase start`) needs a container runtime, so it runs only in CI.
+You need Node 22 (22.23 or later, which Astro 7 requires; `.node-version` pins 22.23.4, because a bare major let CI runners pick a patch Astro rejects), pnpm 9 through corepack, and Xcode with an iOS Simulator for iOS. Node 25 and later no longer bundle corepack, so check `corepack --version` first; then run `corepack enable --install-directory <a directory on your PATH that you own> pnpm` once (on a Homebrew Mac, `/opt/homebrew/bin`), and `pnpm` resolves to the version pinned in `package.json`. Without that step the shell says `command not found: pnpm`. If `corepack` is missing, install pnpm under your Node with `npm install -g pnpm@9`. Development runs against the hosted Supabase project. The local Supabase stack (`supabase start`) needs a container runtime, so it runs only in CI.
 
 ```bash
 scripts/setup-git-identity.sh       # once per clone
@@ -35,8 +35,8 @@ pnpm supabase db push               # apply supabase/migrations to the hosted pr
 | `pnpm dev` | Expo dev server (web at http://localhost:8081) and the worker together, through Turborepo. Expo's key shortcuts need the next command |
 | `pnpm --filter @mp/mobile start` | Expo only. Press `w` for web at http://localhost:8081, `i` for the iOS Simulator |
 | `pnpm --filter @mp/shopper-worker dev` | Worker only. Logs `connected`, then `idle` every 5 seconds |
-| `pnpm supabase functions deploy <name> --use-api` | Deploy an Edge Function to the hosted project without Docker |
-| `pnpm supabase db push` | Apply new migrations to the hosted project |
+| `pnpm supabase functions deploy <name> --use-api --project-ref <ref>` | Deploy an Edge Function to the hosted project without Docker. `--project-ref` (the host part of `EXPO_PUBLIC_SUPABASE_URL`) means no `supabase link` is needed, which matters when the access token lacks `projects_read` |
+| `pnpm supabase db push` | Apply new migrations to the hosted project. If your access token cannot `link`, `pnpm supabase db push --db-url "$WORKER_DATABASE_URL"` pushes over the database connection instead (percent-encode the password); `--dry-run` first lists what would apply |
 | `pnpm typecheck` | `tsc --noEmit` in every workspace |
 | `pnpm lint` | Biome check of the whole repo. `pnpm format` applies fixes |
 | `pnpm test` | Vitest `unit` project: every `*.test.ts` |

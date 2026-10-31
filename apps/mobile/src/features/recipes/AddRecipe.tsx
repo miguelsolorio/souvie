@@ -18,6 +18,7 @@ import { Pressable, Text, View } from "react-native";
 import { Button } from "../../components/Button";
 import { ErrorText, Section } from "../../components/Screen";
 import { TextField } from "../../components/TextField";
+import { afterRecipeSaved, type PickerTarget } from "../plan/routes";
 import { draftFromNormalized, emptyForm, formFromDraft } from "./draft";
 import { MultilineField } from "./MultilineField";
 import { pickRecipePhoto } from "./pickRecipePhoto";
@@ -62,8 +63,11 @@ interface Review {
  * The add-recipe screen body: four ways in (a link, pasted text, a photo, typing it), plus the
  * caption flow for something shared in from another app. A link or pasted text is saved straight
  * away; a photo or a caption comes back as a draft the person checks and edits first.
+ *
+ * `returnTo` is set when the recipe picker sent the person here: once a recipe is saved they go
+ * back to that picker. Without it, a saved recipe opens on its own page.
  */
-export function AddRecipe() {
+export function AddRecipe({ returnTo = null }: { returnTo?: PickerTarget | null }) {
   const router = useRouter();
   const client = useSupabase();
   const household = useHousehold();
@@ -120,12 +124,15 @@ export function AddRecipe() {
     setErrorCode(null);
   }
 
+  /** A recipe is saved: back to the picker that sent the person here, else to the recipe. */
   function openRecipe(id: string | undefined) {
     if (!id) {
       fail(new ImportError("internal_error"));
       return;
     }
-    router.replace(`/recipes/${id}`);
+    const next = afterRecipeSaved(id, returnTo);
+    if (next.action === "dismissTo") router.dismissTo(next.href);
+    else router.replace(next.href);
   }
 
   function switchTab(next: Tab) {
@@ -228,7 +235,7 @@ export function AddRecipe() {
     createRecipe.mutate(
       { householdId, draft, sourceType, ...(sourceUrl ? { sourceUrl } : {}) },
       {
-        onSuccess: (id) => router.replace(`/recipes/${id}`),
+        onSuccess: openRecipe,
         onError: (cause) => setError(recipeErrorMessage(cause)),
       },
     );

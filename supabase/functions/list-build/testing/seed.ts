@@ -1,6 +1,6 @@
-// Test harness only (WS05): puts a buildList fixture (packages/core/src/list/fixtures) into the
-// PGlite database as a real household, recipes, ingredient lines, a plan and its entries, so the
-// store's SQL runs on the same data the pure tests use.
+// Test harness only (WS05): puts a buildList fixture (packages/core/src/list/fixtures) into a
+// database (PGlite, or the CI stack's Postgres) as a real household, recipes, ingredient lines, a
+// plan and its entries, so the store's SQL runs on the same data the pure tests use.
 import {
   IdMap,
   inputOf,
@@ -8,6 +8,12 @@ import {
   ONTOLOGY,
 } from "../../../../packages/core/src/list/fixtures/harness.ts";
 import type { TestDb } from "./db.ts";
+
+/**
+ * All the seed helpers need: run a statement with parameters. A PGlite TestDb has it, and so does
+ * the postgres.js connection that store.postgres.test.ts wraps.
+ */
+export type Queryable = Pick<TestDb, "query">;
 
 export const USER_ID = "a1111111-1111-4111-8111-111111111111";
 export const HOUSEHOLD_ID = "0a000000-0000-4000-8000-00000000000a";
@@ -23,7 +29,7 @@ export interface Seeded {
 
 /** A user, a household, and the user as its owner. Safe to call twice. */
 export async function insertHousehold(
-  t: TestDb,
+  t: Queryable,
   ids: { userId: string; householdId: string; name?: string },
 ): Promise<void> {
   await t.query(`insert into auth.users (id, email) values ($1, $2) on conflict (id) do nothing`, [
@@ -43,7 +49,7 @@ export async function insertHousehold(
 }
 
 /** The ontology snapshot the fixtures use, with the seed's ids. */
-export async function insertOntology(t: TestDb): Promise<void> {
+export async function insertOntology(t: Queryable): Promise<void> {
   for (const ingredient of ONTOLOGY) {
     await t.query(
       `insert into public.ingredients
@@ -71,7 +77,7 @@ export async function insertOntology(t: TestDb): Promise<void> {
  * is not in the fixture (a "ghost") are skipped, because the planner's trigger refuses them.
  */
 export async function seedFixture(
-  t: TestDb,
+  t: Queryable,
   fixture: ListFixture,
   who: { userId?: string; householdId?: string; weekStart?: string } = {},
 ): Promise<Seeded> {

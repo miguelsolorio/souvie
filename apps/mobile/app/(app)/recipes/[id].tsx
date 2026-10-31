@@ -15,6 +15,9 @@ import { RecipeImage } from "../../../src/features/recipes/RecipeImage";
 import { SourceLine } from "../../../src/features/recipes/SourceLine";
 import { confirmAction } from "../../../src/lib/confirm";
 
+/** Shown in place of Edit and Delete on a starter catalog recipe. */
+const CATALOG_RECIPE_NOTE = "Starter recipe from Souvie. Plan it as it is.";
+
 /** One recipe: ingredients, steps, and where it came from. */
 export default function RecipeDetailScreen() {
   const router = useRouter();
@@ -49,6 +52,7 @@ export default function RecipeDetailScreen() {
     );
   }
 
+  const isCatalog = data.visibility === "catalog";
   const groups = groupIngredientLines(data.ingredients);
   const steps = numberSteps(instructionsToSteps(data.instructions));
   const facts = [
@@ -130,22 +134,30 @@ export default function RecipeDetailScreen() {
         )}
       </Section>
 
-      <View className="gap-3">
-        <Button
-          testID="edit-recipe"
-          label="Edit recipe"
-          variant="secondary"
-          onPress={() => router.push(`/recipes/${data.id}/edit`)}
-        />
-        <Button
-          testID="delete-recipe"
-          label="Delete recipe"
-          variant="danger"
-          loading={remove.isPending}
-          onPress={() => void confirmDelete()}
-        />
-        <ErrorText>{error}</ErrorText>
-      </View>
+      {isCatalog ? (
+        // A starter recipe belongs to nobody in the household, so there is nothing to edit or
+        // delete (the database would refuse both). It can still be planned as it is.
+        <Text testID="catalog-note" className="text-base text-neutral-600">
+          {CATALOG_RECIPE_NOTE}
+        </Text>
+      ) : (
+        <View className="gap-3">
+          <Button
+            testID="edit-recipe"
+            label="Edit recipe"
+            variant="secondary"
+            onPress={() => router.push(`/recipes/${data.id}/edit`)}
+          />
+          <Button
+            testID="delete-recipe"
+            label="Delete recipe"
+            variant="danger"
+            loading={remove.isPending}
+            onPress={() => void confirmDelete()}
+          />
+          <ErrorText>{error}</ErrorText>
+        </View>
+      )}
     </Screen>
   );
 }

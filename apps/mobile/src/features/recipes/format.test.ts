@@ -13,6 +13,7 @@ import {
 const summary = (over: Partial<RecipeSummary> = {}): RecipeSummary => ({
   id: "r1",
   household_id: "h1",
+  visibility: "household",
   title: "Lemon Chicken",
   description: null,
   image_url: null,

@@ -61,7 +61,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 ## 6. Wave 5: the shopping agent
 
-- [ ] CCR6: `RunPolicy` in `packages/core` and `RetailerAdapter.checkout` typed to it (orchestrator). On PR #17, 2026-10-31.
+- [x] CCR6: `RunPolicy` in `packages/core` and `RetailerAdapter.checkout` typed to it (orchestrator). Merged 2026-10-31 as e0053e7 (PR #17).
 - [x] WS09 brief corrections written (2026-10-31): service-role decision, `push_tokens`, docs/03 numbers, as-built facts.
 - [x] Dispatch WS09 (opus). Dispatched 2026-10-31. Expect contract change requests here; apply them on `main` yourself.
 - [ ] Review with extra attention to policies-in-code, the write ledger, and the allergen check.

@@ -41,7 +41,8 @@ if (result.ok) {
 
 - `normalizeSourceUrl(link)`: trim, drop the fragment, lowercase the scheme and host, drop tracking parameters (`utm_*`, `fbclid`, `gclid`, `dclid`, `msclkid`, `mc_cid`, `mc_eid`, `igshid`, `igsh`, `ref_src`, `_ga`, `oly_*`: the list `cleanSourceUrl` strips) and empty ones, strip trailing slashes from the path. The path keeps its case and the rest of the query its order. The SQL twin is `public.normalize_source_url`, which fills `recipes.source_url_normalized`; `dedupe.fixtures.ts` is one list of links both are tested against.
 - `normalizeTitle(title)` and `titleSearchPattern(title)`: case and spacing folded, and an `ilike` prefilter to find candidates. Used only when a recipe has no link.
-- `dedupeIngredientLines(lines)`: the first of two lines with the same text (spacing folded, case kept) under the same heading stays. The same text under two headings stays, and so do lines that name one ingredient in different words ("1 tbsp butter", "2 tbsp butter, melted"). The `recipe-import` function applies it to what an importer returns, before a draft is returned or a recipe saved. It runs after "Repeated lines" above and overrides it for a line a page lists twice under one heading (or none): that line ends up once. A page whose sections repeat a line ("1/2 tsp salt" for the batter and the filling) keeps both when the sections are named, and loses one when they are not. The importers and the golden set are unchanged; only what the function stores differs.
+
+Ingredient lines are not de-duplicated. A recipe may list the same line twice and the grocery list counts both ("Repeated lines" above), so the importers' lines are stored as they come. The "duplicate" ingredient lines that showed on the recipe screen were the rows the parser adds for a line such as "salt and pepper to taste"; the screens show those once (`collapseSplitLines` in the app).
 
 ### Rules the code enforces
 

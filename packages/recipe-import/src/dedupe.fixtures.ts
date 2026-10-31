@@ -1,5 +1,5 @@
 // Links and what normalizeSourceUrl makes of them. One list, two readers: dedupe.test.ts checks the
-// TypeScript function against it, and supabase/functions/recipe-import/normalize-sql.test.ts checks
+// TypeScript function against it, and supabase/functions/recipe-import/migration.test.ts checks
 // public.normalize_source_url (the SQL twin that fills recipes.source_url_normalized) against it,
 // so the two cannot drift apart. Test data only; nothing imports this at runtime.
 

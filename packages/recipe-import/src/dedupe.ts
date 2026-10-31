@@ -6,10 +6,9 @@
 //                        public.normalize_source_url in
 //                        supabase/migrations/20261031130000_recipes_source_url_normalized.sql, which
 //                        fills recipes.source_url_normalized; the two are tested against one list of
-//                        links (supabase/functions/recipe-import/normalize-sql.test.ts).
+//                        links (supabase/functions/recipe-import/migration.test.ts).
 //   normalizeTitle       a title with case and spacing folded, for recipes that have no link
 //   titleSearchPattern   an ilike pattern that finds every title normalizeTitle could equal
-//   dedupeIngredientLines  drops repeated lines of one imported recipe
 //
 // No `URL` class on purpose: React Native's is partial, and this file also runs in the app. It
 // imports nothing, so the app reaches it through "@mp/recipe-import/dedupe" without pulling the
@@ -68,34 +67,6 @@ export function titleSearchPattern(title: string): string {
     .filter((word) => word.length > 0)
     .map((word) => word.replace(/[\\%_]/g, "\\$&"));
   return words.join("%");
-}
-
-export interface IngredientLineLike {
-  rawText: string;
-  groupName?: string | undefined;
-}
-
-function foldSpace(text: string | undefined): string {
-  return (text ?? "").replace(/\s+/g, " ").trim();
-}
-
-/**
- * Within one recipe, a line whose text (spacing folded) and section both equal an earlier line's
- * is dropped, so the first one stays. Two lines that read differently stay even when they name
- * the same ingredient ("1 tbsp butter" and "2 tbsp butter, melted"): recipes use an ingredient in
- * several steps on purpose. The same line under two different headings stays too, since each
- * heading is a separate use. Case is not folded.
- */
-export function dedupeIngredientLines<T extends IngredientLineLike>(lines: readonly T[]): T[] {
-  const seen = new Set<string>();
-  const out: T[] = [];
-  for (const line of lines) {
-    const key = `${foldSpace(line.groupName)}\u0000${foldSpace(line.rawText)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(line);
-  }
-  return out;
 }
 
 // ---------------------------------------------------------------------------------------

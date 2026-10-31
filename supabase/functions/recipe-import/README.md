@@ -81,7 +81,7 @@ The function does not create a second copy of a recipe the household already has
 
 If the lookup itself fails the import carries on (logged): a missed title match is a copy the person can delete, and the index still guards links.
 
-Repeated ingredient lines are removed before a draft is returned or a recipe saved: of two lines with the same text (spacing folded) under the same heading, the first stays (`dedupeIngredientLines`).
+Ingredient lines are stored as the importer returned them. A recipe may list the same line twice (the batter and the filling both take salt) and the grocery list counts both; see "Repeated lines" in `packages/recipe-import/README.md`.
 
 ## Matching the lines (parse-ingredients)
 

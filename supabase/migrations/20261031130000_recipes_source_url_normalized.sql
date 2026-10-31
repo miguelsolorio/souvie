@@ -13,7 +13,7 @@
 --
 -- normalize_source_url is the SQL half of normalizeSourceUrl in
 -- packages/recipe-import/src/dedupe.ts. The two must agree: supabase/functions/recipe-import/
--- normalize-sql.test.ts runs a shared list of links through both. The rules, in order:
+-- migration.test.ts runs a shared list of links through both. The rules, in order:
 --   1. trim, then drop everything from the first "#"
 --   2. split into scheme, authority, path and query; lowercase the scheme and the authority (host)
 --   3. drop query parameters named utm_*, fbclid, gclid, dclid, msclkid, mc_cid, mc_eid, igshid,

@@ -782,62 +782,36 @@ describe("a recipe the household already has", () => {
 });
 
 describe("repeated ingredient lines", () => {
+  // A recipe may list the same line twice (the batter and the filling both take salt) and the
+  // grocery list counts both, so the function stores what the importer returned.
   const model = (lines: Array<{ text: string; group: string | null }>) => ({
     ...MODEL_ANSWER,
     ingredients: lines,
   });
+  const repeated = [
+    { text: "1/2 tsp salt", group: null },
+    { text: "2 cups flour", group: null },
+    { text: "1/2 tsp salt", group: null },
+  ];
 
-  it("keeps only the first of two lines with the same text, in a saved recipe", async () => {
-    const { rt, store } = runtime({
-      answers: [
-        model([
-          { text: "2 cups flour", group: null },
-          { text: "1 cup milk", group: null },
-          { text: "2 cups  flour", group: null },
-          { text: "1 egg", group: null },
-          { text: "1 cup milk", group: null },
-        ]),
-      ],
-    });
+  it("saves them as returned", async () => {
+    const { rt, store } = runtime({ answers: [model(repeated)] });
     await call(rt, { kind: "text", input: "Pancakes\n2 cups flour\n1 cup milk\nWhisk. Fry." });
     expect(store.saved[0]?.recipe.ingredients.map((i) => i.rawText)).toEqual([
+      "1/2 tsp salt",
       "2 cups flour",
-      "1 cup milk",
-      "1 egg",
+      "1/2 tsp salt",
     ]);
   });
 
-  it("does the same in a draft", async () => {
-    const { rt } = runtime({
-      answers: [
-        model([
-          { text: "2 cups flour", group: null },
-          { text: "2 cups flour", group: null },
-        ]),
-      ],
-    });
+  it("returns them as they are in a draft", async () => {
+    const { rt } = runtime({ answers: [model(repeated)] });
     const { body } = await call(rt, {
       kind: "text",
       input: "Pancakes\n2 cups flour\n1 cup milk\nWhisk. Fry.",
       save: false,
     });
-    expect((body.draft as { ingredients: unknown[] }).ingredients).toEqual([
-      { rawText: "2 cups flour" },
-    ]);
-  });
-
-  it("keeps lines that name the same ingredient in different words or under different headings", async () => {
-    const { rt, store } = runtime({
-      answers: [
-        model([
-          { text: "1 tbsp butter", group: "For the sauce" },
-          { text: "2 tbsp butter, melted", group: "For the sauce" },
-          { text: "1 tbsp butter", group: "For the topping" },
-        ]),
-      ],
-    });
-    await call(rt, { kind: "text", input: "Pancakes\n2 cups flour\n1 cup milk\nWhisk. Fry." });
-    expect(store.saved[0]?.recipe.ingredients).toHaveLength(3);
+    expect((body.draft as { ingredients: unknown[] }).ingredients).toHaveLength(3);
   });
 });
 

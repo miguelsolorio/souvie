@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LINK_CASES } from "./dedupe.fixtures.ts";
 import {
-  dedupeIngredientLines,
   normalizeSourceUrl,
   normalizeTitle,
   TRACKING_PARAM,
@@ -119,70 +118,5 @@ describe("titleSearchPattern", () => {
     expect(titleSearchPattern("100% beef_stew")).toBe("100\\%%beef\\_stew");
     expect(ilike("100% beef_stew", titleSearchPattern("100% beef_stew"))).toBe(true);
     expect(ilike("100x beefastew", titleSearchPattern("100% beef_stew"))).toBe(false);
-  });
-});
-
-describe("dedupeIngredientLines", () => {
-  it("keeps the first of two lines with the same text", () => {
-    const lines = [
-      { rawText: "2 eggs" },
-      { rawText: "1 cup flour" },
-      { rawText: "2 eggs" },
-      { rawText: "1 cup flour" },
-    ];
-    expect(dedupeIngredientLines(lines)).toEqual([
-      { rawText: "2 eggs" },
-      { rawText: "1 cup flour" },
-    ]);
-  });
-
-  it("folds whitespace before comparing, and keeps the first spelling", () => {
-    const lines = [
-      { rawText: "1  cup   flour" },
-      { rawText: " 1 cup flour " },
-      { rawText: "1\tcup flour" },
-    ];
-    expect(dedupeIngredientLines(lines)).toEqual([{ rawText: "1  cup   flour" }]);
-  });
-
-  it("does not fold case: lines that read differently stay", () => {
-    const lines = [{ rawText: "1 Egg" }, { rawText: "1 egg" }];
-    expect(dedupeIngredientLines(lines)).toHaveLength(2);
-  });
-
-  it("keeps lines that name the same ingredient with different text", () => {
-    const lines = [
-      { rawText: "1 tbsp butter" },
-      { rawText: "2 tbsp butter, melted" },
-      { rawText: "butter for the pan" },
-    ];
-    expect(dedupeIngredientLines(lines)).toEqual(lines);
-  });
-
-  it("keeps the same line under two headings, and drops it within one", () => {
-    const lines = [
-      { rawText: "1/2 tsp salt", groupName: "For the batter" },
-      { rawText: "1/2 tsp salt", groupName: "For the filling" },
-      { rawText: "1/2 tsp salt", groupName: "For the batter" },
-      { rawText: "1/2 tsp salt" },
-    ];
-    expect(dedupeIngredientLines(lines)).toEqual([lines[0], lines[1], lines[3]]);
-  });
-
-  it("treats a heading that differs only in spacing as the same heading", () => {
-    const lines = [
-      { rawText: "salt", groupName: "For  the sauce" },
-      { rawText: "salt", groupName: "For the sauce " },
-    ];
-    expect(dedupeIngredientLines(lines)).toHaveLength(1);
-  });
-
-  it("returns a new array in the original order and leaves its input alone", () => {
-    const lines = [{ rawText: "b" }, { rawText: "a" }, { rawText: "b" }];
-    const out = dedupeIngredientLines(lines);
-    expect(out.map((l) => l.rawText)).toEqual(["b", "a"]);
-    expect(lines).toHaveLength(3);
-    expect(out).not.toBe(lines);
-    expect(dedupeIngredientLines([])).toEqual([]);
   });
 });

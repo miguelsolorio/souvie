@@ -15,7 +15,6 @@ import {
   cleanSourceUrl,
   DUPLICATE_ERROR,
   DUPLICATE_MESSAGE,
-  dedupeIngredientLines,
   type ImportResult,
   importFromCaption,
   importFromImage,
@@ -294,11 +293,9 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
       return fail(result.reason, REQUEST_STATUS[result.reason] ?? 200, jobId, result.message);
     }
 
-    // A page, a model, or a person repeating themselves can list a line twice. The first stays.
-    const recipe: NormalizedRecipe = {
-      ...result.recipe,
-      ingredients: dedupeIngredientLines(result.recipe.ingredients),
-    };
+    // A recipe may list the same ingredient line twice (the batter and the filling both take salt)
+    // and the grocery list counts both, so the lines are stored as the importer returned them.
+    const { recipe } = result;
 
     // Photos and captions are saved only after the person edits and confirms them, unless the
     // caller explicitly asks to save. The app checks a draft for duplicates when it saves it.

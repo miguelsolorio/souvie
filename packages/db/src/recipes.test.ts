@@ -26,7 +26,7 @@ import {
   recipeErrorMessage,
   updateRecipe,
 } from "./hooks/useRecipe";
-import { fetchRecipes } from "./hooks/useRecipes";
+import { fetchRecipes, recipesQueryKey } from "./hooks/useRecipes";
 import { Constants } from "./types.generated";
 
 type Result = { data?: unknown; error?: { message: string } | null };
@@ -54,6 +54,7 @@ function fakeClient(results: Result[] = [], invoke?: () => Promise<unknown>) {
       "eq",
       "in",
       "is",
+      "or",
       "order",
       "limit",
       "single",
@@ -146,6 +147,7 @@ describe("fetchRecipes", () => {
     expect(rows).toHaveLength(1);
     const select = calls.find((c) => c.op === "recipes.select");
     expect(String(select?.args[0])).not.toContain("embedding");
+    expect(String(select?.args[0])).toContain("visibility");
     expect(calls).toContainEqual({ op: "recipes.eq", args: ["household_id", HOUSEHOLD] });
     expect(calls).toContainEqual({ op: "recipes.is", args: ["deleted_at", null] });
     expect(calls).toContainEqual({
@@ -154,9 +156,58 @@ describe("fetchRecipes", () => {
     });
   });
 
+  it("stays household-only unless the starter catalog is asked for", async () => {
+    for (const options of [undefined, {}, { includeCatalog: false }]) {
+      const { client, calls } = fakeClient([{ data: [], error: null }]);
+      await fetchRecipes(client, HOUSEHOLD, options);
+      expect(calls).toContainEqual({ op: "recipes.eq", args: ["household_id", HOUSEHOLD] });
+      expect(calls.some((c) => c.op === "recipes.or")).toBe(false);
+    }
+  });
+
+  it("with the catalog: the household's rows or catalog rows, live ones only, same order", async () => {
+    const { client, calls } = fakeClient([{ data: [{ id: RECIPE, title: "x" }], error: null }]);
+    const rows = await fetchRecipes(client, HOUSEHOLD, { includeCatalog: true });
+    expect(rows).toHaveLength(1);
+    expect(calls).toContainEqual({
+      op: "recipes.or",
+      args: [`household_id.eq.${HOUSEHOLD},visibility.eq.catalog`],
+    });
+    // No household-only filter alongside it, which would hide the catalog again.
+    expect(calls.some((c) => c.op === "recipes.eq")).toBe(false);
+    // The soft-delete filter and the order apply to both kinds of row.
+    expect(calls).toContainEqual({ op: "recipes.is", args: ["deleted_at", null] });
+    expect(calls).toContainEqual({
+      op: "recipes.order",
+      args: ["created_at", { ascending: false }],
+    });
+    const select = calls.find((c) => c.op === "recipes.select");
+    expect(String(select?.args[0])).not.toContain("embedding");
+  });
+
   it("throws on a database error", async () => {
     const { client } = fakeClient([{ data: null, error: { message: "boom" } }]);
     await expect(fetchRecipes(client, HOUSEHOLD)).rejects.toThrow("boom");
+    const again = fakeClient([{ data: null, error: { message: "boom" } }]);
+    await expect(fetchRecipes(again.client, HOUSEHOLD, { includeCatalog: true })).rejects.toThrow(
+      "boom",
+    );
+  });
+});
+
+describe("recipesQueryKey", () => {
+  it("keeps the household-only key as it was, and gives the catalog list its own", () => {
+    expect(recipesQueryKey(HOUSEHOLD)).toEqual(["recipes", HOUSEHOLD]);
+    expect(recipesQueryKey(HOUSEHOLD, { includeCatalog: false })).toEqual(["recipes", HOUSEHOLD]);
+    expect(recipesQueryKey(HOUSEHOLD, { includeCatalog: true })).toEqual([
+      "recipes",
+      HOUSEHOLD,
+      "with-catalog",
+    ]);
+  });
+
+  it("is still under the ['recipes'] prefix every write invalidates", () => {
+    expect(recipesQueryKey(HOUSEHOLD, { includeCatalog: true })[0]).toBe("recipes");
   });
 });
 

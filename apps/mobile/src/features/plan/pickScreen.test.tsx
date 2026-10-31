@@ -23,6 +23,7 @@ const h = vi.hoisted(() => ({
   favorites: { data: [] as string[] | undefined },
   week: { plan: null as unknown, entries: [] as unknown[] },
   actions: { addRecipe: vi.fn(), swapRecipe: vi.fn() },
+  useRecipes: vi.fn(),
 }));
 
 vi.mock("react-native", () => import("../../testing/reactNativeStub"));
@@ -48,7 +49,10 @@ vi.mock("expo-router", async () => {
 
 vi.mock("@mp/db", () => ({
   useHousehold: () => h.household,
-  useRecipes: () => h.recipes,
+  useRecipes: (...args: unknown[]) => {
+    h.useRecipes(...args);
+    return h.recipes;
+  },
   useRecentRecipeIds: () => h.recent,
   useFavoriteRecipeIds: () => h.favorites,
   useMealPlanEntries: () => ({ data: [] }),
@@ -64,6 +68,7 @@ vi.mock("./usePlanActions", () => ({
 const recipe = (id: string, title: string, over: Partial<RecipeSummary> = {}): RecipeSummary => ({
   id,
   household_id: "h1",
+  visibility: "household",
   title,
   description: null,
   image_url: null,
@@ -81,7 +86,11 @@ const recipe = (id: string, title: string, over: Partial<RecipeSummary> = {}): R
 const lemon = recipe("r1", "Lemon chicken");
 const curry = recipe("r2", "Green curry", { servings: 6 });
 // The starter catalog: no household, written by the seed.
-const salmon = recipe("c1", "Sheet-pan salmon", { household_id: null, source_type: "ai" });
+const salmon = recipe("c1", "Sheet-pan salmon", {
+  household_id: null,
+  visibility: "catalog",
+  source_type: "ai",
+});
 
 const PARAMS = { date: "2026-11-03", slot: "dinner" };
 
@@ -238,6 +247,11 @@ describe("the empty states", () => {
 });
 
 describe("catalog recipes", () => {
+  it("are asked for: the picker lists the household's recipes and the starter catalog", () => {
+    show({ recipes: [lemon] });
+    expect(h.useRecipes).toHaveBeenCalledWith("h1", { includeCatalog: true });
+  });
+
   // `useRecipes` decides which rows reach the picker; the picker lists whatever it gets, owner or not.
   it("are listed under All beside the household's own, A to Z", () => {
     const screen = show({ recipes: [lemon, salmon, curry] });
@@ -252,6 +266,9 @@ describe("catalog recipes", () => {
       recipes: [lemon, salmon],
       params: { ...PARAMS, entry: "e1" },
     });
+    // The swap flow's list is this picker: the catalog row is under All beside the household's own.
+    expect(selectedTab(screen)).toEqual(["all"]);
+    expect(rows(screen)).toEqual(["r1", "c1"]);
     screen.press("pick-c1");
     expect(h.actions.swapRecipe).toHaveBeenCalledWith(h.week.entries[0], salmon);
     expect(h.router.back).toHaveBeenCalledTimes(1);

@@ -78,7 +78,8 @@ function Picker({
   const week = usePlanWeek(weekStartFor(date));
   const actions = usePlanActions(householdId);
   const defaultServings = useDefaultServings();
-  const recipes = useRecipes(householdId);
+  // The household's own recipes and the starter catalog, which every member may plan.
+  const recipes = useRecipes(householdId, { includeCatalog: true });
   const recent = useRecentRecipeIds(householdId);
   const favorites = useFavoriteRecipeIds();
   // Keep the week's entries warm so a swap target is in the cache.

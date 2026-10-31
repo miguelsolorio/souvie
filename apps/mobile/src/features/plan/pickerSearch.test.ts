@@ -5,6 +5,7 @@ import { byTitle, initialTab, pickerRecipes, recipeWithId, searchRecipes } from 
 const recipe = (id: string, title: string, over: Partial<RecipeSummary> = {}): RecipeSummary => ({
   id,
   household_id: "h1",
+  visibility: "household",
   title,
   description: null,
   image_url: null,
@@ -133,6 +134,7 @@ describe("pickerRecipes", () => {
     // whatever useRecipes returns is listed, searchable and pickable.
     const catalog = recipe("c1", "Sheet-pan salmon", {
       household_id: null,
+      visibility: "catalog",
       source_type: "ai",
       tags: ["weeknight"],
     });

@@ -108,10 +108,39 @@ export interface Tier3Session {
   readonly target: SessionTarget;
   restore(runToken: string): Promise<RestoreResult>;
   capture(host: BridgeHost): Promise<SessionState>;
-  /** Saves when the session changed. `clear` also wipes the plaintext copy from the WebView. */
+  /**
+   * Saves when the session changed. `clear` also wipes the plaintext copy from the WebView, and
+   * does so even when sealing fails (a phone with no keychain still ends with nothing in plaintext).
+   */
   save(host: BridgeHost, opts?: { clear?: boolean }): Promise<"saved" | "unchanged">;
   /** First save after sign-in. Always writes. */
   signedIn(host: BridgeHost): Promise<void>;
+  /** Clears the retailer's cookies and the page's storage from the WebView, and drops the keys. */
+  clear(host: BridgeHost): Promise<void>;
+}
+
+/**
+ * The plaintext copy of a session out of the WebView: the retailer's cookies, the page's storage,
+ * and the in-memory keys. Every step runs; the first error is rethrown at the end.
+ */
+export async function clearTier3Plaintext(
+  retailer: Tier3RetailerId,
+  host: BridgeHost,
+  deps: Tier3SessionDeps,
+): Promise<void> {
+  const errors: unknown[] = [];
+  try {
+    await deps.cookies.clearDomains(RETAILER_SESSION_DOMAINS[retailer]);
+  } catch (err) {
+    errors.push(err);
+  }
+  try {
+    host.clearPageStorage();
+  } catch (err) {
+    errors.push(err);
+  }
+  deps.vault.forgetKeys();
+  if (errors.length > 0) throw errors[0];
 }
 
 export function createTier3Session(target: SessionTarget, deps: Tier3SessionDeps): Tier3Session {
@@ -175,24 +204,85 @@ export function createTier3Session(target: SessionTarget, deps: Tier3SessionDeps
     capture,
 
     async save(host, opts) {
-      const state = await capture(host);
       let result: "saved" | "unchanged" = "unchanged";
-      if (sessionFingerprint(state) !== lastSaved) {
-        await write(state);
-        result = "saved";
+      const errors: unknown[] = [];
+      try {
+        const state = await capture(host);
+        if (sessionFingerprint(state) !== lastSaved) {
+          await write(state);
+          result = "saved";
+        }
+      } catch (err) {
+        errors.push(err);
       }
+      // Cleared whether or not sealing worked. The save's error, if any, is the one reported.
       if (opts?.clear) {
-        await deps.cookies.clearDomains(domains);
-        host.clearPageStorage();
-        deps.vault.forgetKeys();
+        try {
+          await clearTier3Plaintext(target.retailer, host, deps);
+        } catch (err) {
+          errors.push(err);
+        }
       }
+      if (errors.length > 0) throw errors[0];
       return result;
     },
 
     async signedIn(host) {
       await write(await capture(host));
     },
+
+    clear(host) {
+      return clearTier3Plaintext(target.retailer, host, deps);
+    },
   };
+}
+
+/** The two RPCs the end of sign-in needs (api.ts calls the migration's functions). */
+export interface SignInRpc {
+  connect(householdId: string, retailer: Tier3RetailerId): Promise<string>;
+  revoke(connectionId: string): Promise<void>;
+}
+
+/**
+ * The end of sign-in: create the connection, seal the session, clear the plaintext copy.
+ *
+ * It never leaves an active connection without a sealed blob behind it. The connection's key is
+ * created with its row (connect_browser_session; WS07's check needs a key on every active
+ * browser_session row, and the key is what seals the blob), so the row cannot wait for the save.
+ * Instead a failed save revokes the row it just made: the Vault key goes and the status becomes
+ * revoked. The WebView is cleared whether sign-in finished or not.
+ */
+export async function finishTier3SignIn(args: {
+  householdId: string;
+  retailer: Tier3RetailerId;
+  host: BridgeHost;
+  rpc: SignInRpc;
+  deps: Tier3SessionDeps;
+}): Promise<string> {
+  let connectionId: string | null = null;
+  const errors: unknown[] = [];
+  try {
+    connectionId = await args.rpc.connect(args.householdId, args.retailer);
+    await createTier3Session({ connectionId, retailer: args.retailer }, args.deps).signedIn(
+      args.host,
+    );
+  } catch (err) {
+    errors.push(err);
+    if (connectionId) {
+      try {
+        await args.rpc.revoke(connectionId);
+      } catch {
+        // The save's error is the one to show; the person can disconnect again from settings.
+      }
+    }
+  }
+  try {
+    await clearTier3Plaintext(args.retailer, args.host, args.deps);
+  } catch (err) {
+    errors.push(err);
+  }
+  if (errors.length > 0 || !connectionId) throw errors[0] ?? new Error("no connection");
+  return connectionId;
 }
 
 // ---------------------------------------------------------------------------------------

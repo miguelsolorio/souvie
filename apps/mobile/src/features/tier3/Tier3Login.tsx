@@ -8,10 +8,10 @@ import type { SnapshotTree, UserRequiredReason } from "@mp/retailers";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { Button } from "../../components/Button";
-import { connectBrowserSession, tier3ErrorMessage } from "./api";
+import { connectBrowserSession, revokeBrowserConnection, tier3ErrorMessage } from "./api";
 import type { BridgeHost } from "./bridgeHost";
-import type { Tier3Store } from "./stores";
-import { appTier3SessionDeps, createTier3Session, looksSignedIn } from "./useTier3Session";
+import { allowedHosts, type Tier3Store } from "./stores";
+import { appTier3SessionDeps, finishTier3SignIn, looksSignedIn } from "./useTier3Session";
 import { WebViewHost } from "./WebViewHost";
 
 const REASON_TEXT: Record<UserRequiredReason, string> = {
@@ -67,14 +67,18 @@ export function Tier3Login({
     setBusy(true);
     setError(null);
     try {
-      const connectionId = await connectBrowserSession(client, householdId, store.retailer);
-      const session = createTier3Session(
-        { connectionId, retailer: store.retailer },
-        appTier3SessionDeps(),
-      );
-      await session.signedIn(host);
-      // The session now lives encrypted on the phone; nothing of it stays in the WebView.
-      await session.save(host, { clear: true });
+      // Seals the session, clears the WebView either way, and revokes the new connection when the
+      // session could not be sealed, so no active connection is left without a blob.
+      const connectionId = await finishTier3SignIn({
+        householdId,
+        retailer: store.retailer,
+        host,
+        rpc: {
+          connect: (id, retailer) => connectBrowserSession(client, id, retailer),
+          revoke: (connection) => revokeBrowserConnection(client, connection),
+        },
+        deps: appTier3SessionDeps(),
+      });
       onConnected(connectionId);
     } catch (err) {
       setError(tier3ErrorMessage(err));
@@ -92,6 +96,7 @@ export function Tier3Login({
       <View className="h-[480px] overflow-hidden rounded-xl border border-neutral-200">
         <WebViewHost
           initialUrl={store.homeUrl}
+          allowedHosts={allowedHosts(store.retailer)}
           onHost={setHost}
           onUserRequired={setReason}
           onNavigation={() => void check()}

@@ -218,10 +218,23 @@ export function createSessionVault(deps: SessionVaultDeps): SessionVault {
     async wipeSession(connectionId) {
       const storeKey = sessionStorageKey(connectionId);
       keys.delete(connectionId);
-      // The phone first, so Disconnect clears it even offline; then the server.
-      await deps.cookies.clearAll();
-      if (await deps.store.isAvailableAsync()) await deps.store.deleteItemAsync(storeKey);
-      await deps.keys.revoke(connectionId);
+      // Every step runs even when one fails, so one broken piece never leaves the others behind.
+      // The phone first, so Disconnect clears it even offline; then the server. The first error is
+      // rethrown at the end, so the person sees that something needs another try.
+      const errors: unknown[] = [];
+      const step = async (run: () => Promise<void>) => {
+        try {
+          await run();
+        } catch (err) {
+          errors.push(err);
+        }
+      };
+      await step(() => deps.cookies.clearAll());
+      await step(async () => {
+        if (await deps.store.isAvailableAsync()) await deps.store.deleteItemAsync(storeKey);
+      });
+      await step(() => deps.keys.revoke(connectionId));
+      if (errors.length > 0) throw errors[0];
     },
 
     forgetKeys() {

@@ -32,6 +32,7 @@ export class Tier3ApiError extends Error {
 const MESSAGES: Record<string, string> = {
   not_a_member: "You are not a member of this household.",
   consent_required: "Agree to the terms for this store first.",
+  stale_consent: "The terms for this store changed. Agree to them again first.",
   not_allowed: "Only the person who connected this store can do that.",
   connection_revoked: "This store was disconnected. Connect it again.",
 };
@@ -47,7 +48,11 @@ export function tier3ErrorMessage(error: unknown): string {
     : "Something went wrong. Try again.";
 }
 
-/** record_tier3_consent: the stored list becomes the union of what was there and `retailers`. */
+/**
+ * record_tier3_consent. At the copy version already stored, the list becomes the union of what was
+ * there and `retailers`; at a different version it is replaced by `retailers` alone, because the
+ * other retailers were accepted only at the old copy.
+ */
 export async function recordTier3Consent(
   client: RpcClient,
   householdId: string,
@@ -64,6 +69,15 @@ export async function recordTier3Consent(
   if (!consent)
     throw new Tier3ApiError("internal_error", "The server sent an answer we could not read.");
   return consent;
+}
+
+/** revoke_browser_connection: deletes the connection's Vault key and marks it revoked. */
+export async function revokeBrowserConnection(
+  client: RpcClient,
+  connectionId: string,
+): Promise<void> {
+  const { error } = await client.rpc("revoke_browser_connection", { connection_id: connectionId });
+  if (error) throw apiError(error);
 }
 
 /** connect_browser_session: the member's connection, created or re-activated, with its Vault key. */

@@ -129,12 +129,12 @@ describe("callWithTools", () => {
     ];
     const out = withCachedTail(messages);
     expect(out[0]).toBe(messages[0]);
-    expect((out[2]?.content as Array<{ cache_control?: unknown }>)[0]?.cache_control).toEqual({
+    const tail = out[2]?.content ?? [];
+    const original = messages[2]?.content ?? [];
+    expect((tail as Array<{ cache_control?: unknown }>)[0]?.cache_control).toEqual({
       type: "ephemeral",
     });
-    expect(
-      (messages[2]?.content as Array<{ cache_control?: unknown }>)[0]?.cache_control,
-    ).toBeUndefined();
+    expect((original as Array<{ cache_control?: unknown }>)[0]?.cache_control).toBeUndefined();
   });
 });
 

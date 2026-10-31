@@ -135,7 +135,7 @@ export class SqlApproveStore {
                 unit_price_usd = r.unit_price_usd, line_total_usd = r.line_total_usd,
                 alternatives = r.alternatives,
                 user_decision = r.user_decision::public.shopping_run_items_user_decision
-           from jsonb_to_recordset($3::jsonb) as r(
+           from jsonb_to_recordset($3::text::jsonb) as r(
              id uuid, status text, product_id text, upc text, product_name text, size text,
              qty numeric, unit_price_usd numeric, line_total_usd numeric, alternatives jsonb,
              user_decision text
@@ -186,7 +186,7 @@ export class SqlApproveStore {
            )
            select $1::uuid, $2::public.retailer, $3, r.ingredient_id, r.product_id, r.upc,
                   r.product_name, r.size, r.chosen_by::public.product_matches_chosen_by, false, now()
-             from jsonb_to_recordset($4::jsonb) as r(
+             from jsonb_to_recordset($4::text::jsonb) as r(
                ingredient_id uuid, product_id text, upc text, product_name text, size text,
                chosen_by text
              )

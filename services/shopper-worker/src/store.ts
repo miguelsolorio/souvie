@@ -401,7 +401,7 @@ export class RunStore {
                   r.size, r.qty, r.unit_price_usd, r.line_total_usd,
                   r.status::public.shopping_run_items_status, r.alternatives,
                   coalesce(r.flags, '[]'::jsonb), r.reason
-             from jsonb_to_recordset($3::jsonb) as r(
+             from jsonb_to_recordset($3::text::jsonb) as r(
                id uuid, list_item_id uuid, position integer, display_name text, section text,
                product_id text, upc text, product_name text, size text, qty numeric,
                unit_price_usd numeric, line_total_usd numeric, status text, alternatives jsonb,
@@ -412,8 +412,8 @@ export class RunStore {
       }
       await tx.query(
         `update public.shopping_runs r
-            set status = 'needs_review', cart_snapshot = $3::jsonb, subtotal_usd = $4,
-                progress = $5::jsonb
+            set status = 'needs_review', cart_snapshot = $3::text::jsonb, subtotal_usd = $4,
+                progress = $5::text::jsonb
           where r.id = $1::uuid and r.household_id = $2::uuid`,
         [
           run.id,
@@ -436,7 +436,7 @@ export class RunStore {
     await this.inServiceRole((tx) =>
       tx.query(
         `update public.shopping_runs r
-            set transcript = r.transcript || $3::jsonb
+            set transcript = r.transcript || $3::text::jsonb
           where r.id = $1::uuid and r.household_id = $2::uuid
             and jsonb_array_length(r.transcript) < 2000`,
         [run.id, run.householdId, JSON.stringify(entries)],
@@ -447,7 +447,7 @@ export class RunStore {
   async setProgress(run: ClaimedRun, progress: RunProgress): Promise<void> {
     await this.inServiceRole((tx) =>
       tx.query(
-        `update public.shopping_runs r set progress = $3::jsonb
+        `update public.shopping_runs r set progress = $3::text::jsonb
           where r.id = $1::uuid and r.household_id = $2::uuid and r.status in ('running', 'checking_out')`,
         [run.id, run.householdId, JSON.stringify(progress)],
       ),
@@ -621,7 +621,7 @@ export class RunStore {
     return this.inServiceRole(async (tx) => {
       for (const [rowId, flags] of outcome.rowFlags) {
         await tx.query(
-          `update public.shopping_run_items i set flags = i.flags || $4::jsonb
+          `update public.shopping_run_items i set flags = i.flags || $4::text::jsonb
             where i.id = $1::uuid and i.run_id = $2::uuid and i.household_id = $3::uuid`,
           [rowId, run.id, run.householdId, JSON.stringify(flags)],
         );
@@ -631,12 +631,12 @@ export class RunStore {
       const rows = await tx.query<{ id: string }>(
         `update public.shopping_runs r
             set status = $3::text::public.shopping_runs_status,
-                cart_snapshot = coalesce(r.cart_snapshot, '{}'::jsonb) || $4::jsonb
+                cart_snapshot = coalesce(r.cart_snapshot, '{}'::jsonb) || $4::text::jsonb
                   || jsonb_build_object('flags',
-                       coalesce(r.cart_snapshot -> 'flags', '[]'::jsonb) || $5::jsonb),
+                       coalesce(r.cart_snapshot -> 'flags', '[]'::jsonb) || $5::text::jsonb),
                 approved_at = case when $3::text = 'needs_review' then null else r.approved_at end,
                 approved_by = case when $3::text = 'needs_review' then null else r.approved_by end,
-                progress = $6::jsonb
+                progress = $6::text::jsonb
           where r.id = $1::uuid and r.household_id = $2::uuid and r.status = 'running'
         returning r.id`,
         [

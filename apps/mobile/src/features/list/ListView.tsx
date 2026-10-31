@@ -9,7 +9,7 @@ import {
 } from "@mp/db";
 import { EmptyState } from "@mp/ui/primitives";
 import { Redirect, Stack, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -48,10 +48,16 @@ import { WhyThisAmountSheet } from "./WhyThisAmountSheet";
 export function ListView({
   weekStart,
   listId,
+  autoBuild = false,
+  onAutoBuildStarted,
   onWeekChange,
 }: {
   weekStart: string;
   listId?: string | null;
+  /** Build the list on arrival when the week has none (what "Generate list" asks for). */
+  autoBuild?: boolean;
+  /** Called once when that build starts, so the caller can drop the request from the URL. */
+  onAutoBuildStarted?: () => void;
   /** Called by the previous and next week buttons. Omit for a list opened by id (no week buttons). */
   onWeekChange?: (week: string) => void;
 }) {
@@ -76,6 +82,19 @@ export function ListView({
     () => sectionsToShow(data.split.toBuy, list?.section_order),
     [data.split.toBuy, list?.section_order],
   );
+
+  // "Generate list" is one tap: arriving with the build request and no list builds it, once.
+  const autoBuilt = useRef(false);
+  const { list: loadedList, mealCount, loading } = data;
+  const runBuild = data.build.run;
+  const startedHandler = onAutoBuildStarted;
+  useEffect(() => {
+    if (!autoBuild || autoBuilt.current || loading) return;
+    if (loadedList !== null || mealCount === 0) return;
+    autoBuilt.current = true;
+    runBuild();
+    startedHandler?.();
+  }, [autoBuild, loading, loadedList, mealCount, runBuild, startedHandler]);
 
   if (data.noHousehold) return <Redirect href={CREATE_HOUSEHOLD_ROUTE} />;
   if (data.loading) return <LoadingScreen label="Loading your list" />;

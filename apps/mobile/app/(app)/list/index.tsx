@@ -8,12 +8,15 @@ import { useListTarget } from "../../../src/features/list/useListTarget";
  */
 export default function ListScreen() {
   const router = useRouter();
-  const { weekStart, listId } = useListTarget();
+  const { weekStart, listId, autoBuild } = useListTarget();
   return (
     <ListView
       weekStart={weekStart}
       listId={listId}
-      onWeekChange={listId ? undefined : (week) => router.setParams({ week })}
+      autoBuild={autoBuild && !listId}
+      // Moving to another week drops the build request: it was for the week the planner showed.
+      onWeekChange={listId ? undefined : (week) => router.setParams({ week, build: undefined })}
+      onAutoBuildStarted={() => router.setParams({ build: undefined })}
     />
   );
 }

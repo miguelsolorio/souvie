@@ -25,8 +25,8 @@ describe("routes", () => {
   });
 
   it("sends Generate list to the grocery list screen WS05 provides", () => {
-    expect(GROCERY_LIST_ROUTE).toBe("/list");
-    expect(LIST_ROUTE).toBe(GROCERY_LIST_ROUTE);
+    // The list screen builds the list on arrival when the week has none: one tap, as the brief says.
+    expect(GROCERY_LIST_ROUTE).toBe(`${LIST_ROUTE}?build=1`);
     expect(GROCERY_LIST_PENDING_HINT.length).toBeGreaterThan(0);
   });
 });

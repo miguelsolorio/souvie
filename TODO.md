@@ -88,8 +88,10 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 Collected from the ledger so one list is enough. Each unblocks something named.
 
-- [ ] `SUPABASE_ACCESS_TOKEN` with scopes for the hosted release: every migration on `main`, the functions (`health`, `export-data`, `recipe-import`, `parse-ingredients`, `suggest`, `list-build`, then `run-approve` and `llm-proxy`), the secrets (`ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET`, `KROGER_REDIRECT_URI`, `AI_DAILY_CAP_USD=2`), then the ontology and catalog seeds. Unblocks the hosted smoke tests of `suggest` and `list-build`, hosted Realtime checks, `EXPO_PUBLIC_SUGGEST_ENABLED=1`, and WS14's deploy-gates round.
-- [ ] Skim `supabase/seed/catalog/README.md` before the catalog seed loads into the hosted project.
+- [x] Hosted database: the 15 migrations and the ontology seed (751 ingredients, 4103 aliases) were applied on 2026-10-31 with `pnpm supabase db push --db-url` over `WORKER_DATABASE_URL`, which needs no access token. 24 public tables, pgmq, vector, pg_cron, pg_trgm present; buckets `avatars` and `recipe-images`.
+- [ ] `SUPABASE_ACCESS_TOKEN` with full scope (Supabase dashboard, Account, Access Tokens; the current one is refused with "your account does not have the necessary privileges"). Unblocks `supabase link`, the function deploys (`health`, `export-data`, `recipe-import`, `parse-ingredients`, `retailer-oauth`, `suggest`, `list-build`, then `run-approve` and `llm-proxy`) and the secrets (`ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET`, `KROGER_REDIRECT_URI`, `AI_DAILY_CAP_USD=2`), then the hosted smoke tests, `EXPO_PUBLIC_SUGGEST_ENABLED=1` and WS14's deploy-gates round.
+- [ ] Supabase dashboard, Authentication, URL Configuration: Site URL `http://localhost:8081`; redirect URLs `http://localhost:8081/**`, `souvie://**`, `exp://**`. Needed before magic-link sign-in works from the dev server.
+- [ ] Skim `supabase/seed/catalog/README.md`, then say so: the orchestrator loads `supabase/seed/20_catalog.sql` into the hosted project the same way (the schema is ready; `catalog recipes: 0` today).
 - [ ] Kroger sign-in: after `git pull` in the primary checkout, `pnpm --filter @mp/retailers kroger:login`. Unblocks WS07 criterion 12 (live cart add) and WS09 criterion 13 (real QFC run).
 - [ ] `VOYAGE_API_KEY` in `.env.local`. Unblocks live embeddings for `suggest`.
 - [x] `git pull` in `/Users/miguelsolorio/dev/meal-planner`. Current at b946a60 on 2026-10-31.

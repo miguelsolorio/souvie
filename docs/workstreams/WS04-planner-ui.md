@@ -129,3 +129,19 @@ psql "$WORKER_DATABASE_URL" -c "select signal, count(*) from recipe_feedback gro
 
 ## Completion report
 End with the completion report from `docs/implementation-guide.md` §6.2 (Message templates). Include the realtime evidence and the two responsive screenshots under Verification output.
+
+## Follow-up round (2026-10-31): recipe entry points in the picker
+
+Reported by Miguel while testing against the hosted project: in the "Add to Monday dinner" picker, after adding one recipe, there was no way to add another, and the screen opened on an empty "Recent" tab reading "Nothing planned yet". Causes in `apps/mobile/app/(app)/plan/pick.tsx`: the "Add a recipe" action lives only in the `total === 0` empty state, and `tab` always starts as `"recent"`, which lists only recipes planned before.
+
+Branch `ws/04b-picker-entry-points`, Sonnet. Scope is this round only; nothing else in WS04 changes.
+
+1. **Always a way to add.** The picker shows an "Add a recipe" control whatever the recipe count: a row pinned at the top of the list (above the tabs is fine) or a header action, visible on every tab and while searching. It opens `/recipes/new`. When a recipe is saved from there, the app returns to the picker it came from (same date, slot and swap target) with the new recipe shown first under All and its servings sheet already open, so the person finishes planning in one tap. Carry the return target as route params; do not change `GROCERY_LIST_ROUTE` or the planner's own routes beyond adding what the picker needs in `routes.ts`.
+2. **Open on a tab that has something.** Start on Recent only when the household has at least one recently planned recipe; otherwise start on All. Put the rule in a pure function in `pickerSearch.ts` (`initialTab(recentIds)` or similar) with tests. The tabs stay; a person can still switch to an empty Recent and read its explanation.
+3. **Copy.** Recent's empty message becomes "Recipes you have planned before show up here." with the "Show all recipes" action kept. The zero-recipe state keeps its copy. No em dashes.
+4. **Catalog recipes** (visibility `catalog`, `household_id` null) already appear under All through `useRecipes`; confirm with a test that a catalog recipe is listed and pickable, since the hosted project will carry 62 of them.
+5. **Tests.** `pickerSearch.test.ts` covers the default-tab rule. A screen test (or the existing picker test file, if one exists) covers: one household recipe, picker opens on All showing it and the add control; tapping the add control navigates to `/recipes/new` with the return params; returning with a new recipe id opens its servings sheet. Add the save-and-return path to the AddRecipe tests.
+6. **Verification.** `pnpm typecheck && pnpm lint && pnpm test`, plus a 390 px web screenshot of the picker with one household recipe and the add control visible, saved to the scratchpad path the orchestrator gives you.
+
+Deliverables for this round: `apps/mobile/app/(app)/plan/pick.tsx`, `apps/mobile/app/(app)/recipes/new.tsx`, `apps/mobile/src/features/recipes/AddRecipe.tsx` (the return-after-save hook only), `apps/mobile/src/features/plan/pickerSearch.ts` and its test, `apps/mobile/src/features/plan/routes.ts` and its test, and any screen tests. Nothing under `packages/`, `supabase/` or other features.
+

@@ -475,6 +475,11 @@ export async function createRecipe(client: MpClient, args: CreateRecipeArgs): Pr
   return recipeId;
 }
 
+/** What a line's rows have in common when the parser split one written line into several. */
+function rowShape(row: { position: number; group_name: string | null; raw_text: string }): string {
+  return `${row.position}\u0000${row.group_name ?? ""}\u0000${row.raw_text}`;
+}
+
 /**
  * Saves an edit. Lines the person did not touch keep their parsed fields. A line whose text
  * changed is saved with its parsed fields cleared, so parse-ingredients (WS03) reads it again.
@@ -530,7 +535,32 @@ export async function updateRecipe(
     lines.flatMap(({ line }) => (line.id && before.has(line.id) ? [line.id] : [])),
   );
 
-  const removed = [...before.keys()].filter((id) => !keepIds.has(id));
+  // When the parser reads a line that names several ingredients ("salt and pepper to taste") it
+  // adds a row for each extra one, with the line's position, heading and text. The edit form shows
+  // such a line once, so the draft carries the first row only. The extras go with their line: they
+  // stay (and move along) while its text is untouched, and are dropped when the text changes,
+  // because the line is read again and may split differently.
+  const keptByShape = new Map<string, string>();
+  for (const id of keepIds) {
+    const row = before.get(id);
+    if (row && !keptByShape.has(rowShape(row))) keptByShape.set(rowShape(row), id);
+  }
+  const extrasOf = new Map<string, string[]>();
+  for (const [id, row] of before) {
+    const owner = keepIds.has(id) ? undefined : keptByShape.get(rowShape(row));
+    if (owner) extrasOf.set(owner, [...(extrasOf.get(owner) ?? []), id]);
+  }
+  const textUnchanged = new Set(
+    lines.flatMap(({ line, text }) => {
+      const row = line.id ? before.get(line.id) : undefined;
+      return row && text && row.raw_text === text.rawText ? [row.id] : [];
+    }),
+  );
+  const staying = new Set(
+    [...extrasOf].flatMap(([owner, ids]) => (textUnchanged.has(owner) ? ids : [])),
+  );
+
+  const removed = [...before.keys()].filter((id) => !keepIds.has(id) && !staying.has(id));
   if (removed.length > 0) {
     const result = await client.from("recipe_ingredients").delete().in("id", removed);
     if (result.error) throw new RecipeError("unknown", result.error.message);
@@ -544,6 +574,14 @@ export async function updateRecipe(
       const textChanged = current.raw_text !== text.rawText;
       if (textChanged) needsParse = true;
       const groupChanged = (current.group_name ?? null) !== (text.groupName ?? null);
+      const extras = textChanged ? [] : (extrasOf.get(current.id) ?? []);
+      if (extras.length > 0 && (groupChanged || current.position !== position)) {
+        const moved = await client
+          .from("recipe_ingredients")
+          .update({ position, group_name: text.groupName ?? null })
+          .in("id", extras);
+        if (moved.error) throw new RecipeError("unknown", moved.error.message);
+      }
       if (!textChanged && !groupChanged && current.position === position) continue;
       const result = await client
         .from("recipe_ingredients")

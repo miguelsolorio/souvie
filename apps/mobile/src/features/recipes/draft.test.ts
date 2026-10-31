@@ -257,6 +257,41 @@ describe("recipe to form and back", () => {
   });
 });
 
+describe("a recipe whose parser split one line into two rows", () => {
+  // "salt and pepper to taste" is two rows with the same position, heading and text.
+  const split: RecipeWithIngredients = {
+    ...RECIPE,
+    ingredients: [
+      line("l1", 0, null, "8 chicken thighs"),
+      line("l2", 1, null, "salt and pepper to taste"),
+      line("l2x", 1, null, "salt and pepper to taste"),
+      line("l3", 2, null, "1 lemon"),
+    ],
+  };
+
+  it("is edited as the lines were written: the split line once, with the first row's id", () => {
+    expect(draftFromRecipe(split).ingredients.map((l) => l.id)).toEqual(["l1", "l2", "l3"]);
+    expect(existingLines(split).map((l) => l.id)).toEqual(["l1", "l2", "l3"]);
+    expect(formFromDraft(draftFromRecipe(split)).ingredients).toBe(
+      "8 chicken thighs\nsalt and pepper to taste\n1 lemon",
+    );
+  });
+
+  it("reads the box back to the same three lines, ids and all", () => {
+    const form = formFromDraft(draftFromRecipe(split));
+    const draft = draftFromForm(form, existingLines(split));
+    expect(draft.ingredients.map((l) => l.id)).toEqual(["l1", "l2", "l3"]);
+  });
+
+  it("still shows a line the person wrote twice, twice", () => {
+    const twice: RecipeWithIngredients = {
+      ...RECIPE,
+      ingredients: [line("l1", 0, null, "1 egg"), line("l2", 1, null, "1 egg")],
+    };
+    expect(draftFromRecipe(twice).ingredients).toHaveLength(2);
+  });
+});
+
 describe("formErrors", () => {
   it("accepts a complete form", () => {
     expect(

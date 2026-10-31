@@ -13,6 +13,7 @@ import {
   type RecipeWithIngredients,
 } from "@mp/core";
 import { checkDraft, type DraftIngredient, type RecipeDraft } from "@mp/db";
+import { collapseSplitLines } from "./format";
 
 /** An existing ingredient line, so an edit can keep the parsed fields of lines left untouched. */
 export interface ExistingLine {
@@ -243,7 +244,7 @@ export function draftFromRecipe(recipe: RecipeWithIngredients): RecipeDraft {
     tags: recipe.tags,
     cuisine: recipe.cuisine ?? undefined,
     nutrition: recipe.nutrition ?? undefined,
-    ingredients: recipe.ingredients.map((line) => ({
+    ingredients: collapseSplitLines(recipe.ingredients).map((line) => ({
       id: line.id,
       rawText: line.raw_text,
       ...(line.group_name ? { groupName: line.group_name } : {}),
@@ -253,7 +254,7 @@ export function draftFromRecipe(recipe: RecipeWithIngredients): RecipeDraft {
 }
 
 export function existingLines(recipe: RecipeWithIngredients): ExistingLine[] {
-  return recipe.ingredients.map((line) => ({
+  return collapseSplitLines(recipe.ingredients).map((line) => ({
     id: line.id,
     rawText: line.raw_text,
     groupName: line.group_name ?? undefined,

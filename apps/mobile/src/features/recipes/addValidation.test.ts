@@ -130,7 +130,7 @@ describe("duplicateCheckFor", () => {
     const check = duplicateCheckFor("  Lemon   CHICKEN ");
     expect(check).not.toHaveProperty("sourceUrlNormalized");
     const { title } = check as { title: { pattern: string; isSame: (c: string) => boolean } };
-    expect(title.pattern).toBe("%lemon%chicken%");
+    expect(title.pattern).toBe("lemon%chicken");
     expect(title.isSame("lemon chicken")).toBe(true);
     expect(title.isSame("LEMON\tCHICKEN")).toBe(true);
     expect(title.isSame("Lemon roast chicken")).toBe(false);

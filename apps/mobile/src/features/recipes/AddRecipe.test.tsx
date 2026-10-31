@@ -203,7 +203,7 @@ describe("the screen itself", () => {
         duplicateCheck: { title: { pattern: string; isSame: (candidate: string) => boolean } };
       }
     ).duplicateCheck;
-    expect(title.pattern).toBe("%lemon%chicken%");
+    expect(title.pattern).toBe("lemon%chicken");
     expect(title.isSame("lemon chicken")).toBe(true);
     expect(title.isSame("Lemon roast chicken")).toBe(false);
   });

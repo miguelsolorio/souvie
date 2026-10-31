@@ -100,15 +100,14 @@ describe("titleSearchPattern", () => {
 
   it("finds every spelling normalizeTitle would equal", () => {
     const pattern = titleSearchPattern("Lemon   Chicken");
-    expect(pattern).toBe("%lemon%chicken%");
-    for (const stored of [
-      "Lemon Chicken",
-      "lemon chicken",
-      "  LEMON\tCHICKEN ",
-      "Lemon  Chicken",
-    ]) {
+    expect(pattern).toBe("lemon%chicken");
+    for (const stored of ["Lemon Chicken", "lemon chicken", "LEMON\tCHICKEN", "Lemon  Chicken"]) {
       expect(ilike(stored, pattern)).toBe(true);
     }
+    // A one-word title is matched whole, not as part of a longer one.
+    expect(titleSearchPattern("Soup")).toBe("soup");
+    expect(ilike("Soup", "soup")).toBe(true);
+    expect(ilike("Tomato soup", "soup")).toBe(false);
   });
 
   it("may over-match; the caller compares with normalizeTitle", () => {
@@ -117,7 +116,7 @@ describe("titleSearchPattern", () => {
   });
 
   it("escapes the characters ilike treats as wildcards", () => {
-    expect(titleSearchPattern("100% beef_stew")).toBe("%100\\%%beef\\_stew%");
+    expect(titleSearchPattern("100% beef_stew")).toBe("100\\%%beef\\_stew");
     expect(ilike("100% beef_stew", titleSearchPattern("100% beef_stew"))).toBe(true);
     expect(ilike("100x beefastew", titleSearchPattern("100% beef_stew"))).toBe(false);
   });

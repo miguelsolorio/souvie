@@ -364,6 +364,77 @@ describe("an edit", () => {
   });
 });
 
+describe("an edit of a recipe with a line the parser split in two", () => {
+  // "salt and pepper to taste" is rows l2 (salt) and l2x (pepper): same position, heading and text.
+  // The edit form shows the line once, so the draft carries l2 only.
+  const rows = [
+    { id: "l1", raw_text: "8 chicken thighs", group_name: null, position: 0 },
+    { id: "l2", raw_text: "salt and pepper to taste", group_name: null, position: 1 },
+    { id: "l2x", raw_text: "salt and pepper to taste", group_name: null, position: 1 },
+  ];
+  const run = async (ingredients: RecipeDraft["ingredients"], writes: number) => {
+    const { client, calls } = recorder([
+      { data: [{ id: RECIPE }], error: null },
+      { data: rows, error: null },
+      ...Array.from({ length: writes }, () => ({ error: null })),
+    ]);
+    const result = await updateRecipeAndMatch(
+      client,
+      new QueryClient(),
+      RECIPE,
+      draft({ ingredients }),
+    );
+    return { calls, result };
+  };
+  const lineOne = { id: "l1", rawText: "8 chicken thighs" };
+  const split = { id: "l2", rawText: "salt and pepper to taste" };
+
+  it("keeps the extra row when the line is left alone", async () => {
+    const { calls, result } = await run([lineOne, split], 0);
+    expect(calls.some((c) => c.op === "recipe_ingredients.delete")).toBe(false);
+    expect(calls.some((c) => c.op === "recipe_ingredients.update")).toBe(false);
+    expect(result).toEqual({ needsParse: false });
+    expect(parseCalls(calls)).toHaveLength(0);
+  });
+
+  it("moves the extra row along when the line moves", async () => {
+    // A new first line pushes both lines down one place.
+    const { calls } = await run([{ rawText: "2 eggs" }, lineOne, split], 4);
+    expect(calls.some((c) => c.op === "recipe_ingredients.delete")).toBe(false);
+    const extraUpdate = calls.findIndex(
+      (c) => c.op === "recipe_ingredients.in" && JSON.stringify(c.args) === '["id",["l2x"]]',
+    );
+    expect(extraUpdate).toBeGreaterThan(-1);
+    const payload = calls
+      .slice(0, extraUpdate)
+      .reverse()
+      .find((c) => c.op === "recipe_ingredients.update")?.args[0];
+    expect(payload).toEqual({ position: 2, group_name: null });
+  });
+
+  it("drops the extra row, and matches the line again, when the line's text changes", async () => {
+    const { calls, result } = await run([lineOne, { id: "l2", rawText: "salt to taste" }], 1);
+    expect(calls).toContainEqual({ op: "recipe_ingredients.in", args: ["id", ["l2x"]] });
+    expect(calls.some((c) => c.op === "recipe_ingredients.delete")).toBe(true);
+    expect(result).toEqual({ needsParse: true });
+    expect(parseCalls(calls)).toHaveLength(1);
+  });
+
+  it("deletes both rows when the line is taken out", async () => {
+    const { calls } = await run([lineOne], 0);
+    expect(calls).toContainEqual({ op: "recipe_ingredients.in", args: ["id", ["l2", "l2x"]] });
+  });
+
+  it("does not treat two lines the person wrote the same as one line the parser split", async () => {
+    // Both rows are in the draft with their own ids: both are the person's lines.
+    const { calls } = await run(
+      [lineOne, split, { id: "l2x", rawText: "salt and pepper to taste" }],
+      0,
+    );
+    expect(calls.some((c) => c.op === "recipe_ingredients.delete")).toBe(false);
+  });
+});
+
 describe("an import", () => {
   const jobId = "0c000000-0000-4000-8000-00000000000c";
   const saved = { ok: true, jobId, path: "jsonld", recipeId: RECIPE, warnings: [] };

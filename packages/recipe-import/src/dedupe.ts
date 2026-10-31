@@ -56,17 +56,18 @@ export function normalizeTitle(title: string): string {
 }
 
 /**
- * An `ilike` pattern that matches every title whose normalizeTitle equals the one given: the
- * words in order with anything between them. It over-matches ("lemon%chicken" also finds "Lemon
- * roast chicken"), so a caller compares the candidates with normalizeTitle afterwards. `%`, `_`
- * and `\` in the title are escaped.
+ * An `ilike` pattern that matches every stored title whose normalizeTitle equals the one given: the
+ * words in order with anything between them, starting and ending with them (a stored title is
+ * trimmed, so there is no wildcard at either end). It over-matches (`lemon%chicken` also finds
+ * "Lemon roast chicken"), so a caller compares the candidates with normalizeTitle afterwards.
+ * `%`, `_` and `\` in the title are escaped.
  */
 export function titleSearchPattern(title: string): string {
   const words = normalizeTitle(title)
     .split(" ")
     .filter((word) => word.length > 0)
     .map((word) => word.replace(/[\\%_]/g, "\\$&"));
-  return `%${words.join("%")}%`;
+  return words.join("%");
 }
 
 export interface IngredientLineLike {

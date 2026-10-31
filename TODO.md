@@ -63,7 +63,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 - [ ] CCR6: `RunPolicy` in `packages/core` and `RetailerAdapter.checkout` typed to it (orchestrator). On PR #17, 2026-10-31.
 - [x] WS09 brief corrections written (2026-10-31): service-role decision, `push_tokens`, docs/03 numbers, as-built facts.
-- [ ] Dispatch WS09 (opus). Expect contract change requests here; apply them on `main` yourself.
+- [x] Dispatch WS09 (opus). Dispatched 2026-10-31. Expect contract change requests here; apply them on `main` yourself.
 - [ ] Review with extra attention to policies-in-code, the write ledger, and the allergen check.
 - [ ] Merge, summary. This is the Phase 2 moment: a scheduled run should fill a real QFC cart.
 

@@ -1,0 +1,114 @@
+{
+  "description": "A skipped entry buys nothing, a cooked entry still counts (an item people may have bought is safer on the list than missing), and an entry whose recipe is gone or deleted contributes nothing but is reported.",
+  "recipes": [
+    {
+      "id": "planned",
+      "title": "Planned Dinner",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 lemon",
+          "qty": 1,
+          "unit": "each",
+          "ingredient": "lemon"
+        }
+      ]
+    },
+    {
+      "id": "skipped",
+      "title": "Skipped Dinner",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 lb shrimp",
+          "qty": 1,
+          "unit": "lb",
+          "ingredient": "shrimp"
+        }
+      ]
+    },
+    {
+      "id": "cooked",
+      "title": "Cooked Dinner",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 lb ground beef",
+          "qty": 1,
+          "unit": "lb",
+          "ingredient": "ground beef"
+        }
+      ]
+    },
+    {
+      "id": "deleted",
+      "title": "Deleted Dinner",
+      "servings": 4,
+      "deleted": true,
+      "lines": [
+        {
+          "text": "1 lime",
+          "qty": 1,
+          "unit": "each",
+          "ingredient": "lime"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "planned",
+      "servings": 4
+    },
+    {
+      "id": "e2",
+      "recipe": "skipped",
+      "servings": 4,
+      "status": "skipped"
+    },
+    {
+      "id": "e3",
+      "recipe": "cooked",
+      "servings": 4,
+      "status": "cooked"
+    },
+    {
+      "id": "e4",
+      "recipe": "ghost",
+      "servings": 4
+    },
+    {
+      "id": "e5",
+      "recipe": "deleted",
+      "servings": 4
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "skipped": [
+      {
+        "entry": "e4",
+        "reason": "recipe_missing"
+      },
+      {
+        "entry": "e5",
+        "reason": "recipe_deleted"
+      }
+    ],
+    "items": [
+      {
+        "name": "Lemon",
+        "qty": 1,
+        "unit": "each",
+        "entries": ["e1"]
+      },
+      {
+        "name": "Ground beef",
+        "qty": 1,
+        "unit": "lb",
+        "entries": ["e3"]
+      }
+    ]
+  }
+}

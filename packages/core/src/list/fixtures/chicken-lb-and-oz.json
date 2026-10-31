@@ -1,0 +1,67 @@
+{
+  "description": "1 lb chicken thighs plus 8 oz chicken thighs is 1.5 lb. The pound is the ingredient's default unit and 1.5 lb needs no rounding.",
+  "recipes": [
+    {
+      "id": "lemon",
+      "title": "Lemon Chicken",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 lb chicken thighs",
+          "qty": 1,
+          "unit": "lb",
+          "ingredient": "chicken thigh"
+        }
+      ]
+    },
+    {
+      "id": "stirfry",
+      "title": "Chicken Stir Fry",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "8 oz chicken thighs",
+          "qty": 8,
+          "unit": "oz",
+          "ingredient": "chicken thigh"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "lemon",
+      "servings": 4
+    },
+    {
+      "id": "e2",
+      "recipe": "stirfry",
+      "servings": 4
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Chicken thigh",
+        "qty": 1.5,
+        "unit": "lb",
+        "section": "meat",
+        "rounding": null,
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 1,
+            "unit": "lb"
+          },
+          {
+            "entry": "e2",
+            "qty": 0.5,
+            "unit": "lb"
+          }
+        ]
+      }
+    ]
+  }
+}

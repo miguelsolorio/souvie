@@ -1,0 +1,78 @@
+{
+  "description": "The WS03 review's double-buy: '1 (28 oz) can' is one can. By weight the canned default (14.5 oz) would say two. Same answer with the columns populated and with the raw text alone.",
+  "recipes": [
+    {
+      "id": "columns",
+      "title": "Columns Chili",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 (28 oz) can tomato sauce",
+          "qty": 28,
+          "unit": "oz",
+          "ingredient": "tomato sauce",
+          "containerCount": 1,
+          "container": "can"
+        }
+      ]
+    },
+    {
+      "id": "text",
+      "title": "Text Chili",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 (28 oz) can diced tomatoes",
+          "qty": 28,
+          "unit": "oz",
+          "ingredient": "diced tomatoes"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "columns",
+      "servings": 4
+    },
+    {
+      "id": "e2",
+      "recipe": "text",
+      "servings": 4
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Diced tomatoes",
+        "qty": 1,
+        "unit": "can",
+        "section": "canned",
+        "rounding": null,
+        "contributions": [
+          {
+            "entry": "e2",
+            "qty": 1,
+            "unit": "can"
+          }
+        ]
+      },
+      {
+        "name": "Tomato sauce",
+        "qty": 1,
+        "unit": "can",
+        "section": "canned",
+        "rounding": null,
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 1,
+            "unit": "can"
+          }
+        ]
+      }
+    ]
+  }
+}

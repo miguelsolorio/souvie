@@ -44,7 +44,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 - [x] Dispatch WS04 and WS06 (sonnet) right away. Dispatched 2026-10-30.
 - [x] Draft the Tier 3 consent copy (names each retailer, the terms risk, the account exposure, "stops at pay") and put it in front of Miguel. Drafted 2026-10-31 in `docs/08-brand.md` §11; awaiting approval.
-- [ ] **Human checkpoint 4** gates WS08 only: consent copy approved; Tier 3 retailer list confirmed (WS08's `TIER3_RETAILERS` default is Safeway, Albertsons, Haggen, Costco; the Kroger pay adapter is a WS10 adapter, not a consent retailer). Then dispatch WS08 (opus).
+- [x] **Human checkpoint 4** gates WS08 only: consent copy approved; Tier 3 retailer list confirmed (WS08's `TIER3_RETAILERS` default is Safeway, Albertsons, Haggen, Costco; the Kroger pay adapter is a WS10 adapter, not a consent retailer). Then dispatch WS08 (opus). Approved 2026-10-31 (copy as drafted, four stores); WS08 dispatched (opus).
 - [ ] WS08 reviewer must run the Tier 3 checklist in `docs/04-integrations.md` and confirm no playwright or puppeteer dependency.
 - [x] **Human decision:** recipe catalog cold start. Miguel chose a starter catalog 2026-10-30; WS16 brief written and dispatched.
 - [x] WS16 (starter catalog, sonnet): reviewed and merged as 4fb32da (PR #13), 2026-10-30.

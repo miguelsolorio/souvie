@@ -21,7 +21,7 @@
 // The checks that decide a recipe is acceptable are listed in `problemsFor` below.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   instructionsToJson,
@@ -43,8 +43,8 @@ import {
   type AiRunRecord,
   CATALOG_DRAFT_V1,
   CatalogDraftOutput,
-  type CostGuard,
   createAnthropicClient,
+  estimateCostUsd,
   extract,
   LlmError,
   type MessagesClient,
@@ -68,6 +68,7 @@ import {
   proteinOf,
   proteinPresent,
   recipeId,
+  requiredQualifiers,
   type Slot,
   shapeProblems,
   strayFlesh,
@@ -81,10 +82,22 @@ const CATALOG_DIR = resolve(HERE, "../../../supabase/seed/catalog");
 export const DEFAULT_OUT_DIR = join(CATALOG_DIR, "recipes");
 export const DEFAULT_LOG_PATH = join(CATALOG_DIR, "draft-log.json");
 
+/**
+ * Where the run log goes when `--log` is not given: beside the recipes directory, never inside it,
+ * because everything in the recipes directory is read as a recipe. The default directory logs to
+ * supabase/seed/catalog/draft-log.json (which the review sheet reads); any other `--out` logs to
+ * `<out>.draft-log.json` next to it.
+ */
+export function defaultLogPath(outDir: string): string {
+  const out = resolve(outDir);
+  if (out === DEFAULT_OUT_DIR) return DEFAULT_LOG_PATH;
+  return join(dirname(out), `${basename(out)}.draft-log.json`);
+}
+
 /** Attempts per slot. Each attempt may spend one extra call inside `extract` on a failed check. */
 const MAX_ATTEMPTS = 2;
 /** Output ceiling per call. A recipe is about 1,500 tokens; the rest is room to think. */
-const MAX_TOKENS = 12_000;
+const MAX_TOKENS = 8_000;
 
 export interface DraftOptions {
   /** Plan slugs that should have a file when the run ends. */
@@ -239,6 +252,24 @@ function loadResources(): Resources {
   };
 }
 
+/**
+ * Keeps a qualifier the line states ("gluten-free", "vegetarian") in `prepNote` when the
+ * ingredient it resolved to would otherwise carry gluten or an animal product. The parser drops
+ * the word when it maps "gluten-free tamari" to the plain `soy sauce` id (a WS03 follow-up), and
+ * a reader of the structured data must not lose it.
+ */
+export function withQualifiers(
+  line: CatalogIngredient,
+  categoryOf: (name: string) => string | undefined,
+): CatalogIngredient {
+  if (line.ingredientId === null) return line;
+  const missing = requiredQualifiers(line, categoryOf).filter(
+    (q) => !(line.prepNote ?? "").toLowerCase().includes(q),
+  );
+  if (missing.length === 0) return line;
+  return { ...line, prepNote: [...missing, ...(line.prepNote ? [line.prepNote] : [])].join(", ") };
+}
+
 /** Why a parsed draft is not acceptable. Empty means it is. */
 export function problemsFor(
   slot: Slot,
@@ -328,18 +359,88 @@ export function problemsFor(
   return out;
 }
 
-class Ledger {
-  spent = 0;
+/**
+ * Spend against the `--max-usd` ceiling. A call books its worst-case cost before it starts
+ * (`reserve`) and settles to the real cost when the answer arrives, so committed plus reserved
+ * spend can never pass the cap, however many calls are in flight.
+ */
+export class CostLedger {
+  committed = 0;
+  reserved = 0;
+  /** True once a call was refused for want of budget. */
+  refused = false;
   readonly capUsd: number;
   constructor(capUsd: number) {
     this.capUsd = capUsd;
   }
-  add(usd: number): void {
-    this.spent += usd;
+  reserve(estimate: number): boolean {
+    if (this.committed + this.reserved + estimate > this.capUsd + 1e-9) {
+      this.refused = true;
+      return false;
+    }
+    this.reserved += estimate;
+    return true;
+  }
+  settle(estimate: number, actual: number): void {
+    this.reserved = Math.max(0, this.reserved - estimate);
+    this.committed += actual;
   }
   get exhausted(): boolean {
-    return this.spent >= this.capUsd;
+    return this.committed + this.reserved >= this.capUsd - 1e-9;
   }
+}
+
+/** The most one call can cost: every input token at the model's rate plus `max_tokens` of output. */
+export function estimateCallUsd(params: Record<string, unknown>): number {
+  const model = String(params.model ?? MODELS.sonnet);
+  const chars =
+    JSON.stringify(params.system ?? "").length + JSON.stringify(params.messages ?? "").length;
+  // Two and a half characters per token is pessimistic for English; 2,000 more cover the output
+  // schema the API adds to the prompt.
+  const inputTokens = Math.ceil(chars / 2.5) + 2_000;
+  const outputTokens = Number(params.max_tokens) > 0 ? Number(params.max_tokens) : MAX_TOKENS;
+  return estimateCostUsd(model, { inputTokens, outputTokens });
+}
+
+/**
+ * Wraps a client so every call, the Haiku parser fallback included, books its worst-case cost
+ * first and is refused (`LlmError("cost_cap")`, `ledger.refused`) when that would pass the cap.
+ */
+export function capClient(inner: MessagesClient, ledger: CostLedger): MessagesClient {
+  return {
+    messages: {
+      async parse(params) {
+        const estimate = estimateCallUsd(params);
+        if (!ledger.reserve(estimate)) {
+          throw new LlmError(
+            "cost_cap",
+            `the --max-usd cap of $${ledger.capUsd.toFixed(2)} would be passed by this call`,
+          );
+        }
+        let response: Awaited<ReturnType<MessagesClient["messages"]["parse"]>>;
+        try {
+          response = await inner.messages.parse(params);
+        } catch (err) {
+          // An HTTP error was not billed. Anything else (a parse failure after a full answer, a
+          // dropped connection) may have been, so it keeps the worst-case booking.
+          const status = (err as { status?: unknown } | null)?.status;
+          ledger.settle(estimate, status === undefined ? estimate : 0);
+          throw err;
+        }
+        const usage = response.usage;
+        ledger.settle(
+          estimate,
+          estimateCostUsd(String(params.model ?? MODELS.sonnet), {
+            inputTokens: usage.input_tokens,
+            outputTokens: usage.output_tokens,
+            cacheReadTokens: usage.cache_read_input_tokens ?? 0,
+            cacheWriteTokens: usage.cache_creation_input_tokens ?? 0,
+          }),
+        );
+        return response;
+      },
+    },
+  };
 }
 
 type SlotResult =
@@ -350,8 +451,7 @@ type SlotResult =
 interface RunContext {
   client: MessagesClient;
   resources: Resources;
-  ledger: Ledger;
-  guard: CostGuard;
+  ledger: CostLedger;
   options: DraftOptions;
   now: () => Date;
   say: (line: string) => void;
@@ -362,9 +462,9 @@ interface RunContext {
 async function draftSlot(slot: Slot, ctx: RunContext): Promise<SlotResult> {
   let problems: string[] = [];
   let slotCost = 0;
+  // The ledger counts the run's spend in the capped client; this is only the slot's share.
   const bill = (usd: number): void => {
     slotCost += usd;
-    ctx.ledger.add(usd);
   };
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -400,7 +500,6 @@ async function draftSlot(slot: Slot, ctx: RunContext): Promise<SlotResult> {
         },
         {
           client: ctx.client,
-          guard: ctx.guard,
           log: (record: AiRunRecord) => {
             bill(record.costUsd);
             if (!record.ok && /^(?:rule:|the answer did not match)/.test(record.error ?? "")) {
@@ -415,9 +514,8 @@ async function draftSlot(slot: Slot, ctx: RunContext): Promise<SlotResult> {
       );
       draft = result.value;
     } catch (err) {
-      if (err instanceof LlmError && err.code === "cost_cap") {
-        return { ok: false, abandoned: false, stopped: true };
-      }
+      // `extract` reports a refused call as an API error, so the ledger is the source of truth.
+      if (ctx.ledger.refused) return { ok: false, abandoned: false, stopped: true };
       const message = err instanceof Error ? err.message : String(err);
       problems = [message.replace(/^rule: /, "")];
       ctx.say(`  ${slot.slug}: attempt ${attempt} failed: ${message.slice(0, 200)}`);
@@ -437,6 +535,8 @@ async function draftSlot(slot: Slot, ctx: RunContext): Promise<SlotResult> {
       onWarning: () => undefined,
     };
     const parsed = await parseLinesGrouped(raws, parserDeps);
+    // A refusal during the Haiku fallback stops the run rather than keep a weaker guess.
+    if (ctx.ledger.refused) return { ok: false, abandoned: false, stopped: true };
 
     const lineProblems: string[] = [];
     const ingredients: CatalogIngredient[] = [];
@@ -457,7 +557,7 @@ async function draftSlot(slot: Slot, ctx: RunContext): Promise<SlotResult> {
         lineProblems.push(`line ${i + 1} ("${raw}") has a unit we do not know: ${item.unit}`);
       }
       const group = draft.ingredients[i]?.group;
-      ingredients.push({
+      const line: CatalogIngredient = {
         position: i,
         groupName: group ? tidy(group) : null,
         rawText: raw,
@@ -469,7 +569,8 @@ async function draftSlot(slot: Slot, ctx: RunContext): Promise<SlotResult> {
         prepNote: item.prepNote ?? null,
         optional: item.optional,
         parseConfidence: round4(item.confidence),
-      });
+      };
+      ingredients.push(withQualifiers(line, ctx.resources.categoryOf));
     });
 
     const facts = analyzeRecipe(ingredients, ctx.resources.categoryOf);
@@ -539,12 +640,11 @@ export interface DraftSummary extends RunRecord {
 export async function draftCatalog(options: DraftOptions, deps: DraftDeps): Promise<DraftSummary> {
   const now = deps.now ?? (() => new Date());
   const say = deps.say ?? ((line: string) => console.log(line));
-  const ledger = new Ledger(options.maxUsd);
-  const guard: CostGuard = {
-    async check() {
-      if (ledger.exhausted) throw new LlmError("cost_cap", "the --max-usd cap is reached");
-    },
-  };
+  const ledger = new CostLedger(options.maxUsd);
+  // The run log is read by the loader's review sheet, never as a recipe: keep it out of --out.
+  if (!relative(resolve(options.outDir), resolve(options.logPath)).startsWith("..")) {
+    throw new Error(`the run log ${options.logPath} may not live inside ${options.outDir}`);
+  }
   mkdirSync(options.outDir, { recursive: true });
   const resources = loadResources();
 
@@ -570,10 +670,10 @@ export async function draftCatalog(options: DraftOptions, deps: DraftDeps): Prom
   let cursor = 0;
 
   const ctx: RunContext = {
-    client: deps.client,
+    // Every model call, the Haiku parser fallback included, goes through the capped client.
+    client: capClient(deps.client, ledger),
     resources,
     ledger,
-    guard,
     options,
     now,
     say,
@@ -619,7 +719,7 @@ export async function draftCatalog(options: DraftOptions, deps: DraftDeps): Prom
         say(`gave up on ${slot.slug} after ${MAX_ATTEMPTS} attempts`);
       }
     });
-    if (ledger.exhausted && have < options.count) stoppedByCostCap = true;
+    if ((ledger.exhausted || ledger.refused) && have < options.count) stoppedByCostCap = true;
   }
 
   const record: RunRecord = {
@@ -631,11 +731,11 @@ export async function draftCatalog(options: DraftOptions, deps: DraftDeps): Prom
     skipped,
     rejected,
     abandoned,
-    costUsd: round4(ledger.spent),
+    costUsd: round4(ledger.committed),
     stoppedByCostCap,
   };
   // A run that changed nothing and spent nothing is not worth a line in the log.
-  if (written.length > 0 || rejected.length > 0 || ledger.spent > 0) {
+  if (written.length > 0 || rejected.length > 0 || ledger.committed > 0) {
     const log = readLog(options.logPath);
     log.runs.push(record);
     mkdirSync(dirname(options.logPath), { recursive: true });
@@ -654,8 +754,8 @@ const USAGE = `usage: draft-catalog [--count N] [--max-usd USD] [--out DIR] [--l
   --count N         plan slugs that should have a file when the run ends (default 60)
   --max-usd USD     hard stop on model spend (default 5)
   --out DIR         where the JSON files go (default supabase/seed/catalog/recipes)
-  --log FILE        run log (default supabase/seed/catalog/draft-log.json, or DIR/draft-log.json
-                    when --out is given)
+  --log FILE        run log (default supabase/seed/catalog/draft-log.json, or <DIR>.draft-log.json
+                    beside DIR when --out is given; never inside the recipes directory)
   --concurrency N   recipes drafted at once (default 3)
   --only a,b        draft only these slugs
   --retag           recompute the diet tags of existing files with the current rules in spec.ts
@@ -705,7 +805,7 @@ export function parseArgs(argv: readonly string[]): DraftOptions | "help" {
     count,
     maxUsd: positive("--max-usd", 5),
     outDir,
-    logPath: log ? resolve(log) : out ? join(outDir, "draft-log.json") : DEFAULT_LOG_PATH,
+    logPath: log ? resolve(log) : defaultLogPath(outDir),
     concurrency: Math.max(1, Math.floor(positive("--concurrency", 3))),
     ...(only ? { only } : {}),
     ...(args.includes("--retag") ? { retag: true } : {}),

@@ -49,6 +49,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [ ] WS05 follow-up round (jsonb parameters double-encoded on real Postgres; blocks "Build grocery list" on the hosted project; brief section at the end of WS05's file): review, merge, redeploy `list-build`, Miguel retries.
 - [ ] WS04 follow-up round (picker entry points, from Miguel's test 2026-10-31): review, merge.
 - [ ] WS02 follow-up round (validation on add, no duplicate recipes or ingredient lines; brief section at the end of WS02's file, requested by Miguel 2026-10-31): dispatch after the WS04 round merges, review, merge.
+- [ ] WS04 simple-mode round (one meal a day, household setting `plan_mode` default simple, asked in onboarding step 1; brief section at the end of WS04's file, requested by Miguel 2026-10-31): orchestrator lands `PlanMode`, `slotsForMode` and the `households.plan_mode` migration first, then dispatch after the picker round merges, review, merge.
 - [ ] WS08: review, merge, append to the wave 3 summary. Then `pnpm install` in the orchestrator worktree (native modules change the lockfile) and a `git pull` in the primary checkout.
 - [x] **Human decision:** recipe catalog cold start. Miguel chose a starter catalog 2026-10-30; WS16 brief written and dispatched.
 - [x] WS16 (starter catalog, sonnet): reviewed and merged as 4fb32da (PR #13), 2026-10-30.

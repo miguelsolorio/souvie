@@ -12,15 +12,15 @@
         "beef-and-broccoli-stir-fry",
         "red-lentil-dal",
         "sheet-pan-salmon-and-broccoli",
-        "spaghetti-with-meat-sauce",
+        "spaghetti-with-beef-tomato-sauce",
         "crispy-tofu-vegetable-stir-fry",
         "garlic-shrimp-with-rice",
         "white-bean-and-kale-soup",
         "pork-chops-with-apples",
-        "shakshuka",
+        "spiced-tomato-pepper-poached-eggs",
         "one-pot-chicken-and-rice",
-        "fish-tacos-with-cabbage-slaw",
-        "lamb-kofta-with-yogurt-sauce",
+        "pan-seared-cod-tacos-with-lime-cabbage-slaw",
+        "grilled-lamb-kofta-with-lemon-herb-sauce",
         "turkey-burrito-bowls",
         "chickpea-spinach-curry",
         "chicken-teriyaki-bowls",
@@ -30,21 +30,21 @@
         "chicken-fajita-skillet",
         "pressure-cooker-beef-stew",
         "tofu-scramble-tacos",
-        "miso-glazed-salmon-with-rice",
+        "baked-miso-salmon-with-rice-and-green-beans",
         "chicken-piccata",
         "lentil-bolognese",
         "thai-basil-chicken",
         "tuna-pasta-with-lemon-and-peas",
         "pasta-e-fagioli",
-        "korean-beef-rice-bowls",
+        "beef-bulgogi-rice-bowls",
         "spinach-mushroom-frittata",
         "sheet-pan-shrimp-fajitas",
         "chicken-chickpea-curry",
-        "maple-tempeh-sweet-potato-bowls",
-        "classic-beef-chili",
+        "maple-glazed-tempeh-with-sweet-potatoes-and-kale",
+        "one-pot-beef-and-kidney-bean-chili",
         "chicken-fried-rice",
         "mediterranean-lentil-soup",
-        "garlic-ginger-pork-lettuce-wraps",
+        "ginger-garlic-pork-lettuce-cups",
         "huevos-rancheros",
         "coconut-shrimp-curry",
         "black-bean-burrito-bowls",
@@ -56,14 +56,14 @@
         "shrimp-pad-thai",
         "sheet-pan-chicken-shawarma",
         "turkey-meatballs-with-marinara",
-        "mediterranean-chickpea-salad-bowls",
+        "greek-chickpea-salad-bowls",
         "pressure-cooker-pork-carnitas",
         "chicken-souvlaki-rice-bowls",
         "turkey-sweet-potato-skillet",
         "spinach-ricotta-stuffed-shells",
         "baked-teriyaki-tofu-bowls",
         "red-beans-and-rice",
-        "mustard-roasted-pork-tenderloin",
+        "dijon-roasted-pork-tenderloin-with-sweet-potatoes",
         "margherita-flatbread-pizzas",
         "stuffed-bell-peppers-with-rice"
       ],
@@ -169,14 +169,14 @@
           ]
         },
         {
-          "slug": "tofu-vegetable-coconut-curry",
+          "slug": "tofu-sweet-potato-spinach-coconut-curry",
           "attempt": 1,
           "problems": [
             "it must contain none of peanuts, tree nuts, milk, eggs, wheat, soy, fish, shellfish, sesame: \"1 block (14 oz) extra-firm tofu, pressed and cut into 3/4 inch cubes\" carries soy"
           ]
         },
         {
-          "slug": "tofu-vegetable-coconut-curry",
+          "slug": "tofu-sweet-potato-spinach-coconut-curry",
           "attempt": 2,
           "problems": [
             "the main protein must be tofu, but the lines do not hold it"
@@ -185,7 +185,7 @@
       ],
       "abandoned": [
         "baked-cod-with-tomatoes-and-olives",
-        "tofu-vegetable-coconut-curry"
+        "tofu-sweet-potato-spinach-coconut-curry"
       ],
       "costUsd": 0.7471,
       "stoppedByCostCap": false
@@ -197,7 +197,7 @@
       "requested": 2,
       "written": [
         "baked-cod-with-tomatoes-and-olives",
-        "tofu-vegetable-coconut-curry"
+        "tofu-sweet-potato-spinach-coconut-curry"
       ],
       "skipped": [],
       "rejected": [],

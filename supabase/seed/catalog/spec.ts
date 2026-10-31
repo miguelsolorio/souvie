@@ -689,6 +689,7 @@ const RULES: readonly Rule[] = [
       "parmigiano",
       "pecorino",
       "romano",
+      "grana padano",
       "mozzarella",
       "cheddar",
       "gruyere",
@@ -714,6 +715,19 @@ const RULES: readonly Rule[] = [
     ),
     unless: any("(?:vegan|dairy[- ]free|plant[- ]based|cashew|nut)\\s+cheese"),
     effects: { dairy: true, allergens: ["milk"] },
+  },
+  {
+    // Parmesan, Pecorino and Grana Padano are made with animal rennet. Vegetarian only when the
+    // line says so ("vegetarian Parmesan").
+    re: any(
+      "parmesan",
+      "parmigiano(?:[- ]reggiano)?",
+      "pecorino(?: romano)?",
+      "romano",
+      "grana padano",
+    ),
+    unless: VEGETARIAN_QUALIFIER,
+    effects: { animal: true },
   },
   {
     re: any(
@@ -911,7 +925,9 @@ const RULES: readonly Rule[] = [
     effects: { allergens: ["soy", "wheat"], gluten: true },
   },
   {
-    re: any("miso", "gochujang", "doenjang", "black bean sauce", "bean paste"),
+    // Fermented soy products are made with grain (barley miso, tempeh cultured on grains), so
+    // gluten free only when the line says so.
+    re: any("miso", "gochujang", "doenjang", "black bean sauce", "bean paste", "tempeh"),
     effects: { allergens: ["soy"], gluten: true },
   },
 
@@ -1183,6 +1199,47 @@ export function analyzeRecipe(
   };
 }
 
+/** Qualifiers a line can state for itself, and that the checks honor (see analyzeLine). */
+const QUALIFIERS: readonly { label: string; pattern: string }[] = [
+  { label: "gluten-free", pattern: "\\bgluten[- ]free\\b" },
+  { label: "dairy-free", pattern: "\\b(?:dairy[- ]free|non[- ]dairy)\\b" },
+  { label: "vegan", pattern: "\\bvegan\\b" },
+  { label: "vegetarian", pattern: "\\b(?:vegetarian|meatless)\\b" },
+  { label: "plant-based", pattern: "\\bplant[- ]based\\b" },
+];
+
+const factsKey = (f: LineFacts): string =>
+  JSON.stringify([
+    f.flesh,
+    f.animal,
+    f.dairy,
+    f.egg,
+    f.honey,
+    f.notVegan,
+    [...f.allergens].sort(),
+    f.gluten,
+  ]);
+
+/**
+ * Qualifiers the line states that change what the checks find: "gluten-free" on a line whose
+ * ingredient would otherwise hold gluten, "vegetarian" on Parmesan. A resolved line must carry
+ * each of them in `prepNote`, because the ingredient id alone ("soy sauce" for "gluten-free
+ * tamari") loses the word.
+ */
+export function requiredQualifiers(
+  line: LineInput,
+  categoryOf: (name: string) => string | undefined,
+): string[] {
+  const base = factsKey(analyzeLine(line, categoryOf));
+  const out: string[] = [];
+  for (const q of QUALIFIERS) {
+    if (!new RegExp(q.pattern, "i").test(line.rawText)) continue;
+    const stripped = { ...line, rawText: line.rawText.replace(new RegExp(q.pattern, "gi"), " ") };
+    if (factsKey(analyzeLine(stripped, categoryOf)) !== base) out.push(q.label);
+  }
+  return out;
+}
+
 /**
  * The lines that stop a recipe from earning a diet tag (or from being allergen free), as the
  * drafting script's feedback to the model. Each entry is the raw line and why it counts.
@@ -1338,10 +1395,52 @@ export interface CatalogRecipe {
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /** Diet and allergen claims belong in the tags, which the checks back. Prose may not make them. */
-export const TITLE_CLAIM =
-  /\b(?:kid[- ]friendly|allergen|allergy|gluten[- ]free|dairy[- ]free|vegan|vegetarian)\b/i;
-export const DESCRIPTION_CLAIM =
-  /\b(?:dairy|nut|egg|soy|allergen)[- ]free\b|\bfree of\b|\ballerg|\bvegan\b|\bvegetarian\b/i;
+const ALLERGEN_WORDS =
+  "peanuts?|tree\\s+nuts?|nuts?|milk|dairy|eggs?|wheat|gluten|soy|fish|shellfish|sesame";
+/** "no sesame", "without dairy", "free of eggs": the nine allergens, in the words people use. */
+const NO_ALLERGEN = `\\b(?:no|without|free of)\\s+(?:added\\s+)?(?:${ALLERGEN_WORDS})\\b`;
+export const TITLE_CLAIM = new RegExp(
+  `\\b(?:kid[- ]friendly|allergen|allergy|gluten[- ]free|dairy[- ]free|vegan|vegetarian)\\b|${NO_ALLERGEN}`,
+  "i",
+);
+export const DESCRIPTION_CLAIM = new RegExp(
+  `\\b(?:dairy|nut|egg|soy|allergen)[- ]free\\b|\\bfree of\\b|\\ballerg|\\bvegan\\b|\\bvegetarian\\b|${NO_ALLERGEN}`,
+  "i",
+);
+
+const SLUG_STOP_WORDS = new Set([
+  "with",
+  "and",
+  "over",
+  "in",
+  "on",
+  "of",
+  "the",
+  "a",
+  "for",
+  "to",
+  "or",
+]);
+
+const sameWord = (a: string, b: string): boolean => {
+  if (a === b || `${a}s` === b || `${b}s` === a || `${a}es` === b || `${b}es` === a) return true;
+  return (
+    (a.endsWith("y") && `${a.slice(0, -1)}ies` === b) ||
+    (b.endsWith("y") && `${b.slice(0, -1)}ies` === a)
+  );
+};
+
+/** Words of a slug that its title never uses. A slug may not promise what the title lacks. */
+export function slugWordsMissingFromTitle(slug: string, title: string): string[] {
+  const titleWords = title
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  return slug
+    .split("-")
+    .filter((w) => !SLUG_STOP_WORDS.has(w) && !titleWords.some((t) => sameWord(w, t)));
+}
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
@@ -1381,6 +1480,10 @@ export function shapeProblems(value: unknown): string[] {
   const title = str("title", 1, 200);
   const description = str("description", 1, 4000);
   const cuisine = str("cuisine", 1, 80);
+  if (slug !== null && title !== null) {
+    const missing = slugWordsMissingFromTitle(slug, title);
+    if (missing.length > 0) out.push(`slug names "${missing.join(" ")}" but the title does not`);
+  }
   if (title !== null && TITLE_CLAIM.test(title)) {
     out.push("title makes a diet, allergen, or audience claim; the tags carry that");
   }
@@ -1648,7 +1751,7 @@ export const PLAN: readonly Slot[] = [
     25,
   ),
   slot(
-    "spaghetti-with-meat-sauce",
+    "spaghetti-with-beef-tomato-sauce",
     "Spaghetti with a ground beef and tomato sauce, made with gluten-free spaghetti and no cheese",
     "italian",
     "beef",
@@ -1701,7 +1804,7 @@ export const PLAN: readonly Slot[] = [
     true,
   ),
   slot(
-    "shakshuka",
+    "spiced-tomato-pepper-poached-eggs",
     "Eggs poached in a spiced tomato and pepper sauce",
     "middle eastern",
     "eggs",
@@ -1722,7 +1825,7 @@ export const PLAN: readonly Slot[] = [
     true,
   ),
   slot(
-    "fish-tacos-with-cabbage-slaw",
+    "pan-seared-cod-tacos-with-lime-cabbage-slaw",
     "Pan seared white fish tacos in corn tortillas with lime cabbage slaw",
     "mexican",
     "fish",
@@ -1732,7 +1835,7 @@ export const PLAN: readonly Slot[] = [
     30,
   ),
   slot(
-    "lamb-kofta-with-yogurt-sauce",
+    "grilled-lamb-kofta-with-lemon-herb-sauce",
     "Spiced lamb kofta with lemon herb sauce, cucumber, and rice",
     "middle eastern",
     "lamb",
@@ -1839,7 +1942,7 @@ export const PLAN: readonly Slot[] = [
     25,
   ),
   slot(
-    "miso-glazed-salmon-with-rice",
+    "baked-miso-salmon-with-rice-and-green-beans",
     "Miso glazed salmon with rice and green beans",
     "japanese",
     "fish",
@@ -1901,7 +2004,7 @@ export const PLAN: readonly Slot[] = [
     true,
   ),
   slot(
-    "korean-beef-rice-bowls",
+    "beef-bulgogi-rice-bowls",
     "Ground beef bulgogi style rice bowls with cucumber and carrots, seasoned with coconut aminos, no sesame",
     "korean",
     "beef",
@@ -1943,7 +2046,7 @@ export const PLAN: readonly Slot[] = [
     true,
   ),
   slot(
-    "maple-tempeh-sweet-potato-bowls",
+    "maple-glazed-tempeh-with-sweet-potatoes-and-kale",
     "Maple glazed tempeh with roasted sweet potatoes and kale",
     "american",
     "tempeh",
@@ -1953,7 +2056,7 @@ export const PLAN: readonly Slot[] = [
     35,
   ),
   slot(
-    "classic-beef-chili",
+    "one-pot-beef-and-kidney-bean-chili",
     "Beef and kidney bean chili with tomatoes",
     "american",
     "beef",
@@ -1995,7 +2098,7 @@ export const PLAN: readonly Slot[] = [
     true,
   ),
   slot(
-    "garlic-ginger-pork-lettuce-wraps",
+    "ginger-garlic-pork-lettuce-cups",
     "Ground pork with garlic, ginger, and water chestnuts in lettuce cups, seasoned with coconut aminos",
     "chinese",
     "pork",
@@ -2121,7 +2224,7 @@ export const PLAN: readonly Slot[] = [
     35,
   ),
   slot(
-    "tofu-vegetable-coconut-curry",
+    "tofu-sweet-potato-spinach-coconut-curry",
     "Tofu and vegetable curry with coconut milk, sweet potato, and spinach",
     "indian",
     "tofu",
@@ -2131,7 +2234,7 @@ export const PLAN: readonly Slot[] = [
     35,
   ),
   slot(
-    "mediterranean-chickpea-salad-bowls",
+    "greek-chickpea-salad-bowls",
     "Chickpea salad bowls with cucumber, tomato, olives, and red onion in a lemon dressing",
     "greek",
     "beans",
@@ -2206,7 +2309,7 @@ export const PLAN: readonly Slot[] = [
     true,
   ),
   slot(
-    "mustard-roasted-pork-tenderloin",
+    "dijon-roasted-pork-tenderloin-with-sweet-potatoes",
     "Dijon roasted pork tenderloin with sweet potatoes and broccoli on a sheet pan",
     "french",
     "pork",

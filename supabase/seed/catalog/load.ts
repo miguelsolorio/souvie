@@ -9,8 +9,10 @@
 //
 // The SQL loads after 10_ingredients.sql (name order) because recipe_ingredients.ingredient_id
 // references ingredients. It is idempotent: it upserts recipes and lines by their deterministic
-// ids (spec.ts) and never deletes. No database is needed to render it, because the JSON already
-// holds each ingredient's id.
+// ids (spec.ts). It never deletes a recipe. For each recipe it upserts it does delete the lines
+// the JSON no longer has, so removing a line from a file and running the SQL again removes it
+// from a database that already holds it. No database is needed to render it, because the JSON
+// already holds each ingredient's id.
 //
 // Plain Node, no dependencies, like supabase/seed/load.ts.
 
@@ -40,10 +42,13 @@ export const REVIEW_SHEET_PATH = join(HERE, "README.md");
 // Reading
 // ---------------------------------------------------------------------------------------
 
+/** The drafting script's run log. It sits beside the recipes directory; if it ever lands in it, it is not a recipe. */
+const RUN_LOG_NAME = "draft-log.json";
+
 /** Every recipe file, sorted by slug. Throws on a file that is not a valid recipe. */
 export function readCatalog(dir: string = RECIPES_DIR): CatalogRecipe[] {
   const files = readdirSync(dir)
-    .filter((name) => name.endsWith(".json"))
+    .filter((name) => name.endsWith(".json") && name !== RUN_LOG_NAME)
     .sort();
   const recipes: CatalogRecipe[] = [];
   const problems: string[] = [];
@@ -104,7 +109,11 @@ export function renderCatalogSql(recipes: readonly CatalogRecipe[]): string {
     "-- no created_by, no embedding (WS06 backfill fills it).",
     "--",
     "-- Idempotent: upserts recipes and ingredient lines by their deterministic ids. It never",
-    "-- deletes, so a line removed from a JSON file stays in a database that already has it.",
+    "-- deletes a recipe. For each recipe it upserts, it deletes the ingredient lines that recipe no",
+    "-- longer has in the JSON (the last statement), so a reload also removes a dropped line.",
+    "-- To remove an ingredient line, an allergen included, from a database that has the catalog:",
+    "-- delete the line from its JSON file, run `node supabase/seed/catalog/load.ts`, and run this",
+    '-- file again (supabase/seed/README.md, "Removing an ingredient line").',
     "-- A reload keeps embeddings unless the recipe's title, description, tags or cuisine changed.",
     "-- Loads after 10_ingredients.sql (name order): ingredient_id references public.ingredients.",
     "",
@@ -173,6 +182,18 @@ export function renderCatalogSql(recipes: readonly CatalogRecipe[]): string {
       "",
     );
   }
+
+  // Lines the JSON no longer has. Scoped to the recipes above, so it touches nothing else.
+  const uuidArray = (ids: readonly string[]): string =>
+    `array[\n${chunks(ids, 3)
+      .map((row) => `    ${row.map(q).join(", ")}`)
+      .join(",\n")}\n  ]::uuid[]`;
+  lines.push(
+    "delete from public.recipe_ingredients",
+    `where recipe_id = any (${uuidArray(recipes.map((r) => r.id))})`,
+    `  and id <> all (${uuidArray(rows.map(({ recipe: r, line: l }) => lineId(r.slug, l.position)))});`,
+    "",
+  );
   return lines.join("\n");
 }
 
@@ -281,14 +302,14 @@ export function renderReviewSheet(
     "",
     "The catalog is the set of original dinner recipes every new household can plan from on day one.",
     "Each recipe was drafted by `claude-sonnet-5-5` from a spec (cuisine, protein, method, time), with",
-    "no named source. Nothing here has been loaded into the hosted project yet.",
+    "no named source.",
     "",
     "## How to review",
     "",
     "1. Read the recipe table. The **Allergens** column is conservative: it lists every allergen a line might carry (soy sauce counts as soy and wheat), and a recipe with a line nobody could identify is marked unclear.",
     "2. Open any recipe's JSON (the title links to it) and read the lines and steps.",
     "3. To change a recipe, edit its JSON, then run `node supabase/seed/catalog/load.ts` (this sheet and `../20_catalog.sql` are rewritten) and `pnpm test`.",
-    "4. To drop a recipe, delete its file and tell the orchestrator. Never rename a slug: ids derive from it, and a new slug is a new recipe.",
+    "4. To drop a recipe, delete its file and tell the orchestrator. Ids derive from the slug, so a renamed slug is a new recipe: harmless before the first hosted load, never after.",
     '5. When you approve, the orchestrator loads `20_catalog.sql` into the hosted project (`supabase/seed/README.md`, "Loading the hosted project").',
     "",
     "## Summary",

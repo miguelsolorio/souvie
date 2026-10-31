@@ -1,6 +1,6 @@
 {
-  "id": "66db4ec4-6fa3-54bc-a49a-f814468aca80",
-  "slug": "maple-tempeh-sweet-potato-bowls",
+  "id": "95a41b21-5a55-5c0c-9d1d-e65451942917",
+  "slug": "maple-glazed-tempeh-with-sweet-potatoes-and-kale",
   "title": "Maple Glazed Tempeh with Sweet Potatoes and Kale",
   "description": "Sheet pan tempeh glazed with maple and mustard, served over roasted sweet potatoes and crisp kale. Sweet, tangy, and lightly smoky.",
   "servings": 4,
@@ -46,13 +46,13 @@
     {
       "position": 2,
       "groupName": null,
-      "rawText": "16 oz tempeh, cut into 1/2 inch slabs",
+      "rawText": "16 oz gluten-free tempeh, cut into 1/2 inch slabs",
       "qty": 16,
       "qtyMax": null,
       "unit": "oz",
       "ingredientName": "tempeh",
       "ingredientId": "502d1dff-4d2f-5b2e-a5e9-8b91cbc7f6da",
-      "prepNote": "cut into 1/2 inch slabs",
+      "prepNote": "gluten-free, cut into 1/2 inch slabs",
       "optional": false,
       "parseConfidence": 0.97
     },
@@ -130,7 +130,7 @@
       "unit": "tbsp",
       "ingredientName": "soy sauce",
       "ingredientId": "bdd1c121-834b-5ca5-8d7c-4023c89a31e9",
-      "prepNote": null,
+      "prepNote": "gluten-free",
       "optional": false,
       "parseConfidence": 0.97
     },

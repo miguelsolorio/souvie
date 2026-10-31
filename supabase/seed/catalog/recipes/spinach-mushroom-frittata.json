@@ -123,13 +123,13 @@
     {
       "position": 8,
       "groupName": null,
-      "rawText": "1/2 cup grated Parmesan cheese",
+      "rawText": "1/2 cup grated vegetarian Parmesan cheese",
       "qty": 0.5,
       "qtyMax": null,
       "unit": "cup",
       "ingredientName": "parmesan",
       "ingredientId": "8af4840c-bc44-5d05-a22c-7b67bcb744ba",
-      "prepNote": "grated",
+      "prepNote": "vegetarian, grated",
       "optional": false,
       "parseConfidence": 0.95
     },

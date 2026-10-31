@@ -72,8 +72,8 @@ A new household has no recipes until it imports some. The catalog gives onboardi
 ### Rules the catalog keeps
 
 - **Original only.** Drafted from the spec (cuisine, protein, method, time), never from a named source, URL, or third-party text. No chef, publication, restaurant, or brand names; no "copycat" or "famous". `spec.ts` lists the banned words and the test enforces them.
-- **Ids are deterministic.** A recipe id is a UUID v5 of its slug under `CATALOG_NAMESPACE`; a line id is a UUID v5 of `<slug>#<position>`; an ingredient id is the ontology's. Local, CI, and hosted databases therefore agree. Never change the namespace. Changing a slug creates a second recipe and retires nothing.
-- **Tags are checked, not trusted.** Every tag comes from the vocabulary in `spec.ts`. The diet tags (`vegetarian`, `vegan`, `gluten_free`, `dairy_free`) are what the deterministic check finds in the ingredient lines, and the test requires an exact match. The check is conservative: when in doubt the recipe does not get the tag. A recipe with a non-meat protein is vegetarian, and a recipe holds only the meat or fish its protein tag names.
+- **Ids are deterministic.** A recipe id is a UUID v5 of its slug under `CATALOG_NAMESPACE`; a line id is a UUID v5 of `<slug>#<position>`; an ingredient id is the ontology's. Local, CI, and hosted databases therefore agree. Never change the namespace. Changing a slug creates a second recipe and retires nothing, so a slug is final once the catalog is loaded anywhere that matters. Until then, a slug must only name words its title uses (a test checks), and renaming one means renaming its file and updating its `PLAN` slot.
+- **Tags are checked, not trusted.** Every tag comes from the vocabulary in `spec.ts`. The diet tags (`vegetarian`, `vegan`, `gluten_free`, `dairy_free`) are what the deterministic check finds in the ingredient lines, and the test requires an exact match. The check is conservative: when in doubt the recipe does not get the tag. Gluten doubt covers soy sauce and tamari, broth and stock, pasta and noodles, oats, miso, gochujang, tempeh, and sausages; vegetarian doubt covers broth, fish sauce, Worcestershire sauce, and Parmesan, Pecorino, and Grana Padano (animal rennet). A line clears its doubt only by saying so ("gluten-free tamari", "vegetarian Parmesan"), and then the word stays in the line's `prepNote` too, because its ingredient id alone ("soy sauce") would lose it; a test checks. A recipe with a non-meat protein is vegetarian, and a recipe holds only the meat or fish its protein tag names. Titles and descriptions make no diet or allergen claim, "no sesame" included: the tags carry that.
 - **Allergens are named.** Soy sauce, tamari, fish sauce, oyster sauce, Worcestershire sauce, miso, sesame oil, tahini, and nut butters each get their own ingredient line, and the test fails when a step uses one that no line names. Tags are not the enforcement for allergies: WS06 filters on ingredient ids in SQL and again in TypeScript.
 - **No slow cooker recipes.** The ceiling is 120 minutes of prep plus cook, so the `slow_cooker` tag is in the vocabulary and unused.
 
@@ -81,12 +81,21 @@ A new household has no recipes until it imports some. The catalog gives onboardi
 
 1. Read `catalog/README.md`. The Allergens column over-reports on purpose (soy sauce counts as soy and wheat).
 2. To change a recipe, edit its JSON, then `pnpm seed:catalog` and `pnpm test`. If you change a rule in `spec.ts`, run `pnpm --filter @mp/recipe-import draft-catalog -- --retag` first; it recomputes the diet tags of existing files with no model calls.
-3. To drop a recipe before it is loaded anywhere, delete its file. After it is loaded, the SQL never deletes: set `deleted_at` on the row (as the service role) and delete or keep the file. A file that stays is reloaded as it is, and its `deleted_at` is left alone.
-4. The SQL upserts by id, so a reload updates text in place. It keeps a recipe's embedding unless the title, description, tags, or cuisine changed. A line removed from a JSON file stays in a database that already has it.
+3. To drop a recipe before it is loaded anywhere, delete its file. After it is loaded, the SQL never deletes a recipe: set `deleted_at` on the row (as the service role) and delete or keep the file. A file that stays is reloaded as it is, and its `deleted_at` is left alone.
+4. The SQL upserts by id, so a reload updates text in place. It keeps a recipe's embedding unless the title, description, tags, or cuisine changed. Its last statement deletes the ingredient lines of the catalog recipes it upserts that the JSON no longer has (below).
+
+### Removing an ingredient line
+
+The procedure for taking a line, an allergen included, out of a database that already has the catalog (a hosted project after the first load):
+
+1. Delete the line from the recipe's JSON `ingredients` and renumber `position` from 0 (line ids are `<slug>#<position>`, so a renumbered line keeps its position's id and is updated in place; the highest old position has no id in the new set).
+2. Edit the steps that used it, then run `pnpm seed:catalog` and `pnpm test`.
+3. Run `psql "$WORKER_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/seed/20_catalog.sql`. The upserts rewrite the lines, then `delete from public.recipe_ingredients where recipe_id = any (...) and id <> all (...)` removes every line of those recipes whose id is not in the rendered set. That statement is scoped to the catalog recipes the file lists; household recipes are untouched.
+4. Check: `select count(*) from public.recipe_ingredients where recipe_id = '<recipe id>'` equals the number of lines in the JSON.
 
 ### Drafting more recipes
 
-`packages/recipe-import/scripts/draft-catalog.ts` is a one-time, local script. It reads the plan in `catalog/spec.ts`, asks `claude-sonnet-5-5` for each missing slug (prompt `catalog-draft.v1`), parses every ingredient line with `@mp/ingredient-parser`, computes the diet tags, and writes one JSON file per recipe. It skips slugs that already have a file, stops at `--max-usd`, and refuses to run when `CI` is set.
+`packages/recipe-import/scripts/draft-catalog.ts` is a one-time, local script. It reads the plan in `catalog/spec.ts`, asks `claude-sonnet-5-5` for each missing slug (prompt `catalog-draft.v1`), parses every ingredient line with `@mp/ingredient-parser`, computes the diet tags, and writes one JSON file per recipe. It skips slugs that already have a file and refuses to run when `CI` is set. `--max-usd` is a ceiling, not a trigger: each model call, the Haiku ingredient fallback included, books its worst-case cost before it starts and is refused when that would pass the cap, so a run never spends more than the cap and a cap below one recipe's cost spends nothing. The run log goes beside the recipes directory (`catalog/draft-log.json`, or `<out>.draft-log.json` for another `--out`), never inside it, and the loader ignores a stray `draft-log.json`.
 
 ```bash
 # the key comes from .env.local into this process only

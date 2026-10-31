@@ -73,7 +73,7 @@ const RULES: Rule[] = [
 ];
 
 const PERSONAL_FIELD =
-  /name|address|street|city|zip|postal|phone|mobile|email|card|cvv|birth|code/i;
+  /name|address|street|city|zip|postal|phone|mobile|email|card|cvv|birth|code|pass|pwd/i;
 
 function scrubText(s: string): { text: string; kinds: ScrubKind[] } {
   let text = s;

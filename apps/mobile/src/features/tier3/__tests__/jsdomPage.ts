@@ -16,6 +16,7 @@ export const TEST_PAGE_PATH = join(HERE, "..", "test-page", "index.html");
 export const TEST_PAGE_HTML = readFileSync(TEST_PAGE_PATH, "utf8");
 export const TEST_PAGE_URL = "http://localhost:8790/";
 export const TEST_TOKEN = "testtoken0123456789";
+export const TEST_RECEIVER = "__mpTier3Bridge_receiver0123456789";
 /** What capture() returns: the JPEG start and end markers around a few bytes. */
 export const FAKE_JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 0xff, 0xd9]);
 
@@ -81,6 +82,7 @@ export function createPageHarness(options: HarnessOptions = {}): PageHarness {
 
   host = createBridgeHost(transport, {
     token: TEST_TOKEN,
+    receiver: TEST_RECEIVER,
     requestTimeoutMs: options.requestTimeoutMs ?? 5_000,
     ...(options.allowedHosts ? { allowedHosts: options.allowedHosts } : {}),
   });

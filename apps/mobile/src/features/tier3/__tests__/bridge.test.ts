@@ -24,6 +24,7 @@ import {
   HERE_ROOT,
   type PageHarness,
   TEST_PAGE_URL,
+  TEST_RECEIVER,
   TEST_TOKEN,
 } from "./jsdomPage";
 
@@ -396,7 +397,7 @@ describe("protocol hygiene", () => {
   });
 
   it("delivers host messages as data, never as code", () => {
-    const script = hostMessageScript(TEST_TOKEN, {
+    const script = hostMessageScript(TEST_RECEIVER, {
       type: "type",
       requestId: "r1",
       nodeId: "n1",

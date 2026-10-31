@@ -35,7 +35,6 @@ export {
   BRIDGE_ENVELOPE,
   BRIDGE_PROTOCOL_VERSION,
   type BridgeErrorPayload,
-  bridgeGlobalName,
   type HostMessage,
   hostMessageScript,
   type PageMessage,

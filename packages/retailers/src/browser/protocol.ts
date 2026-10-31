@@ -2,9 +2,12 @@
 // §Tier 3 has the table. Platform-neutral: the WebView host on the phone and a desktop webview host
 // (WS13) speak the same messages to the same bridge.js.
 //
-// Every page -> host message carries the envelope marker and the per-injection token, so a message
-// the retailer's own scripts post through the same channel is ignored. The token lives in the
-// bridge's closure, not on `window`.
+// Every page -> host message carries the envelope marker and the per-injection token, and the host
+// drops anything without them. The token lives only in the bridge's closure; the receiver the host
+// calls has a separate random name, so enumerating `window` reveals the receiver, not the token, and
+// the bridge posts through a postMessage it captured, bound, at install. This is defence in depth:
+// the retailer's own scripts share the page's JavaScript realm, so it raises the bar for a page that
+// tries to answer for the bridge; it is not a guarantee.
 import type { UserRequiredReason } from "./host.ts";
 import type { SnapshotTree } from "./snapshot.ts";
 
@@ -134,16 +137,14 @@ export function parsePageMessage(raw: unknown, token: string): PageMessage | nul
   }
 }
 
-/** The JavaScript the host evaluates in the page to deliver one message to the bridge. */
-export function hostMessageScript(token: string, message: HostMessage): string {
+/**
+ * The JavaScript the host evaluates in the page to deliver one message to the bridge. `receiver` is
+ * the bridge's global (a random name the host chose, never the token).
+ */
+export function hostMessageScript(receiver: string, message: HostMessage): string {
   // JSON.stringify output is a valid JS expression; the second stringify makes it a string
   // literal the bridge parses, so nothing in the payload is evaluated as code.
   const payload = JSON.stringify(JSON.stringify(message));
-  const name = JSON.stringify(bridgeGlobalName(token));
+  const name = JSON.stringify(receiver);
   return `(function(){var b=window[${name}];if(b){b.receive(${payload});}})();true;`;
-}
-
-/** Where the bridge installs its receiver. Keyed by the token so page code cannot guess it. */
-export function bridgeGlobalName(token: string): string {
-  return `__mpTier3Bridge_${token}`;
 }

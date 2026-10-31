@@ -32,7 +32,10 @@ export interface BridgeTransport {
 }
 
 export interface BridgeHostOptions {
+  /** Signs every page message; stays in the bridge's closure. */
   token: string;
+  /** The bridge's global the host calls (newBridgeReceiver). Random, never the token. */
+  receiver: string;
   /** Replies slower than this fail with `timeout`. Default 10 s. */
   requestTimeoutMs?: number;
   /** navigate() fails when the bridge has not reported ready by then. Default 30 s. */
@@ -107,7 +110,8 @@ export function createBridgeHost(
   options: BridgeHostOptions,
 ): BridgeHost {
   const token = options.token;
-  const bridgeScript = buildBridgeScript(token);
+  const receiver = options.receiver;
+  const bridgeScript = buildBridgeScript(token, receiver);
   const requestTimeoutMs = options.requestTimeoutMs ?? 10_000;
   const navigateTimeoutMs = options.navigateTimeoutMs ?? 30_000;
   const waitMaxNodes = options.waitMaxNodes ?? WAIT_MAX_NODES;
@@ -129,7 +133,7 @@ export function createBridgeHost(
     epoch: number;
   } | null = null;
 
-  const nextId = () => `${token.slice(0, 6)}-${++counter}`;
+  const nextId = () => `r${++counter}`;
 
   function fail(code: BrowserHostErrorCode, message?: string): BrowserHostError {
     return new BrowserHostError(code, message);
@@ -146,7 +150,7 @@ export function createBridgeHost(
   }
 
   function deliver(message: HostMessage) {
-    transport.evaluate(hostMessageScript(token, message));
+    transport.evaluate(hostMessageScript(receiver, message));
   }
 
   function send(message: HostMessage) {

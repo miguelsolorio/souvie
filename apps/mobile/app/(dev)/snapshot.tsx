@@ -33,6 +33,8 @@ import { WebViewHost } from "../../src/features/tier3/WebViewHost";
 // Expo inlines EXPO_PUBLIC_* only when read literally. A public URL replaces the local one later.
 const TEST_PAGE_URL = process.env.EXPO_PUBLIC_TIER3_TEST_PAGE_URL || "http://localhost:8790/";
 
+const SECRET_NAME = /pass(word|code)?|pwd/i;
+
 interface Step {
   label: string;
   status: "running" | "ok" | "failed";
@@ -46,7 +48,12 @@ function outline(tree: SnapshotTree, limit = 400): string {
     if (lines.length >= limit) return;
     const extra = [
       node.text ? `text="${node.text}"` : "",
-      node.value !== undefined ? `value="${node.value}"` : "",
+      // The bridge never sends a password's value; a field named like one shows none here either.
+      node.value !== undefined
+        ? SECRET_NAME.test(node.name)
+          ? "value=(hidden)"
+          : `value="${node.value}"`
+        : "",
     ]
       .filter(Boolean)
       .join(" ");

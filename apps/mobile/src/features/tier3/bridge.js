@@ -5,19 +5,23 @@
 // the page needs the person (sign-in, a human check, a one-time code).
 //
 // Protocol: packages/retailers/src/browser/protocol.ts and docs/04-integrations.md §Tier 3. Every
-// message to the host carries the envelope marker and the per-injection token, so a message the
-// page's own scripts post through window.ReactNativeWebView is ignored by the host.
+// message to the host carries the envelope marker and the per-injection token. The token lives only
+// in this closure; the receiver the host calls has a separate random name, and postMessage is
+// captured, bound, at install. That is defence in depth against the page's own scripts, which share
+// this JavaScript realm: it raises the bar, it is not a guarantee.
 //
 // Rules this file keeps:
-//   * It never reads, serializes, or types a password, and never fills a sign-in form.
+//   * It never reads, serializes, or types a password, and never fills a sign-in form. A field is a
+//     password when its type is password, its autocomplete names a password, or its name, id,
+//     label or placeholder says password, passcode or pwd, whatever its type attribute says now.
 //   * It never changes the user agent, hides automation, or touches a human check. A human check is
 //     reported and left for the person.
 //   * Nothing here is sent anywhere but the host on the same device.
 //
 // After editing, run `pnpm --filter @mp/mobile tier3:bridge` to regenerate bridge.generated.ts (a
-// test fails when the two differ). The host replaces the token placeholder at the bottom.
-((TOKEN) => {
-  const GLOBAL = `__mpTier3Bridge_${TOKEN}`;
+// test fails when the two differ). The host replaces the two placeholders at the bottom.
+((TOKEN, RECEIVER) => {
+  const GLOBAL = RECEIVER;
   const existing = window[GLOBAL];
   if (existing && typeof existing.ping === "function") {
     // Injected twice on the same document (before content loaded, then on load end): keep the first.
@@ -32,21 +36,30 @@
   const MAX_NAME = 200;
   const MAX_TEXT = 300;
 
-  // Captured at install so later page code cannot swap them out from under us.
+  // Captured at install so later page code cannot swap them out from under us. postMessage is bound
+  // now: replacing window.ReactNativeWebView.postMessage later neither reads nor blocks our messages.
   const stringify = JSON.stringify;
   const parse = JSON.parse;
-  const nativeBridge = window.ReactNativeWebView;
+  const hasOwn = Object.hasOwn;
+  function capturePost() {
+    const target = window.ReactNativeWebView;
+    if (!target || typeof target.postMessage !== "function") return null;
+    return Function.prototype.bind.call(target.postMessage, target);
+  }
+  // The native bridge is injected ahead of this script; if it is not there yet, take it once, on
+  // first use, and keep that one.
+  let nativePost = capturePost();
 
   function post(type, payload) {
-    const target = nativeBridge || window.ReactNativeWebView;
-    if (!target || typeof target.postMessage !== "function") return;
+    if (!nativePost) nativePost = capturePost();
+    if (!nativePost) return;
     const message = { __mp: ENVELOPE, v: VERSION, token: TOKEN, type: type };
     if (payload) {
       for (const key in payload) {
-        if (Object.hasOwn(payload, key)) message[key] = payload[key];
+        if (hasOwn(payload, key)) message[key] = payload[key];
       }
     }
-    target.postMessage(stringify(message));
+    nativePost(stringify(message));
   }
 
   // ---------------------------------------------------------------------------------------
@@ -260,6 +273,51 @@
     return "";
   }
 
+  // A password, whatever its type attribute says now (the person may have made it visible): the
+  // type is password, the autocomplete names a password, or the name, id, label or placeholder
+  // says password, passcode or pwd. Its value is never serialized and it is never typed into.
+  const SECRET_HINT = /pass(word|code)?|pwd/i;
+  const NOT_TEXT = {
+    checkbox: 1,
+    radio: 1,
+    submit: 1,
+    button: 1,
+    reset: 1,
+    image: 1,
+    hidden: 1,
+    range: 1,
+    color: 1,
+    file: 1,
+  };
+  function isSecretField(el) {
+    const tag = el.tagName;
+    if (tag !== "INPUT" && tag !== "TEXTAREA") return false;
+    const type = (el.getAttribute("type") || "").toLowerCase();
+    if (type === "password") return true;
+    if (tag === "INPUT" && NOT_TEXT[type]) return false;
+    if (/password/i.test(el.getAttribute("autocomplete") || "")) return true;
+    const hints = [
+      el.getAttribute("name"),
+      el.id,
+      el.getAttribute("placeholder"),
+      el.getAttribute("aria-label"),
+      el.getAttribute("title"),
+      labelText(el),
+    ];
+    const by = el.getAttribute("aria-labelledby");
+    if (by) {
+      const ids = norm(by).split(" ");
+      for (let i = 0; i < ids.length; i++) {
+        const ref = document.getElementById(ids[i]);
+        if (ref) hints.push(textOf(ref));
+      }
+    }
+    for (let i = 0; i < hints.length; i++) {
+      if (hints[i] && SECRET_HINT.test(hints[i])) return true;
+    }
+    return false;
+  }
+
   function nameOf(el, role) {
     const by = el.getAttribute("aria-labelledby");
     if (by) {
@@ -338,8 +396,10 @@
     if (tag === "INPUT") {
       const type = (el.getAttribute("type") || "text").toLowerCase();
       if (type === "checkbox" || type === "radio") out.checked = !!el.checked;
-      else if (type !== "password" && role !== "button") out.value = String(el.value);
-    } else if (tag === "TEXTAREA" || tag === "SELECT") {
+      else if (role !== "button" && !isSecretField(el)) out.value = String(el.value);
+    } else if (tag === "TEXTAREA") {
+      if (!isSecretField(el)) out.value = String(el.value);
+    } else if (tag === "SELECT") {
       out.value = String(el.value);
     } else if (tag === "OPTION") {
       out.value = String(el.value);
@@ -627,14 +687,14 @@
   function typeInto(el, text, clear) {
     const tag = el.tagName;
     const editable = el.isContentEditable && el.getAttribute("contenteditable") !== null;
+    if (isSecretField(el)) {
+      throw new BridgeError(
+        "password_field",
+        "Passwords are typed by the person, never by the agent.",
+      );
+    }
     if (tag === "INPUT") {
       const type = (el.getAttribute("type") || "text").toLowerCase();
-      if (type === "password") {
-        throw new BridgeError(
-          "password_field",
-          "Passwords are typed by the person, never by the agent.",
-        );
-      }
       if (inputRole(el) !== "textbox" && type !== "search" && type !== "number") {
         throw new BridgeError("not_actionable", "This field does not take text.");
       }
@@ -985,4 +1045,4 @@
   } else {
     startObserving();
   }
-})("__MP_BRIDGE_TOKEN__");
+})("__MP_BRIDGE_TOKEN__", "__MP_BRIDGE_RECEIVER__");

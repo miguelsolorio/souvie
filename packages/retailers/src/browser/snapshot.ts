@@ -14,7 +14,7 @@
 //      take their name from content; the text itself for `text` nodes; "" when there is none).
 //      Generic wrappers with a single child collapse into that child, so tiles, rows and forms
 //      stay as groups and decoration does not.
-//   3. Set `value` for form controls (never for password fields), `href` for links (absolute),
+//   3. Set `value` for form controls (never for a password field: rule 7), `href` for links (absolute),
 //      `text` for a leaf element whose visible text differs from its name, and `disabled` or
 //      `checked` when they apply.
 //   4. Give every node `bbox` = [x, y, width, height] in CSS pixels relative to the viewport,
@@ -26,7 +26,11 @@
 //      field's `value` and nothing else, and a banner inserted above a tile does not change the
 //      ids inside the tile. Ids are unique within one tree.
 //   6. Stop at `maxNodes` nodes in document order and set `truncated: true`.
-//   7. Never read, serialize, or type a password.
+//   7. Never read, serialize, or type a password. A field is a password when its type is password,
+//      its autocomplete names a password (current-password, new-password), or its name, id, label,
+//      aria-label, title or placeholder matches /pass(word|code)?|pwd/i, whatever its type attribute
+//      says at the moment: a person may have toggled it visible. Such a field has no `value`, and
+//      typing into it fails with `password_field`.
 
 export interface SnapshotNode {
   /** Stable across snapshots of an unchanged DOM (contract rule 5). */
@@ -36,7 +40,7 @@ export interface SnapshotNode {
   name: string;
   /** Visible text of a leaf element, when it differs from `name`. */
   text?: string;
-  /** Current value of a form control. Never present on a password field. */
+  /** Current value of a form control. Never present on a password field (contract rule 7). */
   value?: string;
   /** Absolute URL for links. */
   href?: string;

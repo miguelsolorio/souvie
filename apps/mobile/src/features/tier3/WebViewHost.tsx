@@ -27,7 +27,7 @@ import {
   type WebViewProps,
 } from "react-native-webview";
 import { type BridgeHost, type BridgeTransport, createBridgeHost } from "./bridgeHost";
-import { newBridgeToken } from "./bridgeScript";
+import { newBridgeReceiver, newBridgeToken } from "./bridgeScript";
 import { base64ToBytes } from "./bytes";
 
 export interface WebViewHostProps {
@@ -97,8 +97,10 @@ export const WebViewHost = forwardRef<BridgeHost | null, WebViewHostProps>(funct
         return base64ToBytes(b64);
       },
     };
+    const token = newBridgeToken(getRandomBytes);
     const created = createBridgeHost(transport, {
-      token: newBridgeToken(getRandomBytes),
+      token,
+      receiver: newBridgeReceiver(getRandomBytes, token),
       ...(allowedHosts ? { allowedHosts } : {}),
     });
     created.onUserRequired((reason) => callbacks.current.onUserRequired?.(reason));

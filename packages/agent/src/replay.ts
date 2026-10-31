@@ -242,6 +242,8 @@ export function summarizePlanned(items: readonly ProposedItem[]): PlannedSummary
 export async function replayRun(
   fixture: RunFixture,
   adapter: RetailerAdapter,
+  /** Record mode: a live model in place of the recorded turns (evals/record.ts). */
+  options: { callModel?: ModelCaller } = {},
 ): Promise<ReplayResult> {
   const target = fixture.adapter.capabilities
     ? withCapabilities(adapter, fixture.adapter.capabilities)
@@ -274,7 +276,7 @@ export async function replayRun(
   const model = replayModel(fixture.turns, fixture.model);
   const plan = await planRun(ctx, {
     adapter: target,
-    callModel: fixture.turns.length > 0 ? model.call : null,
+    callModel: options.callModel ?? (fixture.turns.length > 0 ? model.call : null),
     now,
     newId: () => `item-${String(++n).padStart(2, "0")}`,
   });

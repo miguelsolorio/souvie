@@ -44,6 +44,12 @@ export interface SubstitutionReference {
   productId: string;
   /** The pinned product's brand, as the retailer returns it today. Null when unknown. */
   brand: string | null;
+  /**
+   * The pinned product's name as the household confirmed it (product_matches.product_name). When
+   * the store no longer returns the product, a candidate whose brand starts this name is the
+   * same brand ("Northfork Creamery Pasture Eggs" and brand "Northfork Creamery").
+   */
+  name?: string | null;
 }
 
 export interface SubstitutionVerdict {
@@ -75,7 +81,15 @@ export function checkSubstitution(
   if (!reference || candidate.id === reference.productId) {
     return { allowed: true, substitution: false, crossesBrand: false, reason: null };
   }
-  const crossesBrand = !sameBrand(reference.brand, candidate.brand);
+  const namedBrand =
+    reference.brand === null &&
+    candidate.brand !== null &&
+    candidate.brand.trim().length > 0 &&
+    (reference.name ?? "")
+      .trim()
+      .toLowerCase()
+      .startsWith(`${candidate.brand.trim().toLowerCase()} `);
+  const crossesBrand = !(sameBrand(reference.brand, candidate.brand) || namedBrand);
   switch (policy.substitution) {
     case "none":
       return {

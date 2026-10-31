@@ -133,6 +133,15 @@ describe("substitution", () => {
     expect(any).toMatchObject({ allowed: true, substitution: true, crossesBrand: true });
   });
 
+  it("confirms the brand from the pinned name when the store no longer returns the product", () => {
+    const gone = { productId: "P", brand: null, name: "Northfork Creamery Pasture Eggs" };
+    expect(checkSubstitution({ substitution: "same_brand" }, gone, sameBrand)).toMatchObject({
+      allowed: true,
+      crossesBrand: false,
+    });
+    expect(checkSubstitution({ substitution: "same_brand" }, gone, otherBrand).allowed).toBe(false);
+  });
+
   it("with nothing pinned there is nothing to substitute", () => {
     expect(checkSubstitution({ substitution: "none" }, null, otherBrand)).toMatchObject({
       allowed: true,

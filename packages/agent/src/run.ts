@@ -171,6 +171,7 @@ export async function planRun(ctx: RunContext, deps: PlanDeps): Promise<PlanResu
     return {
       productId: pinned.productId,
       brand: pinnedProducts.get(pinned.productId)?.brand ?? null,
+      name: pinned.productName,
     };
   };
 

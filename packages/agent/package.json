@@ -11,10 +11,10 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p evals",
     "lint": "biome check .",
     "test": "vitest run",
-    "record": "node evals/record.ts"
+    "record": "tsx evals/record.ts"
   },
   "dependencies": {
     "@mp/core": "workspace:*",
@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "vitest": "^5.0.5"
   }

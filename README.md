@@ -19,7 +19,7 @@ See `docs/status.md` for the live ledger.
 
 ## Getting started
 
-You need Node 22 (22.23.4 or later, which Astro 7 requires; `.node-version` pins the exact version so CI runners do not fall back to an older 22.x in their tool cache), pnpm 9 (`corepack enable` picks the version pinned in `package.json`), and Xcode with an iOS Simulator for iOS. If `corepack` is not available, install pnpm under your Node 22 with `npm install -g pnpm@9`. Development runs against the hosted Supabase project. The local Supabase stack (`supabase start`) needs a container runtime, so it runs only in CI.
+You need Node 22 (22.23 or later, which Astro 7 requires; `.node-version` pins 22.23.4, because a bare major let CI runners pick a patch Astro rejects), pnpm 9 (`corepack enable` picks the version pinned in `package.json`), and Xcode with an iOS Simulator for iOS. If `corepack` is not available, install pnpm under your Node 22 with `npm install -g pnpm@9`. Development runs against the hosted Supabase project. The local Supabase stack (`supabase start`) needs a container runtime, so it runs only in CI.
 
 ```bash
 scripts/setup-git-identity.sh       # once per clone

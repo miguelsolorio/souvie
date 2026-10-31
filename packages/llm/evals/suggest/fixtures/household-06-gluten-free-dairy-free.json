@@ -1,0 +1,33 @@
+{
+  "name": "household-06-gluten-free-dairy-free",
+  "description": "Gluten free and dairy free together.",
+  "preferences": {
+    "allergies": [],
+    "diets": ["gluten_free", "dairy_free"],
+    "dislikes": [],
+    "cuisines": ["mexican"],
+    "weeknight_minutes": 60,
+    "dinners_per_week": 5
+  },
+  "expect": {
+    "minCandidates": 6,
+    "mustExclude": [
+      "shrimp-spaghetti",
+      "margherita-pizza",
+      "beef-broccoli",
+      "tikka-masala",
+      "pesto-pasta",
+      "egg-fried-rice",
+      "tahini-noodles",
+      "naan-pizzas-unparsed",
+      "buttermilk-pancakes-dinner"
+    ],
+    "mustInclude": [
+      "black-bean-tacos",
+      "coconut-chickpea-curry",
+      "lemon-chicken-sheet-pan",
+      "tofu-peanut-noodles",
+      "veggie-stir-fry"
+    ]
+  }
+}

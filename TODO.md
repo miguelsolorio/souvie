@@ -50,10 +50,11 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] WS16 (starter catalog, sonnet): reviewed and merged as 4fb32da (PR #13), 2026-10-30.
 - [ ] **Human:** Miguel skims `supabase/seed/catalog/README.md` before the catalog loads into the hosted project (with the hosted release).
 - [x] Orchestrator migration `20261030140000_recipes_catalog_read.sql` (catalog read policies) merged as c152769 (PR #11).
-- [ ] Review, merge, wave 3 summary.
+- [x] Review, merge, wave 3 summary (WS04, WS06, WS16 merged 2026-10-30; WS08 appended when it lands).
 
 ## 5. Wave 4: grocery list
 
+- [ ] CCR5: `containerCount` and `container` in `packages/core` (orchestrator) before dispatch.
 - [ ] Dispatch WS05 (sonnet). Review, merge, summary.
 
 ## 6. Wave 5: the shopping agent

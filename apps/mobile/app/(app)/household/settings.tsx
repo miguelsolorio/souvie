@@ -9,7 +9,7 @@ import {
   useSupabase,
 } from "@mp/db";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Redirect, useRouter } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { Button } from "../../../src/components/Button";
@@ -18,12 +18,17 @@ import { TextField } from "../../../src/components/TextField";
 import { CREATE_HOUSEHOLD_ROUTE, HOME_ROUTE } from "../../../src/features/auth/routes";
 import { InviteSection } from "../../../src/features/household/InviteSection";
 import { MemberRow } from "../../../src/features/household/MemberRow";
+import { RecheckNoticeLine } from "../../../src/features/onboarding/components";
+import { KrogerSettingsSection } from "../../../src/features/onboarding/KrogerSettingsSection";
+import { EDIT_START_HREF } from "../../../src/features/onboarding/onboardingState";
 import { confirmAction } from "../../../src/lib/confirm";
 
 export default function HouseholdSettingsScreen() {
   const client = useSupabase();
   const queryClient = useQueryClient();
   const router = useRouter();
+  // The result of re-checking the planned weeks, when the person just edited food preferences.
+  const { notice } = useLocalSearchParams<{ notice?: string }>();
   const { user } = useSession();
   const household = useHousehold();
   const members = useHouseholdMembers(household.data?.id);
@@ -130,6 +135,20 @@ export default function HouseholdSettingsScreen() {
         ) : null}
       </Section>
 
+      <Section title="Food preferences">
+        <Text className="text-sm text-neutral-600">
+          Who you cook for, diets and allergies, dislikes, time, and budget. Your allergies and
+          diets are applied to the whole household's plan.
+        </Text>
+        <RecheckNoticeLine value={notice} />
+        <Button
+          testID="edit-food-preferences"
+          label="Edit food preferences"
+          variant="secondary"
+          onPress={() => router.push(EDIT_START_HREF)}
+        />
+      </Section>
+
       <Section title="Members">
         {members.isPending ? <Text className="text-sm text-neutral-500">Loading</Text> : null}
         {members.isError ? (
@@ -150,6 +169,10 @@ export default function HouseholdSettingsScreen() {
       </Section>
 
       {isOwner ? <InviteSection householdId={current.id} /> : null}
+
+      <Section title="Kroger (QFC and Fred Meyer)">
+        <KrogerSettingsSection householdId={current.id} isOwner={isOwner} zip={current.zip} />
+      </Section>
 
       <ErrorText>{error}</ErrorText>
 

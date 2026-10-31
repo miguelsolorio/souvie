@@ -438,6 +438,14 @@ verify_jwt = true
 import_map = "./functions/export-data/deno.json"
 entrypoint = "./functions/export-data/index.ts"
 
+# Onboarding and suggestions (WS06): drafts a week of dinners, swaps one, and builds the calibration
+# cards. verify_jwt stays on: it answers only for a signed-in member of the household in the body.
+[functions.suggest]
+enabled = true
+verify_jwt = true
+import_map = "./functions/suggest/deno.json"
+entrypoint = "./functions/suggest/index.ts"
+
 [analytics]
 enabled = true
 port = 54327

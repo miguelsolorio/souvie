@@ -1,0 +1,1528 @@
+{
+  "_readme": "Shared corpus for the suggest hard-filter tests and eval. Labels are human-authored ground truth: contains = allergens really present, breaks = diets violated. A line is [rawText, ontologyName | null, truth?]; truth names what an unparsed line contains. owner: household = the fixture household, other = another household's recipe, catalog = shared catalog.",
+  "ingredients": [
+    {
+      "name": "all-purpose flour",
+      "category": "baking"
+    },
+    {
+      "name": "almond",
+      "category": "baking",
+      "plural": "almonds"
+    },
+    {
+      "name": "almond flour",
+      "category": "baking"
+    },
+    {
+      "name": "almond milk",
+      "category": "dairy"
+    },
+    {
+      "name": "avocado",
+      "category": "produce",
+      "plural": "avocados"
+    },
+    {
+      "name": "bacon",
+      "category": "meat"
+    },
+    {
+      "name": "basil",
+      "category": "produce"
+    },
+    {
+      "name": "bean sprouts",
+      "category": "produce"
+    },
+    {
+      "name": "beer",
+      "category": "beverages"
+    },
+    {
+      "name": "bell pepper",
+      "category": "produce",
+      "plural": "bell peppers"
+    },
+    {
+      "name": "black beans",
+      "category": "canned"
+    },
+    {
+      "name": "black pepper",
+      "category": "spices"
+    },
+    {
+      "name": "blue cheese",
+      "category": "dairy"
+    },
+    {
+      "name": "bread",
+      "category": "bakery"
+    },
+    {
+      "name": "breadcrumbs",
+      "category": "bakery"
+    },
+    {
+      "name": "broccoli",
+      "category": "produce"
+    },
+    {
+      "name": "butter",
+      "category": "dairy"
+    },
+    {
+      "name": "butter lettuce",
+      "category": "produce"
+    },
+    {
+      "name": "carrot",
+      "category": "produce",
+      "plural": "carrots"
+    },
+    {
+      "name": "cauliflower",
+      "category": "produce"
+    },
+    {
+      "name": "celery",
+      "category": "produce"
+    },
+    {
+      "name": "cheddar",
+      "category": "dairy"
+    },
+    {
+      "name": "chicken breast",
+      "category": "meat"
+    },
+    {
+      "name": "chicken broth",
+      "category": "canned"
+    },
+    {
+      "name": "chicken thighs",
+      "category": "meat"
+    },
+    {
+      "name": "chickpeas",
+      "category": "canned"
+    },
+    {
+      "name": "cilantro",
+      "category": "produce"
+    },
+    {
+      "name": "cocoa powder",
+      "category": "baking"
+    },
+    {
+      "name": "coconut milk",
+      "category": "canned"
+    },
+    {
+      "name": "cod fillet",
+      "category": "seafood",
+      "plural": "cod fillets"
+    },
+    {
+      "name": "corn",
+      "category": "produce"
+    },
+    {
+      "name": "corn tortilla",
+      "category": "bakery",
+      "plural": "corn tortillas"
+    },
+    {
+      "name": "cornstarch",
+      "category": "baking"
+    },
+    {
+      "name": "couscous",
+      "category": "pantry"
+    },
+    {
+      "name": "crab meat",
+      "category": "seafood"
+    },
+    {
+      "name": "crushed tomatoes",
+      "category": "canned"
+    },
+    {
+      "name": "cucumber",
+      "category": "produce"
+    },
+    {
+      "name": "cumin",
+      "category": "spices"
+    },
+    {
+      "name": "curry paste",
+      "category": "international"
+    },
+    {
+      "name": "egg",
+      "category": "eggs",
+      "plural": "eggs"
+    },
+    {
+      "name": "feta",
+      "category": "dairy"
+    },
+    {
+      "name": "fish sauce",
+      "category": "international"
+    },
+    {
+      "name": "flank steak",
+      "category": "meat"
+    },
+    {
+      "name": "flour tortilla",
+      "category": "bakery",
+      "plural": "flour tortillas"
+    },
+    {
+      "name": "garam masala",
+      "category": "spices"
+    },
+    {
+      "name": "garlic",
+      "category": "produce"
+    },
+    {
+      "name": "gelatin",
+      "category": "baking"
+    },
+    {
+      "name": "ginger",
+      "category": "produce"
+    },
+    {
+      "name": "green onion",
+      "category": "produce",
+      "plural": "green onions"
+    },
+    {
+      "name": "ground beef",
+      "category": "meat"
+    },
+    {
+      "name": "ground turkey",
+      "category": "meat"
+    },
+    {
+      "name": "heavy cream",
+      "category": "dairy"
+    },
+    {
+      "name": "honey",
+      "category": "pantry"
+    },
+    {
+      "name": "hummus",
+      "category": "pantry"
+    },
+    {
+      "name": "italian sausage",
+      "category": "meat"
+    },
+    {
+      "name": "kale",
+      "category": "produce"
+    },
+    {
+      "name": "lemon",
+      "category": "produce",
+      "plural": "lemons"
+    },
+    {
+      "name": "lentils",
+      "category": "pantry"
+    },
+    {
+      "name": "lime",
+      "category": "produce",
+      "plural": "limes"
+    },
+    {
+      "name": "milk",
+      "category": "dairy"
+    },
+    {
+      "name": "mozzarella",
+      "category": "dairy"
+    },
+    {
+      "name": "mushroom",
+      "category": "produce",
+      "plural": "mushrooms"
+    },
+    {
+      "name": "naan",
+      "category": "bakery"
+    },
+    {
+      "name": "oats",
+      "category": "pantry"
+    },
+    {
+      "name": "olive",
+      "category": "canned",
+      "plural": "olives"
+    },
+    {
+      "name": "olive oil",
+      "category": "pantry"
+    },
+    {
+      "name": "onion",
+      "category": "produce",
+      "plural": "onions"
+    },
+    {
+      "name": "oregano",
+      "category": "spices"
+    },
+    {
+      "name": "parmesan",
+      "category": "dairy"
+    },
+    {
+      "name": "parsley",
+      "category": "produce"
+    },
+    {
+      "name": "peanut",
+      "category": "snacks",
+      "plural": "peanuts"
+    },
+    {
+      "name": "peanut butter",
+      "category": "pantry"
+    },
+    {
+      "name": "penne",
+      "category": "pantry"
+    },
+    {
+      "name": "pesto",
+      "category": "pantry"
+    },
+    {
+      "name": "pine nuts",
+      "category": "baking"
+    },
+    {
+      "name": "pizza dough",
+      "category": "bakery"
+    },
+    {
+      "name": "pork shoulder",
+      "category": "meat"
+    },
+    {
+      "name": "potato",
+      "category": "produce",
+      "plural": "potatoes"
+    },
+    {
+      "name": "quinoa",
+      "category": "pantry"
+    },
+    {
+      "name": "red onion",
+      "category": "produce"
+    },
+    {
+      "name": "red wine",
+      "category": "beverages"
+    },
+    {
+      "name": "rice",
+      "category": "pantry"
+    },
+    {
+      "name": "rice noodles",
+      "category": "pantry"
+    },
+    {
+      "name": "romaine lettuce",
+      "category": "produce"
+    },
+    {
+      "name": "salmon fillet",
+      "category": "seafood",
+      "plural": "salmon fillets"
+    },
+    {
+      "name": "salt",
+      "category": "spices"
+    },
+    {
+      "name": "sesame oil",
+      "category": "pantry"
+    },
+    {
+      "name": "sesame seeds",
+      "category": "spices"
+    },
+    {
+      "name": "shrimp",
+      "category": "seafood",
+      "plural": "shrimp"
+    },
+    {
+      "name": "soy sauce",
+      "category": "international"
+    },
+    {
+      "name": "spaghetti",
+      "category": "pantry"
+    },
+    {
+      "name": "spinach",
+      "category": "produce"
+    },
+    {
+      "name": "sugar",
+      "category": "baking"
+    },
+    {
+      "name": "sweet potato",
+      "category": "produce",
+      "plural": "sweet potatoes"
+    },
+    {
+      "name": "tahini",
+      "category": "pantry"
+    },
+    {
+      "name": "tamari",
+      "category": "international"
+    },
+    {
+      "name": "tempeh",
+      "category": "produce"
+    },
+    {
+      "name": "tofu",
+      "category": "produce"
+    },
+    {
+      "name": "tomato",
+      "category": "produce",
+      "plural": "tomatoes"
+    },
+    {
+      "name": "tomato sauce",
+      "category": "canned"
+    },
+    {
+      "name": "vegetable broth",
+      "category": "canned"
+    },
+    {
+      "name": "walnut",
+      "category": "baking",
+      "plural": "walnuts"
+    },
+    {
+      "name": "white wine",
+      "category": "beverages"
+    },
+    {
+      "name": "worcestershire sauce",
+      "category": "pantry"
+    },
+    {
+      "name": "yogurt",
+      "category": "dairy"
+    },
+    {
+      "name": "zucchini",
+      "category": "produce"
+    }
+  ],
+  "recipes": [
+    {
+      "key": "shrimp-spaghetti",
+      "title": "Garlic shrimp spaghetti",
+      "cuisine": "italian",
+      "tags": ["dinner", "pasta"],
+      "prepMin": 10,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["12 oz spaghetti", "spaghetti"],
+        ["1 lb large shrimp, peeled and deveined", "shrimp"],
+        ["4 cloves garlic, sliced", "garlic"],
+        ["3 tbsp olive oil", "olive oil"],
+        ["1/4 cup chopped parsley", "parsley"],
+        ["1 lemon, juiced", "lemon"]
+      ],
+      "labels": {
+        "contains": ["shellfish", "wheat"],
+        "breaks": ["gluten_free", "kosher", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "prawn-skewers-unparsed",
+      "title": "Grilled prawn skewers",
+      "cuisine": "mediterranean",
+      "tags": ["dinner", "grill"],
+      "prepMin": 15,
+      "cookMin": 8,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1 lb jumbo prawns", null, "shrimp"],
+        ["3 tbsp olive oil", "olive oil"],
+        ["2 cloves garlic, minced", "garlic"],
+        ["1 lemon, zested", "lemon"]
+      ],
+      "labels": {
+        "contains": ["shellfish"],
+        "breaks": ["kosher", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "salmon-rice-bowl",
+      "title": "Salmon and rice bowls",
+      "cuisine": "japanese",
+      "tags": ["dinner", "bowl"],
+      "prepMin": 15,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["4 salmon fillets", "salmon fillet"],
+        ["2 cups cooked rice", "rice"],
+        ["1 cucumber, sliced", "cucumber"],
+        ["2 tbsp soy sauce", "soy sauce"],
+        ["1 tbsp sesame seeds", "sesame seeds"],
+        ["2 green onions", "green onion"]
+      ],
+      "labels": {
+        "contains": ["fish", "sesame", "soy", "wheat"],
+        "breaks": ["gluten_free", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "baked-cod",
+      "title": "Lemon baked cod",
+      "cuisine": "american",
+      "tags": ["dinner", "fish"],
+      "prepMin": 10,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["4 cod fillets", "cod fillet"],
+        ["2 tbsp butter, melted", "butter"],
+        ["1 lemon, sliced", "lemon"],
+        ["1/2 cup breadcrumbs", "breadcrumbs"],
+        ["2 tbsp chopped parsley", "parsley"]
+      ],
+      "labels": {
+        "contains": ["fish", "milk", "wheat"],
+        "breaks": ["dairy_free", "gluten_free", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "crab-cakes",
+      "title": "Crab cakes",
+      "cuisine": "american",
+      "tags": ["dinner", "seafood"],
+      "prepMin": 20,
+      "cookMin": 10,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1 lb lump crab meat", "crab meat"],
+        ["1 egg", "egg"],
+        ["1/2 cup breadcrumbs", "breadcrumbs"],
+        ["2 tbsp mayonnaise", null, "mayonnaise"],
+        ["1 tsp Worcestershire sauce", "worcestershire sauce"]
+      ],
+      "labels": {
+        "contains": ["egg", "fish", "shellfish", "wheat"],
+        "breaks": ["gluten_free", "kosher", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "pad-thai",
+      "title": "Shrimp pad thai",
+      "cuisine": "thai",
+      "tags": ["dinner", "noodles"],
+      "prepMin": 20,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["8 oz rice noodles", "rice noodles"],
+        ["8 oz shrimp", "shrimp"],
+        ["2 eggs", "egg"],
+        ["1/2 cup chopped roasted peanuts", "peanut"],
+        ["2 tbsp fish sauce", "fish sauce"],
+        ["1 cup bean sprouts", "bean sprouts"],
+        ["1 lime", "lime"]
+      ],
+      "labels": {
+        "contains": ["egg", "fish", "peanut", "shellfish"],
+        "breaks": ["kosher", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "lemon-chicken-sheet-pan",
+      "title": "Sheet pan lemon chicken and potatoes",
+      "cuisine": "mediterranean",
+      "tags": ["dinner", "chicken"],
+      "prepMin": 15,
+      "cookMin": 40,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["2 lb bone-in chicken thighs", "chicken thighs"],
+        ["1.5 lb baby potatoes", "potato"],
+        ["2 lemons", "lemon"],
+        ["3 tbsp olive oil", "olive oil"],
+        ["1 tsp dried oregano", "oregano"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": ["pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "tikka-masala",
+      "title": "Chicken tikka masala",
+      "cuisine": "indian",
+      "tags": ["dinner", "curry"],
+      "prepMin": 20,
+      "cookMin": 30,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1.5 lb chicken breast", "chicken breast"],
+        ["1 cup plain yogurt", "yogurt"],
+        ["1 can crushed tomatoes", "crushed tomatoes"],
+        ["1 cup heavy cream", "heavy cream"],
+        ["1 onion, diced", "onion"],
+        ["1 tbsp garam masala", "garam masala"],
+        ["1 tbsp grated ginger", "ginger"]
+      ],
+      "labels": {
+        "contains": ["milk"],
+        "breaks": ["dairy_free", "pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "beef-broccoli",
+      "title": "Beef and broccoli",
+      "cuisine": "chinese",
+      "tags": ["dinner", "stir fry"],
+      "prepMin": 15,
+      "cookMin": 10,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1 lb flank steak, sliced", "flank steak"],
+        ["4 cups broccoli florets", "broccoli"],
+        ["1/4 cup soy sauce", "soy sauce"],
+        ["1 tbsp cornstarch", "cornstarch"],
+        ["2 cups cooked rice", "rice"]
+      ],
+      "labels": {
+        "contains": ["soy", "wheat"],
+        "breaks": ["gluten_free", "pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "bacon-pasta-carbonara",
+      "title": "Spaghetti carbonara",
+      "cuisine": "italian",
+      "tags": ["dinner", "pasta"],
+      "prepMin": 10,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["12 oz spaghetti", "spaghetti"],
+        ["6 oz bacon, chopped", "bacon"],
+        ["3 eggs", "egg"],
+        ["1 cup grated parmesan", "parmesan"],
+        ["black pepper", "black pepper"]
+      ],
+      "labels": {
+        "contains": ["egg", "milk", "wheat"],
+        "breaks": [
+          "dairy_free",
+          "gluten_free",
+          "halal",
+          "kosher",
+          "pescatarian",
+          "vegan",
+          "vegetarian"
+        ]
+      }
+    },
+    {
+      "key": "turkey-chili",
+      "title": "Turkey chili",
+      "cuisine": "american",
+      "tags": ["dinner", "chili"],
+      "prepMin": 15,
+      "cookMin": 40,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1 lb ground turkey", "ground turkey"],
+        ["1 can black beans", "black beans"],
+        ["1 can crushed tomatoes", "crushed tomatoes"],
+        ["1 onion, diced", "onion"],
+        ["2 tsp cumin", "cumin"],
+        ["1 cup shredded cheddar", "cheddar"]
+      ],
+      "labels": {
+        "contains": ["milk"],
+        "breaks": ["dairy_free", "pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "sausage-peppers",
+      "title": "Sausage and peppers",
+      "cuisine": "italian",
+      "tags": ["dinner", "skillet"],
+      "prepMin": 10,
+      "cookMin": 25,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1 lb Italian sausage", "italian sausage"],
+        ["3 bell peppers, sliced", "bell pepper"],
+        ["1 onion, sliced", "onion"],
+        ["2 cloves garlic", "garlic"],
+        ["1 can crushed tomatoes", "crushed tomatoes"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": ["halal", "kosher", "pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "pulled-pork-tacos",
+      "title": "Pulled pork tacos",
+      "cuisine": "mexican",
+      "tags": ["dinner", "tacos", "slow cooker"],
+      "prepMin": 20,
+      "cookMin": 360,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["3 lb pork shoulder", "pork shoulder"],
+        ["12 corn tortillas", "corn tortilla"],
+        ["1 red onion, pickled", "red onion"],
+        ["1/2 cup cilantro", "cilantro"],
+        ["2 limes", "lime"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": ["halal", "kosher", "pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "beef-stew-red-wine",
+      "title": "Beef stew with red wine",
+      "cuisine": "french",
+      "tags": ["dinner", "stew"],
+      "prepMin": 20,
+      "cookMin": 120,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["2 lb ground beef", "ground beef"],
+        ["2 cups red wine", "red wine"],
+        ["3 carrots", "carrot"],
+        ["3 stalks celery", "celery"],
+        ["1 onion", "onion"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": ["halal", "pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "caesar-chicken-salad",
+      "title": "Chicken Caesar salad",
+      "cuisine": "american",
+      "tags": ["dinner", "salad"],
+      "prepMin": 15,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["2 chicken breasts, grilled", "chicken breast"],
+        ["2 heads romaine lettuce", "romaine lettuce"],
+        ["1/2 cup Caesar dressing", null, "caesar dressing"],
+        ["1 cup croutons", null, "croutons"],
+        ["1/4 cup shaved parmesan", "parmesan"]
+      ],
+      "labels": {
+        "contains": ["egg", "fish", "milk", "wheat"],
+        "breaks": ["dairy_free", "gluten_free", "pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "black-bean-tacos",
+      "title": "Black bean tacos",
+      "cuisine": "mexican",
+      "tags": ["dinner", "tacos", "vegan"],
+      "prepMin": 10,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["8 corn tortillas", "corn tortilla"],
+        ["1 can black beans", "black beans"],
+        ["1 avocado", "avocado"],
+        ["1/4 cup cilantro", "cilantro"],
+        ["1 tsp cumin", "cumin"],
+        ["1 lime", "lime"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": []
+      }
+    },
+    {
+      "key": "coconut-chickpea-curry",
+      "title": "Coconut chickpea curry",
+      "cuisine": "indian",
+      "tags": ["dinner", "curry", "vegan"],
+      "prepMin": 10,
+      "cookMin": 25,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1 can chickpeas", "chickpeas"],
+        ["1 can coconut milk", "coconut milk"],
+        ["2 tbsp curry paste", "curry paste"],
+        ["1 cup spinach", "spinach"],
+        ["2 cups cooked rice", "rice"],
+        ["1 onion", "onion"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": []
+      }
+    },
+    {
+      "key": "tofu-peanut-noodles",
+      "title": "Peanut tofu noodles",
+      "cuisine": "thai",
+      "tags": ["dinner", "noodles", "vegan"],
+      "prepMin": 15,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["8 oz rice noodles", "rice noodles"],
+        ["14 oz firm tofu", "tofu"],
+        ["1/4 cup peanut butter", "peanut butter"],
+        ["2 tbsp tamari", "tamari"],
+        ["1 lime", "lime"],
+        ["2 green onions", "green onion"]
+      ],
+      "labels": {
+        "contains": ["peanut", "soy"],
+        "breaks": []
+      }
+    },
+    {
+      "key": "margherita-pizza",
+      "title": "Margherita pizza",
+      "cuisine": "italian",
+      "tags": ["dinner", "pizza"],
+      "prepMin": 30,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1 lb pizza dough", "pizza dough"],
+        ["8 oz fresh mozzarella", "mozzarella"],
+        ["1 cup tomato sauce", "tomato sauce"],
+        ["1/4 cup basil leaves", "basil"],
+        ["2 tbsp olive oil", "olive oil"]
+      ],
+      "labels": {
+        "contains": ["milk", "wheat"],
+        "breaks": ["dairy_free", "gluten_free", "vegan"]
+      }
+    },
+    {
+      "key": "veggie-stir-fry",
+      "title": "Veggie stir fry with rice",
+      "cuisine": "chinese",
+      "tags": ["dinner", "stir fry", "vegan"],
+      "prepMin": 15,
+      "cookMin": 10,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["4 cups broccoli", "broccoli"],
+        ["2 carrots", "carrot"],
+        ["1 bell pepper", "bell pepper"],
+        ["2 tbsp tamari", "tamari"],
+        ["1 tbsp grated ginger", "ginger"],
+        ["2 cups cooked rice", "rice"]
+      ],
+      "labels": {
+        "contains": ["soy"],
+        "breaks": []
+      }
+    },
+    {
+      "key": "mushroom-risotto",
+      "title": "Mushroom risotto",
+      "cuisine": "italian",
+      "tags": ["dinner", "rice"],
+      "prepMin": 10,
+      "cookMin": 35,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1.5 cups arborio rice", "rice"],
+        ["8 oz mushrooms", "mushroom"],
+        ["4 cups vegetable broth", "vegetable broth"],
+        ["1/2 cup white wine", "white wine"],
+        ["1/2 cup grated parmesan", "parmesan"],
+        ["2 tbsp butter", "butter"]
+      ],
+      "labels": {
+        "contains": ["milk"],
+        "breaks": ["dairy_free", "halal", "vegan"]
+      }
+    },
+    {
+      "key": "cauliflower-steaks",
+      "title": "Roasted cauliflower steaks",
+      "cuisine": "american",
+      "tags": ["dinner", "vegan"],
+      "prepMin": 10,
+      "cookMin": 30,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["2 large heads cauliflower, cut into steaks", "cauliflower"],
+        ["3 tbsp olive oil", "olive oil"],
+        ["1 tsp cumin", "cumin"],
+        ["1/4 cup parsley", "parsley"],
+        ["1 lemon", "lemon"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": []
+      }
+    },
+    {
+      "key": "lentil-soup",
+      "title": "Lentil soup",
+      "cuisine": "mediterranean",
+      "tags": ["dinner", "soup", "vegan"],
+      "prepMin": 10,
+      "cookMin": 35,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1.5 cups lentils", "lentils"],
+        ["3 carrots", "carrot"],
+        ["3 ribs celery", "celery"],
+        ["1 onion", "onion"],
+        ["6 cups vegetable broth", "vegetable broth"],
+        ["1 tsp cumin", "cumin"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": []
+      }
+    },
+    {
+      "key": "butter-lettuce-wraps",
+      "title": "Butter lettuce chicken wraps",
+      "cuisine": "american",
+      "tags": ["dinner", "wraps"],
+      "prepMin": 15,
+      "cookMin": 10,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1 lb ground turkey", "ground turkey"],
+        ["1 head butter lettuce", "butter lettuce"],
+        ["1 cucumber", "cucumber"],
+        ["2 tbsp tamari", "tamari"],
+        ["1 tsp grated ginger", "ginger"]
+      ],
+      "labels": {
+        "contains": ["soy"],
+        "breaks": ["pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "hummus-bowl",
+      "title": "Hummus and quinoa bowls",
+      "cuisine": "middle eastern",
+      "tags": ["dinner", "bowl", "vegetarian"],
+      "prepMin": 15,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1 cup quinoa", "quinoa"],
+        ["1 cup hummus", "hummus"],
+        ["1 cucumber", "cucumber"],
+        ["1 cup cherry tomatoes", "tomato"],
+        ["1/2 cup crumbled feta", "feta"]
+      ],
+      "labels": {
+        "contains": ["milk", "sesame"],
+        "breaks": ["dairy_free", "vegan"]
+      }
+    },
+    {
+      "key": "pesto-pasta",
+      "title": "Pesto pasta",
+      "cuisine": "italian",
+      "tags": ["dinner", "pasta", "vegetarian"],
+      "prepMin": 5,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["12 oz penne", "penne"],
+        ["1/2 cup pesto", "pesto"],
+        ["1 cup cherry tomatoes", "tomato"],
+        ["1 cup spinach", "spinach"]
+      ],
+      "labels": {
+        "contains": ["milk", "tree_nut", "wheat"],
+        "breaks": ["dairy_free", "gluten_free", "vegan"]
+      }
+    },
+    {
+      "key": "almond-crusted-chicken",
+      "title": "Almond flour crusted chicken",
+      "cuisine": "american",
+      "tags": ["dinner", "chicken"],
+      "prepMin": 15,
+      "cookMin": 20,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["4 chicken breasts", "chicken breast"],
+        ["1 cup almond flour", "almond flour"],
+        ["1 egg", "egg"],
+        ["1 lemon", "lemon"]
+      ],
+      "labels": {
+        "contains": ["egg", "tree_nut"],
+        "breaks": ["pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "walnut-quinoa-salad",
+      "title": "Walnut quinoa salad",
+      "cuisine": "mediterranean",
+      "tags": ["dinner", "salad", "vegetarian"],
+      "prepMin": 15,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1 cup quinoa", "quinoa"],
+        ["1/2 cup chopped walnuts", "walnut"],
+        ["1 cup kale", "kale"],
+        ["1/2 cup crumbled feta", "feta"],
+        ["2 tbsp olive oil", "olive oil"]
+      ],
+      "labels": {
+        "contains": ["milk", "tree_nut"],
+        "breaks": ["dairy_free", "vegan"]
+      }
+    },
+    {
+      "key": "egg-fried-rice",
+      "title": "Egg fried rice",
+      "cuisine": "chinese",
+      "tags": ["dinner", "rice", "vegetarian"],
+      "prepMin": 10,
+      "cookMin": 10,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["3 cups cooked rice", "rice"],
+        ["3 eggs", "egg"],
+        ["1 cup frozen peas and carrots", "carrot"],
+        ["2 tbsp soy sauce", "soy sauce"],
+        ["1 tbsp sesame oil", "sesame oil"],
+        ["2 green onions", "green onion"]
+      ],
+      "labels": {
+        "contains": ["egg", "sesame", "soy", "wheat"],
+        "breaks": ["gluten_free", "vegan"]
+      }
+    },
+    {
+      "key": "shakshuka",
+      "title": "Shakshuka",
+      "cuisine": "middle eastern",
+      "tags": ["dinner", "eggs", "vegetarian"],
+      "prepMin": 10,
+      "cookMin": 25,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["6 eggs", "egg"],
+        ["1 can crushed tomatoes", "crushed tomatoes"],
+        ["1 bell pepper", "bell pepper"],
+        ["1 onion", "onion"],
+        ["1 tsp cumin", "cumin"],
+        ["1/4 cup crumbled feta", "feta"]
+      ],
+      "labels": {
+        "contains": ["egg", "milk"],
+        "breaks": ["dairy_free", "vegan"]
+      }
+    },
+    {
+      "key": "sweet-potato-chili",
+      "title": "Sweet potato black bean chili",
+      "cuisine": "american",
+      "tags": ["dinner", "chili", "vegan"],
+      "prepMin": 15,
+      "cookMin": 35,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["2 sweet potatoes, cubed", "sweet potato"],
+        ["2 cans black beans", "black beans"],
+        ["1 can crushed tomatoes", "crushed tomatoes"],
+        ["1 onion", "onion"],
+        ["2 tsp cumin", "cumin"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": []
+      }
+    },
+    {
+      "key": "buttermilk-pancakes-dinner",
+      "title": "Buttermilk pancakes for dinner",
+      "cuisine": "american",
+      "tags": ["dinner", "pancakes"],
+      "prepMin": 10,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["2 cups all-purpose flour", "all-purpose flour"],
+        ["1 3/4 cups buttermilk", null, "buttermilk"],
+        ["2 eggs", "egg"],
+        ["2 tbsp sugar", "sugar"],
+        ["3 tbsp butter, melted", "butter"]
+      ],
+      "labels": {
+        "contains": ["egg", "milk", "wheat"],
+        "breaks": ["dairy_free", "gluten_free", "vegan"]
+      }
+    },
+    {
+      "key": "gazpacho",
+      "title": "Gazpacho",
+      "cuisine": "spanish",
+      "tags": ["dinner", "soup", "vegan"],
+      "prepMin": 15,
+      "cookMin": 0,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["2 lb ripe tomatoes", "tomato"],
+        ["1 cucumber", "cucumber"],
+        ["1 bell pepper", "bell pepper"],
+        ["2 cloves garlic", "garlic"],
+        ["3 tbsp olive oil", "olive oil"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": []
+      }
+    },
+    {
+      "key": "celery-ribs-stew",
+      "title": "Celery rib and bean stew",
+      "cuisine": "american",
+      "tags": ["dinner", "stew", "vegan"],
+      "prepMin": 10,
+      "cookMin": 30,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["6 celery ribs, sliced", "celery"],
+        ["2 cans chickpeas", "chickpeas"],
+        ["1 onion", "onion"],
+        ["4 cups vegetable broth", "vegetable broth"],
+        ["2 carrots", "carrot"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": []
+      }
+    },
+    {
+      "key": "blue-cheese-burgers",
+      "title": "Blue cheese burgers",
+      "cuisine": "american",
+      "tags": ["dinner", "burgers"],
+      "prepMin": 10,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1.5 lb ground beef", "ground beef"],
+        ["4 oz blue cheese", "blue cheese"],
+        ["4 hamburger buns", null, "hamburger buns"],
+        ["1 red onion", "red onion"],
+        ["1 tomato", "tomato"]
+      ],
+      "labels": {
+        "contains": ["milk", "wheat"],
+        "breaks": ["dairy_free", "gluten_free", "pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "olive-tapenade-pasta",
+      "title": "Olive and tomato pasta",
+      "cuisine": "italian",
+      "tags": ["dinner", "pasta", "vegan"],
+      "prepMin": 10,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["12 oz spaghetti", "spaghetti"],
+        ["1 cup olives, chopped", "olive"],
+        ["1 can crushed tomatoes", "crushed tomatoes"],
+        ["3 cloves garlic", "garlic"],
+        ["2 tbsp olive oil", "olive oil"]
+      ],
+      "labels": {
+        "contains": ["wheat"],
+        "breaks": ["gluten_free"]
+      }
+    },
+    {
+      "key": "miso-salmon-unparsed",
+      "title": "Miso glazed salmon",
+      "cuisine": "japanese",
+      "tags": ["dinner", "fish"],
+      "prepMin": 10,
+      "cookMin": 15,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["4 salmon fillets", null, "salmon"],
+        ["3 tbsp white miso paste", null, "miso"],
+        ["1 tbsp honey", "honey"],
+        ["2 cups steamed rice", "rice"]
+      ],
+      "labels": {
+        "contains": ["fish", "soy"],
+        "breaks": ["vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "tahini-noodles",
+      "title": "Sesame tahini noodles",
+      "cuisine": "chinese",
+      "tags": ["dinner", "noodles", "vegan"],
+      "prepMin": 10,
+      "cookMin": 10,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["8 oz spaghetti", "spaghetti"],
+        ["1/4 cup tahini", "tahini"],
+        ["2 tbsp soy sauce", "soy sauce"],
+        ["1 tbsp sesame oil", "sesame oil"],
+        ["1 cucumber", "cucumber"]
+      ],
+      "labels": {
+        "contains": ["sesame", "soy", "wheat"],
+        "breaks": ["gluten_free"]
+      }
+    },
+    {
+      "key": "naan-pizzas-unparsed",
+      "title": "Naan pizzas",
+      "cuisine": "american",
+      "tags": ["dinner", "pizza"],
+      "prepMin": 10,
+      "cookMin": 10,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["4 naan breads", null, "naan"],
+        ["1 cup shredded mozzarella", null, "mozzarella"],
+        ["1/2 cup tomato sauce", "tomato sauce"],
+        ["1 cup spinach", "spinach"]
+      ],
+      "labels": {
+        "contains": ["milk", "wheat"],
+        "breaks": ["dairy_free", "gluten_free", "vegan"]
+      }
+    },
+    {
+      "key": "plain-roasted-vegetables",
+      "title": "Plain roasted vegetables and rice",
+      "cuisine": "american",
+      "tags": ["dinner", "vegan"],
+      "prepMin": 10,
+      "cookMin": 35,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["2 zucchini", "zucchini"],
+        ["2 carrots", "carrot"],
+        ["1 onion", "onion"],
+        ["3 tbsp olive oil", "olive oil"],
+        ["2 cups cooked rice", "rice"],
+        ["salt and pepper", null, "salt"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": []
+      }
+    },
+    {
+      "key": "jackfruit-no-times",
+      "title": "Black bean and rice bowls (no times listed)",
+      "cuisine": "mexican",
+      "tags": ["dinner", "bowl", "vegan"],
+      "prepMin": null,
+      "cookMin": null,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["2 cans black beans", "black beans"],
+        ["2 cups cooked rice", "rice"],
+        ["1 avocado", "avocado"],
+        ["1 lime", "lime"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": []
+      }
+    },
+    {
+      "key": "slow-braise-long",
+      "title": "Slow braised short ribs",
+      "cuisine": "american",
+      "tags": ["dinner", "braise"],
+      "prepMin": 30,
+      "cookMin": 180,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["3 lb beef short ribs", null, "beef"],
+        ["2 cups red wine", "red wine"],
+        ["2 carrots", "carrot"],
+        ["1 onion", "onion"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": ["halal", "pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "chocolate-cake",
+      "title": "Chocolate cake",
+      "cuisine": "american",
+      "tags": ["Dessert", "baking"],
+      "prepMin": 20,
+      "cookMin": 35,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["2 cups all-purpose flour", "all-purpose flour"],
+        ["2 eggs", "egg"],
+        ["1 cup milk", "milk"],
+        ["1/2 cup cocoa powder", "cocoa powder"],
+        ["1 cup sugar", "sugar"]
+      ],
+      "labels": {
+        "contains": ["egg", "milk", "wheat"],
+        "breaks": ["dairy_free", "gluten_free", "vegan"]
+      }
+    },
+    {
+      "key": "berry-smoothie",
+      "title": "Berry smoothie",
+      "cuisine": "american",
+      "tags": ["Drinks"],
+      "prepMin": 5,
+      "cookMin": 0,
+      "owner": "household",
+      "deleted": false,
+      "lines": [
+        ["1 cup yogurt", "yogurt"],
+        ["1 cup berries", null, "berries"],
+        ["1/2 cup milk", "milk"]
+      ],
+      "labels": {
+        "contains": ["milk"],
+        "breaks": ["dairy_free", "vegan"]
+      }
+    },
+    {
+      "key": "other-household-peanut",
+      "title": "Someone else's peanut stew",
+      "cuisine": "african",
+      "tags": ["dinner", "stew"],
+      "prepMin": 15,
+      "cookMin": 30,
+      "owner": "other",
+      "deleted": false,
+      "lines": [
+        ["1/2 cup peanut butter", "peanut butter"],
+        ["2 sweet potatoes", "sweet potato"],
+        ["1 onion", "onion"]
+      ],
+      "labels": {
+        "contains": ["peanut"],
+        "breaks": []
+      }
+    },
+    {
+      "key": "deleted-safe-dish",
+      "title": "Deleted soup",
+      "cuisine": "american",
+      "tags": ["dinner", "soup"],
+      "prepMin": 10,
+      "cookMin": 20,
+      "owner": "household",
+      "deleted": true,
+      "lines": [["4 cups vegetable broth", "vegetable broth"], ["2 carrots", "carrot"]],
+      "labels": {
+        "contains": [],
+        "breaks": []
+      }
+    },
+    {
+      "key": "catalog-sheet-pan-sausage",
+      "title": "Catalog: sheet pan sausage and vegetables",
+      "cuisine": "american",
+      "tags": ["dinner", "sheet pan"],
+      "prepMin": 10,
+      "cookMin": 30,
+      "owner": "catalog",
+      "deleted": false,
+      "lines": [
+        ["1 lb Italian sausage", "italian sausage"],
+        ["2 zucchini", "zucchini"],
+        ["1 bell pepper", "bell pepper"],
+        ["2 tbsp olive oil", "olive oil"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": ["halal", "kosher", "pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "catalog-chickpea-salad",
+      "title": "Catalog: lemon chickpea salad",
+      "cuisine": "mediterranean",
+      "tags": ["dinner", "salad", "vegan"],
+      "prepMin": 10,
+      "cookMin": 0,
+      "owner": "catalog",
+      "deleted": false,
+      "lines": [
+        ["2 cans chickpeas", "chickpeas"],
+        ["1 cucumber", "cucumber"],
+        ["1 lemon", "lemon"],
+        ["2 tbsp olive oil", "olive oil"],
+        ["1 cup parsley", "parsley"]
+      ],
+      "labels": {
+        "contains": [],
+        "breaks": []
+      }
+    },
+    {
+      "key": "catalog-shrimp-tacos",
+      "title": "Catalog: shrimp tacos",
+      "cuisine": "mexican",
+      "tags": ["dinner", "tacos"],
+      "prepMin": 15,
+      "cookMin": 10,
+      "owner": "catalog",
+      "deleted": false,
+      "lines": [
+        ["1 lb shrimp", "shrimp"],
+        ["8 corn tortillas", "corn tortilla"],
+        ["1 avocado", "avocado"],
+        ["1 lime", "lime"],
+        ["1/4 cup cilantro", "cilantro"]
+      ],
+      "labels": {
+        "contains": ["shellfish"],
+        "breaks": ["kosher", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "catalog-peanut-chicken",
+      "title": "Catalog: peanut chicken satay",
+      "cuisine": "thai",
+      "tags": ["dinner", "chicken"],
+      "prepMin": 15,
+      "cookMin": 20,
+      "owner": "catalog",
+      "deleted": false,
+      "lines": [
+        ["1.5 lb chicken breast", "chicken breast"],
+        ["1/3 cup peanut butter", "peanut butter"],
+        ["2 tbsp soy sauce", "soy sauce"],
+        ["1 lime", "lime"]
+      ],
+      "labels": {
+        "contains": ["peanut", "soy", "wheat"],
+        "breaks": ["gluten_free", "pescatarian", "vegan", "vegetarian"]
+      }
+    },
+    {
+      "key": "catalog-egg-curry",
+      "title": "Catalog: egg curry",
+      "cuisine": "indian",
+      "tags": ["dinner", "curry", "vegetarian"],
+      "prepMin": 10,
+      "cookMin": 25,
+      "owner": "catalog",
+      "deleted": false,
+      "lines": [
+        ["6 eggs, hard boiled", "egg"],
+        ["1 can crushed tomatoes", "crushed tomatoes"],
+        ["1 tbsp garam masala", "garam masala"],
+        ["1 onion", "onion"],
+        ["1 tbsp ginger", "ginger"]
+      ],
+      "labels": {
+        "contains": ["egg"],
+        "breaks": ["vegan"]
+      }
+    }
+  ]
+}

@@ -78,6 +78,7 @@ Native iOS passes Apple's identity token and a hashed nonce straight to `signInW
 ## Edge Functions
 
 - `health` (WS00): liveness and version.
+- `suggest` (WS06): plans a week of dinners, picks the onboarding swipe cards, and fills recipe embeddings. SQL hard filters for allergies, diets, and never-foods; Sonnet composes; a ranked fallback covers the rest. `functions/suggest/README.md` has the request, the errors, and what it reads and writes.
 - `export-data` (WS01): returns a JSON export of the caller's profile, memberships, households, rosters, invites (owners only), and audit events. It queries as the caller, so RLS decides what is included. Later workstreams add to the `SECTIONS` list in `functions/export-data/handler.ts`; they do not replace the function.
 
 ## Testing

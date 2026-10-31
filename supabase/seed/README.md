@@ -7,6 +7,7 @@ What lands here (`docs/01-architecture.md` §Monorepo layout):
 - Ingredient ontology and aliases (WS03, below)
 - The starter catalog of original dinner recipes (WS16, below)
 - Sample recipes (WS02)
+- Washington stores for onboarding (WS06, below)
 - Test households and members for local development and the RLS tests (WS01)
 
 Rules:
@@ -116,3 +117,18 @@ psql "$WORKER_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/seed/20_catalog.sql
 ```
 
 Both files are idempotent. Do not load `20_catalog.sql` before the person who owns the content has approved `catalog/README.md`. After the first load, the catalog's embeddings are empty until WS06's `suggest` function runs its `backfill` mode.
+
+## Washington stores (WS06)
+
+`stores_wa.csv` is a stopgap list of Washington stores for the onboarding "stores" step: QFC, Fred Meyer, Safeway, Albertsons, Haggen, and Costco, 90 rows. The app bundles it as `apps/mobile/src/features/onboarding/storesWa.generated.ts`, so the step works before a household exists and needs no table.
+
+| Column | Meaning |
+|---|---|
+| `banner` | `qfc`, `fredmeyer`, `safeway`, `albertsons`, `haggen`, or `costco` |
+| `name`, `address`, `zip` | As a store directory lists them. No commas in a field |
+| `lat`, `lng` | Approximate: the middle of the store's neighborhood or city. They exist to sort by distance, nothing finer |
+| `kroger_location_id` | Kroger's 8 digit location id when known, else empty. Empty on every row today |
+
+Addresses and ZIPs were read from the retailers' own Washington pages and public store directories on 2026-10-30. Stores close and move; the live Kroger lookup (WS07) is the source for QFC and Fred Meyer, and the app uses these rows for them only when it is unreachable. Verify before launch.
+
+A store's id is the Kroger location id when there is one, else `<banner>-<zip>-<street slug>`. That id is what `preferences.primary_store_id` holds. After editing the CSV run `node supabase/seed/stores.ts` to rewrite the module; `node supabase/seed/stores.ts --check` fails when it is stale, and `pnpm test` runs the same check.

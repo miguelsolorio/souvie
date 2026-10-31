@@ -1,6 +1,7 @@
 // Identity schemas (WS01). Row shapes mirror supabase/migrations/*_identity.sql, so they use
 // the database's snake_case column names. docs/02-data-model.md §Identity is the reference.
 import { z } from "zod";
+import { Allergen, Diet } from "./preferences.ts";
 
 /** Timestamps as PostgREST returns them, for example 2026-10-30T07:12:14.123456+00:00. */
 const Timestamp = z.iso.datetime({ offset: true });
@@ -58,18 +59,19 @@ export const LEFTOVER_STANCES = ["avoid", "ok", "prefer"] as const;
  * because allergies and dislikes belong to a person. Every field is optional: the column starts
  * as {} and WS06 fills it during onboarding.
  *
- * Unknown keys pass through untouched, so WS06 can extend the shape without this schema
- * stripping its fields. The allergen and diet vocabularies (ALLERGENS, DIETS) are WS06's, so
- * `diets` and `allergies` are plain string lists here. Allergies are enforced in SQL and
- * deterministic code, never by a model alone (CLAUDE.md).
+ * Unknown keys pass through untouched, so a later workstream can extend the shape without this
+ * schema stripping its fields. `diets` and `allergies` use the vocabularies WS06 defines in
+ * preferences.ts (DIETS, ALLERGENS), so a misspelled allergen is rejected instead of silently
+ * filtering nothing. Allergies are enforced in SQL and deterministic code, never by a model
+ * alone (CLAUDE.md).
  */
 export const ProfilePreferences = z.looseObject({
   household_size: z
     .object({ adults: z.number().int().min(1), kids: z.number().int().min(0) })
     .optional(),
   dinners_per_week: z.number().int().min(1).max(7).optional(),
-  diets: z.array(z.string()).optional(),
-  allergies: z.array(z.string()).optional(),
+  diets: z.array(Diet).optional(),
+  allergies: z.array(Allergen).optional(),
   dislikes: z.array(z.string()).optional(),
   cuisines: z.array(z.string()).optional(),
   skill: z.enum(SKILL_LEVELS).optional(),

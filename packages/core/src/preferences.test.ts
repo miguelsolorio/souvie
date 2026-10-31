@@ -28,6 +28,7 @@ import {
   SUGGEST_ERROR_MESSAGES,
   SuggestCalibrationResponse,
   SuggestEntry,
+  SuggestPlanResponse,
   SuggestRequest,
   SuggestSwapResponse,
   SWAP_EXCLUDE_MAX,
@@ -464,6 +465,24 @@ describe("suggest contract", () => {
     expect(SuggestSwapResponse.safeParse({ ok: true, entries: [entry, entry] }).success).toBe(
       false,
     );
+  });
+
+  it("lets a plan response say what a re-check changed, and stays valid without it", () => {
+    const base = {
+      ok: true,
+      planId: HOUSEHOLD,
+      entries: [{ date: "2026-11-02", slot: "dinner", recipeId: RECIPE, servings: 4, why: "" }],
+      composedBy: "existing",
+    };
+    expect(SuggestPlanResponse.safeParse(base).success).toBe(true);
+    const withRepair = SuggestPlanResponse.parse({
+      ...base,
+      repaired: { replaced: 1, removed: 2 },
+    });
+    expect(withRepair.repaired).toEqual({ replaced: 1, removed: 2 });
+    expect(
+      SuggestPlanResponse.safeParse({ ...base, repaired: { replaced: -1, removed: 0 } }).success,
+    ).toBe(false);
   });
 
   it("holds a why to 139 characters", () => {

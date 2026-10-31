@@ -536,6 +536,8 @@ describe("a draft for a week that already has a plan re-checks it (fix round)", 
       );
       expect(rows.filter((r) => r.why === CHANGED_WHY)).toHaveLength(changed.length);
       expect(model.parse.mock.calls.length).toBe(calls);
+      // The response says how much it changed, so the app can tell the person.
+      expect(second.repaired).toEqual({ replaced: changed.length, removed: 0 });
       // The replacement is logged.
       const logged = warn.mock.calls.map((call) => String(call[0])).join("\n");
       expect(logged).toMatch(/replaced \d+ and removed \d+ planned dinner/);
@@ -571,6 +573,9 @@ describe("a draft for a week that already has a plan re-checks it (fix round)", 
         runtime,
       );
       expect(res.status).toBe(200);
+      const body = SuggestPlanResponse.parse(await res.json());
+      expect(body.repaired?.replaced).toBe(0);
+      expect(body.repaired?.removed).toBeGreaterThan(0);
       const rows = await planRows();
       // The cooked dinner is history and stays; planned ones that fail are gone, not kept.
       expect(rows.some((r) => r.date === cookedDate && r.status === "cooked")).toBe(true);
@@ -610,7 +615,47 @@ describe("a draft for a week that already has a plan re-checks it (fix round)", 
         ).json(),
       );
       expect(second.entries).toEqual(first.entries);
+      expect(second.repaired).toBeUndefined();
       expect(warn.mock.calls.map((call) => String(call[0])).join("\n")).not.toMatch(/replaced/);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("a replace with a date re-checks the dinners it keeps", async () => {
+    await insertHousemate({ allergies: [], dinners_per_week: 5 });
+    const model = fakeModel();
+    const runtime = runtimeWith({ anthropic: async () => model.client });
+    const first = await firstDraft(runtime);
+    const allergen = allergenInPlan(first.entries.map((e) => e.recipeId));
+    // The night to redo is one whose dinner is fine, so every violation is among the kept ones.
+    const redo = first.entries.find(
+      (e) => !(corpus.byId.get(e.recipeId)?.labels.contains ?? []).includes(allergen),
+    );
+    expect(redo, "a planned dinner without the allergen").toBeDefined();
+    const redoDate = redo?.date as string;
+    await setPreferences(HOUSEMATE, { allergies: [allergen], dinners_per_week: 5 });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const res = await post(
+        { householdId: FIXTURE_HOUSEHOLD, weekStart: WEEK, mode: "replace", date: redoDate },
+        "Bearer housemate",
+        runtime,
+      );
+      const body = SuggestPlanResponse.parse(await res.json());
+      // The response lists the night that was redone, and says the kept ones were changed.
+      expect(body.entries.map((e) => e.date)).toEqual([redoDate]);
+      expect(body.repaired?.replaced).toBeGreaterThan(0);
+      // Every dinner left in the week passes, including the ones the replace did not touch.
+      const rows = await planRows();
+      expect(rows).toHaveLength(5);
+      for (const row of rows) {
+        const labels = corpus.byId.get(row.recipe_id)?.labels.contains ?? [];
+        expect(labels, corpus.byId.get(row.recipe_id)?.key).not.toContain(allergen);
+        expect(labels).not.toContain("shellfish");
+      }
+      expect(rows.filter((r) => r.why === CHANGED_WHY)).toHaveLength(body.repaired?.replaced ?? -1);
+      expect(warn.mock.calls.map((call) => String(call[0])).join("\n")).toMatch(/replaced \d+/);
     } finally {
       warn.mockRestore();
     }

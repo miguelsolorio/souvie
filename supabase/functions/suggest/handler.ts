@@ -94,6 +94,12 @@ function startOfUtcDay(now: Date): string {
   ).toISOString();
 }
 
+/** What a re-check changed in a plan that already existed. */
+interface Repaired {
+  replaced: number;
+  removed: number;
+}
+
 /** The reason shown on a dinner that replaced one the household's allergies or diets ruled out. */
 export const CHANGED_WHY =
   "Changed because the earlier pick no longer fits your household's allergies or diets.";
@@ -290,15 +296,20 @@ async function runSuggest(
   }
 
   // --- draft and replace ------------------------------------------------------------------------
-  const existing = await store.getPlan(householdId, weekStart);
-  const dinnersThisWeek = (existing?.entries ?? []).filter((e) => e.slot === "dinner");
+  let existing = await store.getPlan(householdId, weekStart);
+  let dinnersThisWeek = (existing?.entries ?? []).filter((e) => e.slot === "dinner");
 
-  // A draft for a week that already has dinners returns them. A plan can be older than the
-  // household's allergies: a member may have added one since. So the dinners still planned are
-  // checked against the household's allergies and diets first, and any that fail are replaced
-  // from the ranked list (no model call) or, with nothing to replace them, removed.
-  const existingPlanResponse = async (plan: ExistingPlan): Promise<Response> => {
-    const planned = plan.entries.filter((e) => e.slot === "dinner" && e.status === "planned");
+  // A plan can be older than the household's allergies: a member may have added one since it was
+  // drafted. So the dinners still planned are checked against the household's allergies and diets,
+  // and any that fail are replaced from the ranked list (no model call) or, with nothing to
+  // replace them, removed. `exceptDate` leaves one night alone (a replace is about to redo it).
+  const repairPlan = async (
+    plan: ExistingPlan,
+    exceptDate?: string,
+  ): Promise<{ plan: ExistingPlan; counts: Repaired }> => {
+    const planned = plan.entries.filter(
+      (e) => e.slot === "dinner" && e.status === "planned" && e.date !== exceptDate,
+    );
     // Tastes (never-foods, minutes, dinner tags) belong to whoever asks, so they are not applied
     // to a plan someone else may have built or edited by hand. Safety applies to everyone.
     const safety = buildFilterSpec({
@@ -313,38 +324,43 @@ async function runSuggest(
       recipeIds: planned.map((e) => e.recipeId),
     });
     const bad = planned.filter((e) => failing.has(e.recipeId));
-    let current = plan;
-    if (bad.length > 0) {
-      const { candidates } = await fetchCandidates(runtime.sql, {
-        householdId,
-        spec,
-        tasteEmbedding: me.tasteEmbedding,
-        cuisines,
-        excludeIds: plan.entries.map((e) => e.recipeId),
-        now,
-        limit: MAX_CANDIDATES,
-        warn,
-      });
-      const picks = fallbackWeek(
-        candidates,
-        bad.slice(0, candidates.length).map((e) => e.date),
-        { servings: defaultServings(me), cuisines },
-      );
-      const changes = picks.map((pick, i) => ({
-        entryId: (bad[i] as { id: string }).id,
-        recipeId: pick.recipeId,
-        servings: bad[i]?.servings ?? defaultServings(me),
-        why: CHANGED_WHY,
-      }));
-      const remove = bad.slice(picks.length).map((e) => e.id);
-      await store.changeEntries({ householdId, changes, remove });
-      warn(
-        `suggest: household ${householdId} week ${weekStart}: replaced ${changes.length} and removed ${remove.length} planned dinner(s) that no longer pass the allergy and diet filters: ${bad
-          .map((e) => `${e.recipeId} (${failing.get(e.recipeId)?.[0] ?? "filtered"})`)
-          .join("; ")}`,
-      );
-      current = (await store.getPlan(householdId, weekStart)) ?? { id: plan.id, entries: [] };
-    }
+    if (bad.length === 0) return { plan, counts: { replaced: 0, removed: 0 } };
+
+    const { candidates } = await fetchCandidates(runtime.sql, {
+      householdId,
+      spec,
+      tasteEmbedding: me.tasteEmbedding,
+      cuisines,
+      excludeIds: plan.entries.map((e) => e.recipeId),
+      now,
+      limit: MAX_CANDIDATES,
+      warn,
+    });
+    const picks = fallbackWeek(
+      candidates,
+      bad.slice(0, candidates.length).map((e) => e.date),
+      { servings: defaultServings(me), cuisines },
+    );
+    const changes = picks.map((pick, i) => ({
+      entryId: (bad[i] as { id: string }).id,
+      recipeId: pick.recipeId,
+      servings: bad[i]?.servings ?? defaultServings(me),
+      why: CHANGED_WHY,
+    }));
+    const remove = bad.slice(picks.length).map((e) => e.id);
+    await store.changeEntries({ householdId, changes, remove });
+    warn(
+      `suggest: household ${householdId} week ${weekStart}: replaced ${changes.length} and removed ${remove.length} planned dinner(s) that no longer pass the allergy and diet filters: ${bad
+        .map((e) => `${e.recipeId} (${failing.get(e.recipeId)?.[0] ?? "filtered"})`)
+        .join("; ")}`,
+    );
+    const current = (await store.getPlan(householdId, weekStart)) ?? { id: plan.id, entries: [] };
+    return { plan: current, counts: { replaced: changes.length, removed: remove.length } };
+  };
+
+  // A draft for a week that already has dinners returns them, after the check above.
+  const existingPlanResponse = async (plan: ExistingPlan): Promise<Response> => {
+    const { plan: current, counts } = await repairPlan(plan);
     return json({
       ok: true,
       planId: current.id,
@@ -352,11 +368,21 @@ async function runSuggest(
         .filter((e) => e.slot === "dinner")
         .map((e) => entryFrom(e, defaultServings(me))),
       composedBy: "existing",
+      ...(counts.replaced + counts.removed > 0 ? { repaired: counts } : {}),
     });
   };
 
   if (request.mode === "draft" && dinnersThisWeek.length > 0 && existing) {
     return existingPlanResponse(existing);
+  }
+
+  // Replacing one night keeps the others, so they get the same check before anything is composed.
+  let repaired: Repaired = { replaced: 0, removed: 0 };
+  if (request.mode === "replace" && request.date && existing) {
+    const result = await repairPlan(existing, request.date);
+    existing = result.plan;
+    repaired = result.counts;
+    dinnersThisWeek = existing.entries.filter((e) => e.slot === "dinner");
   }
 
   const locked = dinnersThisWeek.filter((e) => e.status !== "planned");
@@ -519,6 +545,7 @@ async function runSuggest(
   };
   if (notes) response.notes = notes;
   if (shortBy > 0) response.shortBy = shortBy;
+  if (repaired.replaced + repaired.removed > 0) response.repaired = repaired;
   return json(response);
 }
 

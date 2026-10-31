@@ -330,9 +330,10 @@ export interface FilterSpec {
   excludedTags: string[];
   maxMinutes: number | null;
   /**
-   * True when the household has any allergy or diet. Both engines look for a violating ingredient
-   * line, so a recipe with no lines would pass every filter; with this set it is excluded instead.
-   * Nothing can be proven about a recipe that lists nothing.
+   * True when the household has an allergy or a diet with an ingredient rule. Both engines look for
+   * a violating ingredient line, so a recipe with no lines would pass every filter; with this set
+   * it is excluded instead. Nothing can be proven about a recipe that lists nothing. Diets with no
+   * rule (keto, paleo, low carb, omnivore) filter nothing, so they do not set it.
    */
   requireIngredientLines: boolean;
 }
@@ -432,7 +433,7 @@ export function buildFilterSpec(input: FilterInput): FilterSpec {
     categoryRuleExcepts: [...rules.values()].map((rule) => rule.except),
     excludedTags: [...tags],
     maxMinutes: typeof minutes === "number" && minutes > 0 ? Math.trunc(minutes) : null,
-    requireIngredientLines: allergies.length > 0 || diets.length > 0,
+    requireIngredientLines: allergies.length > 0 || diets.some((diet) => DIET_RULES[diet]),
   };
 }
 
@@ -470,23 +471,32 @@ export interface CandidateQueryOptions {
  * A recipe with no time on it passes the minutes filter (its time is unknown, not too long).
  *
  * Never-foods are matched per line. A line the parser resolved is judged by its canonical
- * ingredient: the term names that ingredient exactly (name, plural or alias), or is a whole word
- * in its name unless the ingredient is a pantry staple. So "olive" excludes olives but not olive
- * oil, and "pepper" excludes bell peppers but not black pepper; naming the staple itself
- * ("olive oil") excludes it. A line the parser did not resolve is judged by its raw text, whole
- * word, because nothing else is known about it.
+ * ingredient. A pantry staple (oil, salt, black pepper) is excluded only when the term is its exact
+ * name. Any other ingredient is excluded when the term is its name, its plural, or an alias, or is
+ * a whole word in its name. So "olive" excludes olives but not olive oil, and "pepper" excludes
+ * bell peppers but not black pepper, even though the seed aliases "pepper" to black pepper;
+ * naming the staple itself ("olive oil", "black pepper") excludes it. A line the parser did not
+ * resolve is judged by its raw text, whole word, because nothing else is known about it.
  */
 export function buildCandidateQuery(options: CandidateQueryOptions): BuiltQuery {
   const { spec } = options;
   const text = `
 with never_ids as (
+  -- The exact canonical name always counts, staple or not.
   select i.id
   from public.ingredients i
-  where i.name = any($6::text[]) or i.plural = any($6::text[])
+  where i.name = any($6::text[])
+  union
+  -- A plural or an alias counts for any ingredient that is not a pantry staple. The seed aliases
+  -- "pepper" to black pepper, so a staple would otherwise be removed by a word, not by its name.
+  select i.id
+  from public.ingredients i
+  where i.plural = any($6::text[]) and not coalesce(i.is_staple_default, false)
   union
   select a.ingredient_id
   from public.ingredient_aliases a
-  where a.alias = any($6::text[])
+  join public.ingredients i on i.id = a.ingredient_id
+  where a.alias = any($6::text[]) and not coalesce(i.is_staple_default, false)
 )
 select
   r.id,

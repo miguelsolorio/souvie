@@ -446,6 +446,13 @@ export const SuggestPlanResponse = z.object({
   notes: z.string().optional(),
   /** How many dinners short of the request the plan is, when too few recipes fit. */
   shortBy: z.number().int().min(1).optional(),
+  /**
+   * Present when the call changed dinners that were already planned because they no longer fit the
+   * household's allergies or diets: how many were replaced and how many removed (nothing fit).
+   */
+  repaired: z
+    .object({ replaced: z.number().int().min(0), removed: z.number().int().min(0) })
+    .optional(),
 });
 export type SuggestPlanResponse = z.infer<typeof SuggestPlanResponse>;
 

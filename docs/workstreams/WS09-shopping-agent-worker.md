@@ -144,6 +144,7 @@ KROGER_LIVE_TEST=1 pnpm --filter shopper-worker dev       # manual, local only: 
 ```
 
 ## Risks and notes
+- Orchestrator note (2026-10-30): the worker's direct Postgres connection bypasses RLS. Expect a decision in your brief, before dispatch, on running every transaction under `set local role service_role`; WS06's `suggest` function is the precedent and docs/05 records the posture.
 - R13: the model never emits UPCs or product IDs; it picks indices. Enforce this in the tool schema (`candidateIndex` integer) and in code (reject indices out of range, retry once, then flag the item `unmatched`).
 - R4: the allergen check is deterministic and runs on the proposed cart using `Product.allergens`. Where the catalog returns no allergen data, flag the item for review when the ingredient's ontology category is in a household allergen group.
 - R21: Kroger forbids storing search-derived data. `shopping_run_items.alternatives` holds only `{ productId, upc, name, size, price }` for the life of the run and is nulled when the run reaches `checked_out`, `failed`, or `cancelled`, or 7 days after `cart_ready`. Prices in the ledger are what the user approved, kept as the household's own purchase record. The orchestrator is seeking Kroger's written view on this; keep the nulling behind a config so it can be tightened.

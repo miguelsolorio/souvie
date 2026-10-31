@@ -27,15 +27,27 @@ export interface PickerTarget {
   entry?: string | undefined;
 }
 
+/** A query parameter, encoded: a value is data, and never gets to add a parameter of its own. */
+const param = (name: string, value: string) => `${name}=${encodeURIComponent(value)}`;
+
+/** Ids here are database UUIDs. Anything else in an `entry` parameter did not come from this app. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const isUuid = (value: unknown): value is string =>
+  typeof value === "string" && UUID.test(value);
+
 /**
  * The recipe picker. With `entry` it swaps that entry's recipe instead of adding a new entry.
  * With `added` it opens on a recipe the person just saved (see `afterRecipeSaved`). Only ids,
- * dates and slot names go in the URL.
+ * dates and slot names go in the URL, each encoded.
  */
 export function pickRoute(args: PickerTarget & { added?: string | undefined }): string {
-  const entry = args.entry ? `&entry=${args.entry}` : "";
-  const added = args.added ? `&added=${args.added}` : "";
-  return `${PLAN_ROUTE}/pick?date=${args.date}&slot=${args.slot}${entry}${added}`;
+  const query = [
+    param("date", args.date),
+    param("slot", args.slot),
+    ...(args.entry ? [param("entry", args.entry)] : []),
+    ...(args.added ? [param("added", args.added)] : []),
+  ];
+  return `${PLAN_ROUTE}/pick?${query.join("&")}`;
 }
 
 export const recipeRoute = (id: string) => `/recipes/${id}`;
@@ -50,25 +62,30 @@ const RETURN_TO_PICKER = "pick";
  * along as params so that saving a recipe can bring the person back to the same picker.
  */
 export function newRecipeFromPickerRoute(target: PickerTarget): string {
-  const entry = target.entry ? `&entry=${target.entry}` : "";
-  return `${NEW_RECIPE_ROUTE}?returnTo=${RETURN_TO_PICKER}&date=${target.date}&slot=${target.slot}${entry}`;
+  const query = [
+    param("returnTo", RETURN_TO_PICKER),
+    param("date", target.date),
+    param("slot", target.slot),
+    ...(target.entry ? [param("entry", target.entry)] : []),
+  ];
+  return `${NEW_RECIPE_ROUTE}?${query.join("&")}`;
 }
 
 /**
  * The picker to return to, read from the add-recipe screen's params, or null when the person came
  * from anywhere else (the Recipes tab, a share, a link). Anything malformed counts as "anywhere
- * else", so a hand-edited URL never strands the screen.
+ * else", so a hand-edited URL never strands the screen. That includes an `entry` that is not a
+ * UUID: sending the person back to a swap that names a made-up entry would be worse than sending
+ * them to the recipe. An empty `entry` is no entry.
  */
 export function parsePickerReturn(params: Record<string, unknown>): PickerTarget | null {
   if (params.returnTo !== RETURN_TO_PICKER) return null;
   const slot = MealSlot.safeParse(params.slot);
   const { date, entry } = params;
   if (typeof date !== "string" || !isIsoDate(date) || !slot.success) return null;
-  return {
-    date,
-    slot: slot.data,
-    ...(typeof entry === "string" && entry ? { entry } : {}),
-  };
+  if (entry === undefined || entry === "") return { date, slot: slot.data };
+  if (!isUuid(entry)) return null;
+  return { date, slot: slot.data, entry };
 }
 
 export type SavedRecipeNavigation =

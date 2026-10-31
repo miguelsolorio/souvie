@@ -1,11 +1,18 @@
 import { instructionsToSteps } from "@mp/core";
-import { recipeErrorMessage, useDeleteRecipe, useRecipe } from "@mp/db";
+import {
+  needsIngredientMatch,
+  recipeErrorMessage,
+  useDeleteRecipe,
+  useMatchIngredients,
+  useRecipe,
+} from "@mp/db";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { Button } from "../../../src/components/Button";
 import { ErrorText, LoadingScreen, Screen, Section } from "../../../src/components/Screen";
 import {
+  collapseSplitLines,
   formatMinutes,
   formatServings,
   groupIngredientLines,
@@ -24,7 +31,9 @@ export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const recipe = useRecipe(id);
   const remove = useDeleteRecipe();
+  const match = useMatchIngredients();
   const [error, setError] = useState<string | null>(null);
+  const [matchError, setMatchError] = useState<string | null>(null);
 
   if (recipe.isPending) return <LoadingScreen />;
 
@@ -53,7 +62,9 @@ export default function RecipeDetailScreen() {
   }
 
   const isCatalog = data.visibility === "catalog";
-  const groups = groupIngredientLines(data.ingredients);
+  // Lines the parser has not read yet: a failed or older import. Never for a starter recipe.
+  const showMatch = needsIngredientMatch(data);
+  const groups = groupIngredientLines(collapseSplitLines(data.ingredients));
   const steps = numberSteps(instructionsToSteps(data.instructions));
   const facts = [
     formatServings(data.servings),
@@ -61,6 +72,15 @@ export default function RecipeDetailScreen() {
     data.cook_min ? `Cook ${formatMinutes(data.cook_min)}` : null,
     data.cuisine,
   ].filter((part): part is string => Boolean(part));
+
+  function matchIngredients() {
+    if (!data) return;
+    setMatchError(null);
+    match.mutate(
+      { id: data.id, visibility: data.visibility },
+      { onError: (cause) => setMatchError(cause.message) },
+    );
+  }
 
   async function confirmDelete() {
     const ok = await confirmAction({
@@ -101,6 +121,25 @@ export default function RecipeDetailScreen() {
       ) : null}
 
       <Section title="Ingredients">
+        {showMatch ? (
+          <View
+            testID="match-ingredients-panel"
+            className="gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4"
+          >
+            <Text className="text-sm text-neutral-700">
+              These ingredients are not matched yet, so the grocery list cannot combine them with
+              the rest of your plan.
+            </Text>
+            <Button
+              testID="match-ingredients"
+              label="Match ingredients"
+              variant="secondary"
+              loading={match.isPending}
+              onPress={matchIngredients}
+            />
+            <ErrorText>{matchError}</ErrorText>
+          </View>
+        ) : null}
         <View testID="recipe-ingredients" className="gap-4">
           {groups.map((group) => (
             <View key={group.key} className="gap-2">

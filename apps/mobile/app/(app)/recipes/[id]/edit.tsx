@@ -1,9 +1,10 @@
 import { recipeErrorMessage, useRecipe, useUpdateRecipe } from "@mp/db";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Redirect, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Text } from "react-native";
 import { Button } from "../../../../src/components/Button";
 import { LoadingScreen, Screen } from "../../../../src/components/Screen";
+import { recipeRoute } from "../../../../src/features/plan/routes";
 import {
   draftFromRecipe,
   existingLines,
@@ -11,7 +12,10 @@ import {
 } from "../../../../src/features/recipes/draft";
 import { RecipeForm } from "../../../../src/features/recipes/RecipeForm";
 
-/** Edit a recipe. Ingredient lines left alone keep what the parser already worked out. */
+/**
+ * Edit a recipe. Ingredient lines left alone keep what the parser already worked out; lines the
+ * edit adds or changes are matched when the save finishes (useUpdateRecipe).
+ */
 export default function EditRecipeScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -36,6 +40,11 @@ export default function EditRecipeScreen() {
   }
 
   const current = recipe.data;
+
+  // A starter recipe belongs to no household: the detail screen offers no Edit, and the database
+  // would refuse the save. A deep link to its edit route goes to the recipe instead of a form
+  // that fails with a message about something else.
+  if (current.visibility === "catalog") return <Redirect href={recipeRoute(current.id)} />;
 
   return (
     <Screen title="Edit recipe">

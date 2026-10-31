@@ -58,6 +58,25 @@ export function filterRecipes(recipes: readonly RecipeSummary[], query: string):
   });
 }
 
+/**
+ * One line per written line. When the parser reads a line that names several ingredients ("salt
+ * and pepper to taste"), it keeps the first on the line's own row and adds a row for each other,
+ * all with the same position, section and text. The recipe shows what was written, once.
+ */
+export function collapseSplitLines<
+  T extends { position: number; group_name: string | null; raw_text: string },
+>(lines: readonly T[]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const line of lines) {
+    const key = `${line.position}\u0000${line.group_name ?? ""}\u0000${line.raw_text}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(line);
+  }
+  return out;
+}
+
 /** A recipe's ingredient lines split into runs that share a section heading, in order. */
 export function groupIngredientLines<T extends { id: string; group_name: string | null }>(
   lines: readonly T[],

@@ -173,20 +173,22 @@ describe("the add control", () => {
   });
 
   it("carries a swap target along, and the add-recipe screen reads it back", () => {
+    // An entry id is a UUID, and the add-recipe screen refuses anything else.
+    const entry = "9a2b7c1e-0000-4000-8000-000000000001";
     const screen = show({
       recipes: [lemon],
-      params: { ...PARAMS, slot: "lunch", entry: "e1" },
+      params: { ...PARAMS, slot: "lunch", entry },
     });
     screen.press("picker-add-recipe");
     const [href] = h.router.push.mock.calls[0] ?? [];
-    expect(href).toBe("/recipes/new?returnTo=pick&date=2026-11-03&slot=lunch&entry=e1");
+    expect(href).toBe(`/recipes/new?returnTo=pick&date=2026-11-03&slot=lunch&entry=${entry}`);
 
     const url = new URL(String(href), "https://app.test");
     expect(url.pathname).toBe("/recipes/new");
     expect(parsePickerReturn(Object.fromEntries(url.searchParams))).toEqual({
       date: "2026-11-03",
       slot: "lunch",
-      entry: "e1",
+      entry,
     });
   });
 });

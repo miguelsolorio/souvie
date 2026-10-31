@@ -35,6 +35,14 @@ if (result.ok) {
 - **Repeated lines.** The library collects ingredients in a `Set`, so "1/2 teaspoon salt" listed for the batter and again for the filling comes back once. The page's own `recipeIngredient` list is used to put repeats back, because a shopping list should count them.
 - **Bot checks.** A page that is a Cloudflare or Incapsula interstitial, or a 401, 403, 429, or 451, is `blocked`, and the model is not called on it.
 
+### Telling whether the household already has a recipe
+
+`src/dedupe.ts` is pure and has no imports, so the app reaches it through `@mp/recipe-import/dedupe` without the scrapers or the Anthropic SDK.
+
+- `normalizeSourceUrl(link)`: trim, drop the fragment, lowercase the scheme and host, drop tracking parameters (`utm_*`, `fbclid`, `gclid`, `dclid`, `msclkid`, `mc_cid`, `mc_eid`, `igshid`, `igsh`, `ref_src`, `_ga`, `oly_*`: the list `cleanSourceUrl` strips) and empty ones, strip trailing slashes from the path. The path keeps its case and the rest of the query its order. The SQL twin is `public.normalize_source_url`, which fills `recipes.source_url_normalized`; `dedupe.fixtures.ts` is one list of links both are tested against.
+- `normalizeTitle(title)` and `titleSearchPattern(title)`: case and spacing folded, and an `ilike` prefilter to find candidates. Used only when a recipe has no link.
+- `dedupeIngredientLines(lines)`: the first of two lines with the same text (spacing folded, case kept) under the same heading stays. The same text under two headings stays, and so do lines that name one ingredient in different words ("1 tbsp butter", "2 tbsp butter, melted"). The `recipe-import` function applies it to what an importer returns, before a draft is returned or a recipe saved. It runs after "Repeated lines" above and overrides it for a line a page lists twice under one heading (or none): that line ends up once. A page whose sections repeat a line ("1/2 tsp salt" for the batter and the filling) keeps both when the sections are named, and loses one when they are not. The importers and the golden set are unchanged; only what the function stores differs.
+
 ### Rules the code enforces
 
 - **No video platforms (R11).** `importFromUrl` refuses Instagram, TikTok, YouTube, Facebook, and Vimeo links before any request, including on a redirect hop. `importFromCaption` takes text and never fetches. Tests assert zero `fetch` calls (`src/url.test.ts`, `evals/import.eval.ts`).

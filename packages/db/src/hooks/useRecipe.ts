@@ -243,16 +243,26 @@ export function parseAfterWrite(
 export const MATCH_ERROR_MESSAGE =
   "We could not match the ingredients just now. Your recipe is saved. Try again in a moment.";
 
+/** The button's action: matches, or throws a `RecipeError` whose message the screen shows. */
+export async function matchOrThrow(
+  client: MpClient,
+  recipe: Pick<RecipeWithIngredients, "id" | "visibility">,
+): Promise<Extract<ParseOutcome, { ok: true }>> {
+  const outcome = await matchRecipeIngredients(client, recipe);
+  if (!outcome.ok) throw new RecipeError("unknown", MATCH_ERROR_MESSAGE);
+  return outcome;
+}
+
 /** "Match ingredients": reads every unread line of a household recipe. Throws when it fails. */
 export function useMatchIngredients() {
   const client = useSupabase();
   const queryClient = useQueryClient();
-  return useMutation<ParseOutcome, RecipeError, Pick<RecipeWithIngredients, "id" | "visibility">>({
-    mutationFn: async (recipe) => {
-      const outcome = await matchRecipeIngredients(client, recipe);
-      if (!outcome.ok) throw new RecipeError("unknown", MATCH_ERROR_MESSAGE);
-      return outcome;
-    },
+  return useMutation<
+    Extract<ParseOutcome, { ok: true }>,
+    RecipeError,
+    Pick<RecipeWithIngredients, "id" | "visibility">
+  >({
+    mutationFn: (recipe) => matchOrThrow(client, recipe),
     onSuccess: (_outcome, recipe) => refreshRecipe(queryClient, recipe.id),
   });
 }

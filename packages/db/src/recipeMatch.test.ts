@@ -17,6 +17,8 @@ import {
   createRecipe,
   createRecipeAndMatch,
   findDuplicateRecipe,
+  MATCH_ERROR_MESSAGE,
+  matchOrThrow,
   matchRecipeIngredients,
   needsIngredientMatch,
   PARSE_BUDGET_MS,
@@ -481,6 +483,26 @@ describe("Match ingredients", () => {
       reason: "catalog",
     });
     expect(calls).toHaveLength(0);
+  });
+
+  it("throws a message the screen can show when matching fails, and nothing when it works", async () => {
+    const down = recorder([], { invoke: async () => ({ data: null, error: new Error("down") }) });
+    const error = await matchOrThrow(down.client, { id: RECIPE, visibility: "household" }).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(RecipeError);
+    expect(error.message).toBe(MATCH_ERROR_MESSAGE);
+    expect(error.message).toMatch(/recipe is saved/);
+
+    const catalog = await matchOrThrow(recorder().client, {
+      id: RECIPE,
+      visibility: "catalog",
+    }).catch((e) => e);
+    expect(catalog).toBeInstanceOf(RecipeError);
+
+    await expect(
+      matchOrThrow(recorder().client, { id: RECIPE, visibility: "household" }),
+    ).resolves.toMatchObject({ ok: true });
   });
 
   it("can be tried again after a failure", async () => {

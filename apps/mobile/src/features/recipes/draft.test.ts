@@ -292,4 +292,46 @@ describe("formErrors", () => {
       formErrors({ ...emptyForm(), title: "x", ingredients: "# Sauce\n\n#" }).ingredients,
     ).toBeDefined();
   });
+
+  describe("for the Write tab, which wants whole servings", () => {
+    const base = { ...emptyForm(), title: "Soup", ingredients: "2 cups stock" };
+    const whole = { wholeServings: true };
+
+    it("accepts a whole number, and no servings at all", () => {
+      expect(formErrors({ ...base, servings: "4" }, whole).servings).toBeUndefined();
+      expect(formErrors({ ...base, servings: " 12 " }, whole).servings).toBeUndefined();
+      expect(formErrors(base, whole).servings).toBeUndefined();
+      expect(hasErrors(formErrors({ ...base, servings: "6" }, whole))).toBe(false);
+    });
+
+    it("asks for a whole number when it is anything else", () => {
+      for (const servings of ["1 1/2", "1/2", "4.5", "0", "00", "-2", "lots", "4 people", "1e3"]) {
+        expect(formErrors({ ...base, servings }, whole).servings, servings).toBe(
+          "Use a whole number such as 4.",
+        );
+      }
+    });
+
+    it("still stops at the limit", () => {
+      expect(formErrors({ ...base, servings: "5000" }, whole).servings).toMatch(/too many/);
+    });
+
+    it("still asks for a title and an ingredient", () => {
+      const errors = formErrors({ ...emptyForm(), servings: "4" }, whole);
+      expect(errors.title).toMatch(/title/);
+      expect(errors.ingredients).toMatch(/ingredient/);
+    });
+
+    it("leaves every other form alone: an imported 1 1/2 or 4.5 still saves", () => {
+      for (const servings of ["1 1/2", "4.5", "1/2"]) {
+        expect(formErrors({ ...base, servings }).servings, servings).toBeUndefined();
+        expect(
+          formErrors({ ...base, servings }, { wholeServings: false }).servings,
+        ).toBeUndefined();
+      }
+      expect(formErrors({ ...base, servings: "0" }).servings).toBe(
+        "Use a number such as 4 or 1 1/2.",
+      );
+    });
+  });
 });

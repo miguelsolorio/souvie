@@ -1264,7 +1264,7 @@ export type Database = {
       };
       revoke_browser_connection: { Args: { connection_id: string }; Returns: undefined };
       run_screenshot_readable: { Args: { object_name: string }; Returns: boolean };
-      run_screenshots_max_age: { Args: Record<PropertyKey, never>; Returns: unknown };
+      run_screenshots_max_age: { Args: Record<PropertyKey, never>; Returns: string };
       section_order_is_valid: { Args: { names: string[] }; Returns: boolean };
       tier3_consent_is_valid: { Args: { c: Json }; Returns: boolean };
       tier3_new_session_key: { Args: { p_connection_id: string }; Returns: string };

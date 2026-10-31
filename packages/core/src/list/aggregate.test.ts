@@ -296,6 +296,21 @@ describe("amounts", () => {
     expect(ginger.find((i) => i.unit === "knob")?.qty).toBe(2);
   });
 
+  it("uses the larger of the two bounds even when a bad parse put them the wrong way round", () => {
+    const { draft } = runFixture(
+      base([
+        { text: "2 to 1 cups spinach", qty: 2, qtyMax: 1, unit: "cup", ingredient: "spinach" },
+      ]),
+    );
+    expect(draft.items[0]).toMatchObject({ qty: 2, unit: "cup" });
+    const onlyMax = runFixture(
+      base([
+        { text: "up to 3 cups spinach", qty: null, qtyMax: 3, unit: "cup", ingredient: "spinach" },
+      ]),
+    );
+    expect(onlyMax.draft.items[0]).toMatchObject({ qty: 3, unit: "cup" });
+  });
+
   it("treats a bare number as a count", () => {
     const { draft } = runFixture(
       base([{ text: "3 carrots", qty: 3, unit: null, ingredient: "carrot" }]),

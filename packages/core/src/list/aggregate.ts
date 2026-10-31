@@ -168,7 +168,10 @@ function makeSource(
     unit = container.container;
   } else {
     // The upper bound of a range, so the list never comes up short (WS03 report).
-    const base = line.qty_max ?? line.qty;
+    const base =
+      line.qty_max != null && line.qty != null
+        ? Math.max(line.qty, line.qty_max)
+        : (line.qty_max ?? line.qty);
     qty = base === null || base === undefined ? null : base * factor;
     const code = normalizeUnit(rawUnit);
     // A size word describes the item, not how many to buy (units.ts): 2 large onions are 2 onions.

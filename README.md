@@ -35,7 +35,7 @@ pnpm supabase db push               # apply supabase/migrations to the hosted pr
 | `pnpm dev` | Expo dev server (web at http://localhost:8081) and the worker together, through Turborepo. Expo's key shortcuts need the next command |
 | `pnpm --filter @mp/mobile start` | Expo only. Press `w` for web at http://localhost:8081, `i` for the iOS Simulator |
 | `pnpm --filter @mp/shopper-worker dev` | Worker only. Logs `connected`, then `idle` every 5 seconds |
-| `pnpm supabase functions deploy <name> --use-api` | Deploy an Edge Function to the hosted project without Docker |
+| `pnpm supabase functions deploy <name> --use-api --project-ref <ref>` | Deploy an Edge Function to the hosted project without Docker. `--project-ref` (the host part of `EXPO_PUBLIC_SUPABASE_URL`) means no `supabase link` is needed, which matters when the access token lacks `projects_read` |
 | `pnpm supabase db push` | Apply new migrations to the hosted project. If your access token cannot `link`, `pnpm supabase db push --db-url "$WORKER_DATABASE_URL"` pushes over the database connection instead (percent-encode the password); `--dry-run` first lists what would apply |
 | `pnpm typecheck` | `tsc --noEmit` in every workspace |
 | `pnpm lint` | Biome check of the whole repo. `pnpm format` applies fixes |

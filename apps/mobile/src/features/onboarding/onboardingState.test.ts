@@ -3,8 +3,13 @@ import { describe, expect, it } from "vitest";
 import {
   buildProfileUpdate,
   draftFromPreferences,
+  EDIT_RETURN_ROUTE,
+  EDIT_START_HREF,
+  EDIT_STEPS,
   guardOnboardingRoute,
   hasAnsweredAllergies,
+  isEditParam,
+  isEditStep,
   nextHref,
   OnboardingError,
   onboardingHref,
@@ -74,6 +79,57 @@ describe("guardOnboardingRoute", () => {
 
   it("stays put for a segment that is not a screen", () => {
     expect(guardOnboardingRoute("_layout", 2)).toBeNull();
+  });
+});
+
+describe("editing food preferences after onboarding (opened from household settings)", () => {
+  it("lets a finished person reopen the food preference screens, and only those", () => {
+    for (const screen of [
+      "02-eaters",
+      "03-diets-allergies",
+      "04-dislikes-cuisines",
+      "05-time-skill",
+      "06-budget-leftovers",
+    ]) {
+      expect(guardOnboardingRoute(screen, 8, "/", true), screen).toBeNull();
+      // Without ?edit=1 the same screen still sends them home.
+      expect(guardOnboardingRoute(screen, 8, "/", false), screen).toBe("/");
+    }
+    for (const screen of ["01-household", "07-stores", "08-calibrate", "_layout", undefined]) {
+      expect(guardOnboardingRoute(screen, 8, "/", true), String(screen)).toBe(EDIT_RETURN_ROUTE);
+    }
+  });
+
+  it("ignores ?edit=1 for someone who has not finished: the normal rules apply", () => {
+    expect(guardOnboardingRoute("07-stores", 2, "/", true)).toBe("/03-diets-allergies");
+    expect(guardOnboardingRoute("03-diets-allergies", 2, "/", true)).toBeNull();
+  });
+
+  it("walks the five screens and then returns to settings", () => {
+    expect(EDIT_STEPS).toEqual([2, 3, 4, 5, 6]);
+    expect(EDIT_START_HREF).toBe("/02-eaters?edit=1");
+    expect(nextHref(2, true)).toBe("/03-diets-allergies?edit=1");
+    expect(nextHref(5, true)).toBe("/06-budget-leftovers?edit=1");
+    // Continue on the last of them goes back to settings, not on to stores.
+    expect(nextHref(6, true)).toBe(EDIT_RETURN_ROUTE);
+    expect(previousHref(3, true)).toBe("/02-eaters?edit=1");
+    // Back on the first of them goes back to settings, not to the household screen.
+    expect(previousHref(2, true)).toBe(EDIT_RETURN_ROUTE);
+  });
+
+  it("leaves the normal walk alone", () => {
+    expect(nextHref(6)).toBe("/07-stores");
+    expect(previousHref(2)).toBe("/01-household");
+  });
+
+  it("reads only edit=1 as edit mode", () => {
+    expect(isEditParam("1")).toBe(true);
+    expect(isEditParam(["1"])).toBe(true);
+    expect(isEditParam("0")).toBe(false);
+    expect(isEditParam("true")).toBe(false);
+    expect(isEditParam(undefined)).toBe(false);
+    expect(isEditStep(4)).toBe(true);
+    expect(isEditStep(7)).toBe(false);
   });
 });
 

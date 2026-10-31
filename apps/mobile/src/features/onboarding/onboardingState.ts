@@ -41,7 +41,8 @@ export function stepOfSegment(segment: string | undefined): number | null {
 /**
  * Where to redirect from the screen being shown, or null to stay. Nobody may open a screen past
  * the one after their last completed screen (a typed URL cannot skip the allergy question), and
- * once onboarding is complete the group sends people home.
+ * once onboarding is complete the group sends people home, unless `edit` is set (household
+ * settings opens the food preference screens with `?edit=1`), which allows those screens only.
  *
  * The last screen is the exception: it marks onboarding complete and then plans the first week,
  * and the person has to stay to see how that went. Revisiting it later is harmless (it only offers
@@ -51,24 +52,68 @@ export function guardOnboardingRoute(
   segment: string | undefined,
   completedStep: number | null | undefined,
   home = "/",
+  edit = false,
 ): string | null {
   const done = Math.min(Math.max(Math.trunc(completedStep ?? 0), 0), ONBOARDING_STEP_COUNT);
   const shown = stepOfSegment(segment);
-  if (done >= ONBOARDING_STEP_COUNT) return shown === ONBOARDING_STEP_COUNT ? null : home;
+  if (done >= ONBOARDING_STEP_COUNT) {
+    // Someone who finished can reopen the food preference screens from settings (`?edit=1`), and
+    // only those: the household, stores, and swipe screens have their own homes.
+    if (edit) return shown !== null && isEditStep(shown) ? null : EDIT_RETURN_ROUTE;
+    return shown === ONBOARDING_STEP_COUNT ? null : home;
+  }
   if (shown === null) return null;
   if (shown > done + 1) return resumeHref(done);
   return null;
 }
 
-/** The route before `step`, or null on the first screen. */
-export function previousHref(step: number): string | null {
+// ---------------------------------------------------------------------------------------
+// Editing food preferences after onboarding (opened from household settings)
+// ---------------------------------------------------------------------------------------
+
+/** The screens a finished person can reopen: who eats, diets and allergies, tastes, time, budget. */
+export const EDIT_STEPS: readonly number[] = [2, 3, 4, 5, 6];
+
+/** Where editing starts and ends. */
+export const EDIT_RETURN_ROUTE = "/household/settings";
+
+export function isEditStep(step: number): boolean {
+  return EDIT_STEPS.includes(step);
+}
+
+/** True for the `edit` query parameter a link from settings sets. Only "1" counts. */
+export function isEditParam(value: string | string[] | undefined): boolean {
+  return (Array.isArray(value) ? value[0] : value) === "1";
+}
+
+/** A route in edit mode: the screen with `?edit=1`. */
+export function editHref(route: string): string {
+  return `${onboardingHref(route)}?edit=1`;
+}
+
+/** The first screen of edit mode, for the link in settings. */
+export const EDIT_START_HREF = editHref(
+  ONBOARDING_STEPS.find((s) => s.step === EDIT_STEPS[0])?.route ?? "02-eaters",
+);
+
+/**
+ * The route before `step`, or null on the first screen. In edit mode the screens before the first
+ * food preference screen are not part of the walk, so Back there returns to settings.
+ */
+export function previousHref(step: number, edit = false): string | null {
   const previous = ONBOARDING_STEPS.find((s) => s.step === step - 1);
+  if (edit)
+    return previous && isEditStep(previous.step) ? editHref(previous.route) : EDIT_RETURN_ROUTE;
   return previous ? onboardingHref(previous.route) : null;
 }
 
-/** The route after `step`, or null after the last screen. */
-export function nextHref(step: number): string | null {
+/**
+ * The route after `step`, or null after the last screen. In edit mode Continue on the last food
+ * preference screen returns to settings.
+ */
+export function nextHref(step: number, edit = false): string | null {
   const next = ONBOARDING_STEPS.find((s) => s.step === step + 1);
+  if (edit) return next && isEditStep(next.step) ? editHref(next.route) : EDIT_RETURN_ROUTE;
   return next ? onboardingHref(next.route) : null;
 }
 

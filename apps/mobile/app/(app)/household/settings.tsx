@@ -19,6 +19,7 @@ import { CREATE_HOUSEHOLD_ROUTE, HOME_ROUTE } from "../../../src/features/auth/r
 import { InviteSection } from "../../../src/features/household/InviteSection";
 import { MemberRow } from "../../../src/features/household/MemberRow";
 import { KrogerSettingsSection } from "../../../src/features/onboarding/KrogerSettingsSection";
+import { EDIT_START_HREF } from "../../../src/features/onboarding/onboardingState";
 import { confirmAction } from "../../../src/lib/confirm";
 
 export default function HouseholdSettingsScreen() {
@@ -129,6 +130,19 @@ export default function HouseholdSettingsScreen() {
             onPress={() => rename.mutate(shownName)}
           />
         ) : null}
+      </Section>
+
+      <Section title="Food preferences">
+        <Text className="text-sm text-neutral-600">
+          Who you cook for, diets and allergies, dislikes, time, and budget. Your allergies and
+          diets are applied to the whole household's plan.
+        </Text>
+        <Button
+          testID="edit-food-preferences"
+          label="Edit food preferences"
+          variant="secondary"
+          onPress={() => router.push(EDIT_START_HREF)}
+        />
       </Section>
 
       <Section title="Members">

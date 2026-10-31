@@ -1,9 +1,11 @@
 import { ONBOARDING_STEP_COUNT } from "@mp/core";
+import { useLocalSearchParams } from "expo-router";
 import type { ReactNode } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "../../components/Button";
 import { ErrorText } from "../../components/Screen";
+import { isEditParam } from "./onboardingState";
 
 /**
  * The frame every onboarding screen sits in: a progress line, a back button, a title, the form,
@@ -36,6 +38,9 @@ export function OnboardingFrame({
   children: ReactNode;
 }) {
   const percent = Math.round((step / ONBOARDING_STEP_COUNT) * 100);
+  // Opened from household settings by someone who already finished: no "step n of 8" to count.
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
+  const editing = isEditParam(edit);
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView
@@ -59,16 +64,18 @@ export function OnboardingFrame({
                 <View />
               )}
               <Text testID="onboarding-progress-label" className="text-sm text-neutral-500">
-                Step {step} of {ONBOARDING_STEP_COUNT}
+                {editing ? "Editing food preferences" : `Step ${step} of ${ONBOARDING_STEP_COUNT}`}
               </Text>
             </View>
-            <View
-              accessibilityRole="progressbar"
-              accessibilityValue={{ min: 0, max: ONBOARDING_STEP_COUNT, now: step }}
-              className="h-1.5 overflow-hidden rounded-full bg-neutral-200"
-            >
-              <View className="h-full rounded-full bg-brand" style={{ width: `${percent}%` }} />
-            </View>
+            {editing ? null : (
+              <View
+                accessibilityRole="progressbar"
+                accessibilityValue={{ min: 0, max: ONBOARDING_STEP_COUNT, now: step }}
+                className="h-1.5 overflow-hidden rounded-full bg-neutral-200"
+              >
+                <View className="h-full rounded-full bg-brand" style={{ width: `${percent}%` }} />
+              </View>
+            )}
           </View>
 
           <View className="gap-2">

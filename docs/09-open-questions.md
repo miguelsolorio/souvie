@@ -2,16 +2,6 @@
 
 Facts the research could not confirm as of 2026-10-29, who can resolve each, and when to re-check. The orchestrator assigns a researcher agent or asks the human; answers go into the decisions log in `status.md` and the relevant doc is updated.
 
-## Instacart
-
-| Question | Why it matters | How to resolve | When |
-|---|---|---|---|
-| Is the Developer Platform accepting new applicants? The marketing page said no; the docs said "Apply today" | Gates WS08 production and Tier 2 for Costco and Safeway | Human submits the application and records the reply | Week one |
-| Does `?retailer_key=` on the generated URL preselect the store? One researcher found it in the tutorial; another could not | Determines whether we can send the user straight to Costco or Safeway | Builder tests with a dev key during WS08 | WS08 |
-| Can a small app reach the partner MCP tier that manages carts? | Would upgrade Instacart from handoff to cart write | Human contacts Instacart via the developers page | After WS08 |
-| Rate limits and affiliate commission rates | Cost model and call budgeting | Ask during the production review | WS08 approval |
-| Behavior for unmatched ingredients on the landing page | UX copy for the hand-off | Observe with a dev key | WS08 |
-
 ## Kroger
 
 | Question | Why it matters | How to resolve | When |
@@ -31,14 +21,15 @@ Facts the research could not confirm as of 2026-10-29, who can resolve each, and
 |---|---|---|---|
 | Audience of `doc.api.digital.costco.com` (redirect-looped during research) | A hidden partner API would change Costco's tier | Researcher agent re-checks; human may ask Costco | Before WS10 |
 | Outcome of Albertsons v. Kroger in Delaware Chancery (trial began 2026-10-19) | No product impact; may change Albertsons' partner posture | Researcher agent re-checks | Quarterly |
-| Albertsons' plan to extend the ChatGPT experience to other banners, and whether any third-party surface opens | Would create a Tier 2 path for Safeway | Researcher agent re-checks | Quarterly |
+| Albertsons' plan to extend the ChatGPT experience to other banners, and whether any third-party surface opens | A sanctioned path for Safeway would replace the browser adapter | Researcher agent re-checks | Quarterly |
+| Does costco.com offer grocery pickup or delivery in the household's area without Instacart? | Sets what the Costco adapter can do beyond warehouse items | Builder checks on a member account during WS10 | WS10 |
 
 ## Agentic commerce
 
 | Question | Why it matters | How to resolve | When |
 |---|---|---|---|
-| When does any grocer accept third-party buyer agents over UCP/AP2 or ACP? | Would replace Tier 3 with a sanctioned checkout | Researcher agent re-checks ucp.dev, ACP repo, Kroger and Instacart newsrooms | Quarterly |
-| Status of Instacart's Instant Checkout in ChatGPT after OpenAI's March 2026 pivot | Signals Instacart's appetite for agent checkout | Researcher agent | Quarterly |
+| When does any grocer accept third-party buyer agents over UCP/AP2 or ACP? | Would replace Tier 3 with a sanctioned checkout | Researcher agent re-checks ucp.dev, ACP repo, Kroger and Albertsons newsrooms | Quarterly |
+| Does Instacart's Developer Platform reopen, or offer a cart-write tier to small apps? | Would bring back a sanctioned route for Safeway and Costco | Researcher agent checks company.instacart.com/business/developers | Quarterly |
 
 ## Stack
 
@@ -52,7 +43,8 @@ Facts the research could not confirm as of 2026-10-29, who can resolve each, and
 | Question | Why it matters | How to resolve | When |
 |---|---|---|---|
 | Name | Branding, domains, store listing | Human picks after checks (checkpoint 6) | WS14 |
-| Tier 3 deployment: Mode A only, or also Mode B on a home server | Unattended scheduled checkout | Human decides during WS10 | WS10 |
+| Tier 3 deployment: Mode A only, or also Mode B on a home server | Unattended scheduled checkout | Decided 2026-10-30: Mode A in v1, Mode B document-only. Revisit after Phase 3 | After Phase 3 |
+
 - **Recipe catalog cold start.** Resolved 2026-10-30 by Miguel: a starter catalog. WS16 drafts at least 60 original dinner recipes with Sonnet from a coverage spec, parses them against the ontology, and seeds them as `visibility = catalog`. Miguel reviews the content before it loads into the hosted project. Import-first onboarding stays a fallback idea if the catalog proves thin.
 
 ## Recipe import

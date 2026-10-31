@@ -129,7 +129,7 @@ For each list item and the chosen retailer:
 3. **Model assist.** When the top two candidates are within a small score margin, or the item is ambiguous ("stock"), Sonnet picks **by candidate index** from the list we give it. The model never emits a UPC or product id.
 4. **Output.** A `shopping_run_items` row with the chosen product, up to three alternatives, estimated price, and `needs_review` when confidence is low, the item is high-value (over the per-item ceiling), or a substitution crossed brands.
 
-## 8. Shopping agent (`packages/agent`, hosted by WS09 worker or WS10 WebView)
+## 8. Shopping agent (`packages/agent`, hosted by WS09 worker or WS08 WebView)
 
 ### Tools
 
@@ -166,7 +166,7 @@ Kroger's public Cart API is add-only with no read. So:
 5. Push adds. Before each call, write `shopping_run_items.delta_sent` and `sent_at`; after the call, write `delta_result`. A retry resumes from rows without a result. Corrections send negative deltas.
 6. Deep-link the user to checkout (Tier 1) or continue through slots and pay (Tier 3).
 
-Where an adapter can read the cart (browser adapters, Instacart partner tier), step 5 diffs against the live cart instead.
+Where an adapter can read the cart (browser adapters), step 5 diffs against the live cart instead.
 
 ### Audit
 

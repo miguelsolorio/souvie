@@ -9,7 +9,6 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] Git identity pinned to the Gmail account for this clone (`scripts/setup-git-identity.sh`). Run it again on any fresh clone before the first commit.
 - [x] Create the Supabase project. Put `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `WORKER_DATABASE_URL` in a local `.env.local`. Never commit it.
 - [x] Register the Kroger developer app at developer.kroger.com with redirect URI `souvie://oauth/kroger`. Put `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` in `.env.local`. (Gates wave 2.)
-- [ ] Submit the Instacart Developer Platform application at company.instacart.com/business/developers. Record the response in `docs/status.md` under External tasks. (Gates WS08 production; a dev key works without approval.)
 - [ ] Create accounts: Expo/EAS, Fly.io or Railway (worker), Cloudflare Pages (web and marketing), Sentry, PostHog. Put `ANTHROPIC_API_KEY`, `SENTRY_DSN`, `EXPO_PUBLIC_POSTHOG_KEY` in `.env.local`.
 - [x] Optional now, required before WS14 finishes: run the name checks in `docs/08-brand.md` §1.3 for Sous and Larder.
 - [x] Decide where `main` lives. Either create a GitHub repository and push `main` (enables PRs and GitHub Actions as the docs assume), or tell the orchestrator you're staying local (then CI is the same commands run locally and merges are local squash merges; no PRs).
@@ -41,11 +40,12 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] WS07 reviewer must run the Kroger compliance checklist in `docs/04-integrations.md`. Done 2026-10-30 (terms retention and quota findings came out of it).
 - [x] Review, merge, wave 2 summary. Closed 2026-10-30.
 
-## 4. Wave 3: planner, onboarding, Instacart
+## 4. Wave 3: planner, onboarding, assisted-checkout host
 
 - [x] Dispatch WS04 and WS06 (sonnet) right away. Dispatched 2026-10-30.
-- [ ] **Human checkpoint 4** gates WS08 only: Instacart application status known; `INSTACART_API_KEY` (dev) in `.env.local`. Then dispatch WS08 (sonnet).
-- [ ] WS08 reviewer must run the Instacart compliance checklist.
+- [ ] Draft the Tier 3 consent copy (names each retailer, the terms risk, the account exposure, "stops at pay") and put it in front of Miguel.
+- [ ] **Human checkpoint 4** gates WS08 only: consent copy approved; Tier 3 retailer list confirmed (WS08's `TIER3_RETAILERS` default is Safeway, Albertsons, Haggen, Costco; the Kroger pay adapter is a WS10 adapter, not a consent retailer). Then dispatch WS08 (opus).
+- [ ] WS08 reviewer must run the Tier 3 checklist in `docs/04-integrations.md` and confirm no playwright or puppeteer dependency.
 - [x] **Human decision:** recipe catalog cold start. Miguel chose a starter catalog 2026-10-30; WS16 brief written and dispatched.
 - [x] WS16 (starter catalog, sonnet): reviewed and merged as 4fb32da (PR #13), 2026-10-30.
 - [ ] **Human:** Miguel skims `supabase/seed/catalog/README.md` before the catalog loads into the hosted project (with the hosted release).
@@ -69,16 +69,16 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 ## 7. Wave 6: everything that consumes the agent
 
-- [ ] **Human checkpoint 5** before dispatch: Tier 3 consent copy approved; which retailers get browser adapters.
+- [ ] **Human checkpoint 5** gates WS10 only: the WS08 host demo is accepted (agent drives a test page in the Simulator; consent and disconnect work). The other four may start without it.
 - [ ] Dispatch WS10 (opus), WS11, WS12, WS13, WS15 (sonnet) in one message. Five builders at once is the maximum.
-- [ ] Review each as it finishes. WS10 reviewer runs the Tier 3 checklist.
+- [ ] Review each as it finishes. WS10 reviewer runs the Tier 3 checklist and a manual Safeway run on a real account.
 - [ ] Merge all, wave 6 summary.
 
 ## 8. Done
 
 - [ ] All sixteen rows in `docs/status.md` read `merged`.
 - [ ] `pnpm typecheck && pnpm lint && pnpm test && pnpm eval` and `supabase test db` pass on `main`.
-- [ ] The household runs the loop end to end: onboard → plan → list → QFC cart filled by a scheduled run → notification → pay in the QFC app.
+- [ ] The household runs the loop end to end: onboard → plan → list → QFC cart filled by a scheduled run → notification → pay in the QFC app. And at Safeway: the agent fills the cart in the app and stops at pay.
 - [ ] Docs updated to match what was built. Public-beta decision and name recorded, or recorded as deferred.
 
 ## Standing rules while working

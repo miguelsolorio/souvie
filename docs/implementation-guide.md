@@ -34,7 +34,7 @@ Repeat until every row in `docs/status.md` reads `merged`. A wave advances when 
 
 For each workstream in the current wave, in one message so they run in parallel:
 
-- Spawn a builder with the Agent tool: `subagent_type: "general-purpose"`, `isolation: "worktree"`, `model` per the brief's suggested model (Opus for WS00, WS07, WS09, WS10; Sonnet otherwise). Use the dispatch prompt template in §6.1. The prompt names the brief path, the read-first list, the forbidden paths, the report format, and the verification commands. It does not restate the brief.
+- Spawn a builder with the Agent tool: `subagent_type: "general-purpose"`, `isolation: "worktree"`, `model` per the brief's suggested model (Opus for WS00, WS07, WS08, WS09, WS10; Sonnet otherwise). Use the dispatch prompt template in §6.1. The prompt names the brief path, the read-first list, the forbidden paths, the report format, and the verification commands. It does not restate the brief.
 - Update `docs/status.md`: state `in progress`, branch, model, started date.
 
 Do not duplicate a builder's work while waiting. Use the time to pre-read the next wave's briefs or to dispatch researchers for open questions.
@@ -76,10 +76,10 @@ When every workstream in the wave that a later wave depends on is `merged` (WS14
 | 0 | WS00 | Supabase project exists; the human has its URL and anon key |
 | 1 | WS01, WS03, WS14 | Checkpoint 1 (scaffold approved) |
 | 2 | WS02, WS07 | WS01 merged (checkpoint 2 passed). Checkpoint 3 (Kroger app registered) gates WS07 only; WS02 may start without it |
-| 3 | WS04, WS06, WS08 | Checkpoint 4 (Instacart status known; dev key in env) gates WS08 only; WS04 and WS06 may start without it |
+| 3 | WS04, WS06, WS08 | Checkpoint 4 (Tier 3 consent copy approved; retailer list chosen) gates WS08 only; WS04 and WS06 may start without it |
 | 4 | WS05 | None |
 | 5 | WS09 | None |
-| 6 | WS10, WS11, WS12, WS13, WS15 | Checkpoint 5 (Tier 3 consent copy approved; which retailers get browser adapters) |
+| 6 | WS10, WS11, WS12, WS13, WS15 | Checkpoint 5 (WS08 host demo accepted) gates WS10 only; the others may start without it |
 
 Scale: at most one wave in flight. At most five builders at once (wave 6). Reviewers start as each builder finishes.
 
@@ -90,8 +90,8 @@ The orchestrator stops and asks at these points. Nowhere else, unless something 
 1. **After WS00 merges.** Approve scaffold choices: package names, lint rules, CI shape, Node and pnpm versions.
 2. **Before WS01 merges.** Approve the identity migration and RLS policies. This is where `docs/02-data-model.md` becomes real.
 3. **Before WS07 starts.** The Kroger developer app is registered and the client id, secret, and redirect URI are in `.env.local`. Never in the repo.
-4. **Before WS08 starts.** Instacart application status is known; the dev key is in `.env.local`.
-5. **Before WS10 starts.** Approve the Tier 3 consent copy and choose which retailers get browser adapters.
+4. **Before WS08 starts.** Approve the Tier 3 consent copy and confirm the Tier 3 retailer list (the WS08 brief's `TIER3_RETAILERS` default: Safeway, Albertsons, Haggen, Costco).
+5. **Before WS10 starts.** Accept the WS08 host demo: the agent drives a test page in the Simulator, consent is recorded at connect, Disconnect wipes the session.
 6. **Before WS14 finishes.** Choose the name from `docs/08-brand.md` after the checks.
 7. **Any time.** A contract change the orchestrator judges to be a design change rather than a fix.
 
@@ -193,7 +193,7 @@ Wave summary:
 - Deferred: nutritionInformation display (field empty in live responses; see 09-open-questions).
 - Contracts changed: Product.allergens made optional; RetailerAdapter.handoffUrl added.
 - Next wave needs: WS06 depends on recipes.embedding being populated; confirmed.
-- Human: Instacart application still pending; WS08 proceeds on dev key.
+- Human: consent copy draft awaiting approval; WS08 waits on checkpoint 4.
 ```
 
 ### 6.6 Decisions log entry

@@ -23,7 +23,7 @@ Version one must make this loop work end to end for one household against QFC. E
 | Client stack | Expo + React Native, TypeScript | One codebase for iOS, Android, and web (Expo Router with React Native Web). Desktop is Tauri 2 wrapping the static web export |
 | Backend | Supabase | Postgres with Row Level Security, Auth, Storage, Edge Functions, Realtime, pgvector, Vault, Cron, Queues. A separate Node worker runs long agent jobs |
 | Audience v1 | The household first, public later | Multi-user households and shared plans and lists from day one. No billing, App Store release, or admin tooling until v2 |
-| Checkout stance | Three tiers, all allowed | Tier 1: official API fills the cart, the user pays in the retailer app. Tier 2: Instacart as the fulfillment layer. Tier 3: browser automation for full checkout, feature-flagged and opt-in |
+| Checkout stance | Two tiers | Tier 1: official API fills the cart, the user pays in the retailer app (Kroger banners). Tier 3: the agent drives the retailer's own site on the user's device and stops at the pay button; the main path for every store without an API. Consent is shown once at connect. Tier 2 (Instacart hand-off) was retired on 2026-10-30 when the Developer Platform closed to new applicants |
 | AI provider | Anthropic Claude | Haiku 5.5 for parsing, Sonnet 5.5 for planning and the shopping agent, Opus 5.5 for escalation. One `packages/llm` wrapper so the provider can change |
 
 ## v1 must-haves
@@ -34,7 +34,7 @@ Version one must make this loop work end to end for one household against QFC. E
 - A weekly planner with slot assignment and "swap this" AI actions.
 - A grocery list that is aggregated across recipes, unit-normalized, pantry-aware, grouped by aisle, usable offline in the store, and shared in realtime.
 - Line-item conversion: every list item mapped to concrete retailer products with price, size, and alternatives.
-- Kroger cart fill via the official API. Instacart hand-off for Costco and Safeway. A browser-automation adapter behind a flag.
+- Kroger cart fill via the official API. For Safeway and Costco, the agent fills the cart on the store's own site in the app and stops at the pay button.
 - Scheduled runs ("every Saturday at 9am, shop next week's plan") with a push notification when the cart is ready.
 - History: meals cooked, orders placed, spend per week.
 
@@ -51,7 +51,7 @@ Meal-planning apps (Samsung Food, Mealime, AnyList, eMeals, Plan to Eat) all sto
 What that means for this product:
 
 - **Do not compete on "recipe to cart" inside one store.** Kroger does that for free.
-- **Compete on the household loop across stores.** One plan, one list, split across QFC, Costco, and Safeway by household rules and learned habits. Product preferences that persist week to week. Scheduled autonomous runs. A review step designed to take thirty seconds on a phone. And, for households that opt in, the only hands-off checkout outside a closed-inventory service.
+- **Compete on the household loop across stores.** One plan, one list, split across QFC, Costco, and Safeway by household rules and learned habits. Product preferences that persist week to week. Scheduled autonomous runs. A review step designed to take thirty seconds on a phone. And the only hands-off checkout outside a closed-inventory service: the agent shops the store's own site and stops at pay.
 - **Import quality is table stakes, not a moat.** A maintained TypeScript port of `recipe-scrapers` (v3.2.0, October 2026, Zod-validated) plus Claude structured outputs gets there quickly.
 
 Sources: Kroger assistant (theshelbyreport.com, 2026-07-29); Instacart Clementine (techcrunch.com, 2026-09-09; investors.instacart.com); Safeway in ChatGPT (albertsonscompanies.com newsroom, 2026-08-05); Walmart Sparky and the end of OpenAI Instant Checkout (thepaypers.com, digitalcommerce360.com 2026-03); competitor pricing and integrations from each product's App Store listing and help center, collected 2026-10-29.
@@ -63,7 +63,7 @@ Sources: Kroger assistant (theshelbyreport.com, 2026-07-29); Instacart Clementin
 | `01-architecture.md` | You need the system shape, monorepo layout, tooling, or environment variables |
 | `02-data-model.md` | You touch any table, policy, or migration |
 | `03-ai-design.md` | You build onboarding, suggestions, import, parsing, aggregation, or the agent |
-| `04-integrations.md` | You touch a retailer, Instacart, or the browser adapters |
+| `04-integrations.md` | You touch a retailer or the browser adapters |
 | `05-security-privacy.md` | You handle tokens, sessions, spending, allergens, or user data |
 | `06-risks.md` | You want to know what can go wrong and which workstream prevents it |
 | `07-roadmap.md` | You need the phase and wave order |

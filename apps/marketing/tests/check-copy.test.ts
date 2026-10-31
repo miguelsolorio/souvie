@@ -45,25 +45,10 @@ describe("check-copy on the shipped copy", () => {
 });
 
 describe("check-copy rules (acceptance criterion 6)", () => {
-  it('exits 1 on "our partner Instacart"', () => {
-    const { code, out } = run(["--file", fixture("our partner Instacart")]);
+  it("exits 1 on an em dash and names the rule", () => {
+    const { code, out } = run(["--file", fixture("Plan the week — skip the store.")]);
     expect(code).toBe(1);
-    expect(out).toContain("[instacart-partner]");
-  });
-
-  it("catches partner before or after Instacart, and its variants", () => {
-    expect(run(["--file", fixture("Instacart is our trusted partner for lists.")]).code).toBe(1);
-    expect(run(["--file", fixture("Our partnership with Instacart")]).code).toBe(1);
-  });
-
-  it("allows partner when it is not near Instacart", () => {
-    const far = `We partner with local farmers.${" Plain words.".repeat(12)} Lists open on Instacart.`;
-    expect(run(["--file", fixture(far)]).code).toBe(0);
-  });
-
-  it('exits 1 on "Free Delivery" in any case', () => {
-    expect(run(["--file", fixture("Free Delivery on your first order")]).code).toBe(1);
-    expect(run(["--file", fixture("free-delivery")]).code).toBe(1);
+    expect(out).toContain("[em-dash]");
   });
 
   it("exits 1 on Kroger in a title, heading, or logo text", () => {
@@ -94,7 +79,14 @@ describe("check-copy rules (acceptance criterion 6)", () => {
   });
 
   it("passes clean copy", () => {
-    expect(run(["--file", fixture("<p>Lists open ready to shop on Instacart.</p>")]).code).toBe(0);
+    expect(
+      run([
+        "--file",
+        fixture(
+          "<p>The agent fills the cart on the store's own site and stops at the pay button.</p>",
+        ),
+      ]).code,
+    ).toBe(0);
   });
 });
 
@@ -130,11 +122,11 @@ describe("check-copy on a tree (criterion 7 and the docs listing)", () => {
   });
 
   it("checks listing copy inside copy blocks", () => {
-    const root = tree({ "docs/08-brand.md": doc("Lists open with our partner Instacart.") });
+    const root = tree({ "docs/08-brand.md": doc("Plan the week — skip the store.") });
     const { code, out } = run([], root);
     expect(code).toBe(1);
     expect(out).toContain("docs/08-brand.md");
-    expect(out).toContain("[instacart-partner]");
+    expect(out).toContain("[em-dash]");
   });
 
   it("flags Kroger in a listing title or heading", () => {
@@ -146,7 +138,7 @@ describe("check-copy on a tree (criterion 7 and the docs listing)", () => {
     const root = tree({
       "docs/08-brand.md": doc(
         "Fine copy.",
-        'Rule: never call Instacart a partner. Never write "Free Delivery".',
+        "Rule: no em dashes — none. No prices like $9.99 either.",
       ),
     });
     expect(run([], root).code).toBe(0);

@@ -1,6 +1,6 @@
 # @mp/retailers
 
-The `RetailerAdapter` contract (`docs/04-integrations.md` §Adapter contract) and one folder per adapter: `kroger/`, `instacart/` (WS08), `browser/` (WS10), `mock/`.
+The `RetailerAdapter` interface (`docs/04-integrations.md` §Adapter contract) and one folder per adapter: `kroger/`, `browser/`, `mock/`. `mock/` ships fixtures for tests and evals.
 
 ## Entry points
 
@@ -33,7 +33,7 @@ It reads the Kroger keys from the environment or the repo's `.env.local` (`KROGE
 
 ## Ownership
 
-WS07 built the contract, `MockRetailer`, and the Kroger adapter. WS08 adds Instacart. WS10 adds browser adapters. The contract is shared: only the orchestrator edits it now.
+WS07 built the contract, `MockRetailer`, and the Kroger adapter. WS08 adds the `BrowserHost` interface, snapshot types, and shared skills under `browser/`. WS10 adds the Safeway, Costco, and Kroger browser adapters. The contract is shared: only the orchestrator edits it now. `instacart` still appears in `RetailerId` and `INSTACART_CAPABILITIES` as built by WS07; Instacart was retired on 2026-10-30 and the orchestrator removes the value in a contract change.
 
 ## Scripts
 

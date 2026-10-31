@@ -80,14 +80,18 @@ describe("landing page sections", () => {
     assert.ok(!/<img\b/i.test(blocks[2].inner), "no images in the stores section");
   });
 
-  it("stores: Instacart is planned, not working (the Instacart application is still open)", () => {
+  it("stores: the agent path is planned, not working (nothing is built yet)", () => {
     const section = text(blocks[2].inner);
     assert.match(section, /QFC and Fred Meyer carts fill automatically\./);
     assert.match(
       section,
-      /Safeway, Albertsons, and Costco are next\. We plan to open those lists on Instacart\./,
+      /Safeway, Albertsons, and Costco are next\. The agent will fill the cart on the store's own site and stop at the pay button for your tap\./,
     );
-    assert.ok(!/ready to shop on Instacart/i.test(section), "no present-tense Instacart claim");
+    assert.ok(!/instacart/i.test(section), "Instacart is retired");
+    assert.ok(
+      !/the agent fills/i.test(section),
+      "no present-tense claim for stores that are not built",
+    );
   });
 
   it("trust: no card data, pay in the store's app, export and delete", () => {
@@ -143,16 +147,11 @@ describe("page-wide rules", () => {
   });
 
   it("shows no retailer logos or prices", () => {
-    assert.ok(
-      !/<img\b[^>]*(qfc|kroger|fred-?meyer|safeway|albertsons|costco|instacart)/i.test(html),
-    );
+    assert.ok(!/<img\b[^>]*(qfc|kroger|fred-?meyer|safeway|albertsons|costco)/i.test(html));
     assert.ok(!/\$\s?\d/.test(text(html)), "no dollar amounts");
   });
 
-  it("never says partner near Instacart, Free Delivery, or Kroger in the title", () => {
-    const page = text(html);
-    assert.ok(!/free[\s-]*delivery/i.test(page));
-    assert.ok(!/partner/i.test(page));
+  it("never puts Kroger in the title", () => {
     const title = /<title>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? "";
     assert.ok(!/kroger/i.test(title));
   });

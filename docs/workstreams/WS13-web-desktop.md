@@ -33,7 +33,7 @@ When this is done, the same Expo codebase ships as a hosted web app and as a des
 - The marketing site (`apps/marketing`, WS14).
 - Auto-update infrastructure for the desktop app. Leave the menu item as a placeholder.
 - Code signing and notarization for macOS distribution. Document the steps in `apps/desktop/README.md`; do not acquire certificates.
-- Tier 3 assisted-checkout WebView on desktop (WS10). This WS only ensures a WebView-capable shell exists; WS10 wires it.
+- Tier 3 assisted-checkout WebView on desktop (WS08 host, WS10 adapters). This WS only ensures a WebView-capable shell exists; WS08's host must be able to mount in it.
 - Any new product feature. Only layout, input, packaging, and deployment.
 - Offline web support beyond what TanStack Query persistence already gives (service worker caching is a later WS).
 

@@ -32,7 +32,7 @@ When this is done, the household can look back: which meals were cooked each wee
 - Delete-my-data: deleting a household cascades to `orders`.
 
 ## Out of scope
-- Syncing orders from any retailer API. None exists in a public tier (Kroger, Instacart, Safeway, Costco). Document this in the screen's empty state.
+- Syncing orders from any retailer API. None exists in a public tier (Kroger, Safeway, Costco). Document this in the screen's empty state.
 - Price trends for pinned items over time. **Deferred** pending written clarification from Kroger on storing data derived from catalog searches (R21). Do not store `unit_price` history beyond what `shopping_run_items` already holds for the run itself.
 - Receipts, OCR of receipts, or loyalty program integration.
 - Nutrition totals or calorie tracking.

@@ -48,7 +48,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | default_connection_id | uuid → retailer_connections | Nullable |
 | created_by | uuid → auth.users | |
 | quiet_hours | jsonb | {start, end} in the household's zone; WS11 |
-| tier3_consent | jsonb | {accepted_at, by_user_id, retailers[], copy_version}; WS10 |
+| tier3_consent | jsonb | {accepted_at, by_user_id, retailers[], copy_version}; WS08 |
 | ai_daily_cap_usd | numeric default 2.00 | Daily model spend cap; WS15 |
 
 **household_members**
@@ -294,10 +294,10 @@ Realtime: `grocery_lists` and `grocery_list_items` are in the `supabase_realtime
 | id | uuid pk | |
 | household_id | uuid → households | |
 | user_id | uuid → auth.users | The member whose retailer account this is |
-| retailer | enum retailer: kroger, instacart, safeway, costco | |
+| retailer | enum retailer: kroger, safeway, costco | As built by WS07 the enum also holds `instacart`, retired 2026-10-30 and unused; a later migration drops it |
 | auth_type | enum retailer_connections_auth_type: oauth, browser_session, none | |
-| vault_secret_id | uuid | Supabase Vault secret holding tokens or session state. Never a password |
-| store_id | text | Kroger locationId, Instacart retailer_key, or site-specific store id |
+| vault_secret_id | uuid | Supabase Vault secret holding OAuth tokens (Kroger) or the encryption key for an on-device browser session (WS08). Never a password or session state |
+| store_id | text | Kroger locationId or site-specific store id |
 | store_name | text | |
 | modality | enum retailer_connections_modality: pickup, delivery | |
 | status | enum retailer_connections_status: active, needs_reauth, revoked | |
@@ -488,7 +488,7 @@ Kroger's developer terms prohibit caching catalog data beyond response cache hea
 - No table stores raw search results. Catalog responses live only in memory during a run, bounded by their cache headers.
 - Price trends for pinned items are deferred until Kroger clarifies R21 (see `06-risks.md`).
 
-Instacart's terms require deleting Instacart-sourced data within five business days on request. The Instacart adapter never writes retailer data to the database (it only generates links), so there is nothing to delete beyond `retailer_connections.store_id`.
+Browser adapters (Tier 3) store no retailer catalog data. A run writes `shopping_run_items` and, after a completed checkout, one `orders` row from the confirmation page. Session state lives on the device; see `05-security-privacy.md`.
 
 ## Indexes worth creating up front
 
@@ -516,7 +516,7 @@ Files are created with `supabase migration new <name>` and carry a timestamp pre
 | 9 | retail | retailer_connections, product_matches, retailer_quota_usage, retailer_user_usage, FK `households.default_connection_id` → `retailer_connections` | WS07 |
 | 10 | ws06_preferences | profiles.preferences, onboarding_step, taste_embedding, costco_member | WS06 |
 | 11 | runs | shopping_runs, shopping_run_items, push_tokens, pgmq queue `shopping_run` | WS09 |
-| 12 | tier3 | households.tier3_consent, Storage bucket `run-screenshots` | WS10 |
+| 12 | tier3 | households.tier3_consent, Storage bucket `run-screenshots` | WS08 |
 | 13 | schedules_notifications | scheduled_runs, notification_preferences, notification_outbox, households.quiet_hours, pg_cron jobs (push_tokens created by WS09) | WS11 |
 | 14 | orders_and_history | orders, the three history views | WS12 |
 | 15 | waitlist | waitlist | WS14 |

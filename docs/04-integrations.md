@@ -4,15 +4,15 @@ Research collected 2026-10-29 from primary sources (developer portals, official 
 
 ## The hard constraint
 
-No API from Kroger, Albertsons, Costco, or Instacart's self-serve tier, and no agentic-commerce protocol, lets a third party pay or select a pickup or delivery window today. Every official path ends with the user tapping "place order" in the retailer's own app or site. That makes Tier 1 ("fill the cart, the user pays") the main line and Tier 3 (browser automation) the only route to true hands-off checkout.
+No API from Kroger, Albertsons, or Costco, and no agentic-commerce protocol, lets a third party pay or select a pickup or delivery window today. Every official path ends with the user tapping "place order" in the retailer's own app or site. That makes Tier 1 ("fill the cart, the user pays") the path for Kroger banners and Tier 3 (the agent drives the retailer's own site in the app's WebView) the main path for every store without an API, and the only route to hands-off checkout. Tier 2 (Instacart hand-off) was retired on 2026-10-30; see the Instacart section below.
 
 ## Feasibility matrix
 
 | Retailer | Product search | Add to cart | Checkout / pay | Pick a slot | Order history |
 |---|---|---|---|---|---|
 | QFC / Fred Meyer | **Direct API** (Kroger Products) | **Direct API** (Kroger Cart, add-only) | User completes at kroger.com/checkout or in the banner app (Tier 1) · Tier 3 browser | User in app · Tier 3 browser | Not in public tier; we record from our run ledger |
-| Safeway / Albertsons / Haggen | Via Instacart link (no data back) · Tier 3 browser | Via Instacart link · Tier 3 browser | User completes on Instacart or Safeway · Tier 3 browser | User in app · Tier 3 browser | Not possible via API; ledger |
-| Costco | Via Instacart link (members use sameday.costco.com) · Tier 3 browser | Via Instacart link · Tier 3 browser | User completes on Instacart · Tier 3 browser | User in app (delivery only on Instacart in Seattle) · Tier 3 browser | Not possible via API; ledger |
+| Safeway / Albertsons / Haggen | Tier 3 browser | Tier 3 browser | Tier 3 browser, stops at pay for the user's tap | Tier 3 browser | Not possible via API; ledger |
+| Costco | Tier 3 browser, members only | Tier 3 browser | Tier 3 browser, stops at pay for the user's tap | Tier 3 browser (delivery where costco.com offers it) | Not possible via API; ledger |
 
 ## Adapter contract (`packages/retailers`)
 
@@ -37,7 +37,7 @@ export interface Product {
 export interface CartItemDelta { productId?: string; upc?: string; quantityDelta: number; modality?: 'PICKUP' | 'DELIVERY' }
 
 export interface RetailerAdapter {
-  id: 'kroger' | 'instacart' | 'safeway' | 'costco';
+  id: 'kroger' | 'safeway' | 'costco';
   capabilities: {
     search: Capability; cartAdd: Capability; cartRead: Capability;
     slots: Capability; checkout: Capability; orders: Capability;
@@ -53,7 +53,7 @@ export interface RetailerAdapter {
   selectSlot?(conn: ConnectionHandle, slot: Slot): Promise<void>;
   checkout?(conn: ConnectionHandle, policy: RunPolicy): Promise<OrderRef>;   // Tier 3 only, gated
   getOrders?(conn: ConnectionHandle): Promise<Order[]>;
-  handoffUrl?(conn: ConnectionHandle, run: RunContext): Promise<string>;    // deep link for Tier 1/2
+  handoffUrl?(conn: ConnectionHandle, run: RunContext): Promise<string>;    // deep link for Tier 1
 }
 ```
 
@@ -66,12 +66,13 @@ The agent and the UI only ever see this contract. Adding a store is a new adapte
 | Adapter | Tier | Capabilities | Notes | Implemented |
 |---|---|---|---|---|
 | `kroger` | 1 | search api · cartAdd api · cartRead none · slots handoff · checkout handoff · orders none | First and best adapter. OAuth with PKCE and the `banner` parameter during onboarding. Idempotency via the run ledger, not cart reads. Live product lookups every run; nothing cached past response headers. Deep link to kroger.com/checkout or the QFC or Fred Meyer app. Cart calls can only be tested in production | WS07, 2026-10-30. `packages/retailers/src/kroger/`. OAuth with PKCE S256, a sealed state, and the banner; refresh tokens in Vault, rotated on every refresh. Locations, Products search and batch lookup, Cart add. Daily counts in `retailer_quota_usage`, stopping at 95%. Cache bounded by response headers only; Kroger sends none, so nothing is cached. The terms guard keeps no product data: only a salted hash of each received product's id and display fields, dropped at `cacheUntil` or, with no cache header, when the screen releases the results. Per-member hourly limits in `retailer-oauth` protect the shared quota. Live-tested for stores and search; the cart call waits on the developer's own token |
-| `instacart` | 2 | search none · cartAdd handoff · cartRead none · slots handoff · checkout handoff · orders none | One shopping-list link per store. Preselect the store with `?retailer_key=` (confirm with a dev key). Apply for the production key in Phase 0. Show the required Instacart CTA | Not yet (WS08) |
-| `safeway` (browser) | 3 | all browser | Mode A on-device first | Not yet (WS10) |
-| `costco` (browser) | 3 | all browser | Mode A on-device first. Membership required | Not yet (WS10) |
-| `kroger` browser extension | 3 | slots browser · checkout browser | Optional: finishes slot and pay after the API filled the cart | Not yet (WS10, optional) |
+| `safeway` (browser) | 3 | all browser | Main path. Mode A on-device. Consent shown once at connect. Serves the Safeway, Albertsons and Haggen banners | Not yet (host WS08, adapter WS10) |
+| `costco` (browser) | 3 | all browser | Main path. Mode A on-device. Consent shown once at connect. Membership required; non-members are not supported at Costco | Not yet (host WS08, adapter WS10) |
+| `kroger` browser adapter | 3 | slots browser · checkout browser | Finishes slot and pay on kroger.com after the API filled the cart; "Finish in app" on a Kroger run | Not yet (WS10) |
 
-**Cross-store splitting** stays inside both Kroger's and Instacart's terms because the only prices we display come from the Kroger API (one retailer family), and other stores are assigned by household rules ("bulk and paper goods → Costco," "produce → QFC") and learned preferences, never by comparing prices across retailers on one screen.
+`instacart` (Tier 2, retired 2026-10-30) still exists as a value in `RetailerId`, `INSTACART_CAPABILITIES` and the `retailer` Postgres enum as WS07 built them. No adapter is registered for it. The orchestrator removes the value in a contract change with a new migration.
+
+**Cross-store splitting** stays inside Kroger's terms because the only prices we display come from the Kroger API (one retailer family), and other stores are assigned by household rules ("bulk and paper goods → Costco," "produce → QFC") and learned preferences, never by comparing prices across retailers on one screen. Browser adapters read prices during a run for the household's own cart; those prices are never shown next to Kroger prices.
 
 ## Kroger (QFC, Fred Meyer)
 
@@ -116,42 +117,9 @@ None for third parties. Kroger's own assistant runs on Google Cloud Gemini; Inst
 
 Sources: developer.kroger.com (api-products, documentation/public/getting-started/apis, support/faq, terms, acceptable-use, branding; portal is JavaScript-rendered), ir.kroger.com press releases 2026-01-11 and 2026-09-22, prnewswire.com Kroger–Instacart 2025-11-04, grocerydive.com Cooklist 2026-06.
 
-## Instacart Developer Platform
+## Instacart (retired 2026-10-30)
 
-Covers, in Washington: Costco (and Costco Business Center), Safeway, Albertsons, Haggen, QFC, Fred Meyer, PCC Community Markets, Metropolitan Market, Town & Country Markets.
-
-### What the self-serve tier does
-
-Exactly two capabilities, also exposed as a hosted MCP server (`https://mcp.instacart.com/mcp`, dev `https://mcp.dev.instacart.tools/mcp`):
-
-- `POST /idp/v1/products/products_link` creates a shopping-list page and returns `products_link_url`.
-- `POST /idp/v1/products/recipe` creates a shoppable recipe page and returns `products_link_url`.
-- `GET /idp/v1/retailers?postal_code=&country_code=US` lists nearby retailers (`retailer_key`, `name`, `retailer_logo_url`). A separate API key must be requested for this endpoint.
-
-Base URLs: dev `https://connect.dev.instacart.tools`, prod `https://connect.instacart.com`. Bearer API key.
-
-Line items: `name` (generic, no brand, weight, or quantity words), `display_text`, `line_item_measurements: [{ quantity, unit }]` from a supported-units list, optional `upcs` (ordered fallbacks) or `product_ids` (mutually exclusive), `filters.brand_filters` (exact catalog spelling), `filters.health_filters` (ORGANIC, GLUTEN_FREE, FAT_FREE, VEGAN, KOSHER, SUGAR_FREE, LOW_FAT), `landing_page_configuration.partner_linkback_url`, `enable_pantry_items` (recipe only), `expires_in` ≤365 days (default 30). The older `quantity`/`unit` fields were deprecated 2026-03-18. Duplicate UPCs return 400.
-
-Flow: the user opens the URL, Instacart shows stores carrying at least 40% of the items, the user picks a store (or we preselect one by appending `?retailer_key=<key>`, per the tutorial; confirm with a dev key), Instacart matches products, the user signs in and checks out on Instacart. Unmatched-item behavior is not documented beyond "Instacart notifies the user and offers alternatives" for unavailable UPCs.
-
-**Not available at this tier:** cart read or write, orders, delivery or pickup windows, prices, any Instacart data. A partner-only MCP tier ("contact your Instacart representative," OAuth) can "discover retailers, search products, and manage carts." Connect fulfillment APIs are for retailers only.
-
-### Business model, approval, limits
-
-No developer fee stated. Optional affiliate commission through Impact.com on conversion events (rates unpublished). A dev key works immediately against the dev server. A production key triggers a review: Instacart requests a demo within five business days; end to end is about 30–40 days. The demo must show the Instacart-branded CTA (their button spec and colors). **The marketing page said "We are currently not accepting new applications" on 2026-10-29 while the docs still linked "Apply today."** Rate limits are not documented.
-
-### Terms that shape the product (developer terms)
-
-- §3.5(k)(iv): no displaying priced items from multiple retailers on one screen.
-- §3.5(l): no moving or comparing items between retailer baskets.
-- §3.5(r): no alternative checkout. §3.5(e): no scraping. §3.3: no key sharing.
-- §7: Instacart data is confidential; delete within five business days on request or termination.
-- Copy rules: never say "partner"; never say "Free Delivery"; use marks only to indicate compatibility.
-- §14.1: termination at any time at Instacart's discretion.
-
-Costco on Instacart: Costco Same-Day Delivery (sameday.costco.com) is members-only; non-members can shop Costco on instacart.com at higher prices with a $35 minimum.
-
-Sources: docs.instacart.com (developer_platform_api: create_shopping_list_page, create_recipe_page, get_nearby_retailers, tutorials/create_a_recipe_page, tutorials/mcp, changelog, approval_process, pre-launch_checklist, developer_terms; mcp_servers/get-started; connect), company.instacart.com/business/developers, instacart.com city pages for Seattle and Snohomish, customerservice.costco.com answer 8150.
+Instacart's Developer Platform was the planned Tier 2 hand-off for Safeway, Albertsons, Haggen, and Costco. On 2026-10-30 the developer page read "We are currently not accepting new applications. There is no waitlist available at this time." Without a production key the hand-off cannot ship, and the self-serve tier never offered cart, slot, price, or order access. Instacart is not a supported retailer. The browser adapters cover those stores instead. The research that backed the old plan is in git history (`docs/04-integrations.md` before this date). Re-check the developer page quarterly; a sanctioned cart-write tier would be worth an adapter again.
 
 ## Costco
 
@@ -181,17 +149,17 @@ Terms (terms of use 2025-05-14, covering Safeway, Albertsons, Haggen): §18(a) n
 
 Design implication: keep `checkout` behind the adapter contract so an ACP or UCP adapter can slot in later without touching the agent. Re-check quarterly.
 
-## Tier 3: browser automation (feature-flagged, opt-in)
+## Tier 3: browser automation (main path for stores without an API)
 
 Costco runs Kasada and Safeway runs Imperva. Both block headless browsers from cloud IPs quickly. Both terms forbid non-UI access. Legally, hiQ v. LinkedIn (9th Cir. 2022) kept public scraping outside the CFAA but LinkedIn won on contract; in Amazon v. Perplexity an appeals court vacated the injunction on 2026-08-04, reasoning that users, not Perplexity, accessed Amazon, while contract claims remain live. The practical exposure is the user's account.
 
 | Mode | What | Status |
 |---|---|---|
-| **A: on-device assisted** | The agent drives an in-app WebView on the user's phone or the desktop app, logged in as the user, with the user watching. Real browser, residential IP, the user's cookies. The agent reads the accessibility tree or DOM through an injected bridge, adds items, selects a slot, and stops at the pay button; the user taps it, or the agent taps it under an opted-in cap. CAPTCHA and MFA appear to the user | Build first (WS10) |
-| **B: household-hosted worker** | The same adapter running Playwright on a Mac mini or home server the household owns, with a persistent profile. Enables unattended scheduled runs from a residential IP | Document only in WS10; opt-in later |
+| **A: on-device assisted** | The agent drives an in-app WebView on the user's phone or the desktop app, logged in as the user, with the user watching. Real browser, residential IP, the user's cookies. The agent reads the accessibility tree or DOM through an injected bridge, adds items, selects a slot, and stops at the pay button; the user taps it, or the agent taps it under an opted-in cap. CAPTCHA and MFA appear to the user | Build: WS08 ships the host, bridge, sessions, consent, and gating; WS10 ships the Safeway, Costco, and Kroger adapters and the run screen |
+| **B: household-hosted worker** | The same adapter running Playwright on a Mac mini or home server the household owns, with a persistent profile. Enables unattended scheduled runs from a residential IP | Document only in WS08; beyond v1 |
 | **C: cloud headless** | Playwright on Fly.io with residential proxies | Not allowed. Trips Kasada and Imperva, weakest legal posture |
 
-Common to all modes: no retailer passwords stored (session cookies only, encrypted in Vault, revocable); every step screenshotted into the run transcript; per-household opt-in with consent copy that names the terms risk and the account exposure; PostHog kill switch `tier3_browser_checkout`; spending caps in code; `checkout` never runs without an approved review or an explicit auto-approve cap.
+Common to all modes: no retailer passwords stored (session cookies and storage state only, encrypted on the device with a key held in Vault, revocable); every step screenshotted into the run transcript; consent copy shown once when the household connects a Tier 3 store, naming the terms risk and the account exposure, recorded in `households.tier3_consent`; PostHog flag `tier3_browser_checkout` on by default and used as a kill switch, per retailer; spending caps in code; `checkout` never runs without an approved review or an explicit auto-approve cap.
 
 ## Compliance checklists (reviewers verify these)
 
@@ -204,14 +172,9 @@ Common to all modes: no retailer passwords stored (session cookies only, encrypt
 - [ ] Banner logos appear only in the add-to-cart UI; none on marketing surfaces
 - [ ] Privacy policy and data export exist before any external user
 
-**Instacart adapter and UI**
-- [ ] One link per store; no combined price view; no moving items between stores in the UI
-- [ ] Instacart-branded CTA per their checklist
-- [ ] Copy never says "partner" or "Free Delivery"
-- [ ] A delete path for any Instacart-sourced data
-
 **Tier 3**
-- [ ] Opt-in with consent copy approved by the human (checkpoint 5)
+- [ ] Consent copy approved by the human (checkpoint 4) and shown before the first connect to each Tier 3 store; `tier3_consent` records the retailers and copy version
+- [ ] No Tier 3 store's prices appear on the same screen as Kroger prices
 - [ ] No passwords stored; sessions revocable from settings
 - [ ] Mode C code paths do not exist
 - [ ] Stops at pay unless `auto_checkout` is enabled under cap

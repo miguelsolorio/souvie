@@ -3,7 +3,7 @@
 **Wave:** 2 · **Suggested model:** Opus · **Branch:** `ws/07-retailer-framework-kroger`
 
 ## Goal
-When this is done, the repo has one contract every store integration implements, the `RetailerAdapter` interface in `packages/retailers`, plus two implementations: a `MockRetailer` with fixtures for tests, and a production `KrogerAdapter` covering QFC and Fred Meyer. A household member can connect their Kroger account with OAuth from inside the app, pick a store, search products with live store prices, and push items into their own Kroger cart with a chosen fulfillment modality. The shopping agent (WS09), the Instacart adapter (WS08), and the browser adapters (WS10) all build on this contract, so getting it right here keeps every later workstream from touching shared code.
+When this is done, the repo has one contract every store integration implements, the `RetailerAdapter` interface in `packages/retailers`, plus two implementations: a `MockRetailer` with fixtures for tests, and a production `KrogerAdapter` covering QFC and Fred Meyer. A household member can connect their Kroger account with OAuth from inside the app, pick a store, search products with live store prices, and push items into their own Kroger cart with a chosen fulfillment modality. The shopping agent (WS09), the assisted-checkout host (WS08), and the browser adapters (WS10) all build on this contract, so getting it right here keeps every later workstream from touching shared code.
 
 ## Depends on
 - WS00 (scaffold): monorepo, `packages/core`, `packages/db` generated types, `.env.example`, CI, Supabase Vault enabled in the local stack.
@@ -28,8 +28,8 @@ When this is done, the repo has one contract every store integration implements,
 - Unit tests with recorded HTTP fixtures (no live calls in CI). One opt-in live smoke test behind `KROGER_LIVE_TEST=1`.
 
 ## Out of scope
-- Instacart link generation (WS08).
-- Browser-driven adapters, session capture, WebView bridge (WS10).
+- The WebView host, bridge, and session capture for browser adapters (WS08).
+- Browser-driven adapters and the assisted run screen (WS10).
 - The agent loop, line-item scoring implementation, review UI, run state machine (WS09). You only ship `Product` fields the scorer needs.
 - Scheduled runs and push notifications (WS11).
 - Order history (WS12); Kroger's public tier has no orders endpoint anyway.
@@ -55,7 +55,7 @@ When this is done, the repo has one contract every store integration implements,
 
 ```ts
 export type Capability = 'api' | 'browser' | 'handoff' | 'none';
-export type RetailerId = 'kroger' | 'instacart' | 'safeway' | 'costco';
+export type RetailerId = 'kroger' | 'safeway' | 'costco';
 export type Modality = 'PICKUP' | 'DELIVERY';
 
 export interface Capabilities {

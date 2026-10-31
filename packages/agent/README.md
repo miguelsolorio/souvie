@@ -8,7 +8,7 @@ Scaffold from WS00. `src/index.ts` exports only `packageName`.
 
 ## Ownership
 
-WS09. WS10 adds the WebView host.
+WS09. WS08 adds the WebView host; WS10 runs the loop inside it.
 
 ## Scripts
 

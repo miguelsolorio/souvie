@@ -5,6 +5,7 @@ import { Text, View } from "react-native";
 import { Button } from "../../src/components/Button";
 import { LoadingScreen, Screen } from "../../src/components/Screen";
 import { CREATE_HOUSEHOLD_ROUTE } from "../../src/features/auth/routes";
+import { LIST_ROUTE, PANTRY_ROUTE } from "../../src/features/list/routes";
 import { PLAN_ROUTE } from "../../src/features/plan/routes";
 
 interface Health {
@@ -63,6 +64,18 @@ export default function Menu() {
     >
       <View className="gap-3">
         <Button testID="open-plan" label="Weekly plan" onPress={() => router.push(PLAN_ROUTE)} />
+        <Button
+          testID="open-groceries"
+          label="Grocery list"
+          variant="secondary"
+          onPress={() => router.push(LIST_ROUTE)}
+        />
+        <Button
+          testID="open-pantry"
+          label="Pantry"
+          variant="secondary"
+          onPress={() => router.push(PANTRY_ROUTE)}
+        />
         <Button
           testID="open-recipes"
           label="Recipes"

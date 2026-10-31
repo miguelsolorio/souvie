@@ -187,6 +187,22 @@ export async function fetchLatestList(
   return ((data ?? [])[0] as GroceryList | undefined) ?? null;
 }
 
+/** The Monday of a plan's week, or null when the plan is gone. For rebuilding a list opened by id. */
+export async function fetchPlanWeekStart(
+  client: MpClient,
+  householdId: string,
+  planId: string,
+): Promise<string | null> {
+  const { data, error, status } = await client
+    .from("meal_plans")
+    .select("week_start")
+    .eq("household_id", householdId)
+    .eq("id", planId)
+    .maybeSingle();
+  if (error) throw toListError(error, status);
+  return (data as { week_start: string } | null)?.week_start ?? null;
+}
+
 /** A list's items, in list order. */
 export async function fetchListItems(client: MpClient, listId: string): Promise<GroceryListItem[]> {
   const { data, error, status } = await client

@@ -5,6 +5,7 @@ import {
   fetchLatestList,
   fetchListById,
   fetchListByPlan,
+  fetchPlanWeekStart,
   groceryListByPlanKey,
   groceryListKey,
 } from "../lists";
@@ -63,6 +64,24 @@ export function useLatestGroceryList() {
     queryFn: (): Promise<GroceryList | null> => {
       if (!householdId) return Promise.resolve(null);
       return fetchLatestList(client, householdId);
+    },
+  });
+}
+
+/** The Monday of a plan's week, for rebuilding a list that was opened by id. Idle without a plan. */
+export function usePlanWeekStart(planId: string | null | undefined) {
+  const client = useSupabase();
+  const household = useHousehold();
+  const householdId = household.data?.id;
+
+  return useQuery({
+    queryKey: ["grocery-list", householdId, "plan-week", planId] as const,
+    enabled: Boolean(householdId && planId),
+    meta: { persist: true },
+    staleTime: Number.POSITIVE_INFINITY,
+    queryFn: (): Promise<string | null> => {
+      if (!householdId || !planId) return Promise.resolve(null);
+      return fetchPlanWeekStart(client, householdId, planId);
     },
   });
 }

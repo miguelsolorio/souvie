@@ -1,7 +1,7 @@
-import { type ListBuildResponse, weekStartFor } from "@mp/core";
+import { type GroceryList, type ListBuildResponse, weekStartFor } from "@mp/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSupabase } from "../context";
-import { callListBuild, invalidateGroceryList, ListError } from "../lists";
+import { callListBuild, invalidateGroceryList, ListError, patchList } from "../lists";
 import { useHousehold } from "./useHousehold";
 
 /**
@@ -26,6 +26,30 @@ export function useBuildList() {
     mutationFn: async ({ weekStart }) => {
       if (!householdId) throw new ListError("forbidden", "no household");
       return callListBuild(client, { weekStart: weekStartFor(weekStart), householdId });
+    },
+    onSuccess: () => invalidateGroceryList(queryClient, householdId),
+  });
+}
+
+/**
+ * Changes the list itself: rename it, mark it shopped (or reopen it), or set the household's aisle
+ * order for it. Clients cannot touch anything else on a list (the build counter and fingerprint
+ * belong to `list-build`).
+ */
+export function useUpdateList(listId: string | null | undefined) {
+  const client = useSupabase();
+  const queryClient = useQueryClient();
+  const household = useHousehold();
+  const householdId = household.data?.id;
+
+  return useMutation<
+    void,
+    Error,
+    { name?: string; status?: GroceryList["status"]; section_order?: string[] | null }
+  >({
+    mutationFn: async (patch) => {
+      if (!listId) throw new ListError("not_found", "no list");
+      await patchList(client, listId, patch);
     },
     onSuccess: () => invalidateGroceryList(queryClient, householdId),
   });

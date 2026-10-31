@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { LIST_ROUTE } from "../list/routes";
 import { clearPlanNotice, getPlanNotice, NOTICE_DURATION_MS, showPlanNotice } from "./notice";
 import {
   dayRoute,
@@ -23,8 +24,9 @@ describe("routes", () => {
     expect(recipeRoute("r1")).toBe("/recipes/r1");
   });
 
-  it("leaves Generate list disabled, with a reason, until WS05 provides a route", () => {
-    expect(GROCERY_LIST_ROUTE).toBeNull();
+  it("sends Generate list to the grocery list screen WS05 provides", () => {
+    expect(GROCERY_LIST_ROUTE).toBe("/list");
+    expect(LIST_ROUTE).toBe(GROCERY_LIST_ROUTE);
     expect(GROCERY_LIST_PENDING_HINT.length).toBeGreaterThan(0);
   });
 });

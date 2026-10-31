@@ -31,7 +31,8 @@ export function SwapMenu({
   onBack: () => void;
 }) {
   const client = useSupabase();
-  const recipes = useRecipes(entry.household_id);
+  // A suggestion can be a starter catalog recipe, so the list it is looked up in includes them.
+  const recipes = useRecipes(entry.household_id, { includeCatalog: true });
   const suggestEnabled = isSuggestEnabled();
 
   const suggest = useMutation({

@@ -266,15 +266,17 @@ describe("airplane mode (acceptance criterion 7)", () => {
     expect(queue.size).toBe(0);
   });
 
-  it("collapses many toggles of one item into one write", async () => {
+  it("collapses many toggles of one item: the one being sent, and the newest behind it", async () => {
     const { queue, sent } = makeQueue({
       execute: async () => {
         throw offline();
       },
     });
     for (let i = 0; i < 7; i++) queue.enqueue(check(1, i % 2 === 0, `2026-11-01T18:00:0${i}.000Z`));
-    expect(queue.size).toBe(1);
-    expect(queue.ops()[0]).toMatchObject({ checked: true, at: "2026-11-01T18:00:06.000Z" });
+    // The first tap is already on its way and is left alone; the six after it collapse to the last.
+    expect(queue.size).toBe(2);
+    expect(queue.ops()[0]).toMatchObject({ checked: true, at: "2026-11-01T18:00:00.000Z" });
+    expect(queue.ops()[1]).toMatchObject({ checked: true, at: "2026-11-01T18:00:06.000Z" });
     expect(sent).toEqual([]);
   });
 });
@@ -436,6 +438,95 @@ describe("failures", () => {
     await queue.flush();
     expect(sent).toEqual([]);
     expect(queue.size).toBe(1);
+  });
+});
+
+describe("operations made while the head operation is being sent (F3)", () => {
+  /** A queue whose first send waits until the test releases it. */
+  function holdFirst() {
+    const sent: ListOp[] = [];
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { queue } = makeQueue({
+      execute: async (op) => {
+        sent.push(op);
+        if (sent.length === 1) await gate;
+      },
+    });
+    return { queue, sent, release };
+  }
+
+  it("a second edit of the same item reaches the server, not just the first", async () => {
+    const { queue, sent, release } = holdFirst();
+    queue.enqueue(patch(1, { qty: 2 }));
+    queue.enqueue(patch(1, { unit: "lb" }));
+    release();
+    await queue.flush();
+    const columns: Record<string, unknown> = {};
+    for (const op of sent) if (op.kind === "patch") Object.assign(columns, op.patch);
+    expect(columns).toEqual({ qty: 2, unit: "lb" });
+    expect(queue.size).toBe(0);
+  });
+
+  it("deleting a manual item whose add is being sent still deletes it on the server", async () => {
+    const { queue, sent, release } = holdFirst();
+    queue.enqueue(add(2, "Mistake"));
+    queue.enqueue(remove(2));
+    release();
+    await queue.flush();
+    expect(sent.map((op) => op.kind)).toEqual(["add", "remove"]);
+    expect(queue.size).toBe(0);
+  });
+
+  it("a check tapped again while the first is being sent sends both, newest last", async () => {
+    const { queue, sent, release } = holdFirst();
+    queue.enqueue(check(3, true, "2026-11-01T12:00:01.000Z"));
+    queue.enqueue(check(3, false, "2026-11-01T12:00:02.000Z"));
+    release();
+    await queue.flush();
+    const states = sent.filter((op) => op.kind === "check").map((op) => op.checked);
+    expect(states).toEqual([true, false]);
+    expect(queue.size).toBe(0);
+  });
+
+  it("the operation being sent is not changed, and later ones still collapse behind it", async () => {
+    const { queue, sent, release } = holdFirst();
+    queue.enqueue(patch(1, { qty: 2 }));
+    const inFlight = queue.ops()[0];
+    queue.enqueue(patch(1, { unit: "lb" }));
+    queue.enqueue(patch(1, { section: "meat" }));
+    expect(queue.ops()[0]).toBe(inFlight);
+    expect(queue.size).toBe(2); // the one in flight, and one merged edit behind it
+    release();
+    await queue.flush();
+    expect(sent.map((op) => (op.kind === "patch" ? op.patch : null))).toEqual([
+      { qty: 2 },
+      { unit: "lb", section: "meat" },
+    ]);
+  });
+
+  it("an operation that failed and is waiting to be retried can be merged into again", async () => {
+    let online = false;
+    const sent: ListOp[] = [];
+    const { queue } = makeQueue({
+      execute: async (op) => {
+        if (!online) throw offline();
+        sent.push(op);
+      },
+    });
+    queue.enqueue(patch(1, { qty: 2 }));
+    await queue.flush();
+    queue.enqueue(patch(1, { unit: "lb" }));
+    expect(queue.size).toBe(1);
+    await queue.flush(); // the retry that enqueue started fails too, and settles
+    online = true;
+    queue.kick();
+    await queue.flush();
+    expect(sent.map((op) => (op.kind === "patch" ? op.patch : null))).toEqual([
+      { qty: 2, unit: "lb" },
+    ]);
   });
 });
 

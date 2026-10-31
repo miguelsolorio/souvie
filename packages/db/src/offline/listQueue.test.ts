@@ -2,16 +2,18 @@
 // ends up with after a store trip with no signal.
 import type { GroceryListItem } from "@mp/core";
 import { QueryClient } from "@tanstack/react-query";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { groceryItemsKey } from "../lists";
 import { type FakeServer, fakeClient } from "../testing/fakeClient";
 import {
   acquireListQueue,
   configureReplayStorage,
   createListQueue,
+  releaseListQueue,
   releaseListQueues,
   replayStorageKey,
   setListWriteFailureHandler,
+  startListSync,
 } from "./listQueue";
 import { overlayOps, type QueueStorage } from "./replayQueue";
 
@@ -85,7 +87,7 @@ const writes = (server: FakeServer, ok: boolean) =>
 describe("a store trip with no signal (acceptance criterion 7)", () => {
   it("queues 10 check-offs offline, then persists each once with checked_by set", async () => {
     const { client, server, queryClient, items } = setup();
-    const queue = createListQueue({ client, queryClient, householdId: HOUSEHOLD });
+    const queue = createListQueue({ client, queryClient, householdId: HOUSEHOLD, userId: USER });
     server.offline = true;
 
     for (let n = 1; n <= 10; n++) {
@@ -131,24 +133,24 @@ describe("a store trip with no signal (acceptance criterion 7)", () => {
 
   it("sends what an earlier session left on the device, and clears it", async () => {
     const { client, server, queryClient, storage } = setup(3);
-    const first = createListQueue({ client, queryClient, householdId: HOUSEHOLD });
+    const first = createListQueue({ client, queryClient, householdId: HOUSEHOLD, userId: USER });
     server.offline = true;
     first.enqueue({ kind: "check", id: "a", itemId: id(1), checked: true, userId: USER, at: NOW });
     await first.flush();
     first.stop();
-    expect(storage.data.get(replayStorageKey(HOUSEHOLD))).toContain(id(1));
+    expect(storage.data.get(replayStorageKey(USER, HOUSEHOLD))).toContain(id(1));
 
     server.offline = false;
-    const queue = acquireListQueue(client, queryClient, HOUSEHOLD);
+    const queue = acquireListQueue(client, queryClient, { householdId: HOUSEHOLD, userId: USER });
     await queue.flush();
     expect(server.tables.grocery_list_items?.find((r) => r.id === id(1))?.checked).toBe(true);
-    expect(storage.data.has(replayStorageKey(HOUSEHOLD))).toBe(false);
+    expect(storage.data.has(replayStorageKey(USER, HOUSEHOLD))).toBe(false);
     releaseListQueues(client);
   });
 
   it("a manual add whose answer was lost is sent again with the same id and stays one row", async () => {
     const { client, server, queryClient } = setup(2);
-    const queue = createListQueue({ client, queryClient, householdId: HOUSEHOLD });
+    const queue = createListQueue({ client, queryClient, householdId: HOUSEHOLD, userId: USER });
     // The first send is applied by the server but the response never arrives.
     server.failures = [{ message: "Failed to fetch", status: 0, afterApply: true }];
     queue.enqueue({
@@ -186,7 +188,7 @@ describe("a store trip with no signal (acceptance criterion 7)", () => {
 
   it("sends an edit as a patch that marks the item edited, and a delete as a delete", async () => {
     const { client, server, queryClient } = setup(3);
-    const queue = createListQueue({ client, queryClient, householdId: HOUSEHOLD });
+    const queue = createListQueue({ client, queryClient, householdId: HOUSEHOLD, userId: USER });
     queue.enqueue({ kind: "patch", id: "p", itemId: id(1), patch: { qty: 4, unit: "lb" } });
     queue.enqueue({ kind: "patch", id: "q", itemId: id(2), patch: { excluded_reason: "manual" } });
     queue.enqueue({ kind: "remove", id: "r", itemId: id(3) });
@@ -204,7 +206,7 @@ describe("a store trip with no signal (acceptance criterion 7)", () => {
     const { client, server, queryClient } = setup(3);
     const dropped: string[] = [];
     setListWriteFailureHandler((op) => dropped.push(op.itemId));
-    const queue = createListQueue({ client, queryClient, householdId: HOUSEHOLD });
+    const queue = createListQueue({ client, queryClient, householdId: HOUSEHOLD, userId: USER });
     server.failures = [{ message: "checked_by_mismatch", code: "42501", status: 403 }];
     queue.enqueue({ kind: "check", id: "a", itemId: id(1), checked: true, userId: USER, at: NOW });
     queue.enqueue({ kind: "check", id: "b", itemId: id(2), checked: true, userId: USER, at: NOW });
@@ -221,9 +223,175 @@ describe("a store trip with no signal (acceptance criterion 7)", () => {
     server.tables.grocery_list_items = (server.tables.grocery_list_items ?? []).filter(
       (r) => r.id !== id(1),
     );
-    const queue = createListQueue({ client, queryClient, householdId: HOUSEHOLD });
+    const queue = createListQueue({ client, queryClient, householdId: HOUSEHOLD, userId: USER });
     queue.enqueue({ kind: "check", id: "a", itemId: id(1), checked: true, userId: USER, at: NOW });
     await queue.flush();
     expect(queue.size).toBe(0);
+  });
+});
+
+describe("whose queue it is (F4)", () => {
+  const BOB = "b2222222-2222-4222-8222-222222222222";
+  const OTHER_HOUSEHOLD = "0b000000-0000-4000-8000-00000000000b";
+  const sentCount = (server: FakeServer) => writes(server, true).length;
+
+  /** The user's operations, queued on a phone with no signal and left there (they signed out). */
+  async function parkAlicesChecks(count = 3) {
+    const ctx = setup(count);
+    ctx.server.offline = true;
+    const queue = acquireListQueue(ctx.client, ctx.queryClient, {
+      householdId: HOUSEHOLD,
+      userId: USER,
+    });
+    for (let n = 1; n <= count; n++) {
+      queue.enqueue({
+        kind: "check",
+        id: `a${n}`,
+        itemId: id(n),
+        checked: true,
+        userId: USER,
+        at: NOW,
+      });
+    }
+    await queue.flush();
+    ctx.server.offline = false;
+    // Sign-out: the loop stops and the in-memory queues go. The saved operations stay.
+    releaseListQueues(ctx.client);
+    return ctx;
+  }
+
+  it("saves a queue under the user and the household, so two people on one phone never share one", () => {
+    const alice = replayStorageKey(USER, HOUSEHOLD);
+    expect(alice).toContain(USER);
+    expect(alice).toContain(HOUSEHOLD);
+    expect(replayStorageKey(BOB, HOUSEHOLD)).not.toBe(alice);
+    expect(replayStorageKey(USER, OTHER_HOUSEHOLD)).not.toBe(alice);
+  });
+
+  it("sends none of Alice's operations when Bob signs in, and keeps them for Alice", async () => {
+    const { client, server, queryClient, storage } = await parkAlicesChecks();
+    expect(storage.data.get(replayStorageKey(USER, HOUSEHOLD))).toContain(id(1));
+
+    // Bob signs in on the same phone, in the same household.
+    const bob = startListSync(client, queryClient, { householdId: HOUSEHOLD, userId: BOB });
+    const bobsQueue = acquireListQueue(client, queryClient, {
+      householdId: HOUSEHOLD,
+      userId: BOB,
+    });
+    await bobsQueue.flush();
+    bob();
+    expect(bobsQueue.size).toBe(0);
+    expect(sentCount(server)).toBe(0);
+    expect(server.tables.grocery_list_items?.some((r) => r.checked === true)).toBe(false);
+    // Alice's operations are parked under her key, untouched.
+    const parked = JSON.parse(storage.data.get(replayStorageKey(USER, HOUSEHOLD)) ?? "[]");
+    expect(parked).toHaveLength(3);
+    expect(storage.data.has(replayStorageKey(BOB, HOUSEHOLD))).toBe(false);
+  });
+
+  it("replays Alice's operations, as hers, when she signs back in", async () => {
+    const { client, server, queryClient, storage } = await parkAlicesChecks();
+    const bob = startListSync(client, queryClient, { householdId: HOUSEHOLD, userId: BOB });
+    bob();
+    releaseListQueues(client);
+
+    const alice = startListSync(client, queryClient, { householdId: HOUSEHOLD, userId: USER });
+    await acquireListQueue(client, queryClient, { householdId: HOUSEHOLD, userId: USER }).flush();
+    alice();
+    const rows = server.tables.grocery_list_items ?? [];
+    expect(rows.filter((r) => r.checked === true)).toHaveLength(3);
+    expect(rows.filter((r) => r.checked === true).every((r) => r.checked_by === USER)).toBe(true);
+    expect(sentCount(server)).toBe(3);
+    expect(storage.data.has(replayStorageKey(USER, HOUSEHOLD))).toBe(false);
+  });
+
+  it("does not send another household's operations under the active household's session", async () => {
+    const ctx = setup(3);
+    ctx.server.offline = true;
+    const elsewhere = acquireListQueue(ctx.client, ctx.queryClient, {
+      householdId: OTHER_HOUSEHOLD,
+      userId: USER,
+    });
+    elsewhere.enqueue({
+      kind: "check",
+      id: "x",
+      itemId: id(1),
+      checked: true,
+      userId: USER,
+      at: NOW,
+    });
+    await elsewhere.flush();
+    ctx.server.offline = false;
+    releaseListQueues(ctx.client);
+
+    // The same person is now acting in the first household: only its queue runs.
+    const stop = startListSync(ctx.client, ctx.queryClient, {
+      householdId: HOUSEHOLD,
+      userId: USER,
+    });
+    await acquireListQueue(ctx.client, ctx.queryClient, {
+      householdId: HOUSEHOLD,
+      userId: USER,
+    }).flush();
+    stop();
+    expect(sentCount(ctx.server)).toBe(0);
+    expect(ctx.storage.data.has(replayStorageKey(USER, OTHER_HOUSEHOLD))).toBe(true);
+  });
+
+  describe("signing out", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("stops the retry timer and sends nothing more", async () => {
+      const { client, server, queryClient, storage } = setup(2);
+      server.offline = true;
+      const stop = startListSync(client, queryClient, { householdId: HOUSEHOLD, userId: USER });
+      const queue = acquireListQueue(client, queryClient, { householdId: HOUSEHOLD, userId: USER });
+      queue.enqueue({
+        kind: "check",
+        id: "a",
+        itemId: id(1),
+        checked: true,
+        userId: USER,
+        at: NOW,
+      });
+      await vi.advanceTimersByTimeAsync(100);
+      const attempts = server.requests("grocery_list_items", "update").length;
+      expect(attempts).toBeGreaterThanOrEqual(1);
+      expect(vi.getTimerCount()).toBeGreaterThan(0); // the backoff retry
+
+      stop(); // sign-out
+      expect(vi.getTimerCount()).toBe(0);
+      server.offline = false;
+      await vi.advanceTimersByTimeAsync(120_000);
+      expect(server.requests("grocery_list_items", "update")).toHaveLength(attempts);
+      // The operation is still on the device for the next time this person signs in.
+      expect(storage.data.get(replayStorageKey(USER, HOUSEHOLD))).toContain(id(1));
+    });
+
+    it("a queue asked for after sign-out is a fresh one that works, not the stopped one", async () => {
+      const { client, server, queryClient } = setup(2);
+      const first = acquireListQueue(client, queryClient, { householdId: HOUSEHOLD, userId: USER });
+      releaseListQueue(client, { householdId: HOUSEHOLD, userId: USER });
+      const second = acquireListQueue(client, queryClient, {
+        householdId: HOUSEHOLD,
+        userId: USER,
+      });
+      expect(second).not.toBe(first);
+      second.enqueue({
+        kind: "check",
+        id: "a",
+        itemId: id(1),
+        checked: true,
+        userId: USER,
+        at: NOW,
+      });
+      await vi.advanceTimersByTimeAsync(500);
+      expect(server.tables.grocery_list_items?.find((r) => r.id === id(1))?.checked).toBe(true);
+    });
   });
 });

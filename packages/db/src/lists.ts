@@ -15,7 +15,8 @@
 //   * Clients cannot create a list or write the automatic columns: `list-build` does that.
 import {
   type GroceryList,
-  type GroceryListItem,
+  GroceryListItem,
+  ItemDetail,
   ItemPatch,
   type ListBuildFailure,
   type ListBuildRequest,
@@ -212,7 +213,27 @@ export async function fetchListItems(client: MpClient, listId: string): Promise<
     .order("position", { ascending: true })
     .order("created_at", { ascending: true });
   if (error) throw toListError(error, status);
-  return sortItems((data ?? []) as unknown as GroceryListItem[]);
+  return sortItems((data ?? []).map(parseItemRow));
+}
+
+/**
+ * A row as the server returns it, in the shape the screens read. The row goes through the
+ * `GroceryListItem` schema, so `detail` of a manual item (the column default, `{}`) gains its empty
+ * `contributions` and every list is a list. A row the strict schema refuses (a timestamp format
+ * it does not know) is not dropped, since a missing item in the store is worse than an odd one:
+ * its `detail`, `qualifiers` and `source_entry_ids` are repaired and the rest is kept as sent.
+ */
+export function parseItemRow(row: unknown): GroceryListItem {
+  const parsed = GroceryListItem.safeParse(row);
+  if (parsed.success) return parsed.data;
+  const raw = (row ?? {}) as Record<string, unknown>;
+  const detail = ItemDetail.safeParse(raw.detail ?? {});
+  return {
+    ...raw,
+    detail: detail.success ? detail.data : { contributions: [] },
+    qualifiers: Array.isArray(raw.qualifiers) ? raw.qualifiers : [],
+    source_entry_ids: Array.isArray(raw.source_entry_ids) ? raw.source_entry_ids : [],
+  } as GroceryListItem;
 }
 
 /** The household's pantry rows. A staple with no row is "have (default)", decided by the screen. */
@@ -409,18 +430,31 @@ export async function patchList(
   if (error) throw toListError(error, status);
 }
 
-/** Upserts a pantry row. */
+/**
+ * Sets a pantry row's status, creating the row when the household has none. Two statements, because
+ * a merge upsert cannot be used: PostgREST turns it into `ON CONFLICT DO UPDATE SET <every payload
+ * column> = EXCLUDED.<column>`, which rewrites the key columns, and clients may update `status`
+ * only (supabase/migrations/*_lists.sql). So: an insert that ignores a conflict (`ON CONFLICT DO
+ * NOTHING`) creates the row if it is missing, then an update of `status` alone on the key sets it.
+ * Both are safe to repeat, and the update is what makes a change of an existing row land.
+ */
 export async function writePantryStatus(
   client: MpClient,
   args: { householdId: string; ingredientId: string; status: PantryStatus },
 ): Promise<void> {
-  const { error, status } = await client
+  const insert = await client
     .from("pantry_items")
     .upsert(
       { household_id: args.householdId, ingredient_id: args.ingredientId, status: args.status },
-      { onConflict: "household_id,ingredient_id" },
+      { onConflict: "household_id,ingredient_id", ignoreDuplicates: true },
     );
-  if (error) throw toListError(error, status);
+  if (insert.error) throw toListError(insert.error, insert.status);
+  const update = await client
+    .from("pantry_items")
+    .update({ status: args.status })
+    .eq("household_id", args.householdId)
+    .eq("ingredient_id", args.ingredientId);
+  if (update.error) throw toListError(update.error, update.status);
 }
 
 /** Removes a pantry row, which returns the ingredient to its default (staples are "have"). */

@@ -48,7 +48,7 @@ Failed: `{ "ok": false, "error": "…", "message": "…" }`.
 
 ## What a build does
 
-All in one transaction (`store.ts`), after an advisory lock on the household and week, so two phones tapping "Generate list" build one list, one after the other, and a device never sees the list half replaced:
+All in one transaction (`store.ts`), after an advisory lock on the household and week that is meant to make two phones tapping "Generate list" build one list, one after the other. A device never sees the list half replaced. The lock has not been tested under real concurrency: PGlite is one connection, so the tests check only where it sits (the first statement after the role switch, before any plan is read) and that two builds in a row make one list. Two builds racing on separate connections have not been run:
 
 1. Load the plan, its entries, the entries' recipes (the household's own and the starter catalog's), their ingredient lines, the ontology rows those lines name, and the household's pantry.
 2. `buildList` (`packages/core/src/list/aggregate.ts`) computes the draft. It is pure and fixture-tested.
@@ -77,4 +77,4 @@ Supabase provides `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_DB_U
 
 ## Tests
 
-`pnpm test` runs `handler.test.ts` (request handling against a fake store), `store.test.ts` (the SQL on PGlite with the repo's migrations: the week of five dinners, rebuilds, the pantry, the role), and `pgtap.test.ts` (the pgTAP files `004_rls_planning.sql` and `006_rls_lists.sql` through a small shim, `testing/pgtap-shim.sql`, because the development Mac has no container runtime; CI runs them with real pgTAP). PGlite is Postgres 18 and the hosted project runs 17; the SQL used is plain.
+`pnpm test` runs `handler.test.ts` (request handling against a fake store), `handler.store.test.ts` (the handler on the real store: a caller who names a household they are not in, or one they left or that was deleted, gets 403 and changes no row; where the lock sits), `pantry.test.ts` (the client's pantry write turned into the SQL PostgREST generates and run as `authenticated`), `store.test.ts` (the SQL on PGlite with the repo's migrations: the week of five dinners, rebuilds, the pantry, the role), and `pgtap.test.ts` (the pgTAP files `004_rls_planning.sql` and `006_rls_lists.sql` through a small shim, `testing/pgtap-shim.sql`, because the development Mac has no container runtime; CI runs them with real pgTAP). PGlite is Postgres 18 and the hosted project runs 17; the SQL used is plain.

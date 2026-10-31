@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { MpClient } from "../client";
 import { useSupabase } from "../context";
+import { useSession } from "../hooks/useSession";
 import { groceryListRootKey, withItemAdded, withoutItem } from "../lists";
 import { acquireListQueue } from "../offline/listQueue";
 
@@ -144,13 +145,15 @@ const shared = new WeakMap<MpClient, Map<string, { users: number; stop: () => vo
 /**
  * Like subscribeListChanges, but reference counted: the list screen and store mode can both mount
  * it and still share one channel, which closes when the last one unmounts. Every (re)join also
- * kicks the household's replay queue, so a check-off made in airplane mode goes out the moment
- * the connection returns.
+ * kicks the signed-in person's replay queue for the household, so a check-off made in airplane mode
+ * goes out the moment the connection returns. The channel is per person: it kicks that person's
+ * queue and nobody else's.
  */
 export function acquireListChannel(
   client: MpClient,
   queryClient: QueryClient,
   householdId: string,
+  userId: string,
 ): () => void {
   let byHousehold = shared.get(client);
   if (!byHousehold) {
@@ -158,15 +161,16 @@ export function acquireListChannel(
     shared.set(client, byHousehold);
   }
   const map = byHousehold;
-  let entry = map.get(householdId);
+  const key = `${userId}:${householdId}`;
+  let entry = map.get(key);
   if (!entry) {
     entry = {
       users: 0,
       stop: subscribeListChanges(client, queryClient, householdId, {
-        onJoined: () => acquireListQueue(client, queryClient, householdId).kick(),
+        onJoined: () => acquireListQueue(client, queryClient, { householdId, userId }).kick(),
       }),
     };
-    map.set(householdId, entry);
+    map.set(key, entry);
   }
   entry.users += 1;
   const held = entry;
@@ -178,7 +182,7 @@ export function acquireListChannel(
     held.users -= 1;
     if (held.users === 0) {
       held.stop();
-      map.delete(householdId);
+      map.delete(key);
     }
   };
 }
@@ -187,9 +191,11 @@ export function acquireListChannel(
 export function useListRealtime(householdId: string | null | undefined): void {
   const client = useSupabase();
   const queryClient = useQueryClient();
+  const { user } = useSession();
+  const userId = user?.id;
 
   useEffect(() => {
-    if (!householdId) return;
-    return acquireListChannel(client, queryClient, householdId);
-  }, [client, queryClient, householdId]);
+    if (!householdId || !userId) return;
+    return acquireListChannel(client, queryClient, householdId, userId);
+  }, [client, queryClient, householdId, userId]);
 }

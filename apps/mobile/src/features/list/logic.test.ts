@@ -291,6 +291,26 @@ describe("parseUnitInput", () => {
   });
 });
 
+describe("an item whose detail is the column default (F2)", () => {
+  // What a refetch used to hand the screens for a manual item: detail is `{}`, so `contributions`
+  // is undefined. The list hooks now parse rows, but a cache saved by an older build can still hold
+  // the raw shape, and the sheet must open on it.
+  const raw = item(9, { is_manual: true, display_name: "Paper towels", detail: {} as never });
+
+  it("opens the Why this amount sheet's data without throwing", () => {
+    expect(() => contributionRows(raw)).not.toThrow();
+    expect(() => roundingSentence(raw)).not.toThrow();
+    expect(() => attentionNote(raw)).not.toThrow();
+    expect(contributionRows(raw)).toEqual([]);
+    expect(roundingSentence(raw)).toBeNull();
+    expect(attentionNote(raw)).toBeNull();
+  });
+
+  it("reads as an item the person added", () => {
+    expect(needSummary({ ...raw, qty: 2 })).toBe("You added this: 2");
+  });
+});
+
 describe("moveSection", () => {
   const order = ["produce", "meat", "dairy"];
 

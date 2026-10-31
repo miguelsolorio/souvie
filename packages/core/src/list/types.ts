@@ -170,13 +170,15 @@ export const ManualItemInput = z.object({
 });
 export type ManualItemInput = z.input<typeof ManualItemInput>;
 
-/** The columns a person may change on an item that exists. */
+/**
+ * The columns a person may change on an item that exists. There is no rename: the app has none,
+ * and a rebuild would overwrite a changed name without `edited` being set.
+ */
 export const ItemPatch = z
   .object({
     qty: z.number().positive().max(LIST_LIMITS.qtyMax).nullable(),
     unit: z.string().trim().min(1).max(LIST_LIMITS.unit).nullable(),
     section: z.string().trim().min(1).max(LIST_LIMITS.section),
-    display_name: z.string().trim().min(1).max(LIST_LIMITS.displayName),
     excluded_reason: ExcludedReason.nullable(),
   })
   .partial();

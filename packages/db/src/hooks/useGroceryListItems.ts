@@ -3,9 +3,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useSyncExternalStore } from "react";
 import { useSupabase } from "../context";
 import { fetchListItems, groceryItemsKey } from "../lists";
-import { acquireListQueue } from "../offline/listQueue";
+import {
+  acquireListQueue,
+  queueRegistryVersion,
+  subscribeQueueRegistry,
+} from "../offline/listQueue";
 import { type ListOp, overlayOps } from "../offline/replayQueue";
 import { useHousehold } from "./useHousehold";
+import { useSession } from "./useSession";
 
 const NO_OPS: readonly ListOp[] = [];
 const noSubscription = () => () => {};
@@ -18,9 +23,16 @@ const noSubscription = () => () => {};
 export function usePendingListOps(householdId: string | null | undefined): readonly ListOp[] {
   const client = useSupabase();
   const queryClient = useQueryClient();
+  const { user } = useSession();
+  const userId = user?.id;
+  // The queue is the signed-in person's. One that was released (sign-out, a change of user) is
+  // stopped for good, so the registry's version is a dependency: after a release, ask again.
+  const version = useSyncExternalStore(subscribeQueueRegistry, queueRegistryVersion, () => 0);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `version` is the reason to ask again.
   const queue = useMemo(
-    () => (householdId ? acquireListQueue(client, queryClient, householdId) : null),
-    [client, queryClient, householdId],
+    () =>
+      householdId && userId ? acquireListQueue(client, queryClient, { householdId, userId }) : null,
+    [client, queryClient, householdId, userId, version],
   );
   return useSyncExternalStore(
     queue ? queue.subscribe : noSubscription,

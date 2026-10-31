@@ -99,7 +99,7 @@ export function rowAccessibilityLabel(item: GroceryListItem): string {
 /** Why an item carries the "needs a look" mark, or null when it does not. */
 export function attentionNote(item: GroceryListItem): string | null {
   if (!item.needs_attention) return null;
-  switch (item.detail.attention) {
+  switch (item.detail?.attention) {
     case "unparsed":
       return "We could not match this line to an ingredient, so it is listed the way the recipe wrote it. Check the amount yourself.";
     case "mixed_units":
@@ -131,7 +131,9 @@ function servingsText(value: number): string {
 
 /** One row per recipe entry that adds to the item, for the "Why this amount" sheet. */
 export function contributionRows(item: GroceryListItem): ContributionRow[] {
-  return item.detail.contributions.map((contribution, index) => {
+  // A manual item has no contributions, and a cache saved by an older build can hold a `detail`
+  // without the key. The list hooks parse server rows now; this keeps the sheet safe regardless.
+  return (item.detail?.contributions ?? []).map((contribution, index) => {
     const makes = contribution.recipeServings;
     const differs = makes != null && Math.abs(makes - contribution.servings) > 1e-9;
     return {
@@ -156,7 +158,7 @@ export function contributionRows(item: GroceryListItem): ContributionRow[] {
  * Null when the amount was used as added up.
  */
 export function roundingSentence(item: GroceryListItem): string | null {
-  const rounding = item.detail.rounding;
+  const rounding = item.detail?.rounding;
   if (!rounding) return null;
   const from = formatAmount(rounding.from, rounding.fromUnit) || String(rounding.from);
   const to = formatAmount(rounding.to, rounding.toUnit) || String(rounding.to);

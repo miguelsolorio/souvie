@@ -14,7 +14,8 @@
 //   remove   already gone counts as done
 //
 // Taps on the same item collapse before they are sent (ten toggles are one write), and removing an
-// item cancels everything queued for it. No CRDTs: a check is last-writer-wins, which is enough
+// item cancels everything queued for it that has not started sending. The operation being sent is
+// never changed or cancelled: later taps queue behind it. No CRDTs: a check is last-writer-wins, which is enough
 // because two people rarely check the same item within seconds (docs/01 §Realtime and offline).
 import type { GroceryListItem, ItemPatch, ManualItemInput } from "@mp/core";
 import { manualItemRow, withItemChecked, withItemPatched, withoutItem } from "../lists";
@@ -172,6 +173,8 @@ export class ReplayQueue {
   private readonly listeners = new Set<() => void>();
   private readonly attempts = new Map<string, number>();
   private running: Promise<void> | null = null;
+  /** The operation whose send is in progress. It is immutable until the send settles. */
+  private inFlight: ListOp | null = null;
   private cancelRetry: (() => void) | null = null;
   private failedRuns = 0;
   private stopped = false;
@@ -207,7 +210,15 @@ export class ReplayQueue {
 
   /** Adds an operation, saves the queue, and tries to send soon. */
   enqueue(op: ListOp): void {
-    this.queue = coalesceOps(this.queue, op);
+    // The operation being sent is already on its way and cannot be changed or cancelled: whatever
+    // is queued now merges only with the operations behind it, or goes after it. (Merging into it
+    // would drop the new change when the send finishes and the operation is removed; cancelling
+    // against it would leave the server with something the device believes never happened.)
+    const head =
+      this.inFlight && this.queue[0]?.id === this.inFlight.id ? this.queue[0] : undefined;
+    this.queue = head
+      ? [head, ...coalesceOps(this.queue.slice(1), op)]
+      : coalesceOps(this.queue, op);
     this.changed();
     this.kick();
   }
@@ -261,6 +272,7 @@ export class ReplayQueue {
     while (!this.stopped) {
       const op = this.queue[0];
       if (!op) break;
+      this.inFlight = op;
       try {
         await this.options.execute(op);
       } catch (error) {
@@ -280,6 +292,8 @@ export class ReplayQueue {
         this.failedRuns += 1;
         this.scheduleRetry();
         return;
+      } finally {
+        this.inFlight = null;
       }
       this.options.onSent?.(op);
       this.remove(op);

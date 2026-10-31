@@ -1245,6 +1245,7 @@ export type Database = {
           used: number;
         }[];
       };
+      section_order_is_valid: { Args: { names: string[] }; Returns: boolean };
     };
     Enums: {
       grocery_list_items_excluded_reason: "pantry" | "manual";

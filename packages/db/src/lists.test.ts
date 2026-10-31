@@ -1,6 +1,7 @@
 import { type GroceryListItem, planFingerprint } from "@mp/core";
 import { describe, expect, it } from "vitest";
 import {
+  fetchListItems,
   isListStale,
   ListError,
   listErrorMessage,
@@ -14,6 +15,7 @@ import {
   withItemPatched,
   withoutItem,
 } from "./lists";
+import { fakeClient } from "./testing/fakeClient";
 
 const USER = "a1111111-1111-4111-8111-111111111111";
 const LIST = "1a000000-0000-4000-8000-0000000000a1";
@@ -96,15 +98,21 @@ describe("patchColumns", () => {
     });
   });
 
-  it("does not mark a rename or a removal as an edit of the amount", () => {
-    expect(patchColumns({ display_name: "Bananas" })).toEqual({ display_name: "Bananas" });
+  it("does not mark a removal as an edit of the amount", () => {
     expect(patchColumns({ excluded_reason: "manual" })).toEqual({ excluded_reason: "manual" });
     expect(patchColumns({ excluded_reason: null })).toEqual({ excluded_reason: null });
   });
 
+  it("has no rename: a name is not part of an item patch, because a rebuild would overwrite it (F8)", () => {
+    expect(patchColumns({ display_name: "Bananas" } as never)).toEqual({});
+    expect(patchColumns({ qty: 2, display_name: "Bananas" } as never)).toEqual({
+      qty: 2,
+      edited: true,
+    });
+  });
+
   it("refuses values the database would", () => {
     expect(() => patchColumns({ qty: -1 })).toThrow();
-    expect(() => patchColumns({ display_name: "  " })).toThrow();
     expect(() => patchColumns({ excluded_reason: "pantry" as never })).not.toThrow();
   });
 });
@@ -212,5 +220,49 @@ describe("isListStale (acceptance criterion 9)", () => {
     expect(isListStale({ plan_fingerprint: null }, entries)).toBe(false);
     expect(isListStale(null, entries)).toBe(false);
     expect(isListStale(undefined, entries)).toBe(false);
+  });
+});
+
+describe("fetchListItems (F2)", () => {
+  // What PostgREST returns for a manual item the client inserted: `detail` is the column default.
+  const serverManual = {
+    ...item(1),
+    display_name: "Paper towels",
+    is_manual: true,
+    section: "household",
+    detail: {},
+  };
+
+  it("gives a server row the shape the screens read, whatever the column holds", async () => {
+    const { client, server } = fakeClient();
+    server.tables.grocery_list_items = [
+      serverManual,
+      { ...item(2), detail: { contributions: [], rounding: null, attention: null } },
+      { ...item(3), detail: null, qualifiers: null, source_entry_ids: null },
+    ];
+    const items = await fetchListItems(client, LIST);
+    expect(items).toHaveLength(3);
+    for (const row of items) {
+      expect(row.detail.contributions).toEqual([]);
+      expect(Array.isArray(row.qualifiers)).toBe(true);
+      expect(Array.isArray(row.source_entry_ids)).toBe(true);
+    }
+    expect(items[0]?.display_name).toBe("Paper towels");
+  });
+
+  it("keeps the contributions of an automatic item", async () => {
+    const { client, server } = fakeClient();
+    const contribution = {
+      entryId: "e0000000-0000-4000-8000-000000000001",
+      recipeTitle: "Tacos",
+      servings: 4,
+      recipeServings: 4,
+      qty: 2,
+      unit: "can",
+      rawTexts: ["2 cans black beans"],
+    };
+    server.tables.grocery_list_items = [{ ...item(1), detail: { contributions: [contribution] } }];
+    const [row] = await fetchListItems(client, LIST);
+    expect(row?.detail.contributions).toEqual([contribution]);
   });
 });

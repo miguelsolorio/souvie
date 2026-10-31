@@ -20,7 +20,7 @@
 
 begin;
 
-select plan(98);
+select plan(109);
 
 -- ---------------------------------------------------------------------------------------
 -- Fixtures (as the postgres role, which bypasses RLS)
@@ -160,6 +160,15 @@ select throws_ok(
   $$insert into public.grocery_lists (household_id, name) values ('0a000000-0000-4000-8000-00000000000a', '   ')$$,
   '23514', 'new row for relation "grocery_lists" violates check constraint "grocery_lists_name_length"',
   'a list needs a name'
+);
+select throws_ok(
+  $$update public.grocery_lists set section_order = array['produce', repeat('x', 41)] where id = '1a000000-0000-4000-8000-0000000000a1'$$,
+  '23514', 'new row for relation "grocery_lists" violates check constraint "grocery_lists_section_order_size"',
+  'a section name in the aisle order is at most 40 characters'
+);
+select lives_ok(
+  $$update public.grocery_lists set section_order = array['meat', repeat('x', 40)] where id = '1a000000-0000-4000-8000-0000000000a1'; update public.grocery_lists set section_order = null where id = '1a000000-0000-4000-8000-0000000000a1'$$,
+  'a name of exactly 40 characters is accepted'
 );
 select throws_ok(
   $$insert into public.grocery_list_items (list_id, household_id, display_name, qty, is_manual) values ('1a000000-0000-4000-8000-0000000000a1', '0a000000-0000-4000-8000-00000000000a', 'Negative', -1, true)$$,
@@ -395,21 +404,62 @@ select ok(
   'checked_at was filled in by the server'
 );
 
--- Pantry: an upsert per household and ingredient, closed vocabulary, delete returns to default.
+-- A toggle that changes checked and sends no checked_at is stamped now, not left at the old stamp.
 select lives_ok(
-  $$insert into public.pantry_items (household_id, ingredient_id, status) values ('0a000000-0000-4000-8000-00000000000a', 'f1000000-0000-4000-8000-000000000001', 'low')
-    on conflict (household_id, ingredient_id) do update set status = excluded.status$$,
-  'alice marks an ingredient low'
+  $$insert into public.grocery_list_items (id, list_id, household_id, display_name, is_manual) values ('ea100000-0000-4000-8000-000000000005', '1a000000-0000-4000-8000-0000000000a1', '0a000000-0000-4000-8000-00000000000a', 'Stamp test', true)$$,
+  'alice adds a manual item to toggle'
 );
 select lives_ok(
-  $$insert into public.pantry_items (household_id, ingredient_id, status) values ('0a000000-0000-4000-8000-00000000000a', 'f1000000-0000-4000-8000-000000000001', 'out')
-    on conflict (household_id, ingredient_id) do update set status = excluded.status$$,
-  'and then out, with the same upsert'
+  $$update public.grocery_list_items set checked = true, checked_at = now() - interval '3 hours' where id = 'ea100000-0000-4000-8000-000000000005'$$,
+  'alice checks it with a stamp from three hours ago'
+);
+select lives_ok(
+  $$update public.grocery_list_items set checked = false where id = 'ea100000-0000-4000-8000-000000000005'$$,
+  'then unchecks it, sending checked and no checked_at'
+);
+select ok(
+  (select not checked and checked_at > now() - interval '1 minute' from public.grocery_list_items where id = 'ea100000-0000-4000-8000-000000000005'),
+  'the uncheck took effect and carries a fresh stamp, not the one from three hours ago'
+);
+select is(public.__t_affected($$delete from public.grocery_list_items where id = 'ea100000-0000-4000-8000-000000000005'$$), 1::bigint, 'alice deletes the test item');
+
+-- Pantry: one row per household and ingredient, closed vocabulary, delete returns to default.
+-- A write is two statements, exactly what writePantryStatus sends (@mp/db) in the shape PostgREST
+-- gives them: an insert that ignores a conflict, then an update of status alone. A merge upsert is
+-- not used: PostgREST turns it into DO UPDATE SET <every payload column>, the grant is update (status)
+-- only, and so it is refused (the last case below).
+-- A first write:
+select lives_ok(
+  $$insert into public.pantry_items ("household_id", "ingredient_id", "status") select "household_id", "ingredient_id", "status" from json_populate_record(null::public.pantry_items, '{"household_id": "0a000000-0000-4000-8000-00000000000a", "ingredient_id": "f1000000-0000-4000-8000-000000000001", "status": "low"}'::json) on conflict ("household_id", "ingredient_id") do nothing$$,
+  'a first pantry write: the insert that ignores a conflict, as PostgREST sends it'
+);
+select lives_ok(
+  $$update public.pantry_items set "status" = pgrst_body."status" from (select "status" from json_populate_record(null::public.pantry_items, '{"status": "low"}'::json) as _) pgrst_body where public.pantry_items."household_id" = '0a000000-0000-4000-8000-00000000000a' and public.pantry_items."ingredient_id" = 'f1000000-0000-4000-8000-000000000001'$$,
+  'and the update of status on that key'
+);
+select is(
+  (select status::text from public.pantry_items where household_id = '0a000000-0000-4000-8000-00000000000a' and ingredient_id = 'f1000000-0000-4000-8000-000000000001'),
+  'low',
+  'the first write landed'
+);
+-- A change of the row that exists:
+select lives_ok(
+  $$insert into public.pantry_items ("household_id", "ingredient_id", "status") select "household_id", "ingredient_id", "status" from json_populate_record(null::public.pantry_items, '{"household_id": "0a000000-0000-4000-8000-00000000000a", "ingredient_id": "f1000000-0000-4000-8000-000000000001", "status": "out"}'::json) on conflict ("household_id", "ingredient_id") do nothing$$,
+  'a change of an existing row: the same insert finds the conflict and does nothing'
+);
+select lives_ok(
+  $$update public.pantry_items set "status" = pgrst_body."status" from (select "status" from json_populate_record(null::public.pantry_items, '{"status": "out"}'::json) as _) pgrst_body where public.pantry_items."household_id" = '0a000000-0000-4000-8000-00000000000a' and public.pantry_items."ingredient_id" = 'f1000000-0000-4000-8000-000000000001'$$,
+  'and the update of status changes it'
 );
 select is(
   (select status::text from public.pantry_items where household_id = '0a000000-0000-4000-8000-00000000000a' and ingredient_id = 'f1000000-0000-4000-8000-000000000001'),
   'out',
-  'the second upsert changed the one row'
+  'the change landed on the one row'
+);
+select throws_ok(
+  $$insert into public.pantry_items ("household_id", "ingredient_id", "status") select "household_id", "ingredient_id", "status" from json_populate_record(null::public.pantry_items, '{"household_id": "0a000000-0000-4000-8000-00000000000a", "ingredient_id": "f1000000-0000-4000-8000-000000000001", "status": "have"}'::json) on conflict ("household_id", "ingredient_id") do update set "household_id" = excluded."household_id", "ingredient_id" = excluded."ingredient_id", "status" = excluded."status"$$,
+  '42501', 'permission denied for table pantry_items',
+  'the merge upsert rewrites the key columns, which clients may not update, so it is refused and the client must not send it'
 );
 select is(
   (select count(*)::int from public.pantry_items where household_id = '0a000000-0000-4000-8000-00000000000a'),

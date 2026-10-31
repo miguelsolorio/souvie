@@ -311,6 +311,37 @@ describe("amounts", () => {
     expect(onlyMax.draft.items[0]).toMatchObject({ qty: 3, unit: "cup" });
   });
 
+  it("records a rounding step only when the amount changed (F7)", () => {
+    // 1 lb of pasta has no pack: it is shown in ounces, 16, and nothing was rounded.
+    const pasta = runFixture(
+      base([{ text: "1 lb pasta", qty: 1, unit: "lb", ingredient: "pasta" }]),
+    );
+    expect(pasta.draft.items[0]).toMatchObject({ qty: 16, unit: "oz" });
+    expect(pasta.draft.items[0]?.rounding).toBeUndefined();
+
+    // Twelve eggs are exactly one dozen: a different unit, the same amount.
+    const eggs = runFixture(base([{ text: "12 eggs", qty: 12, unit: "each", ingredient: "egg" }]));
+    expect(eggs.draft.items[0]).toMatchObject({ qty: 1, unit: "dozen" });
+    expect(eggs.draft.items[0]?.rounding).toBeUndefined();
+
+    // 1.2 lb is 19.2 oz, bought as 20: the amount changed, so the step is recorded.
+    const more = runFixture(
+      base([{ text: "1.2 lb pasta", qty: 1.2, unit: "lb", ingredient: "pasta" }]),
+    );
+    expect(more.draft.items[0]).toMatchObject({ qty: 20, unit: "oz" });
+    expect(more.draft.items[0]?.rounding).toMatchObject({
+      from: 1.2,
+      fromUnit: "lb",
+      to: 20,
+      toUnit: "oz",
+    });
+
+    // 13 eggs need a second dozen: recorded.
+    const many = runFixture(base([{ text: "13 eggs", qty: 13, unit: "each", ingredient: "egg" }]));
+    expect(many.draft.items[0]).toMatchObject({ qty: 2, unit: "dozen" });
+    expect(many.draft.items[0]?.rounding).toMatchObject({ from: 13, to: 2, toUnit: "dozen" });
+  });
+
   it("treats a bare number as a count", () => {
     const { draft } = runFixture(
       base([{ text: "3 carrots", qty: 3, unit: null, ingredient: "carrot" }]),

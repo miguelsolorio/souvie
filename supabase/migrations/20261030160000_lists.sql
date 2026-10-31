@@ -34,6 +34,23 @@ create type public.pantry_items_status as enum ('have', 'low', 'out');
 -- grocery_lists
 -- ---------------------------------------------------------------------------------------
 
+-- An aisle order is at most 40 sections, each a name of 1 to 40 characters. A CHECK constraint
+-- cannot hold a subquery, so the per-name test lives in a function.
+create or replace function public.section_order_is_valid(names text[])
+returns boolean
+language sql
+immutable
+parallel safe
+set search_path = ''
+as $$
+  select names is null or (
+    cardinality(names) <= 40
+    and not exists (
+      select 1 from unnest(names) as n where n is null or char_length(n) not between 1 and 40
+    )
+  )
+$$;
+
 create table public.grocery_lists (
   id uuid primary key default gen_random_uuid(),
   household_id uuid not null references public.households (id) on delete cascade,
@@ -57,9 +74,7 @@ create table public.grocery_lists (
 
   constraint grocery_lists_name_length check (char_length(btrim(name)) between 1 and 120),
   constraint grocery_lists_plan_version_range check (plan_version >= 0),
-  constraint grocery_lists_section_order_size check (
-    section_order is null or cardinality(section_order) <= 40
-  )
+  constraint grocery_lists_section_order_size check (public.section_order_is_valid(section_order))
 );
 
 comment on table public.grocery_lists is
@@ -206,6 +221,7 @@ create trigger grocery_list_items_sync_row
 --     is raised, so a replayed queue never gets stuck on a stale item.
 --   * A device clock that runs ahead cannot win forever: checked_at is capped at five minutes past
 --     the server's now().
+--   * A toggle that changes checked and sends no checked_at is stamped now.
 create or replace function public.grocery_list_items_check_guard()
 returns trigger
 language plpgsql
@@ -230,6 +246,13 @@ begin
   if new.checked_by is not null and new.checked_by is distinct from old.checked_by
      and new.checked_by <> uid then
     raise exception 'checked_by_mismatch' using errcode = '42501';
+  end if;
+
+  -- checked changed and the caller sent no checked_at, so the column still holds the old stamp:
+  -- stamp the toggle now (and never earlier than what is on the row, so it is not mistaken for a
+  -- stale one below).
+  if new.checked is distinct from old.checked and new.checked_at is not distinct from old.checked_at then
+    new.checked_at := greatest(now(), coalesce(old.checked_at, now()));
   end if;
 
   new.checked_by := uid;

@@ -6,6 +6,7 @@ import { newId } from "../ids";
 import { groceryItemsKey, nextItemPosition } from "../lists";
 import { acquireListQueue } from "../offline/listQueue";
 import { useHousehold } from "./useHousehold";
+import { useSession } from "./useSession";
 
 /**
  * Adds a free-text item to a list ("paper towels", "birthday candles"). The item gets its id on
@@ -21,16 +22,18 @@ export function useAddManualItem(listId: string | null | undefined) {
   const queryClient = useQueryClient();
   const household = useHousehold();
   const householdId = household.data?.id;
+  const { user } = useSession();
+  const userId = user?.id;
 
   return useCallback(
     (input: ManualItemInput): string | null => {
-      if (!householdId || !listId) return null;
+      if (!householdId || !userId || !listId) return null;
       const item = ManualItemInput.parse(input);
       const held = queryClient.getQueryData<GroceryListItem[]>(
         groceryItemsKey(householdId, listId),
       );
       const itemId = newId();
-      acquireListQueue(client, queryClient, householdId).enqueue({
+      acquireListQueue(client, queryClient, { householdId, userId }).enqueue({
         kind: "add",
         id: newId(),
         itemId,
@@ -41,6 +44,6 @@ export function useAddManualItem(listId: string | null | undefined) {
       });
       return itemId;
     },
-    [client, queryClient, householdId, listId],
+    [client, queryClient, householdId, userId, listId],
   );
 }

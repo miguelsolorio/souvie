@@ -1,6 +1,6 @@
 import type { GroceryListItem, ItemPatch } from "@mp/core";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useSupabase } from "../context";
 import { newId } from "../ids";
 import { acquireListQueue } from "../offline/listQueue";
@@ -8,8 +8,11 @@ import { useHousehold } from "./useHousehold";
 import { useSession } from "./useSession";
 
 /**
- * The household's replay queue plus who is acting, for the hooks that change items. Returns null
- * until the household and the session have loaded, and the hooks below then do nothing.
+ * Who is acting, and a way to get their replay queue, for the hooks that change items. The queue
+ * belongs to the signed-in person (see `replayStorageKey`), and it is asked for when an operation
+ * is made, not kept from an earlier render: a queue released at sign-out is stopped for good, and a
+ * hook that held on to it would queue taps that never go out. Returns null until the household and
+ * the session have loaded, and the hooks below then do nothing.
  */
 function useActor() {
   const client = useSupabase();
@@ -18,8 +21,13 @@ function useActor() {
   const { user } = useSession();
   const householdId = household.data?.id;
   const userId = user?.id;
-  if (!householdId || !userId) return null;
-  return { queue: acquireListQueue(client, queryClient, householdId), householdId, userId };
+  return useMemo(() => {
+    if (!householdId || !userId) return null;
+    return {
+      userId,
+      queue: () => acquireListQueue(client, queryClient, { householdId, userId }),
+    };
+  }, [client, queryClient, householdId, userId]);
 }
 
 /**
@@ -38,7 +46,7 @@ export function useToggleItem() {
   return useCallback(
     (item: Pick<GroceryListItem, "id" | "checked">, checked: boolean = !item.checked) => {
       if (!actor) return;
-      actor.queue.enqueue({
+      actor.queue().enqueue({
         kind: "check",
         id: newId(),
         itemId: item.id,
@@ -52,7 +60,7 @@ export function useToggleItem() {
 }
 
 /**
- * Changes an item's quantity, unit, or section, or renames it. An edit of the amount or section
+ * Changes an item's quantity, unit, or section (an item has no rename). An edit of the amount or section
  * marks the item as edited, so a rebuild keeps the person's answer. Queued like a check-off.
  */
 export function useEditItem() {
@@ -60,7 +68,7 @@ export function useEditItem() {
   return useCallback(
     (itemId: string, patch: ItemPatch) => {
       if (!actor) return;
-      actor.queue.enqueue({ kind: "patch", id: newId(), itemId, patch });
+      actor.queue().enqueue({ kind: "patch", id: newId(), itemId, patch });
     },
     [actor],
   );
@@ -77,9 +85,9 @@ export function useRemoveItem() {
   const remove = useCallback(
     (item: Pick<GroceryListItem, "id" | "is_manual">) => {
       if (!actor) return;
-      if (item.is_manual) actor.queue.enqueue({ kind: "remove", id: newId(), itemId: item.id });
+      if (item.is_manual) actor.queue().enqueue({ kind: "remove", id: newId(), itemId: item.id });
       else {
-        actor.queue.enqueue({
+        actor.queue().enqueue({
           kind: "patch",
           id: newId(),
           itemId: item.id,
@@ -92,7 +100,7 @@ export function useRemoveItem() {
   const restore = useCallback(
     (itemId: string) => {
       if (!actor) return;
-      actor.queue.enqueue({
+      actor.queue().enqueue({
         kind: "patch",
         id: newId(),
         itemId,

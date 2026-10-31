@@ -184,15 +184,15 @@ describe("applyItemChange", () => {
 describe("acquireListChannel", () => {
   it("shares one channel between screens and closes it when the last one leaves", () => {
     const { client, channels, queryClient } = setup();
-    const first = acquireListChannel(client, queryClient, HOUSEHOLD);
-    const second = acquireListChannel(client, queryClient, HOUSEHOLD);
+    const first = acquireListChannel(client, queryClient, HOUSEHOLD, USER);
+    const second = acquireListChannel(client, queryClient, HOUSEHOLD, USER);
     expect(channels).toHaveLength(1);
     first();
     first();
     expect(channels[0]?.removed).toBe(false);
     second();
     expect(channels[0]?.removed).toBe(true);
-    const third = acquireListChannel(client, queryClient, HOUSEHOLD);
+    const third = acquireListChannel(client, queryClient, HOUSEHOLD, USER);
     expect(channels).toHaveLength(2);
     third();
     releaseListQueues(client);
@@ -201,11 +201,11 @@ describe("acquireListChannel", () => {
   it("kicks the replay queue when the channel joins, so an offline trip is sent on reconnect", async () => {
     const { client, server, channels, queryClient } = setup();
     server.tables.grocery_list_items = [row(1) as unknown as Record<string, unknown>];
-    const release = acquireListChannel(client, queryClient, HOUSEHOLD);
+    const release = acquireListChannel(client, queryClient, HOUSEHOLD, USER);
     // Something waiting from before the channel was up.
     const { acquireListQueue } = await import("../offline/listQueue");
     server.offline = true;
-    const queue = acquireListQueue(client, queryClient, HOUSEHOLD);
+    const queue = acquireListQueue(client, queryClient, { householdId: HOUSEHOLD, userId: USER });
     queue.enqueue({ kind: "check", id: "a", itemId: id(1), checked: true, userId: USER, at: NOW });
     await queue.flush();
     expect(queue.size).toBe(1);

@@ -406,7 +406,16 @@ function aggregateGroup(
       if (purchasable) {
         qty = purchasable.qty;
         unit = purchasable.unit;
-        if (!(purchasable.unit === part.unit && near(purchasable.qty, total))) {
+        // A rounding step is recorded only when the amount changed. 1 lb shown as 16 oz, or 12
+        // eggs as 1 dozen, is a different unit for the same amount: nothing was rounded.
+        let changed: boolean;
+        if (purchasable.unit === part.unit) changed = !near(purchasable.qty, total);
+        else {
+          const back = convert(purchasable.qty, purchasable.unit, part.unit, ingredient);
+          // A pack of unknown weight cannot be shown to equal the amount, so it counts as changed.
+          changed = back === null || Math.abs(back - total) > 1e-6 * Math.max(1, Math.abs(total));
+        }
+        if (changed) {
           rounding = {
             from: tidy(total, 3),
             fromUnit: part.unit,

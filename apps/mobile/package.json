@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~58.0.15",
-    "@mp/agent": "workspace:^",
+    "@mp/agent": "workspace:*",
     "@mp/core": "workspace:*",
     "@mp/db": "workspace:*",
     "@mp/recipe-import": "workspace:*",
@@ -32,7 +32,6 @@
     "expo-clipboard": "~58.0.4",
     "expo-constants": "~58.0.14",
     "expo-crypto": "~58.0.7",
-    "expo-device": "~58.0.5",
     "expo-image-manipulator": "~58.0.16",
     "expo-image-picker": "~58.0.10",
     "expo-linking": "~58.0.15",

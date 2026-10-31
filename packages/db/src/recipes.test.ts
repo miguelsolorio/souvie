@@ -26,7 +26,7 @@ import {
   recipeErrorMessage,
   updateRecipe,
 } from "./hooks/useRecipe";
-import { fetchRecipes, recipesQueryKey } from "./hooks/useRecipes";
+import { fetchRecipes, recipesQueryKey, recipesQueryOptions } from "./hooks/useRecipes";
 import { Constants } from "./types.generated";
 
 type Result = { data?: unknown; error?: { message: string } | null };
@@ -192,6 +192,39 @@ describe("fetchRecipes", () => {
     await expect(fetchRecipes(again.client, HOUSEHOLD, { includeCatalog: true })).rejects.toThrow(
       "boom",
     );
+  });
+});
+
+describe("what useRecipes runs", () => {
+  it("leaves the catalog out by default, in its key and in its query, and adds it only when asked", async () => {
+    for (const options of [
+      undefined,
+      {},
+      { includeCatalog: undefined },
+      { includeCatalog: false },
+    ]) {
+      const { client, calls } = fakeClient([{ data: [], error: null }]);
+      const query = recipesQueryOptions(client, HOUSEHOLD, options);
+      expect(query.queryKey).toEqual(["recipes", HOUSEHOLD]);
+      await query.queryFn();
+      expect(calls).toContainEqual({ op: "recipes.eq", args: ["household_id", HOUSEHOLD] });
+      expect(calls.some((c) => c.op === "recipes.or")).toBe(false);
+    }
+
+    const { client, calls } = fakeClient([{ data: [], error: null }]);
+    const query = recipesQueryOptions(client, HOUSEHOLD, { includeCatalog: true });
+    expect(query.queryKey).toEqual(["recipes", HOUSEHOLD, "with-catalog"]);
+    await query.queryFn();
+    expect(calls.some((c) => c.op === "recipes.or")).toBe(true);
+    expect(calls.some((c) => c.op === "recipes.eq")).toBe(false);
+  });
+
+  it("does nothing until there is a household", async () => {
+    const { client, calls } = fakeClient();
+    const query = recipesQueryOptions(client, undefined, { includeCatalog: true });
+    expect(query.enabled).toBe(false);
+    await expect(query.queryFn()).resolves.toEqual([]);
+    expect(calls).toEqual([]);
   });
 });
 

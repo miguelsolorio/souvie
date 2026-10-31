@@ -16,8 +16,7 @@ import { SourceLine } from "../../../src/features/recipes/SourceLine";
 import { confirmAction } from "../../../src/lib/confirm";
 
 /** Shown in place of Edit and Delete on a starter catalog recipe. */
-const CATALOG_RECIPE_NOTE =
-  "Starter recipe from Souvie. Plan it as is, or add your own copy later.";
+const CATALOG_RECIPE_NOTE = "Starter recipe from Souvie. Plan it as it is.";
 
 /** One recipe: ingredients, steps, and where it came from. */
 export default function RecipeDetailScreen() {

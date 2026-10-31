@@ -67,19 +67,31 @@ export async function fetchRecipes(
   return (data ?? []) as unknown as RecipeSummary[];
 }
 
-export function useRecipes(
+/**
+ * What `useRecipes` runs, as plain options so a test can run it without React. The catalog is in
+ * the list only when `includeCatalog` is exactly true; anything else, including no options, is
+ * the household's own recipes.
+ */
+export function recipesQueryOptions(
+  client: MpClient,
   householdId: string | null | undefined,
   options: RecipeListOptions = {},
 ) {
-  const client = useSupabase();
   const includeCatalog = options.includeCatalog === true;
-
-  return useQuery({
+  return {
     queryKey: recipesQueryKey(householdId, { includeCatalog }),
     enabled: Boolean(householdId),
     queryFn: () => {
       if (!householdId) return Promise.resolve([]);
       return fetchRecipes(client, householdId, { includeCatalog });
     },
-  });
+  };
+}
+
+export function useRecipes(
+  householdId: string | null | undefined,
+  options: RecipeListOptions = {},
+) {
+  const client = useSupabase();
+  return useQuery(recipesQueryOptions(client, householdId, options));
 }

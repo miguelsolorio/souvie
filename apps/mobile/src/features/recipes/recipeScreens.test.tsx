@@ -61,7 +61,7 @@ const detail = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-const NOTE = "Starter recipe from Souvie. Plan it as is, or add your own copy later.";
+const NOTE = "Starter recipe from Souvie. Plan it as it is.";
 
 beforeEach(() => {
   vi.clearAllMocks();

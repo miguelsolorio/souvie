@@ -656,7 +656,7 @@ begin
   update public.shopping_runs r
   set status = 'cancelled', error = null
   where r.id = cancel_shopping_run.run_id;
-  return 'cancelled';
+  return 'cancelled'::public.shopping_runs_status;
 end;
 $$;
 

@@ -9,7 +9,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] Git identity pinned to the Gmail account for this clone (`scripts/setup-git-identity.sh`). Run it again on any fresh clone before the first commit.
 - [x] Create the Supabase project. Put `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `WORKER_DATABASE_URL` in a local `.env.local`. Never commit it.
 - [x] Register the Kroger developer app at developer.kroger.com with redirect URI `souvie://oauth/kroger`. Put `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` in `.env.local`. (Gates wave 2.)
-- [ ] Create accounts: Expo/EAS, Fly.io or Railway (worker), Cloudflare Pages (web and marketing), Sentry, PostHog. Put `ANTHROPIC_API_KEY`, `SENTRY_DSN`, `EXPO_PUBLIC_POSTHOG_KEY` in `.env.local`.
+- [ ] Create accounts: Expo/EAS (dev builds for WS08's WebView host and WS09's review UI), Fly.io or Railway (WS09 worker deploy), Cloudflare Pages (marketing site, WS13 web, the Tier 3 test page), Sentry, PostHog (WS08's `tier3_browser_checkout` kill switch; the flag stays on without it). Put `SENTRY_DSN` and `EXPO_PUBLIC_POSTHOG_KEY` in `.env.local` when they exist.
 - [x] Optional now, required before WS14 finishes: run the name checks in `docs/08-brand.md` §1.3 for Sous and Larder.
 - [x] Decide where `main` lives. Either create a GitHub repository and push `main` (enables PRs and GitHub Actions as the docs assume), or tell the orchestrator you're staying local (then CI is the same commands run locally and merges are local squash merges; no PRs).
 - [x] Open a Claude Code session in this folder with Fable as the model and paste the kickoff prompt at the bottom of this file.
@@ -43,9 +43,10 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 ## 4. Wave 3: planner, onboarding, assisted-checkout host
 
 - [x] Dispatch WS04 and WS06 (sonnet) right away. Dispatched 2026-10-30.
-- [x] Draft the Tier 3 consent copy (names each retailer, the terms risk, the account exposure, "stops at pay") and put it in front of Miguel. Drafted 2026-10-31 in `docs/08-brand.md` §11; awaiting approval.
+- [x] Draft the Tier 3 consent copy (names each retailer, the terms risk, the account exposure, "stops at pay") and put it in front of Miguel. Drafted 2026-10-31 in `docs/08-brand.md` §11; approved as drafted 2026-10-31.
 - [x] **Human checkpoint 4** gates WS08 only: consent copy approved; Tier 3 retailer list confirmed (WS08's `TIER3_RETAILERS` default is Safeway, Albertsons, Haggen, Costco; the Kroger pay adapter is a WS10 adapter, not a consent retailer). Then dispatch WS08 (opus). Approved 2026-10-31 (copy as drafted, four stores); WS08 dispatched (opus).
 - [ ] WS08 reviewer must run the Tier 3 checklist in `docs/04-integrations.md` and confirm no playwright or puppeteer dependency.
+- [ ] WS08: review, merge, append to the wave 3 summary. Then `pnpm install` in the orchestrator worktree (native modules change the lockfile) and a `git pull` in the primary checkout.
 - [x] **Human decision:** recipe catalog cold start. Miguel chose a starter catalog 2026-10-30; WS16 brief written and dispatched.
 - [x] WS16 (starter catalog, sonnet): reviewed and merged as 4fb32da (PR #13), 2026-10-30.
 - [ ] **Human:** Miguel skims `supabase/seed/catalog/README.md` before the catalog loads into the hosted project (with the hosted release).
@@ -64,13 +65,15 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] CCR6: `RunPolicy` in `packages/core` and `RetailerAdapter.checkout` typed to it (orchestrator). Merged 2026-10-31 as e0053e7 (PR #17).
 - [x] WS09 brief corrections written (2026-10-31): service-role decision, `push_tokens`, docs/03 numbers, as-built facts.
 - [x] Dispatch WS09 (opus). Dispatched 2026-10-31. Expect contract change requests here; apply them on `main` yourself.
-- [ ] Review with extra attention to policies-in-code, the write ledger, and the allergen check.
-- [ ] Merge, summary. This is the Phase 2 moment: a scheduled run should fill a real QFC cart.
+- [ ] Review with extra attention to policies-in-code, the write ledger, the allergen check, and the service-role authorization in `run-approve` and the worker (a caller must never act for a household they are not in).
+- [ ] Merge, summary. This is the Phase 2 moment: a scheduled run should fill a real QFC cart (criterion 13 needs Miguel's Kroger sign-in; it stays open until then).
+- [ ] Orchestrator contract change after WS09 merges: remove `instacart` from `RetailerId`, `INSTACART_CAPABILITIES`, the registry tests and the `retailer` enum (new migration that recreates the enum), with docs/02 and docs/04 updated. Deferred so no in-flight builder sees the enum move.
+- [ ] **Human (with the hosted release):** deploy `run-approve` and `llm-proxy`, set the worker secrets, and deploy the worker to Fly.io or Railway once the account exists.
 
 ## 7. Wave 6: everything that consumes the agent
 
 - [ ] **Human checkpoint 5** gates WS10 only: the WS08 host demo is accepted (agent drives a test page in the Simulator; consent and disconnect work). The other four may start without it.
-- [ ] Dispatch WS10 (opus), WS11, WS12, WS13, WS15 (sonnet) in one message. Five builders at once is the maximum.
+- [ ] Dispatch WS10 (opus), WS11, WS12, WS13, WS15 (sonnet) in one message. Five builders at once is the maximum. WS10 needs WS08 and WS09 merged; the other four need WS09 merged. Write each brief's orchestrator corrections first (as-built shapes from WS05, WS08 and WS09).
 - [ ] Review each as it finishes. WS10 reviewer runs the Tier 3 checklist and a manual Safeway run on a real account.
 - [ ] Merge all, wave 6 summary.
 
@@ -81,11 +84,26 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [ ] The household runs the loop end to end: onboard → plan → list → QFC cart filled by a scheduled run → notification → pay in the QFC app. And at Safeway: the agent fills the cart in the app and stops at pay.
 - [ ] Docs updated to match what was built. Public-beta decision and name recorded, or recorded as deferred.
 
+## Human items open now (2026-10-31)
+
+Collected from the ledger so one list is enough. Each unblocks something named.
+
+- [ ] `SUPABASE_ACCESS_TOKEN` with scopes for the hosted release: every migration on `main`, the functions (`health`, `export-data`, `recipe-import`, `parse-ingredients`, `suggest`, `list-build`, then `run-approve` and `llm-proxy`), the secrets (`ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET`, `KROGER_REDIRECT_URI`, `AI_DAILY_CAP_USD=2`), then the ontology and catalog seeds. Unblocks the hosted smoke tests of `suggest` and `list-build`, hosted Realtime checks, `EXPO_PUBLIC_SUGGEST_ENABLED=1`, and WS14's deploy-gates round.
+- [ ] Skim `supabase/seed/catalog/README.md` before the catalog seed loads into the hosted project.
+- [ ] Kroger sign-in: after `git pull` in the primary checkout, `pnpm --filter @mp/retailers kroger:login`. Unblocks WS07 criterion 12 (live cart add) and WS09 criterion 13 (real QFC run).
+- [ ] `VOYAGE_API_KEY` in `.env.local`. Unblocks live embeddings for `suggest`.
+- [ ] `git pull` in `/Users/miguelsolorio/dev/meal-planner` (local `main` is 31 commits behind origin/main).
+- [ ] Decide the `sous-brand-naming-493e8f` worktree: its one commit (a27faa1, "pick Souvie as the working name") is on no PR and not in `main`; keep, open a PR, or drop.
+- [ ] Apple and Google sign-in providers in Supabase Auth (WS01 criterion 3).
+- [ ] Cloudflare Pages project for `apps/marketing` (WS14 deploy) and later the Tier 3 test page.
+- [ ] Privacy contact address and route for the marketing footer (WS14 deploy-gates round).
+- [ ] Optional: re-pin the repo's git origin in the desktop app (Help → Troubleshooting → Review Pinned Git Origins) so Auto-fix can merge main into PR branches.
+
 ## Standing rules while working
 
 These are the "stay on task" rules. They repeat the guide on purpose.
 
-1. One wave in flight. Do not pre-dispatch the next wave's builders.
+1. One wave in flight. Do not pre-dispatch the next wave's builders. A workstream held at a human checkpoint from an earlier wave starts as soon as the checkpoint clears, even beside the current wave (WS08 beside WS09 on 2026-10-31).
 2. Read completion reports, never agent transcripts or output files.
 3. Update `docs/status.md` and tick this file in the same turn as the event, not at the end of the wave.
 4. Builders never edit `packages/core`, the `RetailerAdapter` interface, or tables they don't own. You apply contract changes on `main` in your own small commits.

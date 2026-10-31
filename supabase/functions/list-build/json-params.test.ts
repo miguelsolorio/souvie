@@ -133,6 +133,11 @@ function functionSources(dir: string): string[] {
 /** `$1::jsonb`, `$2::json`, `$3 :: jsonb`, but not `$1::text::jsonb`. */
 const BARE_JSON_CAST = /\$\d+\s*::\s*jsonb?\b/g;
 
+/** Source without block comments and line comments, so a comment can name the rule. */
+function withoutComments(text: string): string {
+  return text.replace(/(^|\s)\/\*[\s\S]*?\*\//g, "$1").replace(/(^|\s)\/\/.*$/gm, "$1");
+}
+
 describe("no function binds a parameter straight to a json cast", () => {
   const sources = functionSources(FUNCTIONS_DIR);
 
@@ -143,7 +148,7 @@ describe("no function binds a parameter straight to a json cast", () => {
 
   it("finds none of `$n::json` or `$n::jsonb`; bind text and cast in SQL (`$n::text::jsonb`)", () => {
     const offenders = sources.flatMap((path) => {
-      const text = readFileSync(path, "utf8");
+      const text = withoutComments(readFileSync(path, "utf8"));
       return [...text.matchAll(BARE_JSON_CAST)].map(
         (m) => `${relative(FUNCTIONS_DIR, path)}: ${m[0]}`,
       );
@@ -156,5 +161,11 @@ describe("no function binds a parameter straight to a json cast", () => {
     expect("where x = $12 :: json".match(BARE_JSON_CAST)).toHaveLength(1);
     expect("jsonb_to_recordset($1::text::jsonb)".match(BARE_JSON_CAST)).toBeNull();
     expect("'{}'::jsonb".match(BARE_JSON_CAST)).toBeNull();
+    // Comments may name the rule; code may not break it.
+    expect(
+      withoutComments("// write $1::jsonb never\nconst a = 1;").match(BARE_JSON_CAST),
+    ).toBeNull();
+    expect(withoutComments("/* $1::jsonb */ x").match(BARE_JSON_CAST)).toBeNull();
+    expect(withoutComments("select $1::jsonb // why").match(BARE_JSON_CAST)).toHaveLength(1);
   });
 });

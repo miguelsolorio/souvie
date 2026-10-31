@@ -136,6 +136,16 @@ const ITEM_COLUMNS = `ingredient_id uuid, display_name text, qty numeric, unit t
   source_entry_ids uuid[], section text, excluded_reason text, needs_attention boolean,
   position integer, qualifiers text[], detail jsonb, edited boolean`;
 
+// The rows of a write go to Postgres as one JSON document, bound as text and cast in SQL:
+// `jsonb_to_recordset($1::text::jsonb)` with `JSON.stringify(rows)`. Do not write `$1::jsonb` with
+// a string. postgres.js serializes every value bound to a json or jsonb parameter with
+// JSON.stringify, strings included, so a string already stringified here would arrive as a JSON
+// string scalar, and Postgres answers 22023 "cannot call jsonb_to_recordset on a non-array". That
+// is what failed on the hosted project. Typing the parameter as text makes every driver send the
+// string as given. testing/db.ts binds JSON the way postgres.js does, and json-params.test.ts
+// fails on a bare `$n::jsonb`.
+const rowsAsJson = (rows: readonly unknown[]): string => JSON.stringify(rows);
+
 export class SqlListStore {
   constructor(private readonly sql: SqlRunner) {}
 
@@ -369,7 +379,7 @@ export class SqlListStore {
                   excluded_reason = x.excluded_reason::public.grocery_list_items_excluded_reason,
                   needs_attention = x.needs_attention, position = x.position,
                   qualifiers = x.qualifiers, detail = x.detail, edited = x.edited
-             from jsonb_to_recordset($1::jsonb) as x(id uuid, ${ITEM_COLUMNS})
+             from jsonb_to_recordset($1::text::jsonb) as x(id uuid, ${ITEM_COLUMNS})
             where i.id = x.id and i.list_id = $2::uuid and i.household_id = $3::uuid
               and (i.ingredient_id, i.display_name, i.qty, i.unit, i.source_entry_ids, i.section,
                    i.excluded_reason, i.needs_attention, i.position, i.qualifiers, i.detail,
@@ -379,7 +389,7 @@ export class SqlListStore {
                    x.excluded_reason::public.grocery_list_items_excluded_reason,
                    x.needs_attention, x.position, x.qualifiers, x.detail, x.edited)`,
           [
-            JSON.stringify(changes.updates.map((update) => ({ id: update.id, ...update.write }))),
+            rowsAsJson(changes.updates.map((update) => ({ id: update.id, ...update.write }))),
             listId,
             householdId,
           ],
@@ -394,8 +404,8 @@ export class SqlListStore {
                   x.source_entry_ids, x.section,
                   x.excluded_reason::public.grocery_list_items_excluded_reason,
                   x.needs_attention, x.position, x.qualifiers, x.detail, x.edited
-             from jsonb_to_recordset($1::jsonb) as x(${ITEM_COLUMNS})`,
-          [JSON.stringify(changes.inserts satisfies ItemWrite[]), listId, householdId],
+             from jsonb_to_recordset($1::text::jsonb) as x(${ITEM_COLUMNS})`,
+          [rowsAsJson(changes.inserts satisfies ItemWrite[]), listId, householdId],
         );
       }
 

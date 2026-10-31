@@ -1,16 +1,19 @@
 // Test harness only (WS05): a real Postgres for list-build's SQL and for the lists migration's
 // policies and triggers, with no container. PGlite is Postgres compiled to WASM; it runs our
-// migrations unchanged. Two stand-ins matter, the same two as the suggest harness:
+// migrations unchanged. Three stand-ins matter:
 //   * the version: PGlite 0.5 is Postgres 18, the hosted project and CI run Postgres 17. The SQL
 //     here is plain and stable across both.
 //   * the platform: Supabase's auth and storage schemas and API roles come from the stubs file the
 //     suggest harness already ships (../../suggest/testing/supabase-stubs.sql), read from there so
 //     there is one copy.
+//   * the driver: the function talks to Postgres through postgres.js, and PGlite binds JSON
+//     parameters differently. The runner closes that gap, see POSTGRES_JS_SERIALIZERS. The
+//     real driver on a real Postgres is tested in store.postgres.test.ts (CI only).
 // The migrations are the repo's own files, loaded below. Nothing is copied.
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PGlite } from "@electric-sql/pglite";
+import { PGlite, type QueryOptions } from "@electric-sql/pglite";
 import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
 import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 import { vector } from "@electric-sql/pglite-pgvector";
@@ -43,10 +46,40 @@ function migrationFile(name: string): string | null {
   return match ? join(MIGRATIONS_DIR, match) : null;
 }
 
+/**
+ * How postgres.js (the driver list-build runs on, see client.ts) binds a parameter that Postgres
+ * types as json or jsonb. It sends the statement unprepared, asks Postgres for the parameter types,
+ * and serializes each value with the serializer for the type Postgres reported. For json (114) and
+ * jsonb (3802) that serializer is `JSON.stringify`, applied to every value, strings included. So a
+ * string bound to `$1::jsonb` is encoded a second time and Postgres receives a JSON string scalar,
+ * not the array or object the string spells. That is what failed on the hosted project.
+ *
+ * PGlite's own serializer for these types passes a string through untouched, which let the old
+ * binding pass every test. The runner below hands PGlite these serializers per query, so the type
+ * still comes from Postgres (PGlite's own Describe step) and the encoding is the driver's. The
+ * rule for code under test: bind JSON as text (`$1::text::jsonb`) or hand over the JavaScript
+ * value, never a pre-stringified value under a json cast.
+ */
+export const POSTGRES_JS_SERIALIZERS: NonNullable<QueryOptions["serializers"]> = {
+  114: (value) => JSON.stringify(value),
+  3802: (value) => JSON.stringify(value),
+};
+
+const DRIVER_OPTIONS: QueryOptions = { serializers: POSTGRES_JS_SERIALIZERS };
+
 export interface TestDb {
   db: PGlite;
-  /** Runs statements as the database owner and returns the result of the last. */
+  /**
+   * Runs statements as the database owner, binding parameters the way the function's driver does
+   * (see POSTGRES_JS_SERIALIZERS), and returns the result of the last. Code under test goes
+   * through this.
+   */
   runner: SqlRunner;
+  /**
+   * Direct access for seeding and assertions, with PGlite's own parameter handling. A test that
+   * stands in for another client uses this, not the runner: pantry.test.ts replays the SQL
+   * PostgREST sends, which binds a request body as given.
+   */
   query<T = Record<string, unknown>>(text: string, params?: readonly unknown[]): Promise<T[]>;
   exec(text: string): Promise<void>;
   close(): Promise<void>;
@@ -80,17 +113,17 @@ export async function createListTestDb(options: CreateTestDbOptions = {}): Promi
     return result.rows;
   };
   const wrap = (exec: {
-    query<R>(text: string, params?: unknown[]): Promise<{ rows: R[] }>;
+    query<R>(text: string, params?: unknown[], options?: QueryOptions): Promise<{ rows: R[] }>;
   }): SqlRunner => ({
     query: async <R>(text: string, params: readonly unknown[]) =>
-      (await exec.query<R>(text, [...params])).rows,
+      (await exec.query<R>(text, [...params], DRIVER_OPTIONS)).rows,
     transaction: async () => {
       throw new Error("nested transactions are not supported by the test runner");
     },
   });
   const runner: SqlRunner = {
-    query: (text, params) => query(text, params),
-    transaction: (fn) => db.transaction(async (tx) => fn(wrap(tx as never))),
+    query: wrap(db).query,
+    transaction: (fn) => db.transaction(async (tx) => fn(wrap(tx))),
   };
   return {
     db,

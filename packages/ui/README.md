@@ -5,9 +5,26 @@ The design system for `apps/mobile` and the brand source for `apps/marketing`: t
 ## Status
 
 - **Tokens and brand assets (WS14):** `src/tokens.ts`, `tailwind.preset.js`, `assets/`. Done.
-- **Primitives (WS04):** `Sheet`, `Stepper`, `SegmentedControl`, `EmptyState`. Not started.
+- **Primitives (WS04):** `Sheet`, `Stepper`, `SegmentedControl`, `EmptyState`. Done. See Primitives below.
 
-`apps/mobile/tailwind.config.js` still carries WS00's one placeholder color until WS04 switches it to the preset below.
+`apps/mobile/tailwind.config.js` still carries WS00's one placeholder color, and WS04 did not switch it to the preset below. The preset replaces Tailwind's spacing, font-size, radius and shadow scales instead of extending them, so every existing screen's `text-sm`, `text-base` and `gap-1.5` would stop resolving. Adopting it is a pass over every screen, so it is the orchestrator's call, not a side effect of a feature workstream.
+
+## Primitives
+
+```tsx
+import { EmptyState, SegmentedControl, Sheet, Stepper } from "@mp/ui/primitives";
+```
+
+They live behind `@mp/ui/primitives`, not the package root, because the root also loads in Node (the Tailwind preset, the marketing site's sync script) and the primitives need `react-native`.
+
+| Primitive | What it is |
+|---|---|
+| `Sheet` | A bottom sheet on a phone, a centered dialog from 640 px wide. A modal: it traps focus, closes on Escape, Back and a backdrop tap, lifts above the keyboard, and scrolls. Pass `bottomInset` the safe-area bottom inset |
+| `Stepper` | A number with 44 point minus and plus buttons. For a screen reader it is one adjustable element with a spoken value ("4 servings") |
+| `SegmentedControl` | Two to four exclusive choices in a row, announced as tabs with the selected one marked |
+| `EmptyState` | A title, a reason, and an optional next step, for a list with nothing in it |
+
+They are styled with React Native style objects built from `tokens` (`src/primitives/theme.ts`), not Tailwind classes, so they look right with or without the preset and need no `content` entry in a Tailwind config. They are light mode only, like the app's screens today; `theme.ts` is the one place to branch when dark mode arrives. The stepping, formatting and layout rules are in `src/primitives/logic.ts`, which loads in Node and is unit tested.
 
 ## Tokens
 

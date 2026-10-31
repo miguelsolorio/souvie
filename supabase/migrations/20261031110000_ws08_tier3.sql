@@ -449,6 +449,7 @@ set search_path = ''
 as $$
 declare
   v_first text := split_part(coalesce(object_name, ''), '/', 1);
+  v_runs regclass := to_regclass('public.shopping_runs');
   v_found boolean;
 begin
   if v_first !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
@@ -456,12 +457,16 @@ begin
   then
     return false;
   end if;
-  if to_regclass('public.shopping_runs') is null then
+  if v_runs is null then
     return false;
   end if;
-  execute
-    'select exists (select 1 from public.shopping_runs r where r.id = $1 '
-    || 'and r.household_id in (select public.current_household_ids()))'
+  -- The table name comes from to_regclass, so the statement is built at run time (and the schema
+  -- linter does not resolve it against a database where WS09 has not landed).
+  execute format(
+    'select exists (select 1 from %s r where r.id = $1 '
+      || 'and r.household_id in (select public.current_household_ids()))',
+    v_runs
+  )
     into v_found
     using v_first::uuid;
   return coalesce(v_found, false);

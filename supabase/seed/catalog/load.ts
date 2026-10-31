@@ -264,7 +264,14 @@ export function renderReviewSheet(
   const share = stats.lines === 0 ? 0 : (stats.resolvedLines / stats.lines) * 100;
   const spent = runs ? runs.reduce((sum, run) => sum + run.costUsd, 0) : null;
   const rejected = runs ? runs.reduce((sum, run) => sum + run.rejected.length, 0) : null;
-  const abandoned = runs ? runs.reduce((sum, run) => sum + run.abandoned.length, 0) : null;
+  // A slot abandoned after two attempts may be drafted again by a later run.
+  const written = new Set(runs?.flatMap((run) => run.written) ?? []);
+  const abandoned = [...new Set(runs?.flatMap((run) => run.abandoned) ?? [])];
+  const redone = abandoned.filter((slug) => written.has(slug)).length;
+  const rejectedNote =
+    abandoned.length === 0
+      ? ""
+      : `; ${abandoned.length} recipe(s) were abandoned after two attempts and ${redone} of them drafted again in a later run`;
   const keptCost = recipes.reduce((sum, r) => sum + r.draft.costUsd, 0);
 
   const out: string[] = [
@@ -298,7 +305,7 @@ export function renderReviewSheet(
     `| Ingredient lines | ${stats.lines} |`,
     `| Lines matched to the ontology | ${stats.resolvedLines} (${share.toFixed(1)}%) |`,
     `| Drafting spend, all runs (rejected drafts included) | ${spent === null ? "not recorded" : `$${spent.toFixed(2)} across ${runs?.length ?? 0} run(s)`} |`,
-    `| Drafts rejected by validation | ${rejected === null ? "not recorded" : `${rejected}, of which ${abandoned} recipe(s) given up on`} |`,
+    `| Drafts rejected by validation | ${rejected === null ? "not recorded" : `${rejected}${rejectedNote}`} |`,
     `| Cost recorded in the kept files | $${keptCost.toFixed(2)} |`,
     "",
     "## Recipes",

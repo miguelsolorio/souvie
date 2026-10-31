@@ -28,7 +28,7 @@ no named source. Nothing here has been loaded into the hosted project yet.
 | Ingredient lines | 777 |
 | Lines matched to the ontology | 771 (99.2%) |
 | Drafting spend, all runs (rejected drafts included) | $0.77 across 2 run(s) |
-| Drafts rejected by validation | 15, of which 2 recipe(s) given up on |
+| Drafts rejected by validation | 15; 2 recipe(s) were abandoned after two attempts and 2 of them drafted again in a later run |
 | Cost recorded in the kept files | $0.70 |
 
 ## Recipes

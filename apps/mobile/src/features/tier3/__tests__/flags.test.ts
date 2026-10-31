@@ -1,6 +1,22 @@
 // WS08: the kill switch is on unless PostHog says off (orchestrator correction 8).
 import { describe, expect, it, vi } from "vitest";
-import { createPostHogTier3Flags, evaluateTier3Flag, type PostHogFlagClient } from "../flags";
+import {
+  createPostHogTier3Flags,
+  evaluateTier3Flag,
+  POSTHOG_FLAG_OPTIONS,
+  type PostHogFlagClient,
+} from "../flags";
+
+describe("the PostHog client options (fix round item 7)", () => {
+  it("send no events, flag reads included, and keep nothing on the device", () => {
+    expect(POSTHOG_FLAG_OPTIONS).toMatchObject({
+      sendFeatureFlagEvent: false,
+      captureAppLifecycleEvents: false,
+      persistence: "memory",
+      disableGeoip: true,
+    });
+  });
+});
 
 function client(
   value: unknown,

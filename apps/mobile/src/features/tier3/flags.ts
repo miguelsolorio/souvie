@@ -68,6 +68,19 @@ export function createPostHogTier3Flags(client: PostHogFlagClient | null): Tier3
   };
 }
 
+/**
+ * How the app's PostHog client is built: flags only. No events (lifecycle events and the
+ * $feature_flag_called event a flag read would send are off), nothing kept on the device, no GeoIP.
+ */
+export const POSTHOG_FLAG_OPTIONS = Object.freeze({
+  host: "https://us.i.posthog.com",
+  persistence: "memory" as const,
+  captureAppLifecycleEvents: false,
+  sendFeatureFlagEvent: false,
+  disableGeoip: true,
+  preloadFeatureFlags: false,
+});
+
 let appFlags: Tier3Flags | null = null;
 
 /** The app's flags: PostHog when EXPO_PUBLIC_POSTHOG_KEY is set, always on otherwise. */
@@ -79,13 +92,7 @@ export function tier3Flags(): Tier3Flags {
     try {
       // Loaded lazily so a build without the key never evaluates the module.
       const { PostHog } = require("posthog-react-native") as typeof import("posthog-react-native");
-      client = new PostHog(key, {
-        host: "https://us.i.posthog.com",
-        persistence: "memory",
-        captureAppLifecycleEvents: false,
-        disableGeoip: true,
-        preloadFeatureFlags: false,
-      }) as unknown as PostHogFlagClient;
+      client = new PostHog(key, { ...POSTHOG_FLAG_OPTIONS }) as unknown as PostHogFlagClient;
     } catch {
       client = null;
     }

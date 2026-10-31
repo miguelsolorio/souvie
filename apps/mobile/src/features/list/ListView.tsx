@@ -33,6 +33,7 @@ import { sectionsToShow, syncNote } from "./logic";
 import { OutOfDateBanner } from "./OutOfDateBanner";
 import { PANTRY_ROUTE, storeModeRoute } from "./routes";
 import { SectionGroup } from "./SectionGroup";
+import { SectionOrderSheet } from "./SectionOrderSheet";
 import { useListScreen } from "./useListScreen";
 import { WhyThisAmountSheet } from "./WhyThisAmountSheet";
 
@@ -66,6 +67,7 @@ export function ListView({
   const updateList = useUpdateList(list?.id);
 
   const [openId, setOpenId] = useState<string | null>(null);
+  const [orderOpen, setOrderOpen] = useState(false);
   const openItem = useMemo(
     () => data.items.find((item) => item.id === openId) ?? null,
     [data.items, openId],
@@ -331,6 +333,12 @@ export function ListView({
                   />
                 )}
                 <Button
+                  testID="list-aisle-order"
+                  label="Aisle order"
+                  variant="secondary"
+                  onPress={() => setOrderOpen(true)}
+                />
+                <Button
                   testID="list-pantry"
                   label="Pantry"
                   variant="secondary"
@@ -358,6 +366,14 @@ export function ListView({
           </View>
         ) : null}
       </KeyboardAvoidingView>
+
+      <SectionOrderSheet
+        visible={orderOpen}
+        sectionOrder={list?.section_order}
+        saving={updateList.isPending}
+        onClose={() => setOrderOpen(false)}
+        onChange={(order) => updateList.mutate({ section_order: order })}
+      />
 
       <WhyThisAmountSheet
         item={openItem}

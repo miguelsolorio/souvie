@@ -4,6 +4,7 @@ import {
   amountLabel,
   attentionNote,
   contributionRows,
+  moveSection,
   needSummary,
   parseQuantityInput,
   parseUnitInput,
@@ -287,5 +288,21 @@ describe("parseUnitInput", () => {
     expect(parseUnitInput("3 cups")).toBe("invalid");
     expect(parseUnitInput("cups!")).toBe("invalid");
     expect(parseUnitInput("x".repeat(41))).toBe("invalid");
+  });
+});
+
+describe("moveSection", () => {
+  const order = ["produce", "meat", "dairy"];
+
+  it("moves a section one place and leaves the rest in order", () => {
+    expect(moveSection(order, "meat", -1)).toEqual(["meat", "produce", "dairy"]);
+    expect(moveSection(order, "meat", 1)).toEqual(["produce", "dairy", "meat"]);
+  });
+
+  it("does nothing past either end or for an unknown section, and never changes its input", () => {
+    expect(moveSection(order, "produce", -1)).toEqual(order);
+    expect(moveSection(order, "dairy", 1)).toEqual(order);
+    expect(moveSection(order, "deli", 1)).toEqual(order);
+    expect(order).toEqual(["produce", "meat", "dairy"]);
   });
 });

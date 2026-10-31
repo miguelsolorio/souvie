@@ -63,6 +63,21 @@ export function progressOf(toBuy: readonly Pick<GroceryListItem, "checked">[]): 
   return { done, total, fraction: total === 0 ? 0 : done / total };
 }
 
+/** The order with `section` moved one place up (-1) or down (1). At either end, unchanged. */
+export function moveSection(
+  order: readonly string[],
+  section: string,
+  direction: -1 | 1,
+): string[] {
+  const next = [...order];
+  const from = next.indexOf(section);
+  const to = from + direction;
+  if (from === -1 || to < 0 || to >= next.length) return next;
+  const [moved] = next.splice(from, 1);
+  if (moved !== undefined) next.splice(to, 0, moved);
+  return next;
+}
+
 // ---------------------------------------------------------------------------------------
 // Words
 // ---------------------------------------------------------------------------------------

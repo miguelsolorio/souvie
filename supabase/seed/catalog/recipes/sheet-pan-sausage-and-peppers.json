@@ -1,0 +1,152 @@
+{
+  "id": "6905bd1b-236d-5356-bbb5-84860c564816",
+  "slug": "sheet-pan-sausage-and-peppers",
+  "title": "Sheet Pan Pork Sausage with Peppers and Potatoes",
+  "description": "Mild pork sausage roasted with golden potatoes, sweet bell peppers, and onion on one pan. The flavors are savory and gentle with a little oregano and no heat.",
+  "servings": 4,
+  "prepMin": 12,
+  "cookMin": 23,
+  "cuisine": "italian",
+  "tags": [
+    "dinner",
+    "pork",
+    "dairy_free",
+    "sheet_pan",
+    "kid_friendly"
+  ],
+  "ingredients": [
+    {
+      "position": 0,
+      "groupName": null,
+      "rawText": "1 1/2 lb baby potatoes, cut into 3/4 inch pieces",
+      "qty": 1.5,
+      "qtyMax": null,
+      "unit": "lb",
+      "ingredientName": "baby potato",
+      "ingredientId": "0a3ca172-5b0e-5444-9b66-e3bcbe91e8f8",
+      "prepNote": "cut into 3/4 inch pieces",
+      "optional": false,
+      "parseConfidence": 0.97
+    },
+    {
+      "position": 1,
+      "groupName": null,
+      "rawText": "2 red bell peppers, cut into 1 inch pieces",
+      "qty": 2,
+      "qtyMax": null,
+      "unit": "each",
+      "ingredientName": "red bell pepper",
+      "ingredientId": "1f59fed5-8902-5fff-bc6c-15581d670f88",
+      "prepNote": "cut into 1 inch pieces",
+      "optional": false,
+      "parseConfidence": 0.97
+    },
+    {
+      "position": 2,
+      "groupName": null,
+      "rawText": "1 yellow onion, cut into 1 inch wedges",
+      "qty": 1,
+      "qtyMax": null,
+      "unit": "each",
+      "ingredientName": "yellow onion",
+      "ingredientId": "7586af3a-5172-5003-9a75-d1fbeee4e001",
+      "prepNote": "cut into 1 inch wedges",
+      "optional": false,
+      "parseConfidence": 0.97
+    },
+    {
+      "position": 3,
+      "groupName": null,
+      "rawText": "3 tbsp olive oil",
+      "qty": 3,
+      "qtyMax": null,
+      "unit": "tbsp",
+      "ingredientName": "olive oil",
+      "ingredientId": "3b92951e-94fc-565b-b1fa-61d4c9aa7cd4",
+      "prepNote": null,
+      "optional": false,
+      "parseConfidence": 0.97
+    },
+    {
+      "position": 4,
+      "groupName": null,
+      "rawText": "1 tsp dried oregano",
+      "qty": 1,
+      "qtyMax": null,
+      "unit": "tsp",
+      "ingredientName": "dried oregano",
+      "ingredientId": "2888d52e-9596-573b-b4a3-ade962e0e155",
+      "prepNote": null,
+      "optional": false,
+      "parseConfidence": 0.97
+    },
+    {
+      "position": 5,
+      "groupName": null,
+      "rawText": "1/2 tsp garlic powder",
+      "qty": 0.5,
+      "qtyMax": null,
+      "unit": "tsp",
+      "ingredientName": "garlic powder",
+      "ingredientId": "05614b7f-46f1-53c6-842d-1b739fa41fb7",
+      "prepNote": null,
+      "optional": false,
+      "parseConfidence": 0.97
+    },
+    {
+      "position": 6,
+      "groupName": null,
+      "rawText": "3/4 tsp kosher salt",
+      "qty": 0.75,
+      "qtyMax": null,
+      "unit": "tsp",
+      "ingredientName": "kosher salt",
+      "ingredientId": "f674eb64-0027-56c0-b024-8b6d2c8d3774",
+      "prepNote": null,
+      "optional": false,
+      "parseConfidence": 0.97
+    },
+    {
+      "position": 7,
+      "groupName": null,
+      "rawText": "1/4 tsp black pepper",
+      "qty": 0.25,
+      "qtyMax": null,
+      "unit": "tsp",
+      "ingredientName": "black pepper",
+      "ingredientId": "8f8ba8a3-d6e0-5e42-8931-56b7276a82df",
+      "prepNote": null,
+      "optional": false,
+      "parseConfidence": 0.97
+    },
+    {
+      "position": 8,
+      "groupName": null,
+      "rawText": "1 1/4 lb mild Italian pork sausage links, sliced into 1 inch pieces",
+      "qty": 1.25,
+      "qtyMax": null,
+      "unit": "lb",
+      "ingredientName": "mild italian pork sausage links",
+      "ingredientId": null,
+      "prepNote": "sliced into 1 inch pieces",
+      "optional": false,
+      "parseConfidence": 0.6
+    }
+  ],
+  "instructions": [
+    "Heat the oven to 450 F. Line a large rimmed sheet pan with parchment paper.",
+    "Cut the potatoes into small pieces so they cook fast. Put them on the pan.",
+    "Add the peppers and onion to the pan. Drizzle with the olive oil.",
+    "Sprinkle with the oregano, garlic powder, salt, and pepper. Toss well and spread in a single layer.",
+    "Roast for 10 minutes.",
+    "Take the pan out and push the vegetables aside. Add the sausage pieces and stir everything together.",
+    "Roast 12 to 13 minutes more, stirring once. The potatoes should be golden and tender, and the sausage should reach 160 F in the center.",
+    "Let the pan rest for 3 minutes, then serve."
+  ],
+  "draft": {
+    "model": "claude-sonnet-5-5",
+    "promptVersion": "catalog-draft.v1",
+    "draftedAt": "2026-10-31T02:31:36.107Z",
+    "costUsd": 0.0077
+  }
+}

@@ -145,6 +145,7 @@ pnpm --filter mobile start                               # manual: list → Shop
 ```
 
 ## Risks and notes
+- From the WS16 review (2026-10-30): when a list item carries a qualifier ("gluten-free", "dairy-free"), the search query and the product match must honor it; a match that drops the qualifier is a wrong product, not a near miss. Same rule as the Kroger adapter.
 - R14: Instacart may not be accepting applicants. Development continues on the dev host; production hand-off is blocked until a production key exists. If the application is refused, Costco and Safeway fall to Tier 3 (WS10). Flag this clearly in the status ledger notes.
 - R18: terms violations are the fastest way to lose the key. The three rules that matter: no priced items from multiple retailers on one screen (we show no Instacart prices at all), no moving or comparing items between retailer baskets, and the required Instacart CTA with no "partner" or "Free Delivery" wording. Instacart data is confidential and deletable within 5 business days.
 - R20: Costco on Instacart is members-only via sameday.costco.com; non-members can use instacart.com at higher prices with a $35 minimum. Route by `profiles.costco_member`.

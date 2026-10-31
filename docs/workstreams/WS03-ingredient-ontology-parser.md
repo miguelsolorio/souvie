@@ -101,6 +101,8 @@ pnpm typecheck && pnpm lint && pnpm test
 ```
 
 ## Risks and notes
+- Follow-up from the WS16 review (2026-10-30): the gluten-free qualifier is lost. "gluten-free spaghetti" and "gluten-free tamari" resolve to `spaghetti` and `soy sauce` through the aliases, and `prep_note` is null, so downstream code cannot tell them apart. Keep qualifiers that change what to buy (gluten-free, dairy-free, vegan, low-sodium, sugar-free) as a structured attribute on the parsed line (`prep_note` at minimum, a `qualifiers text[]` column if the orchestrator approves), never dropped.
+- Follow-up from WS16 (2026-10-30): six catalog lines did not resolve because of alias gaps: "gluten-free beef broth", "gluten-free vegetable broth", "mild Italian pork sausage links", "whole milk ricotta cheese", "red Thai chile", "naan flatbreads". Add aliases (or the parser rule that drops "gluten-free" and "whole milk" qualifiers) in the next ontology round.
 - No maintained TypeScript ingredient parser exists; the good CRF one (`ingredient-parser-nlp`) is Python at about 94% sentence accuracy. The grammar plus Haiku design is the pragmatic TS path, and its golden set is our regression suite.
 - Densities vary by ingredient form (packed vs sifted). Store one representative density and document it; WS05 shows "why this amount" so users can override (R2).
 - Use `claude-haiku-5-5` for the fallback; batch 25 lines per call; `strict` schema; log every call to `ai_runs` when WS02's table exists (R3).

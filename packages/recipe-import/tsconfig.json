@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["src", "evals"]
+  "include": ["src", "evals", "scripts"]
 }

@@ -350,7 +350,7 @@ As built (WS07, 2026-10-30): `retailer_connections` and `product_matches` carry 
 | connection_id | uuid → retailer_connections | |
 | trigger | enum shopping_runs_trigger: manual, scheduled | |
 | status | enum shopping_runs_status: queued, running, needs_review, cart_ready, checking_out, checked_out, failed, cancelled | |
-| policy | jsonb | `core.RunPolicy`: budget_cap_usd, item_ceiling_usd, substitution (none/same_brand/any), auto_checkout boolean, auto_checkout_cap_usd |
+| policy | jsonb | `core.RunPolicy` (CCR6, `packages/core/src/run.ts`), stored as is: budget_cap_usd, per_item_ceiling_usd, substitution (none/same_brand/any), auto_checkout boolean, auto_checkout_cap_usd, max_tool_calls, max_wall_clock_seconds |
 | cart_snapshot | jsonb | The proposed cart shown at review. Expires: cleared by a job 24h after the run closes (Kroger terms) |
 | subtotal_usd | numeric | At review time |
 | transcript | jsonb | Array of {ts, tool, input, output_summary, screenshot_path?} |
@@ -406,7 +406,7 @@ As built (WS07, 2026-10-30): `retailer_connections` and `product_matches` carry 
 | last_enqueued_for | timestamptz | The `next_run_at` value already enqueued; idempotency guard |
 | enabled | boolean | |
 
-**push_tokens** (WS11)
+**push_tokens** (created by WS09 exactly as sketched, since its two run pushes need it; WS11 extends it)
 | column | type |
 |---|---|
 | user_id | uuid → auth.users |
@@ -515,9 +515,9 @@ Files are created with `supabase migration new <name>` and carry a timestamp pre
 | 8 | lists | grocery_lists, grocery_list_items, pantry_items, Realtime publication | WS05 |
 | 9 | retail | retailer_connections, product_matches, retailer_quota_usage, retailer_user_usage, FK `households.default_connection_id` → `retailer_connections` | WS07 |
 | 10 | ws06_preferences | profiles.preferences, onboarding_step, taste_embedding, costco_member | WS06 |
-| 11 | runs | shopping_runs, shopping_run_items, pgmq queue `shopping_run` | WS09 |
+| 11 | runs | shopping_runs, shopping_run_items, push_tokens, pgmq queue `shopping_run` | WS09 |
 | 12 | tier3 | households.tier3_consent, Storage bucket `run-screenshots` | WS10 |
-| 13 | schedules_notifications | scheduled_runs, push_tokens, notification_preferences, notification_outbox, households.quiet_hours, pg_cron jobs | WS11 |
+| 13 | schedules_notifications | scheduled_runs, notification_preferences, notification_outbox, households.quiet_hours, pg_cron jobs (push_tokens created by WS09) | WS11 |
 | 14 | orders_and_history | orders, the three history views | WS12 |
 | 15 | waitlist | waitlist | WS14 |
 | 16 | observability | households.ai_daily_cap_usd, shopping_runs.heartbeat_at, `shopping_run_dlq` queue, cost views | WS15 |

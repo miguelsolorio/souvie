@@ -54,10 +54,12 @@ test "$(q "select count(*) from public.shopping_run_items where run_id = '$run'"
 test "$(q "select count(*) from public.shopping_run_items where run_id = '$run' and delta_sent is not null")" -eq 0
 echo "proposal written, no cart write before review"
 
-# The approval, as run-approve writes it: decisions, needs_review -> running, the queue message.
-q "update public.shopping_run_items set user_decision = 'accepted' where run_id = '$run' and status in ('matched', 'substituted')" > /dev/null
-q "update public.shopping_runs set status = 'running', approved_at = now(), approved_by = '$USER_ID', heartbeat_at = null, subtotal_usd = (select coalesce(sum(line_total_usd), 0) from public.shopping_run_items where run_id = '$run' and status in ('matched', 'substituted')) where id = '$run'" > /dev/null
-q "select public.shopping_run_dispatch('$run')" > /dev/null
+# The approval through run-approve's own store over postgres.js (what the Edge Function runs after
+# auth.getUser): one swap, the rest kept, needs_review -> running, the queue message.
+(cd services/shopper-worker && DB_URL="$DB_URL" ./node_modules/.bin/tsx scripts/approve.ts "$run" "$USER_ID")
+test "$(q "select count(*) from public.shopping_run_items where run_id = '$run' and user_decision = 'swapped'")" -eq 1
+test "$(q "select count(*) from public.product_matches where household_id = '0c000000-0000-4000-8000-0000000000c9'")" -ge 1
+echo "approved through run-approve's store"
 wait_for_status "$run" cart_ready
 psql "$DB_URL" -c "select status, subtotal_usd, cart_snapshot ->> 'handoffUrl' as handoff from public.shopping_runs where id = '$run'"
 psql "$DB_URL" -c "select delta_result, count(*) from public.shopping_run_items where run_id = '$run' and status in ('matched', 'substituted') group by delta_result"

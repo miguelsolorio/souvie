@@ -1,0 +1,30 @@
+{
+  "name": "household-03-milk-egg",
+  "description": "Milk and egg allergy; coconut milk and butter lettuce must not be over-excluded.",
+  "preferences": {
+    "allergies": ["milk", "egg"],
+    "diets": [],
+    "dislikes": [],
+    "cuisines": [],
+    "weeknight_minutes": 60,
+    "dinners_per_week": 4
+  },
+  "expect": {
+    "minCandidates": 6,
+    "mustExclude": [
+      "bacon-pasta-carbonara",
+      "tikka-masala",
+      "margherita-pizza",
+      "shakshuka",
+      "egg-fried-rice",
+      "mushroom-risotto",
+      "buttermilk-pancakes-dinner",
+      "caesar-chicken-salad",
+      "crab-cakes",
+      "catalog-egg-curry",
+      "hummus-bowl",
+      "baked-cod"
+    ],
+    "mustInclude": ["coconut-chickpea-curry", "black-bean-tacos", "butter-lettuce-wraps"]
+  }
+}

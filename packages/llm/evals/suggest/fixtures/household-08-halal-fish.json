@@ -1,0 +1,35 @@
+{
+  "name": "household-08-halal-fish",
+  "description": "Halal, fish allergy; wine and Worcestershire sauce count.",
+  "preferences": {
+    "allergies": ["fish"],
+    "diets": ["halal"],
+    "dislikes": [],
+    "cuisines": ["indian"],
+    "weeknight_minutes": 60,
+    "dinners_per_week": 5
+  },
+  "expect": {
+    "minCandidates": 6,
+    "mustExclude": [
+      "bacon-pasta-carbonara",
+      "sausage-peppers",
+      "pulled-pork-tacos",
+      "beef-stew-red-wine",
+      "mushroom-risotto",
+      "salmon-rice-bowl",
+      "caesar-chicken-salad",
+      "miso-salmon-unparsed",
+      "slow-braise-long",
+      "crab-cakes",
+      "pad-thai",
+      "catalog-sheet-pan-sausage"
+    ],
+    "mustInclude": [
+      "lemon-chicken-sheet-pan",
+      "tikka-masala",
+      "beef-broccoli",
+      "blue-cheese-burgers"
+    ]
+  }
+}

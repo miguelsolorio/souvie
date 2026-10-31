@@ -1,0 +1,27 @@
+{
+  "name": "household-07-pescatarian-sesame",
+  "description": "Pescatarian, sesame allergy, no mushrooms or cilantro.",
+  "preferences": {
+    "allergies": ["sesame"],
+    "diets": ["pescatarian"],
+    "dislikes": ["mushroom", "cilantro"],
+    "cuisines": ["japanese"],
+    "weeknight_minutes": 45,
+    "dinners_per_week": 4
+  },
+  "expect": {
+    "minCandidates": 5,
+    "mustExclude": [
+      "salmon-rice-bowl",
+      "tahini-noodles",
+      "egg-fried-rice",
+      "hummus-bowl",
+      "mushroom-risotto",
+      "black-bean-tacos",
+      "pulled-pork-tacos",
+      "catalog-shrimp-tacos",
+      "lemon-chicken-sheet-pan"
+    ],
+    "mustInclude": ["baked-cod", "shrimp-spaghetti"]
+  }
+}

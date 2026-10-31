@@ -143,7 +143,7 @@ select is((select count(*)::int from public.profiles), 1, 'alice sees only her o
 select is(public.__t_affected($$update public.profiles set display_name = 'Alice A.' where user_id = 'a1111111-1111-4111-8111-111111111111'$$), 1::bigint, 'alice can edit her own profile');
 select is(public.__t_affected($$update public.profiles set display_name = 'Pwned' where user_id = 'b2222222-2222-4222-8222-222222222222'$$), 0::bigint, 'alice cannot edit bob''s profile');
 select throws_ok($$insert into public.profiles (user_id) values ('b2222222-2222-4222-8222-222222222222')$$, '42501', 'new row violates row-level security policy for table "profiles"', 'alice cannot create a profile for someone else');
-select throws_ok($$update public.profiles set user_id = 'b2222222-2222-4222-8222-222222222222' where user_id = 'a1111111-1111-4111-8111-111111111111'$$, '42501', 'new row violates row-level security policy for table "profiles"', 'alice cannot hand her profile to someone else');
+select throws_ok($$update public.profiles set user_id = 'b2222222-2222-4222-8222-222222222222' where user_id = 'a1111111-1111-4111-8111-111111111111'$$, '42501', 'permission denied for table profiles', 'alice cannot hand her profile to someone else');
 
 -- Avatars: write only inside <user_id>/.
 select lives_ok($$insert into storage.objects (bucket_id, name) values ('avatars', 'a1111111-1111-4111-8111-111111111111/me.png')$$, 'alice can write inside her own avatars folder');

@@ -1,0 +1,46 @@
+{
+  "name": "household-10-all-nine",
+  "description": "All nine allergens at once: only plain recipes may remain.",
+  "preferences": {
+    "allergies": [
+      "peanut",
+      "tree_nut",
+      "milk",
+      "egg",
+      "wheat",
+      "soy",
+      "fish",
+      "shellfish",
+      "sesame"
+    ],
+    "diets": [],
+    "dislikes": [],
+    "cuisines": [],
+    "weeknight_minutes": 60,
+    "dinners_per_week": 5
+  },
+  "expect": {
+    "minCandidates": 5,
+    "mustExclude": [
+      "shrimp-spaghetti",
+      "pad-thai",
+      "tikka-masala",
+      "margherita-pizza",
+      "egg-fried-rice",
+      "hummus-bowl",
+      "pesto-pasta",
+      "caesar-chicken-salad",
+      "miso-salmon-unparsed",
+      "tahini-noodles",
+      "naan-pizzas-unparsed",
+      "turkey-chili"
+    ],
+    "mustInclude": [
+      "plain-roasted-vegetables",
+      "gazpacho",
+      "lentil-soup",
+      "lemon-chicken-sheet-pan",
+      "cauliflower-steaks"
+    ]
+  }
+}

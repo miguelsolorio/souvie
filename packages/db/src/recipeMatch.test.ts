@@ -1,13 +1,12 @@
 // Matching ingredient lines after a recipe is written (the parse wiring), and the duplicate checks
 // on add (WS02 follow-up, 2026-10-31). The client is a recorder: every call is logged in order,
 // table queries answer from a queue, and the two Edge Functions answer from handlers.
+import { IMPORT_ERROR_MESSAGES } from "@mp/core";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { MpClient } from "./client";
 import {
-  DUPLICATE_ERROR,
-  DUPLICATE_MESSAGE,
   ImportError,
   importErrorMessage,
   importRecipe,
@@ -605,7 +604,7 @@ describe("importRecipe: what the function says is what the person reads", () => 
         data: {
           ok: false,
           error: "duplicate",
-          message: DUPLICATE_MESSAGE,
+          message: IMPORT_ERROR_MESSAGES.duplicate,
           recipeId: OTHER,
           matchedBy: "title",
           jobId: "0c000000-0000-4000-8000-00000000000c",
@@ -616,7 +615,7 @@ describe("importRecipe: what the function says is what the person reads", () => 
     const error = await importRecipe(client, url).catch((e) => e);
     expect(error).toBeInstanceOf(ImportError);
     expect(error).toMatchObject({
-      code: DUPLICATE_ERROR,
+      code: "duplicate",
       existing: { recipeId: OTHER, matchedBy: "title" },
     });
     expect(importErrorMessage(error)).toBe("You already have this recipe.");

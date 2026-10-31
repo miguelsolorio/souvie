@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { ImportRecipeResponse } from "../../../packages/core/src/index.ts";
 import { LlmError } from "../../../packages/llm/src/index.ts";
 import type { ModelExtract } from "../../../packages/recipe-import/src/index.ts";
 import {
@@ -590,6 +591,8 @@ describe("a recipe the household already has", () => {
       recipeId: EXISTING_ID,
       matchedBy: "url",
     });
+    // And it is the answer @mp/core's contract describes (CCR8), not a shape of the function's own.
+    expect(ImportRecipeResponse.safeParse(body)).toMatchObject({ success: true });
     expect(store.lookups).toEqual([{ sourceUrlNormalized: LEMON_KEY }]);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(modelCalls).toHaveLength(0);

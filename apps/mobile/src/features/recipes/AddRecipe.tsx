@@ -1,9 +1,13 @@
-import { type ImportRecipeSuccess, type RecipeSourceType, recipeSourceDomain } from "@mp/core";
+import {
+  type ImportErrorCode,
+  type ImportRecipeRequest,
+  type ImportRecipeSuccess,
+  type RecipeSourceType,
+  recipeSourceDomain,
+} from "@mp/core";
 import {
   type CreateRecipeArgs,
   ImportError,
-  type ImportFailureCode,
-  type ImportRequest,
   type RecipeDraft,
   uploadRecipeImage,
   useCreateRecipe,
@@ -102,7 +106,7 @@ export function AddRecipe({
   const [review, setReview] = useState<Review | null>(null);
   const [reviewKey, setReviewKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [errorCode, setErrorCode] = useState<ImportFailureCode | null>(null);
+  const [errorCode, setErrorCode] = useState<ImportErrorCode | null>(null);
   const [working, setWorking] = useState<string | null>(null);
 
   // Something shared in from another app: a caption to read, or a link to import.
@@ -167,7 +171,7 @@ export function AddRecipe({
   // --- the import request: link, paste, and caption -----------------------------------------
 
   /** What happens when the function answers: a saved recipe opens, a caption becomes a draft. */
-  function afterImport(request: ImportRequest, result: ImportRecipeSuccess) {
+  function afterImport(request: ImportRecipeRequest, result: ImportRecipeSuccess) {
     if (request.kind !== "caption") {
       openRecipe(result.recipeId);
       return;
@@ -182,7 +186,7 @@ export function AddRecipe({
     });
   }
 
-  function runImport(request: ImportRequest) {
+  function runImport(request: ImportRecipeRequest) {
     clearError();
     importRecipe.mutate(request, {
       onSuccess: (result) => afterImport(request, result),

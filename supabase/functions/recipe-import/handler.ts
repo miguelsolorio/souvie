@@ -6,6 +6,7 @@ import {
   IMPORT_ERROR_MESSAGES,
   type ImportErrorCode,
   type ImportJobKind,
+  type ImportRecipeFailure,
   ImportRecipeRequest,
   type NormalizedRecipe,
   type RecipeSourceType,
@@ -13,8 +14,6 @@ import {
 import type { ExtractImage, ImageMediaType } from "../../../packages/llm/src/index.ts";
 import {
   cleanSourceUrl,
-  DUPLICATE_ERROR,
-  DUPLICATE_MESSAGE,
   type ImportResult,
   importFromCaption,
   importFromImage,
@@ -65,24 +64,12 @@ function json(body: unknown, status = 200): Response {
   return Response.json(body, { status, headers: { ...CORS_HEADERS, "Cache-Control": "no-store" } });
 }
 
-/**
- * `duplicate` is part of the contract the app reads but not yet of `ImportErrorCode` in `@mp/core`
- * (contract change request in the WS02 follow-up report). Until it is, the handler widens the code
- * type here.
- */
-type FailureCode = ImportErrorCode | typeof DUPLICATE_ERROR;
-
-const FAILURE_MESSAGES: Record<FailureCode, string> = {
-  ...IMPORT_ERROR_MESSAGES,
-  [DUPLICATE_ERROR]: DUPLICATE_MESSAGE,
-};
-
-function fail(error: FailureCode, status: number, jobId?: string, message?: string): Response {
+function fail(error: ImportErrorCode, status: number, jobId?: string, message?: string): Response {
   return json(
     {
       ok: false,
       error,
-      message: message ?? FAILURE_MESSAGES[error],
+      message: message ?? IMPORT_ERROR_MESSAGES[error],
       ...(jobId ? { jobId } : {}),
     },
     status,
@@ -97,12 +84,12 @@ function fail(error: FailureCode, status: number, jobId?: string, message?: stri
 function duplicate(existing: ExistingRecipe, jobId?: string): Response {
   return json({
     ok: false,
-    error: DUPLICATE_ERROR,
-    message: DUPLICATE_MESSAGE,
+    error: "duplicate",
+    message: IMPORT_ERROR_MESSAGES.duplicate,
     recipeId: existing.recipeId,
     matchedBy: existing.matchedBy,
     ...(jobId ? { jobId } : {}),
-  });
+  } satisfies ImportRecipeFailure);
 }
 
 /** Request-level problems get an HTTP error; import-level outcomes are a 200 with `ok: false`. */
@@ -192,8 +179,7 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
     return fail("invalid_request", 400, undefined, `${where}: ${issue?.message ?? "invalid"}`);
   }
   const request = parsed.data;
-  // Not in ImportRecipeRequest yet (contract change request), so read from the body itself.
-  const allowDuplicate = (raw as { allowDuplicate?: unknown } | null)?.allowDuplicate === true;
+  const allowDuplicate = request.allowDuplicate === true;
 
   try {
     const household = await runtime.store.resolveHousehold(
@@ -235,7 +221,7 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
       input: jobInput(request),
     });
 
-    const finishFailed = async (code: FailureCode, message?: string) => {
+    const finishFailed = async (code: ImportErrorCode, message?: string) => {
       try {
         await runtime.store.finishJob(jobId, householdId, {
           status: "failed",
@@ -332,7 +318,7 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
             },
           });
     if (existing) {
-      await finishFailed(DUPLICATE_ERROR);
+      await finishFailed("duplicate");
       return duplicate(existing, jobId);
     }
 
@@ -346,7 +332,7 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
           sourceUrlNormalized: storedKey,
         });
         if (raced) {
-          await finishFailed(DUPLICATE_ERROR);
+          await finishFailed("duplicate");
           return duplicate(raced, jobId);
         }
       }

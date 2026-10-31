@@ -68,19 +68,3 @@ export function titleSearchPattern(title: string): string {
     .map((word) => word.replace(/[\\%_]/g, "\\$&"));
   return words.join("%");
 }
-
-// ---------------------------------------------------------------------------------------
-// The duplicate answer of the recipe-import contract
-// ---------------------------------------------------------------------------------------
-//
-// `@mp/core` does not carry these yet (contract change request in the WS02 follow-up report):
-// the `duplicate` failure code and its message. The function answers
-// `{ ok: false, error: "duplicate", message, recipeId, matchedBy }` and takes
-// `allowDuplicate: true` in the request. They live here until the orchestrator moves them into
-// `IMPORT_ERROR_CODES`, `ImportRecipeFailure` and `ImportRecipeRequest`.
-
-export const DUPLICATE_ERROR = "duplicate" as const;
-export const DUPLICATE_MESSAGE = "You already have this recipe.";
-
-/** How the existing recipe was recognised: by the link it came from, or by its title. */
-export type DuplicateMatchedBy = "url" | "title";

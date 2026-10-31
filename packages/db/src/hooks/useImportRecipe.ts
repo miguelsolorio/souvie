@@ -12,56 +12,27 @@ import type { MpClient } from "../client";
 import { useSupabase } from "../context";
 import { type DuplicateMatch, parseAfterWrite, RECIPE_IMAGE_BUCKET } from "./useRecipe";
 
-// ---------------------------------------------------------------------------------------
-// The duplicate answer
-// ---------------------------------------------------------------------------------------
-//
-// Two additions to the recipe-import contract that `@mp/core` does not carry yet (contract change
-// request in the WS02 follow-up report): the `allowDuplicate` request field and the `duplicate`
-// failure, which names the recipe the household already has. They live here until the orchestrator
-// moves them into `ImportRecipeRequest`, `IMPORT_ERROR_CODES` and `ImportRecipeFailure`; then
-// this block and the casts below go away. The function's side is `DUPLICATE_ERROR` in
-// supabase/functions/recipe-import/handler.ts.
-
-export const DUPLICATE_ERROR = "duplicate" as const;
-export const DUPLICATE_MESSAGE = "You already have this recipe.";
-
-/** A recipe-import request, with the field the function reads for "Add anyway". */
-export type ImportRequest = ImportRecipeRequest & {
-  /** Save even though the household has a recipe with this title. Never overrides a same-link match. */
-  allowDuplicate?: boolean | undefined;
-};
-
-export type ImportFailureCode = ImportErrorCode | typeof DUPLICATE_ERROR;
-
-const KNOWN_FAILURES: ReadonlySet<string> = new Set<string>([
-  ...IMPORT_ERROR_CODES,
-  DUPLICATE_ERROR,
-]);
+const KNOWN_FAILURES: readonly string[] = IMPORT_ERROR_CODES;
 
 /** A failed import, with the code the recipe-import Edge Function returned. */
 export class ImportError extends Error {
-  readonly code: ImportFailureCode;
+  readonly code: ImportErrorCode;
   readonly jobId: string | undefined;
   /** For `duplicate`: the household's existing recipe and how it was recognised. */
   readonly existing: { recipeId: string; matchedBy: DuplicateMatch } | undefined;
 
   constructor(
-    code: ImportFailureCode,
+    code: ImportErrorCode,
     message?: string,
     jobId?: string,
     existing?: { recipeId: string; matchedBy: DuplicateMatch },
   ) {
-    super(message ?? failureMessage(code));
+    super(message ?? IMPORT_ERROR_MESSAGES[code]);
     this.name = "ImportError";
     this.code = code;
     this.jobId = jobId;
     this.existing = existing;
   }
-}
-
-function failureMessage(code: ImportFailureCode): string {
-  return code === DUPLICATE_ERROR ? DUPLICATE_MESSAGE : IMPORT_ERROR_MESSAGES[code];
 }
 
 /**
@@ -70,7 +41,7 @@ function failureMessage(code: ImportFailureCode): string {
  * the table's text for the code when the function sent none. Unknown errors get the generic line.
  */
 export function importErrorMessage(error: unknown): string {
-  if (error instanceof ImportError) return error.message || failureMessage(error.code);
+  if (error instanceof ImportError) return error.message || IMPORT_ERROR_MESSAGES[error.code];
   return IMPORT_ERROR_MESSAGES.internal_error;
 }
 
@@ -86,12 +57,12 @@ function failureFromBody(body: unknown): ImportError | null {
   if (record?.ok !== false || typeof record.error !== "string") return null;
   const message = typeof record.message === "string" && record.message ? record.message : undefined;
   const jobId = typeof record.jobId === "string" ? record.jobId : undefined;
-  if (!KNOWN_FAILURES.has(record.error)) {
+  if (!KNOWN_FAILURES.includes(record.error)) {
     return new ImportError("internal_error", message, jobId);
   }
-  const code = record.error as ImportFailureCode;
+  const code = record.error as ImportErrorCode;
   const existing =
-    code === DUPLICATE_ERROR && typeof record.recipeId === "string"
+    code === "duplicate" && typeof record.recipeId === "string"
       ? {
           recipeId: record.recipeId,
           matchedBy: (record.matchedBy === "url" ? "url" : "title") as DuplicateMatch,
@@ -121,7 +92,7 @@ function failureFromStatus(status: number | undefined, body: unknown): ImportErr
  */
 export async function importRecipe(
   client: MpClient,
-  request: ImportRequest,
+  request: ImportRecipeRequest,
 ): Promise<ImportRecipeSuccess> {
   const { data, error } = await client.functions.invoke("recipe-import", { body: request });
 
@@ -156,7 +127,7 @@ export async function importRecipe(
 export async function importRecipeAndMatch(
   client: MpClient,
   queryClient: QueryClient,
-  request: ImportRequest,
+  request: ImportRecipeRequest,
 ): Promise<ImportRecipeSuccess> {
   const result = await importRecipe(client, request);
   if (result.recipeId) await parseAfterWrite(client, queryClient, result.recipeId);
@@ -167,7 +138,7 @@ export function useImportRecipe() {
   const client = useSupabase();
   const queryClient = useQueryClient();
 
-  return useMutation<ImportRecipeSuccess, ImportError, ImportRequest>({
+  return useMutation<ImportRecipeSuccess, ImportError, ImportRecipeRequest>({
     mutationFn: (request) => importRecipeAndMatch(client, queryClient, request),
     onSuccess: async (result) => {
       // Only a saved recipe changes the list. A draft is saved later, by createRecipe.

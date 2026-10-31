@@ -15,7 +15,7 @@ Requires a signed-in user who belongs to the household: send the user's JWT as `
 | `sourceUrl` | `caption` only: the shared post's link. Stored as the recipe's `source_url` (attribution) and never fetched |
 | `householdId` | Optional. Defaults to the caller's most recently joined household. The caller must be a member |
 | `save` | Optional, default `true`. `false` returns the draft and writes no recipe, so the person can edit and confirm first. The app sends `false` for photos and captions |
-| `allowDuplicate` | Optional, default `false`. Save even though the household has a recipe with the same title. It never overrides a same-link match (see Duplicates). Not in `ImportRecipeRequest` in `@mp/core` yet (contract change request in the WS02 follow-up report), so the handler reads it from the body |
+| `allowDuplicate` | Optional, default `false`. Save even though the household has a recipe with the same title. It never overrides a same-link match (see Duplicates) |
 
 ```bash
 curl -s -X POST "$SUPABASE_URL/functions/v1/recipe-import" \

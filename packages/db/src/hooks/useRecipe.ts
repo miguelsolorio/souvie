@@ -1,4 +1,5 @@
 import {
+  type ImportRecipeFailure,
   instructionsToJson,
   NormalizedRecipe,
   type RecipeIngredient,
@@ -22,7 +23,7 @@ export const recipeQueryKey = (id: string | null | undefined) => ["recipe", id] 
 export type RecipeErrorCode = "not_found" | "invalid" | "duplicate" | "unknown";
 
 /** How an existing recipe was recognised: by the link it came from, or by its title. */
-export type DuplicateMatch = "url" | "title";
+export type DuplicateMatch = NonNullable<ImportRecipeFailure["matchedBy"]>;
 
 export class RecipeError extends Error {
   readonly code: RecipeErrorCode;

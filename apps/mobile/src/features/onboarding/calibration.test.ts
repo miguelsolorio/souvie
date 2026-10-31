@@ -84,22 +84,32 @@ describe("feedbackRows", () => {
     { recipeId: "r1", signal: "dislike" as const },
   ];
 
-  it("builds one row per recipe with the household and user", () => {
-    const rows = feedbackRows("h1", "u1", answers);
+  it("builds one row per recipe with the household", () => {
+    const rows = feedbackRows("h1", answers);
     expect(rows).toEqual([
-      { household_id: "h1", user_id: "u1", recipe_id: "r1", signal: "like" },
-      { household_id: "h1", user_id: "u1", recipe_id: "r2", signal: "dislike" },
+      { household_id: "h1", recipe_id: "r1", signal: "like" },
+      { household_id: "h1", recipe_id: "r2", signal: "dislike" },
     ]);
   });
 
   it("leaves out recipes the person already answered", () => {
-    const rows = feedbackRows("h1", "u1", answers, new Set(["r2"]));
+    const rows = feedbackRows("h1", answers, new Set(["r2"]));
     expect(rows.map((r) => r.recipe_id)).toEqual(["r1"]);
   });
 
   it("uses only the like and dislike signals a client may insert", () => {
-    for (const row of feedbackRows("h", "u", answers)) {
+    for (const row of feedbackRows("h", answers)) {
       expect(["like", "dislike"]).toContain(row.signal);
+    }
+  });
+
+  it("names only columns WS04 grants a client insert on, and never user_id", () => {
+    // WS04: grant insert (id, household_id, recipe_id, signal, rating) on recipe_feedback.
+    // user_id comes from the column default, so naming it is "permission denied for table".
+    const granted = new Set(["id", "household_id", "recipe_id", "signal", "rating"]);
+    for (const row of feedbackRows("h", answers)) {
+      expect(Object.keys(row).every((column) => granted.has(column))).toBe(true);
+      expect(row).not.toHaveProperty("user_id");
     }
   });
 });

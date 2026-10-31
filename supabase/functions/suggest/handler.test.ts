@@ -140,7 +140,7 @@ async function planRows() {
     notes: string | null;
     servings: number;
   }>(
-    `select e.date::text as date, e.recipe_id, e.status::text as status, e.why, e.notes, e.servings
+    `select e.date::text as date, e.recipe_id, e.status::text as status, e.why, e.notes, e.servings::float8 as servings
        from public.meal_plan_entries e join public.meal_plans p on p.id = e.plan_id
       where p.household_id = $1 order by e.date`,
     [FIXTURE_HOUSEHOLD],
@@ -302,6 +302,11 @@ describe("draft (criterion 7)", () => {
     expect(plans).toEqual([{ id: body.planId, week_start: WEEK }]);
     // servings came from the model, as whole numbers
     expect(rows.every((r) => Number.isInteger(r.servings) && r.servings > 0)).toBe(true);
+    // The reason fits the real column's 200 character cap with room to spare.
+    expect(rows.every((r) => r.why.length <= 200)).toBe(true);
+    // A draft is not something a person saved: WS04's trigger writes `saved` only for a signed-in
+    // caller, and this write runs as the service role.
+    expect(await t.query("select 1 from public.recipe_feedback")).toHaveLength(0);
   });
 
   it("returns the existing plan on a second draft without calling the model", async () => {

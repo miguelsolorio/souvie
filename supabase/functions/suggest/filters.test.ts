@@ -209,7 +209,7 @@ describe("findViolations", () => {
 describe("term lists: the SQL engine and the TypeScript engine agree", () => {
   let t: TestDb;
   beforeAll(async () => {
-    t = await createTestDb({ planning: false });
+    t = await createTestDb();
   });
   afterAll(async () => {
     await t.close();

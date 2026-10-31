@@ -53,21 +53,24 @@ export function progressOf(state: CalibrationState): { answered: number; total: 
   return { answered: state.answers.length, total: state.cards.length };
 }
 
+/**
+ * One recipe_feedback insert. WS04 grants a client insert on (id, household_id, recipe_id, signal,
+ * rating) only. There is no user_id: the column defaults to the caller's auth.uid(), so a client
+ * cannot write a signal as someone else, and naming it is a permission error.
+ */
 export interface FeedbackRow {
   household_id: string;
-  user_id: string;
   recipe_id: string;
   signal: SwipeSignal;
 }
 
 /**
  * The recipe_feedback rows to insert, leaving out recipes the person already answered (a resumed
- * or repeated calibration must not write twice). `existing` lists recipe ids with a like or skip
- * from this person.
+ * or repeated calibration must not write twice). `existing` lists recipe ids with a like or
+ * dislike from this person.
  */
 export function feedbackRows(
   householdId: string,
-  userId: string,
   answers: readonly Answer[],
   existing: ReadonlySet<string> = new Set(),
 ): FeedbackRow[] {
@@ -78,7 +81,6 @@ export function feedbackRows(
     seen.add(answer.recipeId);
     rows.push({
       household_id: householdId,
-      user_id: userId,
       recipe_id: answer.recipeId,
       signal: answer.signal,
     });

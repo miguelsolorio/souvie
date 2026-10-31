@@ -1,5 +1,6 @@
+import type { MpClient } from "@mp/db";
 import { describe, expect, it, vi } from "vitest";
-import { type LooseClient, saveCalibrationFeedback } from "./calibrationApi";
+import { saveCalibrationFeedback } from "./calibrationApi";
 
 function fakeClient(options: {
   existing?: { recipe_id: string; signal: string }[];
@@ -27,10 +28,14 @@ function fakeClient(options: {
       return query;
     },
   });
+  const tables: string[] = [];
   const client = {
-    from: () => ({ select: () => query, insert }),
-  } as unknown as LooseClient;
-  return { client, insert, filters };
+    from: (table: string) => {
+      tables.push(table);
+      return { select: () => query, insert };
+    },
+  } as unknown as MpClient;
+  return { client, insert, filters, tables };
 }
 
 const answers = [
@@ -40,22 +45,26 @@ const answers = [
 ];
 
 describe("saveCalibrationFeedback", () => {
-  it("inserts a row per answer, scoped to the household and the person", async () => {
-    const { client, insert, filters } = fakeClient({});
+  it("inserts a row per answer, scoped to the household, without user_id", async () => {
+    const { client, insert, filters, tables } = fakeClient({});
     const written = await saveCalibrationFeedback(client, {
       householdId: "h",
       userId: "u",
       answers,
     });
     expect(written).toBe(3);
+    // WS04 grants a client insert on (id, household_id, recipe_id, signal, rating) and fills
+    // user_id from auth.uid(), so the rows carry no user_id.
     expect(insert).toHaveBeenCalledWith([
-      { household_id: "h", user_id: "u", recipe_id: "r1", signal: "like" },
-      { household_id: "h", user_id: "u", recipe_id: "r2", signal: "dislike" },
-      { household_id: "h", user_id: "u", recipe_id: "r3", signal: "like" },
+      { household_id: "h", recipe_id: "r1", signal: "like" },
+      { household_id: "h", recipe_id: "r2", signal: "dislike" },
+      { household_id: "h", recipe_id: "r3", signal: "like" },
     ]);
+    // The user id only narrows the lookup of earlier answers.
     expect(filters).toContainEqual(["household_id", "h"]);
     expect(filters).toContainEqual(["user_id", "u"]);
     expect(filters).toContainEqual(["recipe_id", ["r1", "r2", "r3"]]);
+    expect(new Set(tables)).toEqual(new Set(["recipe_feedback"]));
   });
 
   it("does not write a recipe the person already answered", async () => {

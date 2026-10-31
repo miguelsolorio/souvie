@@ -14,6 +14,7 @@
 // vocabularies from here without a runtime cycle.
 import { z } from "zod";
 import type { ProfilePreferences } from "./identity.ts";
+import { isoDateOf, MEAL_SLOTS, MealSlot } from "./planning.ts";
 
 // ---------------------------------------------------------------------------------------
 // Vocabularies
@@ -339,15 +340,6 @@ export function mergePreferences(
 // Weeks
 // ---------------------------------------------------------------------------------------
 
-function pad(value: number): string {
-  return String(value).padStart(2, "0");
-}
-
-/** The calendar date of a Date in its own (local) time zone, as YYYY-MM-DD. */
-export function isoDateOf(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
 /**
  * The Monday that starts "the coming week": today when today is Monday, otherwise the next
  * Monday. The first plan is drafted for this week, on the same Monday-based `week_start` the
@@ -372,10 +364,13 @@ export const SUGGEST_MODES = ["draft", "replace", "calibration", "backfill", "sw
 export const SuggestMode = z.enum(SUGGEST_MODES);
 export type SuggestMode = z.infer<typeof SuggestMode>;
 
-/** The meal slots a suggestion can be for. Plans are dinners; a swap may name any slot. */
-export const SUGGEST_SLOTS = ["breakfast", "lunch", "dinner", "snack"] as const;
-export const SuggestSlot = z.enum(SUGGEST_SLOTS);
-export type SuggestSlot = z.infer<typeof SuggestSlot>;
+/**
+ * The meal slots a suggestion can be for. Plans are dinners; a swap may name any slot. These are
+ * WS04's slots (planning.ts), under the names this contract has used, so the two cannot drift.
+ */
+export const SUGGEST_SLOTS = MEAL_SLOTS;
+export const SuggestSlot = MealSlot;
+export type SuggestSlot = MealSlot;
 
 /** Most recipe ids a swap may ask to avoid. */
 export const SWAP_EXCLUDE_MAX = 200;

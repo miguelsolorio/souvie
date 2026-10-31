@@ -1,42 +1,27 @@
-// Writing the swipes (WS06). recipe_feedback is WS04's table, so it is not in the generated
-// database types yet; this talks to it through a small loose interface instead of editing them.
-// Once WS04 merges and the types are regenerated, the cast can go.
+// Writing the swipes (WS06). The rows go to WS04's recipe_feedback table, under WS04's grants and
+// policy: a client inserts (id, household_id, recipe_id, signal, rating) only, user_id comes from
+// the column default (the caller's auth.uid()), the signal must be `like` or `dislike`, and the
+// recipe must be live and either the household's own or a catalog recipe.
 import type { MpClient } from "@mp/db";
-import { type Answer, type FeedbackRow, feedbackRows } from "./calibration";
-
-interface LooseResult<T> {
-  data: T | null;
-  error: { message: string } | null;
-}
-
-interface LooseQuery<T> extends PromiseLike<LooseResult<T>> {
-  eq(column: string, value: string): LooseQuery<T>;
-  in(column: string, values: string[]): LooseQuery<T>;
-}
-
-export interface LooseFeedbackTable {
-  select(columns: string): LooseQuery<{ recipe_id: string; signal: string }[]>;
-  insert(rows: FeedbackRow[]): PromiseLike<{ error: { message: string } | null }>;
-}
-
-export interface LooseClient {
-  from(table: "recipe_feedback"): LooseFeedbackTable;
-}
+import { type Answer, feedbackRows } from "./calibration";
 
 /**
- * Saves a person's like and skip answers as recipe_feedback rows (`like`, `dislike`) in their
- * household. A recipe they already answered is left alone, so retrying a failed finish, or going
- * through calibration twice, never writes twice. Returns how many rows were written.
+ * Saves a person's like and dislike answers as recipe_feedback rows in their household. A recipe
+ * they already answered is left alone, so retrying a failed finish, or going through calibration
+ * twice, never writes twice. Returns how many rows were written.
+ *
+ * `userId` is only for the lookup of earlier answers. It is not written: the database fills the
+ * column from the session, and a client that names it is refused.
  */
 export async function saveCalibrationFeedback(
-  client: MpClient | LooseClient,
+  client: MpClient,
   args: { householdId: string; userId: string; answers: readonly Answer[] },
 ): Promise<number> {
   if (args.answers.length === 0) return 0;
-  const table = (client as unknown as LooseClient).from("recipe_feedback");
   const ids = args.answers.map((a) => a.recipeId);
 
-  const existing = await table
+  const existing = await client
+    .from("recipe_feedback")
     .select("recipe_id, signal")
     .eq("household_id", args.householdId)
     .eq("user_id", args.userId)
@@ -48,9 +33,9 @@ export async function saveCalibrationFeedback(
       .map((row) => row.recipe_id),
   );
 
-  const rows = feedbackRows(args.householdId, args.userId, args.answers, answered);
+  const rows = feedbackRows(args.householdId, args.answers, answered);
   if (rows.length === 0) return 0;
-  const { error } = await table.insert(rows);
+  const { error } = await client.from("recipe_feedback").insert(rows);
   if (error) throw new Error(error.message);
   return rows.length;
 }

@@ -9,8 +9,8 @@
 //   * The platform. Supabase's auth and storage schemas and API roles are stubbed by
 //     supabase-stubs.sql. Migrations that need Vault, pgmq, or pg_cron (WS07's retail migration,
 //     the extensions migration) are not loaded.
-// The planning tables (WS04's, still unmerged when this was written) come from planning-ws04.sql,
-// which is a copy of docs/02 §Planning and never a migration.
+// The planning tables (WS04: meal_plans, meal_plan_entries, recipe_feedback) and the catalog read
+// policies are the repo's own migrations, loaded below like the rest. Nothing is copied.
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,7 +31,9 @@ export const HARNESS_MIGRATIONS = [
   "proposals_household_fk",
   "recipes",
   "ai_runs",
+  "planning",
   "ws06_preferences",
+  "recipes_catalog_read",
 ] as const;
 
 function migrationFile(name: string): string {
@@ -52,8 +54,6 @@ export interface TestDb {
 }
 
 export interface CreateTestDbOptions {
-  /** Load WS04's planning tables (docs/02 §Planning). Default true. */
-  planning?: boolean;
   /** Extra extensions, for example pgTAP when a script runs the pgTAP files. */
   extensions?: Record<string, unknown>;
 }
@@ -70,9 +70,6 @@ export async function createTestDb(options: CreateTestDbOptions = {}): Promise<T
 
   for (const name of HARNESS_MIGRATIONS) {
     await db.exec(readFileSync(migrationFile(name), "utf8"));
-  }
-  if (options.planning ?? true) {
-    await db.exec(readFileSync(join(HERE, "planning-ws04.sql"), "utf8"));
   }
 
   const query = async <T = Record<string, unknown>>(

@@ -373,6 +373,60 @@ export async function fetchCandidates(
   return { candidates: kept, dropped };
 }
 
+/**
+ * Which of these recipes fail the filters now, with the reasons. Used on a plan that already
+ * exists: the household may have gained an allergy or a diet since it was drafted. A recipe must
+ * pass the SQL filter and the TypeScript check, the same two engines as retrieval. Recipes that
+ * are deleted or that the household cannot see are left out of the answer: they are not a
+ * safety matter and the planner already shows them as unavailable.
+ */
+export async function findFailingRecipes(
+  sql: SqlRunner,
+  context: { householdId: string; spec: FilterSpec; recipeIds: readonly string[] },
+): Promise<Map<string, string[]>> {
+  const failing = new Map<string, string[]>();
+  const ids = [...new Set(context.recipeIds)];
+  if (ids.length === 0) return failing;
+
+  const live = await sql.query<{
+    id: string;
+    tags: string[] | null;
+    total_min: number | string | null;
+  }>(
+    `select r.id, r.tags, nullif(coalesce(r.prep_min, 0) + coalesce(r.cook_min, 0), 0) as total_min
+       from public.recipes r
+      where r.id = any($1::uuid[]) and r.deleted_at is null
+        and (r.household_id = $2::uuid or r.visibility = 'catalog')`,
+    [ids, context.householdId],
+  );
+  const query = buildCandidateQuery({
+    householdId: context.householdId,
+    spec: context.spec,
+    tasteEmbedding: null,
+    onlyIds: ids,
+    limit: ids.length,
+  });
+  const passing = new Set(
+    (await sql.query<{ id: string }>(query.text, query.params)).map((r) => r.id),
+  );
+  const lines = await loadLines(
+    sql,
+    live.map((row) => row.id),
+  );
+
+  for (const row of live) {
+    const reasons = findViolations(
+      { tags: row.tags ?? [], totalMin: num(row.total_min), lines: lines.get(row.id) ?? [] },
+      context.spec,
+    );
+    if (reasons.length === 0 && !passing.has(row.id)) {
+      reasons.push("the database filter excluded it");
+    }
+    if (reasons.length > 0) failing.set(row.id, reasons.slice(0, 5));
+  }
+  return failing;
+}
+
 // ---------------------------------------------------------------------------------------
 // Calibration
 // ---------------------------------------------------------------------------------------

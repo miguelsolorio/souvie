@@ -130,12 +130,12 @@ describe("buildCandidateQuery", () => {
     limit: 200,
   });
 
-  it("takes eleven parameters and never writes a value into the SQL text", () => {
-    expect(query.params).toHaveLength(11);
+  it("takes thirteen parameters and never writes a value into the SQL text", () => {
+    expect(query.params).toHaveLength(13);
     expect(query.text).not.toContain("shrimp");
     expect(query.text).not.toContain("drop table");
     expect(query.text).not.toContain(FIXTURE_HOUSEHOLD);
-    for (let i = 1; i <= 11; i++) expect(query.text).toContain(`$${i}`);
+    for (let i = 1; i <= 13; i++) expect(query.text).toContain(`$${i}`);
   });
 
   it("reads only the household's recipes and the catalog, and never deleted ones", () => {
@@ -154,6 +154,9 @@ describe("buildCandidateQuery", () => {
     expect(query.params[4]).toBe(spec.textPattern);
     expect(query.params[5]).toEqual(spec.neverTerms);
     expect(query.params[10]).toBe(200);
+    // This household has an allergy and a diet, so recipes must list ingredients. No audit list.
+    expect(query.params[11]).toBe(true);
+    expect(query.params[12]).toBeNull();
   });
 });
 
@@ -236,6 +239,9 @@ describe("term lists: the SQL engine and the TypeScript engine agree", () => {
       "ice cream",
       "cheddar cheese",
       "ricotta",
+      "grated pecorino",
+      "vanilla buttercream",
+      "1/4 cup coffee creamer",
     ],
     egg: [
       "2 eggs",
@@ -288,6 +294,9 @@ describe("term lists: the SQL engine and the TypeScript engine agree", () => {
       "butter lettuce leaves",
       "cocoa butter",
       "coconut cream",
+      "2 tbsp oat creamer",
+      "non-dairy creamer",
+      "1 lb creamer potatoes",
     ],
     egg: ["eggplant", "1 large eggplant, cubed"],
     wheat: [

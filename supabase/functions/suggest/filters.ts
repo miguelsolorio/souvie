@@ -87,8 +87,10 @@ const MILK_PATTERNS: readonly string[] = [
     "(?! of tartar)",
   ),
   wordsNot(NUT_BUTTER_PREFIXES, "butter", "(?! (?:beans?|lettuce|leaf|leaves|squash))"),
+  // Coffee creamer is dairy unless it says otherwise; "creamer potatoes" are small potatoes.
+  wordsNot(PLANT_PREFIXES, "creamers?", "(?! potato)"),
   words(
-    "buttermilk|butterscotch|pesto|cheeses?|cheddar|mozzarella|parmesan|parmigiano|ricotta|mascarpone|feta|brie|camembert|gouda|gruy[eè]re|provolone|halloumi|paneer|asiago|fontina|manchego|romano|gorgonzola|burrata|queso|cotija|havarti|emmental|jarlsberg|stilton|roquefort|colby|monterey jack|pepper jack|neufchatel|labneh|quark|skyr|yogh?urt|kefir|ghee|whey|casein|caseinate|lactose|custard|ice cream|gelato|half[- ]and[- ]half|cr[eè]me fra[iî]che|eggnog|alfredo|b[eé]chamel|ranch|curds?|clotted|dulce de leche|whipped topping|cool whip|nougat|caramels?",
+    "buttermilk|buttercream|butterscotch|pecorino|pesto|cheeses?|cheddar|mozzarella|parmesan|parmigiano|ricotta|mascarpone|feta|brie|camembert|gouda|gruy[eè]re|provolone|halloumi|paneer|asiago|fontina|manchego|romano|gorgonzola|burrata|queso|cotija|havarti|emmental|jarlsberg|stilton|roquefort|colby|monterey jack|pepper jack|neufchatel|labneh|quark|skyr|yogh?urt|kefir|ghee|whey|casein|caseinate|lactose|custard|ice cream|gelato|half[- ]and[- ]half|cr[eè]me fra[iî]che|eggnog|alfredo|b[eé]chamel|ranch|curds?|clotted|dulce de leche|whipped topping|cool whip|nougat|caramels?",
   ),
 ];
 
@@ -327,6 +329,12 @@ export interface FilterSpec {
   /** Lowercase recipe tags that exclude a recipe: diet conflicts and non-dinner tags. */
   excludedTags: string[];
   maxMinutes: number | null;
+  /**
+   * True when the household has any allergy or diet. Both engines look for a violating ingredient
+   * line, so a recipe with no lines would pass every filter; with this set it is excluded instead.
+   * Nothing can be proven about a recipe that lists nothing.
+   */
+  requireIngredientLines: boolean;
 }
 
 function unique<T>(items: readonly T[]): T[] {
@@ -424,6 +432,7 @@ export function buildFilterSpec(input: FilterInput): FilterSpec {
     categoryRuleExcepts: [...rules.values()].map((rule) => rule.except),
     excludedTags: [...tags],
     maxMinutes: typeof minutes === "number" && minutes > 0 ? Math.trunc(minutes) : null,
+    requireIngredientLines: allergies.length > 0 || diets.length > 0,
   };
 }
 
@@ -445,6 +454,8 @@ export interface CandidateQueryOptions {
   excludeIds?: readonly string[];
   /** Rows to return. */
   limit: number;
+  /** Look only at these recipes (an audit of a plan's dinners). Omit to search everything. */
+  onlyIds?: readonly string[];
 }
 
 /**
@@ -453,9 +464,17 @@ export interface CandidateQueryOptions {
  *
  * Parameters: $1 household, $2 excluded recipe ids, $3 minutes limit, $4 excluded tags,
  * $5 allergen and diet pattern, $6 never-food names, $7 never-food pattern, $8 and $9 category
- * rules, $10 taste embedding, $11 limit.
+ * rules, $10 taste embedding, $11 limit, $12 require ingredient lines, $13 only these recipe ids
+ * (null for all).
  *
  * A recipe with no time on it passes the minutes filter (its time is unknown, not too long).
+ *
+ * Never-foods are matched per line. A line the parser resolved is judged by its canonical
+ * ingredient: the term names that ingredient exactly (name, plural or alias), or is a whole word
+ * in its name unless the ingredient is a pantry staple. So "olive" excludes olives but not olive
+ * oil, and "pepper" excludes bell peppers but not black pepper; naming the staple itself
+ * ("olive oil") excludes it. A line the parser did not resolve is judged by its raw text, whole
+ * word, because nothing else is known about it.
  */
 export function buildCandidateQuery(options: CandidateQueryOptions): BuiltQuery {
   const { spec } = options;
@@ -489,6 +508,11 @@ from public.recipes r
 where r.deleted_at is null
   and (r.household_id = $1::uuid or r.visibility = 'catalog')
   and r.id <> all($2::uuid[])
+  and ($13::uuid[] is null or r.id = any($13::uuid[]))
+  and (
+    not $12::boolean
+    or exists (select 1 from public.recipe_ingredients any_line where any_line.recipe_id = r.id)
+  )
   and (
     $3::int is null
     or nullif(coalesce(r.prep_min, 0) + coalesce(r.cook_min, 0), 0) is null
@@ -505,9 +529,14 @@ where r.deleted_at is null
       and (
         ri.raw_text ~* $5::text
         or i.name ~* $5::text
-        or ri.raw_text ~* $7::text
-        or i.name ~* $7::text
-        or ri.ingredient_id in (select id from never_ids)
+        or (ri.ingredient_id is null and ri.raw_text ~* $7::text)
+        or (
+          ri.ingredient_id is not null
+          and (
+            ri.ingredient_id in (select id from never_ids)
+            or (not coalesce(i.is_staple_default, false) and i.name ~* $7::text)
+          )
+        )
         or exists (
           select 1
           from unnest($8::text[], $9::text[]) as cr(category, except_pattern)
@@ -532,6 +561,8 @@ limit $11::int`;
       spec.categoryRuleExcepts,
       options.tasteEmbedding,
       options.limit,
+      spec.requireIngredientLines,
+      options.onlyIds ? [...options.onlyIds] : null,
     ],
   };
 }
@@ -558,6 +589,8 @@ export interface RecipeLine {
   ingredientName: string | null;
   category: string | null;
   ingredientId?: string | null;
+  /** The ontology's pantry-staple flag (oil, salt, pepper). Never-foods skip staples by word. */
+  staple?: boolean;
 }
 
 export interface RecipeFacts {
@@ -593,17 +626,35 @@ export function findViolations(
     except: spec.categoryRuleExcepts[i] ? toJsPattern(spec.categoryRuleExcepts[i] as string) : null,
   }));
 
+  // A recipe that lists no ingredients cannot be shown safe, so it fails whenever the household has
+  // an allergy or a diet. (The SQL does the same with `require ingredient lines`.)
+  if (spec.requireIngredientLines && recipe.lines.length === 0) {
+    reasons.push("no ingredient lines to check against the household's allergies and diets");
+  }
+
+  const neverNames = new Set(spec.neverTerms);
   for (const line of recipe.lines) {
     const name = line.ingredientName ?? "";
+    const parsed = line.ingredientId != null || line.ingredientName != null;
     const hit = (pattern: RegExp | null) => {
       if (!pattern) return null;
       return pattern.exec(line.rawText)?.[0] ?? pattern.exec(name)?.[0] ?? null;
     };
     const allergenHit = hit(text);
     if (allergenHit) reasons.push(`ingredient: "${allergenHit}" in "${line.rawText}"`);
-    const neverHit = hit(never);
-    if (neverHit) reasons.push(`never-food: "${neverHit}" in "${line.rawText}"`);
-    if (line.ingredientId && neverIds.has(line.ingredientId)) {
+    // Never-foods: a parsed line is judged by its canonical ingredient, an unparsed one by its
+    // raw text. See buildCandidateQuery for why.
+    if (never) {
+      const neverHit = parsed
+        ? line.staple
+          ? null
+          : (never.exec(name)?.[0] ?? null)
+        : (never.exec(line.rawText)?.[0] ?? null);
+      if (neverHit) reasons.push(`never-food: "${neverHit}" in "${line.rawText}"`);
+    }
+    if (parsed && neverNames.has(name.toLowerCase())) {
+      reasons.push(`never-food ingredient: ${name}`);
+    } else if (line.ingredientId && neverIds.has(line.ingredientId)) {
       reasons.push(`never-food ingredient: ${name || line.rawText}`);
     }
     if (line.category) {

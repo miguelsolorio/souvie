@@ -20,11 +20,11 @@ Requires a signed-in user who belongs to the household: send the user's JWT as `
 
 | Mode | What it does |
 |---|---|
-| `draft` | Composes the week. If the week already has dinners it returns them unchanged (`composedBy: "existing"`) and calls no model |
+| `draft` | Composes the week. If the week already has dinners it returns them (`composedBy: "existing"`) and calls no model, after a safety re-check: the dinners still `planned` are run through the household's current allergy and diet filters, and any that fail are replaced from the ranked list (reason: "Changed because the earlier pick no longer fits your household's allergies or diets.") or, when nothing fits, removed. The change is logged. Cooked and skipped dinners are never touched, and tastes (never-foods, minutes) are not re-applied |
 | `replace` | Composes again. Without `date`, every still-planned dinner of the week is replaced and cooked or skipped ones stay. With `date`, only that night, and never with the recipe it had |
 | `swap` | One recipe for one slot, for the planner's "swap with a suggestion" (WS04). Same filters and ranking as `draft`, minus recipes in `excludeRecipeIds` and the ones already on that week's plan. Writes nothing: no plan, no entry, no feedback, no embedding refresh, no model call. The reason is built from facts, not by a model. Another slot than `dinner` also lets recipes tagged breakfast, dessert, and the like through. Returns `{ ok, planId?, entries }` with exactly one entry, `planId` only when the week already has a plan |
 | `calibration` | Twelve recipes for the swipe screen, spread over cuisines, leaving out ones the caller already answered (a like or a dislike). Writes nothing |
-| `backfill` | Embeds up to 50 of the household's recipes that have no embedding. Needs `VOYAGE_API_KEY` |
+| `backfill` | Embeds up to 50 recipes that have no embedding: the household's own first, then catalog recipes (`visibility = 'catalog'`, shared by every household, so any household's call may fill them). Only null embeddings are written, so repeating the call is safe. Needs `VOYAGE_API_KEY` |
 
 ```bash
 curl -s -X POST "$SUPABASE_URL/functions/v1/suggest" \
@@ -59,12 +59,12 @@ Failed: `{ "ok": false, "error": "…", "message": "…" }`.
 ## How a plan is made
 
 1. **Membership.** The caller must belong to the household. The household id used by every later query comes from that check.
-2. **Allergy gate.** The caller's `preferences.allergies` must exist.
-3. **Embeddings** (only with `VOYAGE_API_KEY`). Up to 40 of the household's recipes with no vector are embedded, then the caller's taste vector is rebuilt: Haiku writes a short taste description from preferences, likes, and skips (plain text without an Anthropic key), it is embedded as a query, and half the final vector is the average of the liked recipes' vectors. Any failure here only costs ranking quality.
+2. **Allergy gate.** The caller's `preferences.allergies` must exist. Preferences are read field by field (`readStoredPreferences` in `store.ts`): a field that fails its schema is left out on its own, and every member's `allergies` and `diets` are read straight from the stored JSON, so one bad field (`weeknight_minutes: 0`) never drops a housemate's allergy from the household's union. A value outside the vocabulary, or a list that is not a list, stops the request instead (`internal_error`).
+3. **Embeddings** (only with `VOYAGE_API_KEY`). Up to 40 recipes with no vector (the household's, then the catalog's) are embedded, then the caller's taste vector is rebuilt: Haiku writes a short taste description from preferences, likes, and skips (plain text without an Anthropic key), it is embedded as a query, and half the final vector is the average of the liked recipes' vectors. Any failure here only costs ranking quality.
 4. **Candidates** (`filters.ts`, `candidates.ts`). One SQL query over the household's recipes and the catalog applies every hard filter, then the pool is ranked and the top 60 kept. The ingredient lines of those 60 are read back and checked again in TypeScript; a recipe that fails is dropped and logged. The model only sees what both checks passed.
 5. **Compose** (`compose.ts`). Sonnet gets the numbered candidates and the dates and answers with positions. Code rejects an out-of-range index, a repeated recipe or date, an unoffered date, or the wrong number of dinners; the call is retried once with the problem described, then `ComposeError`. Recipe ids come from the candidate list, never from the model.
 6. **Fallback.** No Anthropic key, a spent budget, or two bad answers: the best-ranked candidates, spread over cuisines, quickest first. The reason on each is built from facts (minutes, favorite cuisine), not from a model.
-7. **Write.** One transaction takes an advisory lock on the household and week, makes the `meal_plans` row if needed, removes the dinners being replaced, and inserts the new ones with `status = 'planned'` and the reason in `notes`. Two drafts at once write one plan.
+7. **Write.** One transaction takes an advisory lock on the household and week, makes the `meal_plans` row if needed, removes the dinners being replaced, and inserts the new ones with `status = 'planned'` and the reason in `why`. `notes` stays empty for the person's own. Two drafts at once write one plan.
 
 ### The hard filters
 
@@ -72,7 +72,8 @@ Filters are SQL `where` clauses built by `buildFilterSpec` and `buildCandidateQu
 
 - **Allergies** (the nine in `ALLERGENS`). The brief assumed an `ingredients.allergen_tags` column. The ontology WS03 shipped has none, so each allergen has a term list (`ALLERGEN_PATTERNS` in `filters.ts`) matched against the parsed ingredient name and the line's raw text, plus category rules where the category is a clean signal (eggs, dairy, and seafood that is not shellfish). Raw text matters: a recipe whose lines the parser has not resolved yet would otherwise pass. The lists err toward excluding. They can still miss a food they do not name; a tag column on the ontology is the fix (see the WS06 report).
 - **Diets.** vegetarian, vegan, pescatarian, halal, kosher, gluten free, and dairy free are enforced from ingredient terms, categories, and a few recipe tags. low carb, keto, and paleo cannot be proven from an ingredient list, so they steer the composer only. Kosher does not check meat and dairy mixing.
-- **Never-foods.** Resolved to ingredients through `ingredients.name`, `plural`, and `ingredient_aliases`, and matched as whole words in raw text. Nothing derived is stored.
+- **No ingredient lines.** When the household has any allergy or diet, a recipe with no ingredient lines is left out, in SQL and in TypeScript: both engines look for a violating line, so a recipe that lists nothing would otherwise pass them all.
+- **Never-foods.** Judged per line. A line the parser resolved is judged by its canonical ingredient: the term names it exactly (`name`, `plural`, or an `ingredient_aliases` alias), or is a whole word in its name unless the ingredient is a pantry staple (`is_staple_default`). So "olive" excludes olives but not olive oil, "pepper" excludes bell peppers but not black pepper, and naming the staple ("olive oil") excludes it. A line the parser did not resolve is judged by its raw text, whole word. Nothing derived is stored.
 - **Time.** `prep_min + cook_min` at most `weeknight_minutes`. A recipe with no time passes. The limit applies to every night; weekends are not relaxed.
 - **Not dinners.** Recipes tagged dessert, drinks, breakfast, snack, and similar are left out.
 - **Scope.** Deleted recipes and other households' recipes are never returned. Catalog recipes (`visibility = 'catalog'`) are visible to every household.
@@ -91,11 +92,11 @@ The function connects to Postgres as the database owner (`SUPABASE_DB_URL`), whi
 | `household_members`, `households` | read | membership, `deleted_at` |
 | `profiles` | read; writes `taste_embedding` | `preferences`, `onboarding_step`, `taste_embedding` |
 | `recipes`, `recipe_ingredients`, `ingredients`, `ingredient_aliases` | read; writes `recipes.embedding` | see `filters.ts` |
-| `meal_plans`, `meal_plan_entries` (WS04) | read, insert, delete planned dinners | `meal_plans(household_id, week_start)`; entries `(plan_id, household_id, date, slot, recipe_id, servings, status, why, position)` |
+| `meal_plans`, `meal_plan_entries` (WS04) | read, insert, delete planned dinners; change the recipe and reason of a planned dinner that no longer fits | `meal_plans(household_id, week_start)`; entries `(plan_id, household_id, date, slot, recipe_id, servings, status, why, position)` |
 | `recipe_feedback` (WS04) | read | `(household_id, user_id, recipe_id, signal, created_at)`; if the table is missing, ranking runs without history |
 | `ai_runs` | insert, read | every model and embedding call; the daily spend |
 
-The one-line reason is stored in `meal_plan_entries.why` (WS04's migration adds the column) and `notes` is left to the person. Servings are rounded to whole numbers for `meal_plan_entries.servings`.
+The one-line reason is stored in `meal_plan_entries.why` (WS04's column, 200 characters at most; ours are under 140) and `notes` is left to the person. Servings are rounded to whole numbers for `meal_plan_entries.servings`.
 
 ## `ai_runs`
 

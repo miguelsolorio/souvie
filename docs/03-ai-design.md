@@ -70,6 +70,10 @@ Retrieve → filter → compose → learn.
 - **Allergen data.** The ontology has no `allergen_tags`. Allergens are matched by term lists against ingredient names and raw ingredient text, plus category rules, in SQL and again in TypeScript on the final candidates. Lists exclude when in doubt and can miss a food they do not name.
 - **Diets.** Seven diets are enforced from ingredients. low carb, keto, and paleo only steer the composer.
 - **Households.** Everyone's allergies and diets apply to a shared plan; the requester's never-foods and weeknight minutes steer it.
+- **Safety reads.** Each member's preferences are read field by field, so one invalid field never drops their allergies or diets from the household's union. A value outside the vocabulary stops the request. A recipe with no ingredient lines is left out whenever the household has any allergy or diet. A draft for a week that already has a plan re-checks its still-planned dinners against the current allergies and diets and replaces any that fail, with no model call.
+- **Never-foods.** A parsed line is judged by its canonical ingredient (exact name, or a whole word unless the ingredient is a pantry staple), an unparsed line by its raw text. "olive" excludes olives, not olive oil.
+- **Catalog embeddings.** `backfill` and the pre-plan refresh also embed catalog recipes, which every household shares.
+- **Editing later.** Household settings has "Edit food preferences", which reopens screens 2 to 6 and returns to settings.
 - **Fallback.** After two invalid answers, or with no model key or no budget, the plan is the best-ranked candidates spread over cuisines, with reasons built from facts, not from a model. The response says `composedBy: "fallback"`.
 - **Embeddings.** Voyage `voyage-3`. The taste vector is rebuilt on every plan (once a week in practice) rather than by a separate weekly job. Without `VOYAGE_API_KEY` ranking uses cuisine and popularity.
 - **Logging.** `suggest.compose` and `suggest.embed` rows in `ai_runs`; a plan with no possible model call writes one failed `suggest.compose` row with the reason.

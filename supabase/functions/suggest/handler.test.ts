@@ -4,6 +4,7 @@
 // owner gets the same plan, and the hard filters hold.
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  ALLERGENS,
   CALIBRATION_CARD_COUNT,
   SuggestCalibrationResponse,
   SuggestPlanResponse,
@@ -11,7 +12,7 @@ import {
 } from "../../../packages/core/src/index.ts";
 import type { MessagesClient } from "../../../packages/llm/src/index.ts";
 import { addDays, isMonday, pickDinnerDates, weekDates } from "./compose.ts";
-import { EMBED_BATCH, handleSuggest, type Runtime } from "./handler.ts";
+import { CHANGED_WHY, EMBED_BATCH, handleSuggest, type Runtime } from "./handler.ts";
 import {
   FIXTURE_HOUSEHOLD,
   FIXTURE_USER,
@@ -412,6 +413,210 @@ describe("draft (criterion 7)", () => {
   });
 });
 
+describe("a member's other fields never hide their allergies (fix round)", () => {
+  async function draftRows(token: string, runtime: Runtime) {
+    const res = await post(
+      { householdId: FIXTURE_HOUSEHOLD, weekStart: WEEK, mode: "draft", dinners: 5 },
+      token,
+      runtime,
+    );
+    expect(res.status).toBe(200);
+    return planRows();
+  }
+
+  it("keeps a housemate's allergies when another of their fields is invalid", async () => {
+    // The reviewer's reproduction: weeknight_minutes 0 and skill "expert" fail the schema.
+    await insertHousemate({
+      allergies: ["milk", "egg"],
+      weeknight_minutes: 0,
+      skill: "expert",
+      dinners_per_week: 5,
+    });
+    const model = fakeModel();
+    const rows = await draftRows(
+      "Bearer fixture",
+      runtimeWith({ anthropic: async () => model.client }),
+    );
+    expect(rows).toHaveLength(5);
+    for (const row of rows) {
+      const labels = corpus.byId.get(row.recipe_id)?.labels.contains ?? [];
+      expect(labels, corpus.byId.get(row.recipe_id)?.key).not.toContain("milk");
+      expect(labels, corpus.byId.get(row.recipe_id)?.key).not.toContain("egg");
+      expect(labels).not.toContain("shellfish");
+    }
+  });
+
+  it("plans for a requester whose own other fields are invalid, still without their allergy", async () => {
+    await setPreferences(FIXTURE_USER, {
+      allergies: ["shellfish"],
+      weeknight_minutes: 0,
+      skill: "expert",
+      dinners_per_week: 9,
+    });
+    const model = fakeModel();
+    const rows = await draftRows(
+      "Bearer fixture",
+      runtimeWith({ anthropic: async () => model.client }),
+    );
+    // dinners_per_week 9 is dropped on its own, so the request's own `dinners: 5` decides.
+    expect(rows).toHaveLength(5);
+    for (const row of rows) {
+      expect(corpus.byId.get(row.recipe_id)?.labels.contains ?? []).not.toContain("shellfish");
+    }
+  });
+});
+
+describe("a draft for a week that already has a plan re-checks it (fix round)", () => {
+  async function firstDraft(runtime: Runtime) {
+    return SuggestPlanResponse.parse(
+      await (
+        await post(
+          { householdId: FIXTURE_HOUSEHOLD, weekStart: WEEK, mode: "draft", dinners: 5 },
+          "Bearer fixture",
+          runtime,
+        )
+      ).json(),
+    );
+  }
+
+  /** An allergen that one of the planned recipes really contains, other than the household's. */
+  function allergenInPlan(recipeIds: string[]): string {
+    for (const id of recipeIds) {
+      const found = (corpus.byId.get(id)?.labels.contains ?? []).find((a) => a !== "shellfish");
+      if (found) return found;
+    }
+    throw new Error("no planned recipe carries an allergen to add");
+  }
+
+  it("replaces a planned dinner that a member's new allergy rules out, with no model call", async () => {
+    await insertHousemate({ allergies: [], dinners_per_week: 5 });
+    const model = fakeModel();
+    const runtime = runtimeWith({ anthropic: async () => model.client });
+    const first = await firstDraft(runtime);
+    const calls = model.parse.mock.calls.length;
+    const allergen = allergenInPlan(first.entries.map((e) => e.recipeId));
+
+    // The housemate adds an allergy after the plan was drafted.
+    await setPreferences(HOUSEMATE, { allergies: [allergen], dinners_per_week: 5 });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const res = await post(
+        { householdId: FIXTURE_HOUSEHOLD, weekStart: WEEK, mode: "draft" },
+        "Bearer housemate",
+        runtime,
+      );
+      const second = SuggestPlanResponse.parse(await res.json());
+      expect(second.composedBy).toBe("existing");
+      expect(second.planId).toBe(first.planId);
+      expect(second.entries).toHaveLength(5);
+
+      // No recipe in the plan carries the new allergen (or shellfish) any more.
+      for (const entry of second.entries) {
+        const labels = corpus.byId.get(entry.recipeId)?.labels.contains ?? [];
+        expect(labels, corpus.byId.get(entry.recipeId)?.key).not.toContain(allergen);
+        expect(labels).not.toContain("shellfish");
+      }
+      // Entries that were fine are untouched; the ones that changed say why.
+      const before = new Map(first.entries.map((e) => [e.date, e]));
+      const changed = second.entries.filter((e) => e.recipeId !== before.get(e.date)?.recipeId);
+      expect(changed.length).toBeGreaterThan(0);
+      for (const entry of second.entries) {
+        const old = before.get(entry.date);
+        if (entry.recipeId === old?.recipeId) {
+          expect(entry.why).toBe(old.why);
+        } else {
+          expect(entry.why).toBe(CHANGED_WHY);
+          expect(entry.servings).toBe(old?.servings);
+        }
+      }
+      // The database agrees, and the model was not called again.
+      const rows = await planRows();
+      expect(rows.map((r) => r.recipe_id).sort()).toEqual(
+        second.entries.map((e) => e.recipeId).sort(),
+      );
+      expect(rows.filter((r) => r.why === CHANGED_WHY)).toHaveLength(changed.length);
+      expect(model.parse.mock.calls.length).toBe(calls);
+      // The replacement is logged.
+      const logged = warn.mock.calls.map((call) => String(call[0])).join("\n");
+      expect(logged).toMatch(/replaced \d+ and removed \d+ planned dinner/);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("leaves a dinner that is already cooked alone, and removes one nothing can replace", async () => {
+    await insertHousemate({ allergies: [], dinners_per_week: 5 });
+    const model = fakeModel();
+    const runtime = runtimeWith({ anthropic: async () => model.client });
+    const first = await firstDraft(runtime);
+    const cookedDate = first.entries[0]?.date as string;
+    await t.query(
+      "update public.meal_plan_entries set status = 'cooked' where date = $1::date and household_id = $2",
+      [cookedDate, FIXTURE_HOUSEHOLD],
+    );
+    // Every allergen at once, and no other live recipe in the corpus: nothing can take a place.
+    await setPreferences(HOUSEMATE, { allergies: [...ALLERGENS], dinners_per_week: 5 });
+    const live = (
+      await t.query<{ id: string }>("select id from public.recipes where deleted_at is null")
+    ).map((row) => row.id);
+    await t.query(
+      "update public.recipes set deleted_at = now() where deleted_at is null and id <> all($1::uuid[])",
+      [first.entries.map((e) => e.recipeId)],
+    );
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const res = await post(
+        { householdId: FIXTURE_HOUSEHOLD, weekStart: WEEK, mode: "draft" },
+        "Bearer housemate",
+        runtime,
+      );
+      expect(res.status).toBe(200);
+      const rows = await planRows();
+      // The cooked dinner is history and stays; planned ones that fail are gone, not kept.
+      expect(rows.some((r) => r.date === cookedDate && r.status === "cooked")).toBe(true);
+      const planned = rows.filter((r) => r.status === "planned");
+      for (const row of planned) {
+        const labels = corpus.byId.get(row.recipe_id)?.labels.contains ?? [];
+        expect(labels.filter((label) => (ALLERGENS as readonly string[]).includes(label))).toEqual(
+          [],
+        );
+      }
+      expect(planned.length).toBeLessThan(4);
+      expect(planned.some((r) => r.why === CHANGED_WHY)).toBe(false);
+      expect(warn.mock.calls.map((call) => String(call[0])).join("\n")).toMatch(
+        /replaced 0 and removed [1-9]/,
+      );
+    } finally {
+      warn.mockRestore();
+      await t.query("update public.recipes set deleted_at = null where id = any($1::uuid[])", [
+        live,
+      ]);
+    }
+  });
+
+  it("changes nothing when the plan still passes", async () => {
+    const model = fakeModel();
+    const runtime = runtimeWith({ anthropic: async () => model.client });
+    const first = await firstDraft(runtime);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const second = SuggestPlanResponse.parse(
+        await (
+          await post(
+            { householdId: FIXTURE_HOUSEHOLD, weekStart: WEEK, mode: "draft" },
+            "Bearer fixture",
+            runtime,
+          )
+        ).json(),
+      );
+      expect(second.entries).toEqual(first.entries);
+      expect(warn.mock.calls.map((call) => String(call[0])).join("\n")).not.toMatch(/replaced/);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+});
+
 describe("logging (criterion 9)", () => {
   it("writes suggest.compose rows with model, tokens, and cost", async () => {
     const model = fakeModel();
@@ -588,11 +793,16 @@ describe("embeddings", () => {
     expect(first.ok).toBe(true);
     expect(first.embedded).toBeGreaterThan(0);
     expect(first.embedded + first.remaining).toBeGreaterThan(0);
+    // The household's own recipes and the starter catalog are filled; the count adds up.
     const row = await t.query<{ n: number }>(
-      "select count(*)::int as n from public.recipes where household_id = $1 and embedding is not null",
+      "select count(*)::int as n from public.recipes where (household_id = $1 or visibility = 'catalog') and embedding is not null",
       [FIXTURE_HOUSEHOLD],
     );
     expect(row[0]?.n).toBe(first.embedded);
+    const catalog = await t.query<{ n: number }>(
+      "select count(*)::int as n from public.recipes where visibility = 'catalog' and embedding is not null",
+    );
+    expect(catalog[0]?.n).toBeGreaterThan(0);
     // Other households' recipes are never touched.
     const other = await t.query<{ n: number }>(
       "select count(*)::int as n from public.recipes where household_id = $1 and embedding is not null",

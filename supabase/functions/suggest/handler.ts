@@ -29,6 +29,7 @@ import {
 import {
   type Candidate,
   fetchCandidates,
+  findFailingRecipes,
   MAX_CANDIDATES,
   pickCalibration,
   type SqlRunner,
@@ -47,7 +48,7 @@ import {
 } from "./compose.ts";
 import { buildFilterSpec, FilterError, filterInputFromPreferences } from "./filters.ts";
 import { buildTasteEmbedding, type EmbedFn, embedMissingRecipes } from "./profile-embedding.ts";
-import { type MemberProfile, SqlSuggestStore } from "./store.ts";
+import { type ExistingPlan, type MemberProfile, SqlSuggestStore } from "./store.ts";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -92,6 +93,10 @@ function startOfUtcDay(now: Date): string {
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
   ).toISOString();
 }
+
+/** The reason shown on a dinner that replaced one the household's allergies or diets ruled out. */
+export const CHANGED_WHY =
+  "Changed because the earlier pick no longer fits your household's allergies or diets.";
 
 /** People to cook for: the saved headcount, else adults plus kids, else two. */
 export function defaultServings(member: MemberProfile): number {
@@ -213,11 +218,12 @@ async function runSuggest(
   if (!me || me.preferences.allergies === undefined) return fail("allergies_not_set", 200);
   const others = members.filter((member) => member.userId !== userId);
 
+  const filterInput = filterInputFromPreferences(
+    me.preferences,
+    others.map((member) => member.preferences),
+  );
   const spec = buildFilterSpec({
-    ...filterInputFromPreferences(
-      me.preferences,
-      others.map((member) => member.preferences),
-    ),
+    ...filterInput,
     // A swap for a breakfast or lunch slot may return a recipe tagged breakfast or lunch.
     dinnerOnly: request.mode === "swap" ? request.slot === "dinner" : true,
   });
@@ -287,13 +293,70 @@ async function runSuggest(
   const existing = await store.getPlan(householdId, weekStart);
   const dinnersThisWeek = (existing?.entries ?? []).filter((e) => e.slot === "dinner");
 
-  if (request.mode === "draft" && dinnersThisWeek.length > 0 && existing) {
+  // A draft for a week that already has dinners returns them. A plan can be older than the
+  // household's allergies: a member may have added one since. So the dinners still planned are
+  // checked against the household's allergies and diets first, and any that fail are replaced
+  // from the ranked list (no model call) or, with nothing to replace them, removed.
+  const existingPlanResponse = async (plan: ExistingPlan): Promise<Response> => {
+    const planned = plan.entries.filter((e) => e.slot === "dinner" && e.status === "planned");
+    // Tastes (never-foods, minutes, dinner tags) belong to whoever asks, so they are not applied
+    // to a plan someone else may have built or edited by hand. Safety applies to everyone.
+    const safety = buildFilterSpec({
+      ...filterInput,
+      dislikes: [],
+      weeknightMinutes: null,
+      dinnerOnly: false,
+    });
+    const failing = await findFailingRecipes(runtime.sql, {
+      householdId,
+      spec: safety,
+      recipeIds: planned.map((e) => e.recipeId),
+    });
+    const bad = planned.filter((e) => failing.has(e.recipeId));
+    let current = plan;
+    if (bad.length > 0) {
+      const { candidates } = await fetchCandidates(runtime.sql, {
+        householdId,
+        spec,
+        tasteEmbedding: me.tasteEmbedding,
+        cuisines,
+        excludeIds: plan.entries.map((e) => e.recipeId),
+        now,
+        limit: MAX_CANDIDATES,
+        warn,
+      });
+      const picks = fallbackWeek(
+        candidates,
+        bad.slice(0, candidates.length).map((e) => e.date),
+        { servings: defaultServings(me), cuisines },
+      );
+      const changes = picks.map((pick, i) => ({
+        entryId: (bad[i] as { id: string }).id,
+        recipeId: pick.recipeId,
+        servings: bad[i]?.servings ?? defaultServings(me),
+        why: CHANGED_WHY,
+      }));
+      const remove = bad.slice(picks.length).map((e) => e.id);
+      await store.changeEntries({ householdId, changes, remove });
+      warn(
+        `suggest: household ${householdId} week ${weekStart}: replaced ${changes.length} and removed ${remove.length} planned dinner(s) that no longer pass the allergy and diet filters: ${bad
+          .map((e) => `${e.recipeId} (${failing.get(e.recipeId)?.[0] ?? "filtered"})`)
+          .join("; ")}`,
+      );
+      current = (await store.getPlan(householdId, weekStart)) ?? { id: plan.id, entries: [] };
+    }
     return json({
       ok: true,
-      planId: existing.id,
-      entries: dinnersThisWeek.map((e) => entryFrom(e, defaultServings(me))),
+      planId: current.id,
+      entries: current.entries
+        .filter((e) => e.slot === "dinner")
+        .map((e) => entryFrom(e, defaultServings(me))),
       composedBy: "existing",
     });
+  };
+
+  if (request.mode === "draft" && dinnersThisWeek.length > 0 && existing) {
+    return existingPlanResponse(existing);
   }
 
   const locked = dinnersThisWeek.filter((e) => e.status !== "planned");
@@ -435,16 +498,9 @@ async function runSuggest(
   });
 
   if (!wrote) {
-    // Another draft for the same week finished first. Return what it wrote.
+    // Another draft for the same week finished first. Return what it wrote, checked the same way.
     const plan = await store.getPlan(householdId, weekStart);
-    return json({
-      ok: true,
-      planId,
-      entries: (plan?.entries ?? [])
-        .filter((e) => e.slot === "dinner")
-        .map((e) => entryFrom(e, defaultServings(me))),
-      composedBy: "existing",
-    });
+    return existingPlanResponse(plan ?? { id: planId, entries: [] });
   }
 
   const response: Record<string, unknown> = {

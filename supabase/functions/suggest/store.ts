@@ -11,6 +11,7 @@
 import { ProfilePreferences } from "../../../packages/core/src/index.ts";
 import type { AiRunRecord } from "../../../packages/llm/src/index.ts";
 import type { SqlRunner } from "./candidates.ts";
+import { FilterError, type FilterErrorCode } from "./filters.ts";
 import { parseVector } from "./profile-embedding.ts";
 
 export interface MemberProfile {
@@ -62,6 +63,43 @@ export interface WritePlanInput {
   replaceDates?: readonly string[] | null;
 }
 
+function listOf(value: unknown, code: FilterErrorCode, name: string): string[] | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
+    throw new FilterError(code, `${name} is not a list of strings`);
+  }
+  return value as string[];
+}
+
+/**
+ * Reads one person's stored preferences for planning, without letting one bad field hide another.
+ *
+ * Every field is checked on its own and a field that fails is left out (`weeknight_minutes: 0`
+ * loses the time limit, nothing else). Allergies and diets are read straight from the stored JSON
+ * and never dropped: an entry outside the vocabulary stays in the list so `buildFilterSpec`
+ * refuses the whole request (fail closed), and a value that is not a list throws. The database
+ * CHECK on `profiles.preferences` already keeps both lists to the closed vocabulary, so this is
+ * the second line of defense against a row that got past it. A housemate's allergy must never
+ * fall out of the household's union because some other field of theirs is invalid.
+ */
+export function readStoredPreferences(raw: unknown): ProfilePreferences {
+  const source =
+    raw !== null && typeof raw === "object" && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
+  const result: Record<string, unknown> = {};
+  for (const [key, schema] of Object.entries(ProfilePreferences.shape)) {
+    if (key === "allergies" || key === "diets" || !(key in source)) continue;
+    const field = schema.safeParse(source[key]);
+    if (field.success && field.data !== undefined) result[key] = field.data;
+  }
+  const allergies = listOf(source.allergies, "unknown_allergen", "allergies");
+  if (allergies) result.allergies = allergies;
+  const diets = listOf(source.diets, "unknown_diet", "diets");
+  if (diets) result.diets = diets;
+  return result as ProfilePreferences;
+}
+
 interface MemberRow {
   user_id: string;
   preferences: unknown;
@@ -103,17 +141,12 @@ export class SqlSuggestStore {
         order by hm.created_at, hm.user_id`,
       [householdId],
     );
-    return rows.map((row) => {
-      // A row that no longer parses (a hand edit) counts as having no preferences. The caller
-      // then refuses to plan for someone whose allergies are unknown.
-      const parsed = ProfilePreferences.safeParse(row.preferences ?? {});
-      return {
-        userId: row.user_id,
-        preferences: parsed.success ? parsed.data : {},
-        onboardingStep: Number(row.onboarding_step ?? 0),
-        tasteEmbedding: row.taste_embedding,
-      };
-    });
+    return rows.map((row) => ({
+      userId: row.user_id,
+      preferences: readStoredPreferences(row.preferences),
+      onboardingStep: Number(row.onboarding_step ?? 0),
+      tasteEmbedding: row.taste_embedding,
+    }));
   }
 
   async getPlan(householdId: string, weekStart: string): Promise<ExistingPlan | null> {
@@ -276,6 +309,44 @@ export class SqlSuggestStore {
         );
       }
       return { planId, wrote: true };
+    });
+  }
+
+  /**
+   * Changes planned dinners that no longer fit the household, in one transaction: each `change`
+   * puts a new recipe, servings, and reason on an existing entry (its date, position, and notes
+   * stay), and each id in `remove` is deleted because nothing could take its place. Only entries
+   * of this household that are still `planned` are touched; cooked and skipped dinners are history.
+   */
+  async changeEntries(input: {
+    householdId: string;
+    changes: readonly { entryId: string; recipeId: string; servings: number; why: string }[];
+    remove: readonly string[];
+  }): Promise<void> {
+    if (input.changes.length === 0 && input.remove.length === 0) return;
+    await this.sql.transaction(async (tx) => {
+      if (input.changes.length > 0) {
+        await tx.query(
+          `update public.meal_plan_entries e
+              set recipe_id = t.r, servings = t.s, why = t.w
+             from unnest($2::uuid[], $3::uuid[], $4::int[], $5::text[]) as t(id, r, s, w)
+            where e.id = t.id and e.household_id = $1::uuid and e.status = 'planned'`,
+          [
+            input.householdId,
+            input.changes.map((c) => c.entryId),
+            input.changes.map((c) => c.recipeId),
+            input.changes.map((c) => Math.max(1, Math.round(c.servings))),
+            input.changes.map((c) => c.why),
+          ],
+        );
+      }
+      if (input.remove.length > 0) {
+        await tx.query(
+          `delete from public.meal_plan_entries
+            where id = any($2::uuid[]) and household_id = $1::uuid and status = 'planned'`,
+          [input.householdId, [...input.remove]],
+        );
+      }
     });
   }
 

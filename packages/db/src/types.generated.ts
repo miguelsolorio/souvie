@@ -426,6 +426,110 @@ export type Database = {
         };
         Relationships: [];
       };
+      meal_plan_entries: {
+        Row: {
+          created_at: string;
+          date: string;
+          household_id: string;
+          id: string;
+          notes: string | null;
+          plan_id: string;
+          position: number;
+          recipe_id: string;
+          servings: number;
+          slot: Database["public"]["Enums"]["meal_plan_entries_slot"];
+          status: Database["public"]["Enums"]["meal_plan_entries_status"];
+          updated_at: string;
+          why: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          date: string;
+          household_id: string;
+          id?: string;
+          notes?: string | null;
+          plan_id: string;
+          position?: number;
+          recipe_id: string;
+          servings: number;
+          slot: Database["public"]["Enums"]["meal_plan_entries_slot"];
+          status?: Database["public"]["Enums"]["meal_plan_entries_status"];
+          updated_at?: string;
+          why?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          date?: string;
+          household_id?: string;
+          id?: string;
+          notes?: string | null;
+          plan_id?: string;
+          position?: number;
+          recipe_id?: string;
+          servings?: number;
+          slot?: Database["public"]["Enums"]["meal_plan_entries_slot"];
+          status?: Database["public"]["Enums"]["meal_plan_entries_status"];
+          updated_at?: string;
+          why?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "meal_plan_entries_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "meal_plan_entries_plan_id_fkey";
+            columns: ["plan_id"];
+            isOneToOne: false;
+            referencedRelation: "meal_plans";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "meal_plan_entries_recipe_id_fkey";
+            columns: ["recipe_id"];
+            isOneToOne: false;
+            referencedRelation: "recipes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      meal_plans: {
+        Row: {
+          created_at: string;
+          household_id: string;
+          id: string;
+          updated_at: string;
+          week_start: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          household_id: string;
+          id?: string;
+          updated_at?: string;
+          week_start: string;
+        };
+        Update: {
+          created_at?: string;
+          household_id?: string;
+          id?: string;
+          updated_at?: string;
+          week_start?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "meal_plans_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       product_matches: {
         Row: {
           chosen_by: Database["public"]["Enums"]["product_matches_chosen_by"];
@@ -532,6 +636,52 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [];
+      };
+      recipe_feedback: {
+        Row: {
+          created_at: string;
+          household_id: string;
+          id: string;
+          rating: number | null;
+          recipe_id: string;
+          signal: Database["public"]["Enums"]["recipe_feedback_signal"];
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          household_id: string;
+          id?: string;
+          rating?: number | null;
+          recipe_id: string;
+          signal: Database["public"]["Enums"]["recipe_feedback_signal"];
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          household_id?: string;
+          id?: string;
+          rating?: number | null;
+          recipe_id?: string;
+          signal?: Database["public"]["Enums"]["recipe_feedback_signal"];
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "recipe_feedback_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recipe_feedback_recipe_id_fkey";
+            columns: ["recipe_id"];
+            isOneToOne: false;
+            referencedRelation: "recipes";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       recipe_ingredients: {
         Row: {
@@ -900,7 +1050,10 @@ export type Database = {
       ingredient_alias_proposals_status: "pending" | "accepted" | "rejected";
       ingredient_aliases_source: "seed" | "llm" | "user";
       ingredient_parse_cache_source: "grammar" | "llm";
+      meal_plan_entries_slot: "breakfast" | "lunch" | "dinner" | "snack";
+      meal_plan_entries_status: "planned" | "cooked" | "skipped";
       product_matches_chosen_by: "agent" | "user";
+      recipe_feedback_signal: "like" | "dislike" | "cooked" | "skipped" | "saved";
       recipes_source_type: "url" | "text" | "photo" | "video" | "manual" | "ai";
       recipes_visibility: "household" | "catalog";
       retailer: "kroger" | "instacart" | "safeway" | "costco";
@@ -1028,7 +1181,10 @@ export const Constants = {
       ingredient_alias_proposals_status: ["pending", "accepted", "rejected"],
       ingredient_aliases_source: ["seed", "llm", "user"],
       ingredient_parse_cache_source: ["grammar", "llm"],
+      meal_plan_entries_slot: ["breakfast", "lunch", "dinner", "snack"],
+      meal_plan_entries_status: ["planned", "cooked", "skipped"],
       product_matches_chosen_by: ["agent", "user"],
+      recipe_feedback_signal: ["like", "dislike", "cooked", "skipped", "saved"],
       recipes_source_type: ["url", "text", "photo", "video", "manual", "ai"],
       recipes_visibility: ["household", "catalog"],
       retailer: ["kroger", "instacart", "safeway", "costco"],

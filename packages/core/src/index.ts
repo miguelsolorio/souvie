@@ -9,6 +9,7 @@
 // barrel through an import map.
 export * from "./identity.ts";
 export * from "./ingredient.ts";
+export * from "./planning.ts";
 export * from "./preferences.ts";
 export * from "./recipe.ts";
 export * from "./retail.ts";

@@ -22,6 +22,7 @@ Each `WSxx-*.md` file is a self-contained hand-off for one **builder agent**. A 
 | 13 | `WS13-web-desktop.md` | 6 | Sonnet |
 | 14 | `WS14-brand-marketing-site.md` | 1 | Sonnet |
 | 15 | `WS15-observability-evals.md` | 6 | Sonnet |
+| 16 | `WS16-starter-catalog.md` | 3 | Sonnet |
 
 ## Template
 

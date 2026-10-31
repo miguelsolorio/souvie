@@ -13,6 +13,14 @@ export default function AppLayout() {
         <ShareIntentReceiver />
         <Stack screenOptions={{ headerTitleAlign: "center", headerShadowVisible: false }}>
           <Stack.Screen name="index" options={{ headerShown: false }} />
+          {/* WS04: the planner is the home screen. */}
+          <Stack.Screen name="plan/index" options={{ title: "Plan" }} />
+          <Stack.Screen name="plan/[date]" options={{ title: "Day" }} />
+          <Stack.Screen
+            name="plan/pick"
+            options={{ title: "Add a recipe", presentation: "modal" }}
+          />
+          <Stack.Screen name="menu" options={{ title: "Menu" }} />
           <Stack.Screen name="household/create" options={{ title: "Create household" }} />
           <Stack.Screen name="household/settings" options={{ title: "Household" }} />
           <Stack.Screen name="profile" options={{ title: "Profile" }} />

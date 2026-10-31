@@ -53,6 +53,7 @@ Facts the research could not confirm as of 2026-10-29, who can resolve each, and
 |---|---|---|---|
 | Name | Branding, domains, store listing | Human picks after checks (checkpoint 6) | WS14 |
 | Tier 3 deployment: Mode A only, or also Mode B on a home server | Unattended scheduled checkout | Human decides during WS10 | WS10 |
+- **Recipe catalog cold start.** Resolved 2026-10-30 by Miguel: a starter catalog. WS16 drafts at least 60 original dinner recipes with Sonnet from a coverage spec, parses them against the ontology, and seeds them as `visibility = catalog`. Miguel reviews the content before it loads into the hosted project. Import-first onboarding stays a fallback idea if the catalog proves thin.
 
 ## Recipe import
 

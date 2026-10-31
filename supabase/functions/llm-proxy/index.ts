@@ -1,6 +1,6 @@
 // llm-proxy (WS08): the model endpoint for the on-device Tier 3 shopping agent.
 //
-//   POST { householdId, runId?, kind: "agent_plan" | "agent_step", model, system, messages,
+//   POST { householdId, runId, kind: "agent_plan" | "agent_step", model, system, messages,
 //          tools?, maxTokens, runCapUsd?, effort?, promptVersion? }
 //     -> 200 text/event-stream: the Messages API stream, passed through unchanged
 //     or { ok: false, error, message }: 400 invalid_request, 401 unauthorized, 402 cost_cap

@@ -1,5 +1,8 @@
 // WS08 criterion 9: llm-proxy's membership check, cost caps, forwarding with the server key,
 // ai_runs logging, and that the key never leaves the function.
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import type { AiRunRecord } from "../../../packages/llm/src/log.ts";
 import {
@@ -101,6 +104,7 @@ function harness(
 function body(overrides: Record<string, unknown> = {}) {
   return {
     householdId: HOUSEHOLD,
+    runId: RUN,
     kind: "agent_step",
     model: "claude-haiku-5-5",
     system: "ping",
@@ -353,6 +357,29 @@ describe("llm-proxy cost caps", () => {
     await res2.text();
   });
 
+  it("fix round item 6: a request without runId is refused for every agent kind", async () => {
+    const h = harness();
+    for (const kind of ["agent_plan", "agent_step"]) {
+      const res = await handleLlmProxy(post(body({ kind, runId: undefined })), h.runtime);
+      expect(res.status, kind).toBe(400);
+      expect(await res.json()).toMatchObject({ ok: false, error: "invalid_request" });
+    }
+    expect(h.fetch).not.toHaveBeenCalled();
+    expect(h.rows).toHaveLength(0);
+  });
+
+  it("fix round item 6: until ai_runs.run_id exists the run cap applies to each call on its own", async () => {
+    // runSpentUsd is null while the column is missing; the daily cap has plenty of room.
+    const h = harness({ runSpent: null, spent: 0, dailyCapUsd: 2, runCapUsd: 0.0005 });
+    const res = await handleLlmProxy(post(body({ maxTokens: 2000 })), h.runtime);
+    expect(res.status).toBe(402);
+    expect(await res.json()).toMatchObject({ error: "cost_cap", scope: "run" });
+    expect(h.fetch).not.toHaveBeenCalled();
+    const small = await handleLlmProxy(post(body({ maxTokens: 16 })), h.runtime);
+    expect(small.status).toBe(200);
+    await small.text();
+  });
+
   it("counts the call at its worst case", () => {
     const request = parseProxyRequest(body({ maxTokens: 1000 }), 4096);
     if ("status" in request) throw new Error("invalid");
@@ -529,5 +556,17 @@ describe("runtimeFromEnv", () => {
     expect(defaults.anthropicKey).toBeUndefined();
     expect(defaults.maxTokensPerCall).toBe(DEFAULT_MAX_TOKENS_PER_CALL);
     expect(() => runtimeFromEnv(() => undefined)).toThrow("SUPABASE_URL");
+  });
+});
+
+describe("fix round item 7: supabase/config.toml", () => {
+  it("declares llm-proxy with verify_jwt = true", () => {
+    const toml = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "..", "..", "config.toml"),
+      "utf8",
+    );
+    const section = /\[functions\.llm-proxy\]([\s\S]*?)(?=\n\[|$)/.exec(toml)?.[1] ?? "";
+    expect(section).toMatch(/^verify_jwt = true$/m);
+    expect(section).toMatch(/^entrypoint = "\.\/functions\/llm-proxy\/index\.ts"$/m);
   });
 });

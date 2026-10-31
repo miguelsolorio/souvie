@@ -8,6 +8,9 @@
 //      @mp/llm, AI_DAILY_CAP_USD, as suggest does) and the run's cap (the request's runCapUsd,
 //      never above LLM_PROXY_RUN_CAP_USD). Both count this call at its worst case: its input
 //      estimated from the request size and all of maxTokens as output. 402 { error: "cost_cap" }.
+//      runId is required, so the run cap always applies. Until ai_runs has a run_id column (an
+//      orchestrator migration after WS09) the run's spend so far is unknown and the cap applies to
+//      each call on its own; store.ts picks the column up when it exists.
 //   3. Forward to the Messages API with the server key, streaming, and pass the stream through.
 //   4. Read usage from the stream as it passes and write one ai_runs row when it ends.
 //
@@ -39,7 +42,7 @@ const PROMPT_VERSION = /^[a-z0-9-]{1,60}\.v\d{1,4}$/;
 
 export interface ProxyRequest {
   householdId: string;
-  runId: string | null;
+  runId: string;
   kind: ProxyKind;
   model: string;
   system: string | Record<string, unknown>[];
@@ -100,8 +103,9 @@ export function parseProxyRequest(raw: unknown, maxTokensPerCall: number): Proxy
   if (typeof householdId !== "string" || !UUID.test(householdId)) {
     return invalid("householdId: must be a uuid");
   }
-  if (runId !== undefined && runId !== null && (typeof runId !== "string" || !UUID.test(runId))) {
-    return invalid("runId: must be a uuid");
+  // Every agent call belongs to a run, so the run cap always applies (decided 2026-10-31).
+  if (typeof runId !== "string" || !UUID.test(runId)) {
+    return invalid("runId: required, a uuid");
   }
   if (typeof kind !== "string" || !(KINDS as readonly string[]).includes(kind)) {
     return invalid(`kind: must be one of ${KINDS.join(", ")}`);
@@ -165,7 +169,7 @@ export function parseProxyRequest(raw: unknown, maxTokensPerCall: number): Proxy
   }
   return {
     householdId: householdId.toLowerCase(),
-    runId: typeof runId === "string" ? runId.toLowerCase() : null,
+    runId: runId.toLowerCase(),
     kind: kind as ProxyKind,
     model,
     system: system as ProxyRequest["system"],
@@ -379,22 +383,22 @@ export async function handleLlmProxy(req: Request, runtime: Runtime): Promise<Re
     }
     throw err;
   }
-  if (request.runId) {
-    const runCap = Math.min(request.runCapUsd ?? runtime.runCapUsd, runtime.runCapUsd);
-    let spent: number | null = null;
-    try {
-      spent = await runtime.store.runSpentUsd(request.householdId, request.runId);
-    } catch {
-      console.warn("llm-proxy: run spend lookup failed; only this call counts toward the run cap");
-    }
-    if ((spent ?? 0) + projected >= runCap) {
-      return fail({
-        status: 402,
-        error: "cost_cap",
-        message: "This run reached its model budget.",
-        extra: { scope: "run" },
-      });
-    }
+  // The run cap. With no run spend known (no ai_runs.run_id yet, or a failed lookup) this call
+  // alone must fit under it.
+  const runCap = Math.min(request.runCapUsd ?? runtime.runCapUsd, runtime.runCapUsd);
+  let spent: number | null = null;
+  try {
+    spent = await runtime.store.runSpentUsd(request.householdId, request.runId);
+  } catch {
+    console.warn("llm-proxy: run spend lookup failed; only this call counts toward the run cap");
+  }
+  if ((spent ?? 0) + projected >= runCap) {
+    return fail({
+      status: 402,
+      error: "cost_cap",
+      message: "This run reached its model budget.",
+      extra: { scope: "run" },
+    });
   }
 
   // Forward.

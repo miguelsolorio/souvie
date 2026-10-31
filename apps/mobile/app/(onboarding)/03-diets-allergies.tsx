@@ -22,9 +22,9 @@ import {
   DIET_NOTE,
 } from "../../src/features/onboarding/labels";
 import { hasAnsweredAllergies, toggleItem } from "../../src/features/onboarding/onboardingState";
+import { useFinishStep } from "../../src/features/onboarding/useFinishStep";
 import { useOnboarding } from "../../src/features/onboarding/useOnboarding";
 import { usePreferencesDraft } from "../../src/features/onboarding/usePreferencesDraft";
-import { useStepNav } from "../../src/features/onboarding/useStepNav";
 
 /**
  * Screen 3: diets and allergies. The allergy question cannot be skipped: Continue stays off until
@@ -33,7 +33,7 @@ import { useStepNav } from "../../src/features/onboarding/useStepNav";
 export default function DietsAllergiesStep() {
   const { saved, saveStep, saving } = useOnboarding();
   const { draft, set, update } = usePreferencesDraft(saved);
-  const { goNext, goBack } = useStepNav(3);
+  const { goBack, finish, checking } = useFinishStep(3);
   const [error, setError] = useState<string | null>(null);
   // Undefined until the person touches the chip; then it is their answer. Before that, the saved answer.
   const [noAllergiesEdit, setNoAllergiesEdit] = useState<boolean | undefined>(undefined);
@@ -67,10 +67,13 @@ export default function DietsAllergiesStep() {
     }
     try {
       await saveStep({ step: 3, patch: dietsAllergiesToPreferences(parsed.data) });
-      goNext();
     } catch {
       setError("We could not save that. Try again.");
+      return;
     }
+    // In edit mode this also re-checks the planned weeks against the new answers.
+    const problem = await finish();
+    if (problem) setError(problem);
   }
 
   const noteDiets = DIETS.filter((d) => diets.includes(d) && DIET_NOTE[d]);
@@ -83,7 +86,7 @@ export default function DietsAllergiesStep() {
       onBack={goBack}
       onContinue={() => void submit()}
       canContinue={canContinue}
-      busy={saving}
+      busy={saving || checking}
       error={error}
     >
       <View className="gap-3">

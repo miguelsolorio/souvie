@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "../../components/Button";
 import { ErrorText } from "../../components/Screen";
 import { isEditParam } from "./onboardingState";
+import { noticeFromParam, noticeText } from "./planRecheck";
 
 /**
  * The frame every onboarding screen sits in: a progress line, a back button, a title, the form,
@@ -39,7 +40,7 @@ export function OnboardingFrame({
 }) {
   const percent = Math.round((step / ONBOARDING_STEP_COUNT) * 100);
   // Opened from household settings by someone who already finished: no "step n of 8" to count.
-  const { edit } = useLocalSearchParams<{ edit?: string }>();
+  const { edit, notice } = useLocalSearchParams<{ edit?: string; notice?: string }>();
   const editing = isEditParam(edit);
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -84,6 +85,8 @@ export function OnboardingFrame({
             </Text>
             {subtitle ? <Text className="text-base text-neutral-600">{subtitle}</Text> : null}
           </View>
+
+          {editing ? <RecheckNoticeLine value={notice} /> : null}
 
           {children}
 
@@ -255,4 +258,22 @@ export function SectionLabel({ children }: { children: string }) {
 /** Small print under a control. */
 export function Note({ children }: { children: ReactNode }) {
   return <Text className="text-sm text-neutral-500">{children}</Text>;
+}
+
+/**
+ * One line telling the person what re-checking their planned weeks did ("Your week was updated."
+ * or "Your plan already fits."). `value` is the `notice` query parameter; with none, nothing shows.
+ */
+export function RecheckNoticeLine({ value }: { value: string | string[] | undefined }) {
+  const notice = noticeFromParam(value);
+  if (!notice) return null;
+  return (
+    <Text
+      testID="plan-recheck-notice"
+      accessibilityLiveRegion="polite"
+      className="rounded-xl bg-neutral-100 px-4 py-3 text-sm text-neutral-800"
+    >
+      {noticeText(notice)}
+    </Text>
+  );
 }

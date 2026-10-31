@@ -1,6 +1,8 @@
 import { comingWeekStart, type SuggestPlanResponse } from "@mp/core";
-import { useHousehold, useSupabase } from "@mp/db";
+import { fetchMealPlan, fetchMealPlanEntries, useHousehold, useSupabase } from "@mp/db";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+import { type RecheckResult, recheckPlans } from "./planRecheck";
 import { SuggestError, suggestCalibration, suggestPlan } from "./suggestApi";
 
 export interface SuggestWeekInput {
@@ -41,6 +43,35 @@ export function useSuggestWeek() {
       void queryClient.invalidateQueries({ queryKey: ["meal-plan", householdId] });
     },
   });
+}
+
+/**
+ * Re-checks the planned weeks (this one and the coming one) against the household's allergies and
+ * diets, through `useSuggestWeek`'s `draft`. A week that already has dinners comes back with any
+ * dinner that no longer fits replaced or removed; a week with none is skipped. Returns a function
+ * that resolves with what changed and throws when a call fails.
+ */
+export function usePlanRecheck() {
+  const client = useSupabase();
+  const household = useHousehold();
+  const { mutateAsync } = useSuggestWeek();
+  const householdId = household.data?.id;
+
+  return useCallback(async (): Promise<RecheckResult> => {
+    if (!householdId) throw new SuggestError("no_household");
+    return recheckPlans(
+      {
+        hasDinners: async (weekStart) => {
+          const plan = await fetchMealPlan(client, householdId, weekStart);
+          if (!plan) return false;
+          const entries = await fetchMealPlanEntries(client, plan.id);
+          return entries.some((entry) => entry.slot === "dinner");
+        },
+        draft: (weekStart) => mutateAsync({ mode: "draft", weekStart }),
+      },
+      new Date(),
+    );
+  }, [client, householdId, mutateAsync]);
 }
 
 export const calibrationQueryKey = (householdId: string | undefined, weekStart: string) =>

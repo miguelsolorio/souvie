@@ -9,6 +9,7 @@ import {
   ONBOARDING_STEPS,
   ProfilePreferences,
 } from "@mp/core";
+import { type RecheckNotice, withNotice } from "./planRecheck";
 
 export class OnboardingError extends Error {
   readonly code: "invalid_preferences" | "no_profile";
@@ -98,22 +99,37 @@ export const EDIT_START_HREF = editHref(
 
 /**
  * The route before `step`, or null on the first screen. In edit mode the screens before the first
- * food preference screen are not part of the walk, so Back there returns to settings.
+ * food preference screen are not part of the walk, so Back there returns to settings. In edit mode
+ * a re-check `notice` is carried along, so the result stays in view until the walk ends.
  */
-export function previousHref(step: number, edit = false): string | null {
+export function previousHref(
+  step: number,
+  edit = false,
+  notice: RecheckNotice | null = null,
+): string | null {
   const previous = ONBOARDING_STEPS.find((s) => s.step === step - 1);
-  if (edit)
-    return previous && isEditStep(previous.step) ? editHref(previous.route) : EDIT_RETURN_ROUTE;
+  if (edit) {
+    const href =
+      previous && isEditStep(previous.step) ? editHref(previous.route) : EDIT_RETURN_ROUTE;
+    return withNotice(href, notice);
+  }
   return previous ? onboardingHref(previous.route) : null;
 }
 
 /**
  * The route after `step`, or null after the last screen. In edit mode Continue on the last food
- * preference screen returns to settings.
+ * preference screen returns to settings, with the re-check `notice` if there is one.
  */
-export function nextHref(step: number, edit = false): string | null {
+export function nextHref(
+  step: number,
+  edit = false,
+  notice: RecheckNotice | null = null,
+): string | null {
   const next = ONBOARDING_STEPS.find((s) => s.step === step + 1);
-  if (edit) return next && isEditStep(next.step) ? editHref(next.route) : EDIT_RETURN_ROUTE;
+  if (edit) {
+    const href = next && isEditStep(next.step) ? editHref(next.route) : EDIT_RETURN_ROUTE;
+    return withNotice(href, notice);
+  }
   return next ? onboardingHref(next.route) : null;
 }
 

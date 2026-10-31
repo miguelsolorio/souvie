@@ -9,7 +9,7 @@ import {
   useSupabase,
 } from "@mp/db";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Redirect, useRouter } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { Button } from "../../../src/components/Button";
@@ -18,6 +18,7 @@ import { TextField } from "../../../src/components/TextField";
 import { CREATE_HOUSEHOLD_ROUTE, HOME_ROUTE } from "../../../src/features/auth/routes";
 import { InviteSection } from "../../../src/features/household/InviteSection";
 import { MemberRow } from "../../../src/features/household/MemberRow";
+import { RecheckNoticeLine } from "../../../src/features/onboarding/components";
 import { KrogerSettingsSection } from "../../../src/features/onboarding/KrogerSettingsSection";
 import { EDIT_START_HREF } from "../../../src/features/onboarding/onboardingState";
 import { confirmAction } from "../../../src/lib/confirm";
@@ -26,6 +27,8 @@ export default function HouseholdSettingsScreen() {
   const client = useSupabase();
   const queryClient = useQueryClient();
   const router = useRouter();
+  // The result of re-checking the planned weeks, when the person just edited food preferences.
+  const { notice } = useLocalSearchParams<{ notice?: string }>();
   const { user } = useSession();
   const household = useHousehold();
   const members = useHouseholdMembers(household.data?.id);
@@ -137,6 +140,7 @@ export default function HouseholdSettingsScreen() {
           Who you cook for, diets and allergies, dislikes, time, and budget. Your allergies and
           diets are applied to the whole household's plan.
         </Text>
+        <RecheckNoticeLine value={notice} />
         <Button
           testID="edit-food-preferences"
           label="Edit food preferences"

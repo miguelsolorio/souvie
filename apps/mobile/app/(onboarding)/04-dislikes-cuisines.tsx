@@ -17,10 +17,10 @@ import {
 } from "../../src/features/onboarding/components";
 import { titleCase } from "../../src/features/onboarding/labels";
 import { toggleItem } from "../../src/features/onboarding/onboardingState";
+import { useFinishStep } from "../../src/features/onboarding/useFinishStep";
 import { useIngredientSuggestions } from "../../src/features/onboarding/useIngredientSuggestions";
 import { useOnboarding } from "../../src/features/onboarding/useOnboarding";
 import { usePreferencesDraft } from "../../src/features/onboarding/usePreferencesDraft";
-import { useStepNav } from "../../src/features/onboarding/useStepNav";
 
 const MAX = PREFERENCE_LIMITS.dislikes.maxItems;
 
@@ -28,7 +28,7 @@ const MAX = PREFERENCE_LIMITS.dislikes.maxItems;
 export default function DislikesCuisinesStep() {
   const { saved, saveStep, saving } = useOnboarding();
   const { draft, update } = usePreferencesDraft(saved);
-  const { goNext, goBack } = useStepNav(4);
+  const { goBack, finish, checking } = useFinishStep(4);
   const [error, setError] = useState<string | null>(null);
   const [typed, setTyped] = useState("");
 
@@ -63,10 +63,13 @@ export default function DislikesCuisinesStep() {
     }
     try {
       await saveStep({ step: 4, patch: dislikesCuisinesToPreferences(parsed.data) });
-      goNext();
     } catch {
       setError("We could not save that. Try again.");
+      return;
     }
+    // In edit mode this also re-checks the planned weeks.
+    const problem = await finish();
+    if (problem) setError(problem);
   }
 
   const options = (suggestions.data ?? []).filter((name) => !dislikes.includes(name));
@@ -78,7 +81,7 @@ export default function DislikesCuisinesStep() {
       subtitle="Skip any food you will not eat, and pick the cuisines you cook most. Both are optional."
       onBack={goBack}
       onContinue={() => void submit()}
-      busy={saving}
+      busy={saving || checking}
       error={error}
     >
       <View className="gap-3">

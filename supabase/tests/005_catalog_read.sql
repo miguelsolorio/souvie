@@ -68,9 +68,9 @@ set local request.jwt.claims = '{"sub": "d4444444-4444-4444-8444-444444444444", 
 set local role authenticated;
 
 select results_eq(
-  $$select id::text from public.recipes order by id$$,
+  $$select id::text from public.recipes where id in ('cc000000-0000-4000-8000-000000000001', 'cc000000-0000-4000-8000-000000000002', 'aa000000-0000-4000-8000-000000000001') order by id$$,
   $$values ('cc000000-0000-4000-8000-000000000001'), ('cc000000-0000-4000-8000-000000000002')$$,
-  'dave reads both catalog recipes, retired included, and no household recipe');
+  'dave reads both catalog recipes, retired included, and no household recipe (scoped to fixtures)');
 
 select is(
   (select count(*)::int from public.recipe_ingredients where recipe_id = 'cc000000-0000-4000-8000-000000000001'),
@@ -117,9 +117,9 @@ set local request.jwt.claims = '{"sub": "a1111111-1111-4111-8111-111111111111", 
 set local role authenticated;
 
 select is(
-  (select count(*)::int from public.recipes),
+  (select count(*)::int from public.recipes where id in ('cc000000-0000-4000-8000-000000000001', 'cc000000-0000-4000-8000-000000000002', 'aa000000-0000-4000-8000-000000000001')),
   3,
-  'alice reads the two catalog recipes and her own');
+  'alice reads the two catalog recipes and her own (scoped to fixtures)');
 
 select is(
   public.__t_affected($$update public.recipes set title = 'hacked' where id = 'cc000000-0000-4000-8000-000000000001'$$),

@@ -279,6 +279,9 @@ importers:
       '@mp/core':
         specifier: workspace:*
         version: link:../core
+      '@mp/ingredient-parser':
+        specifier: workspace:*
+        version: link:../ingredient-parser
       '@mp/llm':
         specifier: workspace:*
         version: link:../llm

@@ -219,6 +219,11 @@ const ImportBase = {
    * person can edit and confirm before saving.
    */
   save: z.boolean().optional(),
+  /**
+   * CCR8 (2026-10-31): true saves a second copy when only the title matched an existing recipe.
+   * A link can be saved once per household, so this never bypasses a url match.
+   */
+  allowDuplicate: z.boolean().optional(),
 };
 
 export const ImportRecipeRequest = z.discriminatedUnion("kind", [
@@ -267,6 +272,7 @@ export const IMPORT_ERROR_CODES = [
   "rate_limited",
   "image_not_found",
   "save_failed",
+  "duplicate",
   "internal_error",
 ] as const;
 export const ImportErrorCode = z.enum(IMPORT_ERROR_CODES);
@@ -291,6 +297,9 @@ export const ImportRecipeFailure = z.object({
   error: ImportErrorCode,
   message: z.string().optional(),
   jobId: z.uuid().optional(),
+  /** CCR8: on `duplicate`, the recipe the person already has and what matched. */
+  recipeId: z.uuid().optional(),
+  matchedBy: z.enum(["url", "title"]).optional(),
 });
 
 export type ImportRecipeFailure = z.infer<typeof ImportRecipeFailure>;
@@ -324,5 +333,6 @@ export const IMPORT_ERROR_MESSAGES: Record<ImportErrorCode, string> = {
   rate_limited: "You are importing too fast. Wait a few minutes and try again.",
   image_not_found: "We could not find that photo. Take it again.",
   save_failed: "We read the recipe but could not save it. Try again.",
+  duplicate: "You already have this recipe.",
   internal_error: "Something went wrong. Try again.",
 };

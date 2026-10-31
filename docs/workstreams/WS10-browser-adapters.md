@@ -141,3 +141,15 @@ pnpm --filter mobile start                                    # manual: Assisted
 
 ## Completion report
 End with the report format from `docs/implementation-guide.md` §6.2 (Message templates) (Built, Files changed, Verification output, Deviations from brief, Contract change requests, Open issues, Follow-ups). Nothing else is read by the orchestrator.
+
+## Preconditions and follow-ups from the WS08 review (orchestrator, 2026-10-31)
+
+Before the first screenshot upload: the 30-day lifecycle job in WS08's migration deletes `storage.objects` rows, which does not remove the file from the Storage backend. WS10 adds the sweep (an Edge Function or the worker calling `storage.remove` for objects past 30 days, scheduled by pg_cron through pg_net or run by the worker) and proves it with a test before any upload code lands. The consent copy promises deletion.
+
+Also from that review, for WS10 to pick up:
+- Call `configureAppTier3Gate` or `installTier3Gate` before `getAdapter`; wrap each run in `useTier3Session` (restore before, save with `clear: true` after); pass site-specific `signedInCheck` and `allowedHosts`; `looksSignedIn` has no host check today.
+- `llm-proxy` requires a `runId` but does not check it against `shopping_runs`; once WS09 is merged, verify the run belongs to the caller's household so a fresh id per call cannot reset the per-run total.
+- A `CONSENT_VERSION` bump needs a migration (`tier3_consent_version()`), and Settings hides Connect once a store is connected, so no screen offers re-consent for an already-connected store; add one with the first bump.
+- `finishTier3SignIn` swallows a failed revoke after a failed seal, which can leave an active row with no blob; harmless (restore reports needs-sign-in, Disconnect works) but worth tightening.
+- The Tier 3 connect belongs in onboarding step 7 as well as household settings.
+

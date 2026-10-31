@@ -3,6 +3,7 @@ import {
   HttpUrl,
   IMPORT_ERROR_CODES,
   IMPORT_ERROR_MESSAGES,
+  ImportRecipeFailure,
   ImportRecipeRequest,
   ImportRecipeResponse,
   instructionsToJson,
@@ -239,6 +240,30 @@ describe("row schemas", () => {
     ).toBe(true);
     expect(
       RecipeIngredient.safeParse({ ...line, container_count: 0, container: "can" }).success,
+    ).toBe(false);
+  });
+});
+
+describe("CCR8 duplicate import answer", () => {
+  it("accepts allowDuplicate on a request and recipeId plus matchedBy on a failure", () => {
+    expect(
+      ImportRecipeRequest.safeParse({
+        kind: "url",
+        input: "https://example.com/soup",
+        allowDuplicate: true,
+      }).success,
+    ).toBe(true);
+    const failure = ImportRecipeFailure.safeParse({
+      ok: false,
+      error: "duplicate",
+      message: IMPORT_ERROR_MESSAGES.duplicate,
+      recipeId: "0a000000-0000-4000-8000-00000000000a",
+      matchedBy: "title",
+    });
+    expect(failure.success).toBe(true);
+    expect(IMPORT_ERROR_MESSAGES.duplicate).toBe("You already have this recipe.");
+    expect(
+      ImportRecipeFailure.safeParse({ ok: false, error: "duplicate", matchedBy: "upc" }).success,
     ).toBe(false);
   });
 });

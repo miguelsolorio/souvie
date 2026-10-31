@@ -37,7 +37,10 @@ function migrationSql(name: string): string {
   const file = readdirSync(MIGRATIONS_DIR).find((f) => new RegExp(`^\\d+_${name}\\.sql$`).test(f));
   if (!file) throw new Error(`migration ${name} not found in ${MIGRATIONS_DIR}`);
   const sql = readFileSync(join(MIGRATIONS_DIR, file), "utf8");
-  return sql.replace(/^create extension if not exists supabase_vault[^;]*;$/m, "-- (Vault stubbed)");
+  return sql.replace(
+    /^create extension if not exists supabase_vault[^;]*;$/m,
+    "-- (Vault stubbed)",
+  );
 }
 
 export interface Tier3TestDb {
@@ -45,7 +48,10 @@ export interface Tier3TestDb {
   query<T = Record<string, unknown>>(text: string, params?: readonly unknown[]): Promise<T[]>;
   exec(text: string): Promise<void>;
   /** Runs `fn` as a signed-in user (or the service role), inside a transaction rolled back after. */
-  as<T>(who: { sub: string } | "service_role", fn: (q: Tier3TestDb["query"]) => Promise<T>): Promise<T>;
+  as<T>(
+    who: { sub: string } | "service_role",
+    fn: (q: Tier3TestDb["query"]) => Promise<T>,
+  ): Promise<T>;
   close(): Promise<void>;
 }
 
@@ -78,10 +84,19 @@ export async function createTier3TestDb(options: { pgtap?: boolean } = {}): Prom
       let out: unknown;
       await db
         .transaction(async (tx) => {
-          const claims = who === "service_role" ? { role: "service_role" } : { sub: who.sub, role: "authenticated" };
-          await tx.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify(claims)]);
-          await tx.exec(`set local role ${who === "service_role" ? "service_role" : "authenticated"}`);
-          out = await fn(async (text, params = []) => (await tx.query(text, [...params])).rows as never);
+          const claims =
+            who === "service_role"
+              ? { role: "service_role" }
+              : { sub: who.sub, role: "authenticated" };
+          await tx.query("select set_config('request.jwt.claims', $1, true)", [
+            JSON.stringify(claims),
+          ]);
+          await tx.exec(
+            `set local role ${who === "service_role" ? "service_role" : "authenticated"}`,
+          );
+          out = await fn(
+            async (text, params = []) => (await tx.query(text, [...params])).rows as never,
+          );
           throw new RollbackSignal();
         })
         .catch((err: unknown) => {

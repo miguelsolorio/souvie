@@ -251,6 +251,25 @@ jobs:
           fi
           test "$(grep -c "\] idle " worker.log)" -ge 2
 
+      # WS05 follow-up (2026-10-31). list-build's store, through postgres.js, on this stack's own
+      # Postgres: the five-dinner build and a rebuild. The PGlite store tests bind JSON parameters
+      # through a model of the driver, and an earlier version of that model let a double-encoded
+      # jsonb parameter through, so "Build grocery list" failed on the hosted project. The file
+      # skips itself when LIST_BUILD_TEST_DATABASE_URL is empty, so the step also fails if nothing
+      # ran.
+      - name: list-build store on the stack's Postgres (postgres.js)
+        env:
+          LIST_BUILD_TEST_DATABASE_URL: ${{ env.DB_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$LIST_BUILD_TEST_DATABASE_URL"
+          pnpm exec vitest run --project unit --reporter=verbose \
+            supabase/functions/list-build/store.postgres.test.ts | tee store-postgres.log
+          grep -Eq "Tests +[0-9]+ passed" store-postgres.log
+          if grep -Eq "Tests .*skipped" store-postgres.log; then
+            echo "the real-Postgres tests were skipped"; exit 1
+          fi
+
       # The committed packages/db/src/types.generated.ts must match the migrated schema. A new
       # migration that changes a table or function fails here until the regenerated file (the
       # artifact below, or `pnpm --filter @mp/db gen-types` on a stack) is committed. The upload

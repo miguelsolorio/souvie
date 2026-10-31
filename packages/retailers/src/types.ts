@@ -6,6 +6,7 @@
 // load these modules by path. The retailer and modality vocabularies come from @mp/core
 // (retail.ts), so there is one source for them.
 import { AdapterModality, RetailerId as RetailerIdEnum } from "@mp/core";
+import type { RunPolicy } from "@mp/core";
 
 /** How a store does one thing: our API call, a driven browser, a hand-off to the user, or not at all. */
 export type Capability = "api" | "browser" | "handoff" | "none";
@@ -172,8 +173,8 @@ export interface RetailerAdapter {
   removeFromCart?(conn: ConnectionHandle, itemIds: string[]): Promise<void>;
   getSlots?(conn: ConnectionHandle, store: Store, modality: Modality): Promise<Slot[]>;
   selectSlot?(conn: ConnectionHandle, slot: Slot): Promise<void>;
-  /** Tier 3 only, gated by policy and approval. `policy` is WS09's RunPolicy. */
-  checkout?(conn: ConnectionHandle, policy: unknown): Promise<{ orderRef: string }>;
+  /** Tier 3 only, gated by policy and approval (orchestrator CCR6: `RunPolicy` from `@mp/core`). */
+  checkout?(conn: ConnectionHandle, policy: RunPolicy): Promise<{ orderRef: string }>;
   getOrders?(conn: ConnectionHandle): Promise<Order[]>;
   /** Where the user finishes a Tier 1 or Tier 2 order (docs/04 §Adapter contract). */
   handoffUrl?(conn: ConnectionHandle, run?: { runId: string }): Promise<string>;

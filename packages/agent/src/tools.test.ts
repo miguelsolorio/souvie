@@ -170,6 +170,43 @@ describe("Tier 3 checkout plumbing", () => {
       "finish",
     ]);
   });
+
+  it("persists checking_out before it selects a slot, so a crash there is never a cart_ready run", async () => {
+    const mock = new MockRetailer({ seed: 1 });
+    const store = await storeById(mock, MOCK_STORE_ID);
+    const connection = connectionFor(store);
+    await mock.addToCart(connection, [
+      { productId: "0099020000001", upc: "0099020000001", quantityDelta: 1 },
+    ]);
+    const browser = withCapabilities(mock, BROWSER);
+    const order: string[] = [];
+    const select = browser.selectSlot?.bind(browser);
+    if (!select) throw new Error("the mock selects slots");
+    browser.selectSlot = async (...args: Parameters<typeof select>) => {
+      order.push("select_slot");
+      return select(...args);
+    };
+    await continueCheckout(
+      {
+        runId: "r",
+        store,
+        connection,
+        allergies: [],
+        approvedSubtotalUsd: 4.29,
+        approved: true,
+        cartSubtotalUsd: 4.29,
+        policy: DEFAULT_RUN_POLICY,
+      },
+      {
+        adapter: browser,
+        transition: async (to) => {
+          order.push(to);
+        },
+        personApproved: true,
+      },
+    );
+    expect(order).toEqual(["checking_out", "select_slot"]);
+  });
 });
 
 describe("transcript", () => {

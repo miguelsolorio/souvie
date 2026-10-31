@@ -6,7 +6,7 @@
 # Dockerfile.dockerignore next to this file keeps the context to what the worker needs. No secret
 # is baked in: WORKER_DATABASE_URL, ANTHROPIC_API_KEY, KROGER_CLIENT_ID, KROGER_CLIENT_SECRET and
 # EXPO_PUSH_ACCESS_TOKEN come from the host's secret store at run time.
-FROM node:22.23.0-slim AS base
+FROM node:22.23.4-slim AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable

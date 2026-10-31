@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   failureText,
   groupBySection,
+  inCartCount,
   overBudget,
+  overlayRun,
   preview,
   progressText,
   type RunItem,
@@ -142,6 +144,40 @@ describe("rows and copy", () => {
       /new sign-in/,
     );
     expect(failureText("stalled: no heartbeat for 90 seconds")).toMatch(/stopped answering/);
+    expect(failureText("stalled: no heartbeat for 90 seconds")).not.toMatch(/store cart/);
+  });
+
+  it("warns that items may be in the cart when a failed run already added some", () => {
+    const failed = {
+      status: "failed" as const,
+      approved_at: "x",
+      progress: null,
+      error: "stalled: no heartbeat for 90 seconds",
+    };
+    expect(progressText(failed, { itemsInCart: true })).toBe(
+      "The shopper stopped answering. Try again. Some items may already be in your store cart, so check it first.",
+    );
+    expect(progressText(failed)).toBe("The shopper stopped answering. Try again.");
+    expect(inCartCount([{ cart_qty: 2 }, { cart_qty: 0 }, { cart_qty: 1 }])).toBe(2);
+  });
+
+  it("lays a Realtime change over the cached run without wiping what it leaves out", () => {
+    const held = toRun({
+      id: "r",
+      status: "running",
+      subtotal_usd: "64.30",
+      transcript: [{ ts: "t", tool: "search_products", by: "host", output_summary: "s", ok: true }],
+      cart_snapshot: { summary: "kept" },
+    });
+    const next = overlayRun(held, { id: "r", status: "cart_ready", heartbeat_at: null });
+    expect(next.status).toBe("cart_ready");
+    expect(next.transcript).toHaveLength(1);
+    expect(next.cart_snapshot).toEqual({ summary: "kept" });
+    expect(next.subtotal_usd).toBe(64.3);
+    const full = overlayRun(held, { subtotal_usd: "60.10", cart_snapshot: null, transcript: [] });
+    expect(full.subtotal_usd).toBe(60.1);
+    expect(full.cart_snapshot).toBeNull();
+    expect(full.transcript).toEqual([]);
   });
 
   it("formats the transcript", () => {

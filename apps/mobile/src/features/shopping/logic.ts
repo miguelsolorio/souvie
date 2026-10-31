@@ -109,6 +109,25 @@ export function toRun(row: Record<string, unknown>): ShoppingRun {
   };
 }
 
+/**
+ * Lays a Realtime change over the cached run. Only the keys the payload carries change: a payload
+ * that leaves out an unchanged column (Postgres can omit a large unchanged value) keeps the cached
+ * transcript and snapshot instead of wiping them.
+ */
+export function overlayRun(held: ShoppingRun, row: Record<string, unknown>): ShoppingRun {
+  const next = { ...held } as ShoppingRun & Record<string, unknown>;
+  for (const [key, value] of Object.entries(row)) next[key] = value;
+  if ("subtotal_usd" in row) next.subtotal_usd = num(row.subtotal_usd);
+  if ("transcript" in row) {
+    next.transcript = Array.isArray(row.transcript)
+      ? (row.transcript as TranscriptEntry[])
+      : held.transcript;
+  }
+  if ("cart_snapshot" in row)
+    next.cart_snapshot = (row.cart_snapshot as RunSnapshot | null) ?? null;
+  return next;
+}
+
 export function toItem(row: Record<string, unknown>): RunItem {
   return {
     ...(row as unknown as RunItem),
@@ -145,9 +164,15 @@ export const STATUS_LABEL: Readonly<Record<RunStatus, string>> = {
   cancelled: "Cancelled",
 };
 
+/** Lines the store confirmed in the cart. */
+export function inCartCount(items: readonly Pick<RunItem, "cart_qty">[]): number {
+  return items.filter((item) => item.cart_qty > 0).length;
+}
+
 /** The line under the status: what is happening now. */
 export function progressText(
   run: Pick<ShoppingRun, "status" | "progress" | "approved_at" | "error">,
+  options: { itemsInCart?: boolean } = {},
 ): string {
   const done = run.progress?.done ?? 0;
   const total = run.progress?.total ?? 0;
@@ -174,14 +199,24 @@ export function progressText(
     case "checked_out":
       return "The order is placed.";
     case "failed":
-      return failureText(run.error);
+      return failureText(run.error, options.itemsInCart);
     case "cancelled":
       return "This run was cancelled.";
   }
 }
 
-/** A failure in plain words. The raw error stays in the transcript. */
-export function failureText(error: string | null): string {
+/**
+ * A failure in plain words. The raw error stays in the transcript. When the run already put items
+ * in the store cart, a new run starts from an empty ledger and would add them again, so say so.
+ */
+export function failureText(error: string | null, itemsInCart = false): string {
+  const text = failureReason(error);
+  return itemsInCart
+    ? `${text} Some items may already be in your store cart, so check it first.`
+    : text;
+}
+
+function failureReason(error: string | null): string {
   if (!error) return "The shopper stopped. Try again.";
   if (error.startsWith("needs_reauth"))
     return "Your store account needs a new sign-in. Reconnect it, then try again.";

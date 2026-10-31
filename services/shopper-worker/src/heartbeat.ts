@@ -1,14 +1,24 @@
 // Run liveness (risk R10). While the worker holds a run it writes shopping_runs.heartbeat_at every
 // WORKER_HEARTBEAT_SECONDS and pushes the queue message's visibility out, so no other worker takes
-// it. A sweeper on the same tick fails any run whose heartbeat is older than three intervals: its
-// worker died, and the app must not show "Shopping..." forever.
+// it. A sweeper on the same tick looks for runs whose heartbeat is older than STALE_AFTER_SECONDS:
+// their worker died. An approved push is requeued and resumes from the ledger; anything else is
+// failed, so the app never shows "Shopping..." forever (store.ts sweepStale).
+//
+// Every worker sweeps every other worker's runs, so the threshold is one constant, never a
+// worker's own setting: a worker with a short interval must not fail the runs of a worker with a
+// long one. The interval is capped so three beats always fit inside the threshold.
 import type { Logger, QueueClient } from "./queue.ts";
 import { errorMessage, SHOPPING_RUN_QUEUE, VISIBILITY_TIMEOUT_S } from "./queue.ts";
-import type { RunStore } from "./store.ts";
+import type { RunStore, SweepResult } from "./store.ts";
 
-export const DEFAULT_HEARTBEAT_SECONDS = 30;
-/** A heartbeat older than this many intervals means the worker is gone. */
+/** A heartbeat older than this means the worker is gone. The same for every worker. */
+export const STALE_AFTER_SECONDS = 90;
+/** Beats a live worker gets inside the threshold, at the longest interval. */
 export const STALE_INTERVALS = 3;
+/** The longest WORKER_HEARTBEAT_SECONDS: three beats fit inside STALE_AFTER_SECONDS. */
+export const MAX_HEARTBEAT_SECONDS = STALE_AFTER_SECONDS / STALE_INTERVALS;
+export const MIN_HEARTBEAT_SECONDS = 5;
+export const DEFAULT_HEARTBEAT_SECONDS = 30;
 
 export interface HeartbeatOptions {
   store: Pick<RunStore, "heartbeat" | "sweepStale">;
@@ -28,12 +38,18 @@ export class Heartbeat {
 
   constructor(options: HeartbeatOptions) {
     this.#options = options;
-    this.intervalSeconds = options.intervalSeconds ?? DEFAULT_HEARTBEAT_SECONDS;
+    const interval = options.intervalSeconds ?? DEFAULT_HEARTBEAT_SECONDS;
+    if (interval > MAX_HEARTBEAT_SECONDS) {
+      throw new Error(
+        `a heartbeat every ${interval}s would let other workers sweep this worker's runs; the most is ${MAX_HEARTBEAT_SECONDS}s`,
+      );
+    }
+    this.intervalSeconds = interval;
   }
 
-  /** Seconds after which another run's heartbeat counts as stale. */
+  /** Seconds after which a run's heartbeat counts as stale: STALE_AFTER_SECONDS, for every worker. */
   get staleSeconds(): number {
-    return this.intervalSeconds * STALE_INTERVALS;
+    return STALE_AFTER_SECONDS;
   }
 
   hold(runId: string, msgId: string): void {
@@ -61,16 +77,22 @@ export class Heartbeat {
     return beaten;
   }
 
-  /** Fails runs nobody is beating for. Returns their ids. */
-  async sweep(): Promise<string[]> {
-    const failed = await this.#options.store.sweepStale(this.staleSeconds);
-    if (failed.length > 0) {
-      this.#options.log.warn("failed stalled runs", {
-        runIds: failed,
+  /** Resumes or fails runs nobody is beating for. */
+  async sweep(): Promise<SweepResult> {
+    const result = await this.#options.store.sweepStale(this.staleSeconds);
+    if (result.requeued.length > 0) {
+      this.#options.log.warn("requeued stalled pushes", {
+        runIds: result.requeued,
         staleSeconds: this.staleSeconds,
       });
     }
-    return failed;
+    if (result.failed.length > 0) {
+      this.#options.log.warn("failed stalled runs", {
+        runIds: result.failed,
+        staleSeconds: this.staleSeconds,
+      });
+    }
+    return result;
   }
 
   /** One tick: beat first, so this worker's own runs are fresh before the sweep looks. */

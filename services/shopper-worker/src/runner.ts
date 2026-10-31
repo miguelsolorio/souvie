@@ -26,6 +26,7 @@ import type { ReviewSummaryVars } from "@mp/llm";
 import { isRetailerError, RetailerAuthError } from "@mp/retailers";
 import type { AdapterSource } from "./adapters.ts";
 import type { Heartbeat } from "./heartbeat.ts";
+import { pushText } from "./push.ts";
 import { errorMessage, type HandlerOutcome, type Logger, type QueueMessage } from "./queue.ts";
 import { type ClaimedRun, connectionHandle, InvalidAllergyError, type RunStore } from "./store.ts";
 
@@ -274,6 +275,8 @@ export class RunRunner {
       rowFlags: result.rowFlags,
       handoffUrl: result.handoffUrl,
       cartSubtotalUsd: result.cartSubtotalUsd,
+      // The screen's headline and the notification say the same thing: what is in the cart.
+      summary: result.push ? pushText(result.push).body : null,
     });
     if (!finished) return;
     log.info(result.status === "cart_ready" ? "cart ready" : "push paused for review", {

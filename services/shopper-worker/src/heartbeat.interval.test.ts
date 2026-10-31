@@ -16,7 +16,7 @@ describe("heartbeat timing", () => {
           beats.push(Date.now());
           return ids.length;
         },
-        sweepStale: async () => [],
+        sweepStale: async () => ({ requeued: [], failed: [] }),
       },
       queue: { setVisibility: async () => {} },
       log: recorder(),

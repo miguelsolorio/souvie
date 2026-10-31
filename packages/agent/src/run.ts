@@ -809,6 +809,9 @@ export async function continueCheckout(
   const index = deps.chooseSlot ? deps.chooseSlot(slots) : cheapest;
   const slot = slots[index] ?? slots[cheapest];
   if (!slot) throw new Error("no slot to select");
+  // Selecting a slot changes the store's side, so the run says checking_out first: a crash from
+  // here on leaves a run the sweeper fails, never one that looks like an untouched cart.
+  await deps.transition("checking_out");
   await deps.adapter.selectSlot(ctx.connection, slot);
   transcript.record({
     tool: "select_slot",
@@ -817,7 +820,6 @@ export async function continueCheckout(
     output_summary: "Window selected.",
     ok: true,
   });
-  await deps.transition("checking_out");
   const { orderRef } = await deps.adapter.checkout(ctx.connection, ctx.policy);
   transcript.record({
     tool: "checkout",

@@ -20,10 +20,14 @@
 --
 -- Kroger's terms shape this file (docs/04-integrations.md §Kroger, docs/02 §Retention):
 --   * shopping_run_items holds the product the household reviewed and the price it saw, as the
---     household's own purchase record. `alternatives` (up to three other candidates) and the run's
---     `cart_snapshot` are search-derived; both are cleared 24 hours after the run closes, by the
---     pg_cron job at the end of this file. The interval is the function's argument, so it can be
---     tightened without a schema change.
+--     household's own purchase record. `alternatives` (up to three other candidates, each
+--     {product_id, upc, name, size, price, qty}: five retailer fields and the units the code would
+--     buy, which is ours) and the run's `cart_snapshot` are search-derived; both are cleared 24
+--     hours after the run closes, by the pg_cron job at the end of this file, together with the
+--     row's `reason` (model text that may name a product). The interval is the function's
+--     argument, so it can be tightened without a schema change.
+--   * A run nobody reviews does not wait forever: the same job cancels a run idle in needs_review
+--     for 48 hours ("review timed out"), and the 24-hour clearing then applies to it.
 --   * No table here stores search results. Candidates live in the worker's memory for one run.
 --
 -- Columns beyond the docs/02 sketch (all additive; see the "As built (WS09)" note there):
@@ -219,7 +223,8 @@ create table public.shopping_runs (
   -- The proposed cart shown at review: flags, summary, handoffUrl. Cleared 24h after the run
   -- closes (Kroger terms).
   cart_snapshot jsonb,
-  -- The subtotal the household reviewed, then the one it approved.
+  -- The subtotal the household reviewed, then the one it approved, then at cart_ready what the
+  -- push put in the cart (rows the store rejected are not in it).
   subtotal_usd numeric(12, 2),
   -- Array of {ts, tool, by, input, output_summary, ok, screenshot_path?}. No product data.
   transcript jsonb not null default '[]'::jsonb,
@@ -401,7 +406,9 @@ create table public.shopping_run_items (
 comment on table public.shopping_run_items is
   'One row per list item per run (WS09): the proposal, the review decision, and the add-only cart ledger.';
 comment on column public.shopping_run_items.alternatives is
-  'Up to three other candidates for review. Search-derived: cleared 24 hours after the run closes.';
+  'Up to three other candidates for review, each {product_id, upc, name, size, price, qty}; qty is the units the code would buy. Search-derived: cleared 24 hours after the run closes.';
+comment on column public.shopping_run_items.reason is
+  'The model''s or the code''s one-line reason for the choice. Cleared with alternatives, 24 hours after the run closes.';
 comment on column public.shopping_run_items.delta_sent is
   'Total units this run has sent for the row, including a call in flight. Written before the call.';
 comment on column public.shopping_run_items.cart_qty is
@@ -526,9 +533,11 @@ $$;
 --
 -- A signed-in member may start a manual run of their household's list at one of their
 -- household's active connections. With no signed-in user (the service role, pg_cron) the run may
--- be manual or scheduled. Refusals are plain error codes in the message, like the other
+-- be manual or scheduled. The policy is the household owner's to set: a member passes null and
+-- the run gets the default policy. Refusals are plain error codes in the message, like the other
 -- functions: list_not_found (also for a list of another household), connection_not_found,
--- connection_inactive, invalid_trigger, invalid_policy, run_in_progress, daily_run_limit.
+-- connection_inactive, invalid_trigger, policy_owner_only, invalid_policy, run_in_progress,
+-- daily_run_limit.
 -- ---------------------------------------------------------------------------------------
 
 create or replace function public.enqueue_shopping_run(
@@ -573,6 +582,14 @@ begin
     where m.household_id = v_household and m.user_id = v_uid
   ) then
     raise exception 'list_not_found';
+  end if;
+  -- Spending rules are the owner's call (docs/05 §Money). The scheduler, with no user, passes the
+  -- policy WS11 stored for the household.
+  if v_uid is not null and enqueue_shopping_run.policy is not null and not exists (
+    select 1 from public.household_members m
+    where m.household_id = v_household and m.user_id = v_uid and m.role = 'owner'
+  ) then
+    raise exception 'policy_owner_only';
   end if;
 
   select c.retailer, c.store_id, c.store_name, c.status
@@ -689,15 +706,18 @@ grant execute on function public.cancel_shopping_run(uuid) to authenticated, ser
 grant execute on function public.shopping_run_dispatch(uuid) to service_role;
 
 -- ---------------------------------------------------------------------------------------
--- Retention (docs/02 §Retention, Kroger terms): 24 hours after a run closes, its cart_snapshot is
--- cleared and its items' alternatives are nulled. The approved product, quantity and price stay
+-- Retention (docs/02 §Retention, Kroger terms). First, a run idle in needs_review for
+-- `p_review_timeout` is cancelled ("review timed out"): nobody is coming back to it, and it holds
+-- its list's one active run. Then, 24 hours after a run closes, its cart_snapshot is cleared and
+-- its items' alternatives and reasons are nulled. The approved product, quantity and price stay
 -- as the household's own purchase record. A proposal nobody approved is no purchase record: a
 -- run that failed or was cancelled before approval loses its proposed products and prices too.
--- `p_after` is the config: lower it to tighten.
+-- `p_after` and `p_review_timeout` are the config: lower them to tighten.
 -- ---------------------------------------------------------------------------------------
 
 create or replace function public.shopping_runs_clear_expired(
-  p_after interval default interval '24 hours'
+  p_after interval default interval '24 hours',
+  p_review_timeout interval default interval '48 hours'
 )
 returns integer
 language plpgsql
@@ -707,11 +727,17 @@ as $$
 declare
   v_runs integer;
 begin
+  -- The status guard stamps finished_at, so the clearing below starts its 24 hours now.
+  update public.shopping_runs r
+  set status = 'cancelled', error = 'review timed out'
+  where r.status = 'needs_review'
+    and r.status_changed_at < now() - p_review_timeout;
+
   update public.shopping_run_items i
-  set alternatives = null
+  set alternatives = null, reason = null
   from public.shopping_runs r
   where i.run_id = r.id
-    and i.alternatives is not null
+    and (i.alternatives is not null or i.reason is not null)
     and r.status in ('cart_ready', 'checked_out', 'failed', 'cancelled')
     and r.finished_at < now() - p_after;
 
@@ -736,9 +762,9 @@ begin
 end;
 $$;
 
-revoke all on function public.shopping_runs_clear_expired(interval)
+revoke all on function public.shopping_runs_clear_expired(interval, interval)
   from public, anon, authenticated;
-grant execute on function public.shopping_runs_clear_expired(interval) to service_role;
+grant execute on function public.shopping_runs_clear_expired(interval, interval) to service_role;
 
 -- Every hour. cron.schedule replaces a job of the same name, so a re-run of this file is safe.
 select cron.schedule(

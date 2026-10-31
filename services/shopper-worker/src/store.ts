@@ -12,7 +12,7 @@
 //
 // Because RLS is bypassed, every query names the household. The run is found by id (the queue
 // message), and the household id in every later statement comes from that row. The sweeper is the
-// one statement that spans households, by design: it fails runs whose worker died.
+// one statement that spans households, by design: it resumes or fails runs whose worker died.
 
 import type {
   CartSnapshot,
@@ -34,6 +34,16 @@ import type { ConnectionHandle, RetailerId } from "@mp/retailers";
 import type { SqlRunner } from "./sql.ts";
 
 export const SERVICE_ROLE_STATEMENT = "set local role service_role";
+
+/** Times the sweeper resumes one run's push after its worker died, before it fails the run. */
+export const MAX_SWEEP_RESUMES = 2;
+
+/** What one sweep did. */
+export interface SweepResult {
+  /** Approved runs handed back to the queue: their push resumes from the ledger. */
+  requeued: string[];
+  failed: string[];
+}
 
 /** A run the worker holds, as the claim returned it. */
 export interface ClaimedRun {
@@ -469,23 +479,57 @@ export class RunStore {
   }
 
   /**
-   * The sweeper: fails every run whose worker stopped beating for `staleSeconds`. The one query
-   * that spans households; it reads no household data and writes only status and error.
+   * The sweeper: what to do with every run whose worker stopped beating for `staleSeconds`. The one
+   * query that spans households; it reads no household data and writes only status, error and one
+   * transcript note.
+   *
+   *   approved, running   requeued and dispatched: the push resumes from the ledger, so the items
+   *                       already in the cart are not added twice. At most `maxResumes` times.
+   *   anything else       failed: a plan that never reached review, a checkout, or a push that
+   *                       keeps dying. The app warns when items may already be in the cart.
+   *
+   * The stale test is repeated in the UPDATE's own WHERE, so a second worker sweeping at the same
+   * moment re-reads the row after the first one's commit and skips it.
    */
-  async sweepStale(staleSeconds: number): Promise<string[]> {
-    const rows = await this.inServiceRole((tx) =>
-      tx.query<{ id: string }>(
-        `update public.shopping_runs r
-            set status = 'failed',
-                error = 'stalled: no heartbeat for ' || $1::integer || ' seconds'
-          where r.status in ('running', 'checking_out')
+  async sweepStale(staleSeconds: number, maxResumes = MAX_SWEEP_RESUMES): Promise<SweepResult> {
+    return this.inServiceRole(async (tx) => {
+      const rows = await tx.query<{ id: string; status: string }>(
+        `with stale as (
+           select r.id,
+                  r.status = 'running' and r.approved_at is not null
+                    and (select count(*) from jsonb_array_elements(r.transcript) e
+                          where e ->> 'tool' = 'resume') < $2::integer as resume
+             from public.shopping_runs r
+            where r.status in ('running', 'checking_out')
+              and r.heartbeat_at is not null
+              and r.heartbeat_at < now() - make_interval(secs => $1::integer)
+         )
+         update public.shopping_runs r
+            set status = (case when s.resume then 'queued' else 'failed' end)::public.shopping_runs_status,
+                error = case when s.resume then null
+                             else 'stalled: no heartbeat for ' || $1::integer || ' seconds' end,
+                transcript = case when s.resume then r.transcript || jsonb_build_array(jsonb_build_object(
+                               'ts', now(), 'tool', 'resume', 'by', 'host', 'input', '{}'::jsonb,
+                               'output_summary', 'The worker stopped mid-push. Resuming from the cart ledger.',
+                               'ok', true))
+                             else r.transcript end
+           from stale s
+          where r.id = s.id
+            and r.status in ('running', 'checking_out')
             and r.heartbeat_at is not null
             and r.heartbeat_at < now() - make_interval(secs => $1::integer)
-        returning r.id`,
-        [Math.ceil(staleSeconds)],
-      ),
-    );
-    return rows.map((row) => row.id);
+        returning r.id, r.status::text as status`,
+        [Math.ceil(staleSeconds), maxResumes],
+      );
+      const requeued = rows.filter((row) => row.status === "queued").map((row) => row.id);
+      for (const id of requeued) {
+        await tx.query("select public.shopping_run_dispatch($1::uuid)", [id]);
+      }
+      return {
+        requeued,
+        failed: rows.filter((row) => row.status === "failed").map((row) => row.id),
+      };
+    });
   }
 
   /** Hands back a run by id alone: a retry or a shutdown that never loaded the row. */
@@ -615,7 +659,10 @@ export class RunStore {
       flags: RunFlag[];
       rowFlags: ReadonlyMap<string, ItemFlag[]>;
       handoffUrl: string | null;
+      /** What the push put in the cart. At cart_ready it becomes the run's subtotal. */
       cartSubtotalUsd: number | null;
+      /** The cart_ready headline, the same words as the notification. */
+      summary?: string | null;
     },
   ): Promise<boolean> {
     return this.inServiceRole(async (tx) => {
@@ -628,9 +675,15 @@ export class RunStore {
       }
       const patch: Record<string, unknown> = {};
       if (outcome.handoffUrl) patch.handoffUrl = outcome.handoffUrl;
+      const ready = outcome.status === "cart_ready" && outcome.cartSubtotalUsd !== null;
+      if (ready) {
+        patch.subtotalUsd = outcome.cartSubtotalUsd;
+        if (outcome.summary) patch.summary = outcome.summary;
+      }
       const rows = await tx.query<{ id: string }>(
         `update public.shopping_runs r
             set status = $3::text::public.shopping_runs_status,
+                subtotal_usd = coalesce($7::numeric, r.subtotal_usd),
                 cart_snapshot = coalesce(r.cart_snapshot, '{}'::jsonb) || $4::text::jsonb
                   || jsonb_build_object('flags',
                        coalesce(r.cart_snapshot -> 'flags', '[]'::jsonb) || $5::text::jsonb),
@@ -650,6 +703,7 @@ export class RunStore {
             done: 1,
             total: 1,
           }),
+          ready ? outcome.cartSubtotalUsd : null,
         ],
       );
       return rows.length > 0;

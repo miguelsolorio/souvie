@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { LoadingScreen } from "../../components/Screen";
 import { confirmAction } from "../../lib/confirm";
 import {
+  inCartCount,
   isActive,
   overBudget,
   preview,
@@ -59,6 +60,11 @@ export function RunDetail({ runId, actions }: { runId: string; actions?: ReactNo
   const subtotal = reviewing
     ? review.subtotalUsd
     : (data.subtotal_usd ?? snapshot.subtotalUsd ?? 0);
+  // Once the push ran, the count is what the store took, matching the in-cart subtotal.
+  const inCart = inCartCount(lines);
+  const pushed =
+    data.status === "cart_ready" || data.status === "checking_out" || data.status === "checked_out";
+  const count = pushed ? inCart : review.cartLines;
   const handoff = snapshot.handoffUrl ?? CHECKOUT_FALLBACK[data.retailer] ?? null;
   const store = data.store_name ?? snapshot.storeName ?? "your store";
 
@@ -73,7 +79,7 @@ export function RunDetail({ runId, actions }: { runId: string; actions?: ReactNo
             </Text>
           </View>
           <Text testID="run-progress" className="text-base text-neutral-700">
-            {progressText(data)}
+            {progressText(data, { itemsInCart: inCart > 0 })}
           </Text>
           <Text className="text-sm text-neutral-500">{store}</Text>
         </View>
@@ -96,7 +102,7 @@ export function RunDetail({ runId, actions }: { runId: string; actions?: ReactNo
         {lines.length > 0 ? (
           <View className="gap-1">
             <Text testID="run-subtotal" className="text-lg font-semibold text-neutral-900">
-              {review.cartLines} items, {formatPrice(subtotal)}
+              {count} items, {formatPrice(subtotal)}
             </Text>
             <Text className="text-sm text-neutral-500">
               Prices are the store's, before tax and fees. The store confirms them at checkout.

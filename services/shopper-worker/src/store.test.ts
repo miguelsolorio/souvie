@@ -1,8 +1,12 @@
+import { readFileSync } from "node:fs";
+import { canTransition, RUN_STATUSES } from "@mp/agent";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { readConfig } from "./config.ts";
 import { pushText, sendPush } from "./push.ts";
 import { InvalidAllergyError, RunStore, rawTextsOf, unionAllergies } from "./store.ts";
 import {
+  ALICE,
+  BOB,
   CONNECTION,
   createRunsTestDb,
   enqueue,
@@ -131,6 +135,93 @@ describe("helpers", () => {
     expect(() => readConfig({ WORKER_DATABASE_URL: "x", WORKER_RETAILER_MODE: "cloud" })).toThrow(
       /live or mock/,
     );
+    // Three beats fit inside the one sweep threshold, whatever the env asks for.
+    expect(
+      readConfig({ WORKER_DATABASE_URL: "x", WORKER_HEARTBEAT_SECONDS: "300" }).heartbeatSeconds,
+    ).toBe(30);
+  });
+
+  it("refuses the mock store in production", () => {
+    expect(() =>
+      readConfig({
+        WORKER_DATABASE_URL: "x",
+        WORKER_RETAILER_MODE: "mock",
+        NODE_ENV: "production",
+      }),
+    ).toThrow(/mock is refused when NODE_ENV is production/);
+    expect(
+      readConfig({ WORKER_DATABASE_URL: "x", WORKER_RETAILER_MODE: "mock", NODE_ENV: "test" })
+        .retailerMode,
+    ).toBe("mock");
+    expect(readConfig({ WORKER_DATABASE_URL: "x", NODE_ENV: "production" }).retailerMode).toBe(
+      "live",
+    );
+  });
+
+  it("builds the image on the repo's Node version", () => {
+    const pinned = readFileSync(new URL("../../../.node-version", import.meta.url), "utf8").trim();
+    const dockerfile = readFileSync(new URL("../Dockerfile", import.meta.url), "utf8");
+    expect(dockerfile).toContain(`FROM node:${pinned}-slim AS base`);
+  });
+});
+
+describe("the household's allergies, read from the database", () => {
+  it("are the union over every member of this household, and only this household", async () => {
+    const CAROL = "c3333333-3333-4333-8333-3333333333a9";
+    const DAVE = "d4444444-4444-4444-8444-4444444444a9";
+    await t.exec(`
+      insert into auth.users (id, email) values
+        ('${CAROL}', 'carol-ws09@example.test'), ('${DAVE}', 'dave-ws09@example.test');
+      insert into public.household_members (household_id, user_id, role) values
+        ('${HOUSEHOLD}', '${CAROL}', 'member'), ('${HOUSEHOLD}', '${DAVE}', 'member');
+      update public.profiles set preferences = '{"allergies": ["peanut"]}'::jsonb where user_id = '${ALICE}';
+      update public.profiles set preferences = '{"allergies": ["milk", "sesame"]}'::jsonb where user_id = '${CAROL}';
+      update public.profiles set preferences = '{"allergies": ["shellfish"]}'::jsonb where user_id = '${BOB}';
+    `);
+    try {
+      await t.exec(
+        `update public.shopping_runs set status = 'cancelled' where status in ('queued', 'running', 'needs_review')`,
+      );
+      const runId = await enqueue(t);
+      const store = new RunStore(t.runner);
+      const run = await store.claim(runId);
+      if (!run) throw new Error("no run");
+      // Owner alice (peanut), member carol (milk, sesame), member dave who never answered, and
+      // bob of the other household (shellfish), who must not leak in.
+      expect((await store.loadPlanningInput(run)).allergies).toEqual(["milk", "peanut", "sesame"]);
+    } finally {
+      await t.exec(`
+        delete from public.household_members where user_id in ('${CAROL}', '${DAVE}');
+        update public.profiles set preferences = '{}'::jsonb where user_id in ('${ALICE}', '${BOB}');
+      `);
+    }
+  });
+});
+
+describe("the run state machine in SQL and in TypeScript", () => {
+  it("has the same statuses and allows exactly the same moves", async () => {
+    const statuses = await t.query<{ status: string }>(
+      "select unnest(enum_range(null::public.shopping_runs_status))::text as status",
+      [],
+    );
+    expect(statuses.map((row) => row.status)).toEqual([...RUN_STATUSES]);
+    const pairs = await t.query<{ from: string; to: string; ok: boolean }>(
+      `select f::text as from, s::text as to, public.shopping_run_transition_allowed(f, s) as ok
+         from unnest(enum_range(null::public.shopping_runs_status)) f,
+              unnest(enum_range(null::public.shopping_runs_status)) s
+        where f <> s`,
+      [],
+    );
+    expect(pairs).toHaveLength(RUN_STATUSES.length * (RUN_STATUSES.length - 1));
+    const differ = pairs.filter(
+      (pair) =>
+        pair.ok !==
+        canTransition(
+          pair.from as (typeof RUN_STATUSES)[number],
+          pair.to as (typeof RUN_STATUSES)[number],
+        ),
+    );
+    expect(differ).toEqual([]);
   });
 });
 

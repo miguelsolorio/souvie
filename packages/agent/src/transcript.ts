@@ -3,8 +3,10 @@
 //
 // What an entry may hold is narrow on purpose. Kroger forbids storing data derived from
 // searches, and a transcript lives 90 days, so entries name list lines, candidate indices, counts
-// and results. They never hold a product name, an id, a UPC, a price or a model's free text. The
-// ledger, not the transcript, is the source of truth for recovery.
+// and results. They never hold a product name, an id, a UPC or a price. The one piece of model
+// text an entry keeps is a search's `query` (at most 120 characters): the tool input docs/03 §8
+// says the audit must show. The model's reasons stay on the run's items, which retention clears.
+// The ledger, not the transcript, is the source of truth for recovery.
 import type { TranscriptEntry } from "./types.ts";
 
 /** Where entries go. The worker appends them to the run row; tests keep them in memory. */

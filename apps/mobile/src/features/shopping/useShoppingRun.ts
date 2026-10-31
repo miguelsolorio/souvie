@@ -47,6 +47,7 @@ const ENQUEUE_MESSAGES: Record<string, string> = {
   list_not_found: "This list is not in your household.",
   daily_run_limit: "That is the most runs for one day. Try again tomorrow.",
   invalid_policy: "The shopping rules for this run are not valid.",
+  policy_owner_only: "Only the household owner can change the shopping rules.",
 };
 
 function enqueueError(message: string): RunActionError {
@@ -122,7 +123,7 @@ export function useRunItems(runId: string | undefined) {
   });
 }
 
-/** "Shop this list": enqueue_shopping_run with the household's default policy. */
+/** "Shop this list": enqueue_shopping_run with no policy, so the run gets the default one. */
 export function useStartRun() {
   const client = useSupabase();
   const queryClient = useQueryClient();
@@ -134,7 +135,7 @@ export function useStartRun() {
         list_id: args.listId,
         connection_id: args.connectionId,
         trigger: "manual",
-        policy: {},
+        policy: null,
       });
       if (error) throw enqueueError(error.message);
       if (typeof data !== "string")

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { Heartbeat, STALE_INTERVALS } from "./heartbeat.ts";
+import { Heartbeat, MAX_HEARTBEAT_SECONDS, STALE_AFTER_SECONDS } from "./heartbeat.ts";
 import { createPgmqClient, SHOPPING_RUN_QUEUE } from "./queue.ts";
 import { RunStore } from "./store.ts";
 import {
@@ -62,7 +62,7 @@ describe("heartbeat", () => {
     expect(heartbeat.held()).toEqual([]);
   });
 
-  it("the sweeper fails a run whose heartbeat is older than three intervals, and leaves a fresh one", async () => {
+  it("the sweeper fails an unapproved run whose heartbeat is older than the threshold, and leaves a fresh one", async () => {
     const stale = await claimed();
     await t.exec(
       `update public.shopping_runs set heartbeat_at = now() - interval '91 seconds' where id = '${stale.runId}'`,
@@ -74,8 +74,8 @@ describe("heartbeat", () => {
       log,
       intervalSeconds: 30,
     });
-    expect(heartbeat.staleSeconds).toBe(30 * STALE_INTERVALS);
-    expect(await heartbeat.sweep()).toEqual([stale.runId]);
+    expect(heartbeat.staleSeconds).toBe(STALE_AFTER_SECONDS);
+    expect(await heartbeat.sweep()).toEqual({ requeued: [], failed: [stale.runId] });
     const run = await runRow(t, stale.runId);
     expect(run.status).toBe("failed");
     expect(run.error).toBe("stalled: no heartbeat for 90 seconds");
@@ -85,8 +85,34 @@ describe("heartbeat", () => {
     await t.exec(
       `update public.shopping_runs set heartbeat_at = now() - interval '89 seconds' where id = '${fresh.runId}'`,
     );
-    expect(await heartbeat.sweep()).toEqual([]);
+    expect(await heartbeat.sweep()).toEqual({ requeued: [], failed: [] });
     expect((await runRow(t, fresh.runId)).status).toBe("running");
+  });
+
+  it("sweeps with one threshold for every worker, whatever its own interval", async () => {
+    const run = await claimed();
+    // A worker beating every 30 seconds was last seen 60 seconds ago: alive, two beats missed.
+    await t.exec(
+      `update public.shopping_runs set heartbeat_at = now() - interval '60 seconds' where id = '${run.runId}'`,
+    );
+    const quick = new Heartbeat({
+      store: new RunStore(t.runner),
+      queue: createPgmqClient(t.runner),
+      log: recorder(),
+      intervalSeconds: 5,
+    });
+    expect(quick.staleSeconds).toBe(STALE_AFTER_SECONDS);
+    expect(await quick.sweep()).toEqual({ requeued: [], failed: [] });
+    expect((await runRow(t, run.runId)).status).toBe("running");
+    expect(
+      () =>
+        new Heartbeat({
+          store: new RunStore(t.runner),
+          queue: createPgmqClient(t.runner),
+          log: recorder(),
+          intervalSeconds: MAX_HEARTBEAT_SECONDS + 1,
+        }),
+    ).toThrow(/most is 30s/);
   });
 
   it("never sweeps a run that waits for a worker (no heartbeat yet)", async () => {
@@ -103,7 +129,7 @@ describe("heartbeat", () => {
       log: recorder(),
       intervalSeconds: 30,
     });
-    expect(await heartbeat.sweep()).toEqual([]);
+    expect(await heartbeat.sweep()).toEqual({ requeued: [], failed: [] });
   });
 
   it("ticks on its interval: beat first, then sweep", async () => {
@@ -116,7 +142,7 @@ describe("heartbeat", () => {
         },
         sweepStale: async () => {
           calls.push("sweep");
-          return [];
+          return { requeued: [], failed: [] };
         },
       },
       queue: { setVisibility: async () => void calls.push("vt") },

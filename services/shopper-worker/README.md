@@ -9,11 +9,11 @@ Long-running Node 22 service (WS09). It consumes the pgmq queue `shopping_run` (
 3. Approved (`run-approve` set `approved_at` and sent a new message): the push phase. `pushRun` fills the cart through the ledger and the run moves to `cart_ready` with the hand-off link; the members get "Cart ready at QFC Duvall, $142.17. Review and pay."
 4. The message is deleted. A failed attempt is retried after 30 and 60 seconds; the third failure archives the message (the dead letter, `pgmq.a_shopping_run`) and fails the run with the error. A connection that needs a new sign-in fails the run at once.
 
-While a run is held the heartbeat writes `heartbeat_at` and pushes the message's visibility out every `WORKER_HEARTBEAT_SECONDS`. On the same tick the sweeper fails any run whose heartbeat is three intervals old. On SIGTERM the poller stops, in-flight runs stop at their next step and go back to `queued` with their messages visible at once, and the process exits within 10 seconds.
+While a run is held the heartbeat writes `heartbeat_at` and pushes the message's visibility out every `WORKER_HEARTBEAT_SECONDS`. On the same tick the sweeper looks for runs whose heartbeat is older than 90 seconds (`STALE_AFTER_SECONDS`, the same for every worker): an approved push goes back to `queued` with a fresh message and resumes from the ledger, at most twice; anything else is failed. On SIGTERM the poller stops, in-flight runs stop at their next step and go back to `queued` with their messages visible at once, and the process exits within 10 seconds.
 
 ## Database access
 
-`WORKER_DATABASE_URL` connects as the database owner. Every statement on an application table runs in a transaction that starts with `set local role service_role`, so the worker has the service role's table privileges and no DDL (`store.test.ts` proves a `create table` fails). The service role has no grant on the `pgmq` schema, so the pgmq calls run as the connection role, outside those transactions. Every query names the household from the claimed run row; the sweeper is the one statement across households, and it writes only `status` and `error`.
+`WORKER_DATABASE_URL` connects as the database owner. Every statement on an application table runs in a transaction that starts with `set local role service_role`, so the worker has the service role's table privileges and no DDL (`store.test.ts` proves a `create table` fails). The service role has no grant on the `pgmq` schema, so the pgmq calls run as the connection role, outside those transactions. Every query names the household from the claimed run row; the sweeper is the one statement across households, and it writes only `status`, `error` and a `resume` transcript entry.
 
 ## Configuration
 
@@ -21,8 +21,8 @@ While a run is held the heartbeat writes `heartbeat_at` and pushes the message's
 |---|---|---|
 | `WORKER_DATABASE_URL` | yes | Postgres URL. Hosted: the Supavisor pooler in session mode, port 5432 (postgres.js prepares statements). The transaction pooler on 6543 would need `prepare: false` in `src/index.ts`. In CI: the DB URL from `supabase status`. |
 | `WORKER_CONCURRENCY` | no | Runs at once, 1 to 8. Default 2. |
-| `WORKER_HEARTBEAT_SECONDS` | no | 5 to 300. Default 30. |
-| `WORKER_RETAILER_MODE` | no | `live` (default): Kroger with the credentials below. `mock`: MockRetailer for every store, for local development and the CI smoke run. Never in production. |
+| `WORKER_HEARTBEAT_SECONDS` | no | 5 to 30, so three beats fit inside the sweep threshold. Default 30. |
+| `WORKER_RETAILER_MODE` | no | `live` (default): Kroger with the credentials below. `mock`: MockRetailer for every store, for local development and the CI smoke run. Refused when `NODE_ENV` is `production`. |
 | `ANTHROPIC_API_KEY` | no | The planning loop (Sonnet) and the review summary (Haiku). Without it code picks the close calls and flags them. |
 | `AI_DAILY_CAP_USD` | no | A household's model budget per UTC day. Default 2. |
 | `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET`, `KROGER_API_BASE` | live mode | Refresh tokens come from Vault through WS07's service-role functions. |

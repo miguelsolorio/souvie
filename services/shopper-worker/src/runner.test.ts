@@ -2,11 +2,12 @@
 // (run-approve's own store) -> push -> cart_ready, with the transcript, the ledger, ai_runs and
 // both notifications.
 import type { MessageParam, ToolMessagesClient } from "@mp/llm";
-import { RetailerAuthError } from "@mp/retailers";
+import { RETAILER_CAPABILITIES, RetailerAuthError } from "@mp/retailers";
 import { MockRetailer } from "@mp/retailers/mock";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { SqlApproveStore } from "../../../supabase/functions/run-approve/store.ts";
 import { createModelSource } from "./models.ts";
+import { SHOPPING_RUN_QUEUE } from "./queue.ts";
 import { parseRunMessage } from "./runner.ts";
 import {
   ALICE,
@@ -268,5 +269,206 @@ describe("a run through the worker", () => {
     expect(parseRunMessage({ run_id: "nope" })).toBeNull();
     expect(parseRunMessage("x")).toBeNull();
     expect(lineId(0)).toMatch(/^8a/);
+  });
+});
+
+/** MockRetailer with Kroger's capabilities: an add-only cart the worker cannot read back. */
+function krogerShaped(mock: MockRetailer): MockRetailer {
+  Object.defineProperty(mock, "capabilities", { value: RETAILER_CAPABILITIES.kroger });
+  return mock;
+}
+
+async function approveAsIs(runId: string): Promise<void> {
+  const approved = await new SqlApproveStore(t.runner).approve({
+    runId,
+    householdId: HOUSEHOLD,
+    userId: ALICE,
+    decisions: [],
+  });
+  expect(approved.ok).toBe(true);
+}
+
+async function cartLines(runId: string) {
+  return t.query<{ product_id: string; qty: number; cart_qty: number }>(
+    `select product_id, qty::float8 as qty, cart_qty::float8 as cart_qty
+       from public.shopping_run_items
+      where run_id = $1 and status in ('matched', 'substituted') and product_id is not null
+      order by position`,
+    [runId],
+  );
+}
+
+describe("the push phase, as the worker wires it", () => {
+  it("resumes a push whose worker died mid-cart, without adding anything twice", async () => {
+    await closeRuns();
+    const mock = krogerShaped(new MockRetailer({ seed: 1 }));
+    const add = mock.addToCart.bind(mock);
+    let calls = 0;
+    let crashed = false;
+    // The sixth add never returns: the process is gone, not throwing.
+    mock.addToCart = (async (...args: Parameters<typeof add>) => {
+      calls += 1;
+      if (calls === 6 && !crashed) {
+        crashed = true;
+        return new Promise(() => {});
+      }
+      return add(...args);
+    }) as typeof mock.addToCart;
+    const dead = testWorker(t, { mock });
+    const runId = await enqueue(t);
+    await dead.next();
+    await approveAsIs(runId);
+
+    const [message] = await dead.queue.read(SHOPPING_RUN_QUEUE, 900, 1);
+    if (!message) throw new Error("no push message");
+    void dead.runner.handle(message, new AbortController().signal);
+    for (let i = 0; i < 400 && calls < 6; i++) await new Promise((r) => setTimeout(r, 5));
+    expect(calls).toBe(6);
+    const before = await cartLines(runId);
+    expect(before.filter((row) => row.cart_qty > 0)).toHaveLength(5);
+
+    // Its heartbeat goes stale; another worker's sweeper finds it.
+    await t.exec(
+      `update public.shopping_runs set heartbeat_at = now() - interval '200 seconds' where id = '${runId}'`,
+    );
+    const live = testWorker(t, { mock });
+    expect(await live.heartbeat.sweep()).toEqual({ requeued: [runId], failed: [] });
+    const requeued = await runRow(t, runId);
+    expect(requeued.status).toBe("queued");
+    expect(requeued.error).toBeNull();
+    expect(requeued.transcript.at(-1)).toMatchObject({ tool: "resume", by: "host", ok: true });
+
+    // The sweeper dispatched a fresh message: the push resumes from the ledger at once.
+    const resumed = await live.next();
+    expect(resumed?.message.msgId).not.toBe(message.msgId);
+    expect((await runRow(t, runId)).status).toBe("cart_ready");
+    const rows = await cartLines(runId);
+    const cart = await mock.getCart({
+      connectionId: CONNECTION,
+      retailer: "kroger",
+      storeId: "MOCK0001",
+    });
+    const inCart = new Map(cart.items.map((item) => [item.productId, item.quantity]));
+    for (const row of rows) expect(inCart.get(row.product_id), row.product_id).toBe(row.qty);
+
+    // The dead worker's own message surfaces after its visibility timeout and finds nothing to do.
+    await t.exec(`update pgmq.q_shopping_run set vt = now() - interval '1 second'`);
+    const sent = calls;
+    const late = await live.next();
+    expect(late?.message.msgId).toBe(message.msgId);
+    expect(calls).toBe(sent);
+  });
+
+  it("stops resuming a push that keeps dying, and fails it", async () => {
+    await closeRuns();
+    const worker = testWorker(t);
+    const runId = await enqueue(t);
+    await worker.next();
+    await approveAsIs(runId);
+    await worker.store.claim(runId);
+    await t.exec(`
+      update public.shopping_runs
+         set heartbeat_at = now() - interval '200 seconds',
+             transcript = transcript || '[{"ts": "2026-10-31T00:00:00Z", "tool": "resume", "by": "host", "input": {}, "output_summary": "x", "ok": true},
+                                          {"ts": "2026-10-31T00:01:00Z", "tool": "resume", "by": "host", "input": {}, "output_summary": "x", "ok": true}]'::jsonb
+       where id = '${runId}'`);
+    expect(await worker.heartbeat.sweep()).toEqual({ requeued: [], failed: [runId] });
+    expect((await runRow(t, runId)).error).toMatch(/^stalled/);
+  });
+
+  it("re-checks allergies at push time: an allergy added after review keeps that product out", async () => {
+    await closeRuns();
+    const worker = testWorker(t);
+    const runId = await enqueue(t);
+    await worker.next();
+    const milk = await t.query<{ id: string; product_id: string | null }>(
+      `select id, product_id from public.shopping_run_items where run_id = $1 and display_name = 'Whole milk'`,
+      [runId],
+    );
+    expect(milk[0]?.product_id).toBeTruthy();
+    await approveAsIs(runId);
+    // A member answers the allergy question between the approval and the push.
+    await t.query(
+      `update public.profiles set preferences = jsonb_build_object('allergies', '["peanut", "milk"]'::jsonb) where user_id = $1`,
+      [ALICE],
+    );
+    try {
+      await worker.next();
+      expect((await runRow(t, runId)).status).toBe("cart_ready");
+      const cart = await worker.mock.getCart({
+        connectionId: CONNECTION,
+        retailer: "kroger",
+        storeId: "MOCK0001",
+      });
+      expect(cart.items.map((item) => item.productId)).not.toContain(milk[0]?.product_id);
+      const row = await t.query<{ cart_qty: number; flags: Array<{ kind: string }> }>(
+        `select cart_qty::float8 as cart_qty, flags from public.shopping_run_items where id = $1`,
+        [milk[0]?.id],
+      );
+      expect(row[0]?.cart_qty).toBe(0);
+      expect(row[0]?.flags.map((flag) => flag.kind)).toContain("allergen");
+    } finally {
+      await t.query(
+        `update public.profiles set preferences = jsonb_build_object('allergies', '["peanut"]'::jsonb) where user_id = $1`,
+        [ALICE],
+      );
+    }
+  });
+
+  it("gates the push on the approved subtotal: over the cap, nothing is added", async () => {
+    await closeRuns();
+    const worker = testWorker(t);
+    const runId = await enqueue(t);
+    await worker.next();
+    await approveAsIs(runId);
+    const approved = Number((await runRow(t, runId)).subtotal_usd);
+    expect(approved).toBeGreaterThan(10);
+    // The owner lowers the cap after approving.
+    await t.exec(
+      `update public.shopping_runs set policy = policy || '{"budget_cap_usd": 10}'::jsonb where id = '${runId}'`,
+    );
+    await worker.next();
+    const run = await runRow(t, runId);
+    expect(run.status).toBe("needs_review");
+    expect(run.approved_at).toBeNull();
+    const flags = (run.cart_snapshot?.flags ?? []) as Array<{ kind: string }>;
+    expect(flags.map((f) => f.kind)).toContain("budget");
+    expect(worker.mock.calls.filter((call) => call.operation === "addToCart")).toEqual([]);
+  });
+
+  it("headlines cart_ready with what the push put in the cart, as the notification does", async () => {
+    await closeRuns();
+    const mock = new MockRetailer({ seed: 1 });
+    const worker = testWorker(t, { mock });
+    const runId = await enqueue(t);
+    await worker.next();
+    await approveAsIs(runId);
+    const approved = Number((await runRow(t, runId)).subtotal_usd);
+    const salmon = await t.query<{ product_id: string }>(
+      `select product_id from public.shopping_run_items where run_id = $1 and display_name = 'Salmon fillets'`,
+      [runId],
+    );
+    const add = mock.addToCart.bind(mock);
+    // The store refuses the salmon.
+    mock.addToCart = (async (conn, items) => {
+      const refused = items.filter((item) => item.productId === salmon[0]?.product_id);
+      const kept = items.filter((item) => !refused.includes(item));
+      const result = kept.length > 0 ? await add(conn, kept) : { accepted: [], rejected: [] };
+      return {
+        accepted: result.accepted,
+        rejected: [...result.rejected, ...refused.map((item) => ({ item, reason: "sold out" }))],
+      };
+    }) as typeof mock.addToCart;
+    await worker.next();
+    const run = await runRow(t, runId);
+    expect(run.status).toBe("cart_ready");
+    const inCart = Number(run.subtotal_usd);
+    expect(inCart).toBeLessThan(approved);
+    const ready = worker.pushes.at(-1);
+    expect(ready).toMatchObject({ type: "cart_ready", subtotalUsd: inCart });
+    expect(run.cart_snapshot).toMatchObject({
+      subtotalUsd: inCart,
+      summary: `Cart ready at Mock QFC Duvall, $${inCart.toFixed(2)}. Review and pay.`,
+    });
   });
 });

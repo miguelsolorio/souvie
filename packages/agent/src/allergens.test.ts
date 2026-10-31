@@ -199,4 +199,33 @@ describe("allergens in a planned run", () => {
     }
     expect(mock.calls.some((c) => c.operation === "addToCart")).toBe(false);
   });
+
+  it("removes at the last layer a product whose allergen data arrived after the line was scored", async () => {
+    const mock = new MockRetailer({ seed: 1 });
+    const store = await storeById(mock, MOCK_STORE_ID);
+    const lines = [line("L1", "Chicken broth", 4, "cup", ONTOLOGY.chickenBroth)];
+    // Every broth looks clean while the line is scored. Its allergen data lands only afterwards,
+    // so only the final check before the proposal can catch it.
+    let revealed = false;
+    const search = mock.searchProducts.bind(mock);
+    mock.searchProducts = (async (...args: Parameters<typeof search>) =>
+      (await search(...args)).map((found) =>
+        Object.defineProperty({ ...found }, "allergens", {
+          enumerable: true,
+          get: () => (revealed ? ["Wheat"] : []),
+        }),
+      )) as typeof mock.searchProducts;
+    const result = await planRun(context(store, lines, { allergies: ["wheat"] }), {
+      adapter: mock,
+      callModel: null,
+      progress: async (progress) => {
+        if (progress.phase === "planning" && progress.done === lines.length) revealed = true;
+      },
+    });
+    expect(revealed).toBe(true);
+    const broth = result.items[0];
+    expect(broth?.product).toBeNull();
+    expect(broth?.flags.map((f) => f.kind)).toContain("allergen");
+    expect(result.snapshot.flags?.map((f) => f.kind)).toContain("allergen_removed");
+  });
 });

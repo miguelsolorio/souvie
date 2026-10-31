@@ -1497,7 +1497,10 @@ export type Database = {
         };
         Returns: boolean;
       };
-      shopping_runs_clear_expired: { Args: { p_after?: string }; Returns: number };
+      shopping_runs_clear_expired: {
+        Args: { p_after?: string; p_review_timeout?: string };
+        Returns: number;
+      };
     };
     Enums: {
       grocery_list_items_excluded_reason: "pantry" | "manual";

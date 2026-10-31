@@ -9,11 +9,13 @@
 --   * clients cannot write runs or items at all; they start a run through enqueue_shopping_run and
 --     stop one through cancel_shopping_run, and both check membership
 --   * enqueue_shopping_run validates the policy against core.RunPolicy's keys (unknown keys
---     refused, auto_checkout needs a cap), fills the defaults, refuses a second active run of the
---     same list, and sends one {"run_id"} message to the shopping_run queue
+--     refused, auto_checkout needs a cap), takes one only from an owner (a member passes null and
+--     gets the default), fills the defaults, refuses a second active run of the same list, and
+--     sends one {"run_id"} message to the shopping_run queue
 --   * the status guard refuses transitions the state machine does not allow, for every writer
 --   * push tokens are per user: nobody reads or writes another user's
---   * retention clears cart_snapshot and alternatives 24 hours after a run closes, not before
+--   * retention clears cart_snapshot, alternatives and reasons 24 hours after a run closes, not
+--     before; a run idle in needs_review for 48 hours is cancelled first, which frees its list
 --   * the service role cannot run DDL, and has no access to the pgmq schema (so the worker calls
 --     pgmq as the connection role and run-approve goes through shopping_run_dispatch)
 --
@@ -23,7 +25,7 @@
 
 begin;
 
-select plan(94);
+select plan(107);
 
 -- ---------------------------------------------------------------------------------------
 -- Fixtures (as the postgres role, which bypasses RLS)
@@ -55,10 +57,11 @@ insert into public.household_members (household_id, user_id, role) values
   ('0a000000-0000-4000-8000-00000000000a', 'c3333333-3333-4333-8333-333333333333', 'member'),
   ('0b000000-0000-4000-8000-00000000000b', 'b2222222-2222-4222-8222-222222222222', 'owner');
 
--- Lists: two for A, one for B. Items for A's first list.
+-- Lists: three for A, one for B. Items for A's first list.
 insert into public.grocery_lists (id, household_id, name) values
   ('9a000000-0000-4000-8000-0000000000a1', '0a000000-0000-4000-8000-00000000000a', 'ws09 A week'),
   ('9a000000-0000-4000-8000-0000000000a2', '0a000000-0000-4000-8000-00000000000a', 'ws09 A extra'),
+  ('9a000000-0000-4000-8000-0000000000a3', '0a000000-0000-4000-8000-00000000000a', 'ws09 A party'),
   ('9b000000-0000-4000-8000-0000000000b1', '0b000000-0000-4000-8000-00000000000b', 'ws09 B week');
 
 insert into public.grocery_list_items (id, list_id, household_id, display_name, qty, unit, section) values
@@ -105,7 +108,7 @@ select ok(not has_table_privilege('authenticated', 'public.shopping_run_items', 
 select ok(not has_table_privilege('anon', 'public.shopping_runs', 'SELECT'), 'anon cannot read runs');
 select ok(not has_function_privilege('anon', 'public.enqueue_shopping_run(uuid, uuid, text, jsonb)', 'EXECUTE'), 'anon cannot enqueue a run');
 select ok(not has_function_privilege('authenticated', 'public.shopping_run_dispatch(uuid)', 'EXECUTE'), 'only the service role dispatches a run');
-select ok(not has_function_privilege('authenticated', 'public.shopping_runs_clear_expired(interval)', 'EXECUTE'), 'only the service role runs retention');
+select ok(not has_function_privilege('authenticated', 'public.shopping_runs_clear_expired(interval, interval)', 'EXECUTE'), 'only the service role runs retention');
 
 -- ---------------------------------------------------------------------------------------
 -- RunPolicy in SQL (core.RunPolicy, CCR6)
@@ -255,6 +258,16 @@ select throws_ok($$ select public.cancel_shopping_run(public.__t_run('a1')) $$, 
 reset role;
 
 -- ---------------------------------------------------------------------------------------
+-- Only an owner sets a run's policy (alice's run a1 above carries hers)
+-- ---------------------------------------------------------------------------------------
+
+set local request.jwt.claims = '{"sub": "c3333333-3333-4333-8333-333333333333", "role": "authenticated"}';
+set local role authenticated;
+select throws_ok($$ select public.enqueue_shopping_run('9a000000-0000-4000-8000-0000000000a3', '7a000000-0000-4000-8000-0000000000a1', 'manual', '{"budget_cap_usd": 500}') $$, 'P0001', 'policy_owner_only', 'a member cannot set a run''s policy');
+select throws_ok($$ select public.enqueue_shopping_run('9a000000-0000-4000-8000-0000000000a3', '7a000000-0000-4000-8000-0000000000a1', 'manual', '{}') $$, 'P0001', 'policy_owner_only', 'a member passes null, not an empty policy');
+reset role;
+
+-- ---------------------------------------------------------------------------------------
 -- push_tokens
 -- ---------------------------------------------------------------------------------------
 
@@ -282,6 +295,7 @@ update public.shopping_runs set finished_at = now() - interval '25 hours' where 
 update public.shopping_runs set finished_at = now() - interval '1 hour' where id = public.__t_run('b1');
 insert into public.shopping_run_items (run_id, household_id, display_name, product_id, product_name, qty, status, alternatives) values
   (public.__t_run('b1'), '0b000000-0000-4000-8000-00000000000b', 'Bananas', '0099010000001', 'Harbor Fields Bananas', 1, 'matched', '[{"product_id": "0099010000003", "upc": null, "name": "Honeycrisp Apples", "size": "1 lb", "price": 2.99, "qty": 1}]');
+update public.shopping_run_items set reason = 'Cheaper per pound than Cedar Valley Farms Red Onion' where id = '6a000000-0000-4000-8000-0000000000a1';
 -- A2 was cancelled before anyone approved it: its proposal is no purchase record.
 update public.shopping_runs set finished_at = now() - interval '25 hours' where id = public.__t_run('a2');
 insert into public.shopping_run_items (run_id, household_id, display_name, product_id, upc, product_name, size, qty, unit_price_usd, line_total_usd, status) values
@@ -291,9 +305,50 @@ select ok(public.shopping_runs_clear_expired() >= 1, 'retention clears at least 
 select is((select coalesce(product_name, 'cleared') || '/' || coalesce(unit_price_usd::text, 'cleared') from public.shopping_run_items where run_id = public.__t_run('a2')), 'cleared/cleared', 'a proposal cancelled before approval loses its products and prices');
 select is((select cart_snapshot from public.shopping_runs where id = public.__t_run('a1')), null, 'a run closed 25 hours ago loses its cart snapshot');
 select is((select count(*)::int from public.shopping_run_items where run_id = public.__t_run('a1') and alternatives is not null), 0, 'and its items lose their alternatives');
+select is((select count(*)::int from public.shopping_run_items where run_id = public.__t_run('a1') and reason is not null), 0, 'and their reasons, which are model text');
 select is((select product_name || ' x' || qty::text from public.shopping_run_items where id = '6a000000-0000-4000-8000-0000000000a1'), 'Harbor Fields Yellow Onions x1', 'the reviewed product and quantity stay as the purchase record');
 select isnt((select cart_snapshot from public.shopping_runs where id = public.__t_run('b1')), null, 'a run closed an hour ago keeps its snapshot');
 select is((select count(*)::int from public.shopping_run_items where run_id = public.__t_run('b1') and alternatives is not null), 1, 'and its alternatives');
+
+-- ---------------------------------------------------------------------------------------
+-- A review nobody finishes: cancelled after 48 hours, then cleared like any closed run
+-- ---------------------------------------------------------------------------------------
+
+insert into __t_runs (name, id) values
+  ('stale', 'e1000000-0000-4000-8000-0000000000a3'),
+  ('fresh', 'e1000000-0000-4000-8000-0000000000a2');
+insert into public.shopping_runs (id, household_id, list_id, connection_id, retailer, store_id, store_name, status, cart_snapshot) values
+  (public.__t_run('stale'), '0a000000-0000-4000-8000-00000000000a', '9a000000-0000-4000-8000-0000000000a3', '7a000000-0000-4000-8000-0000000000a1', 'kroger', 'MOCK0001', 'Mock QFC Duvall', 'needs_review', '{"summary": "1 of 1 items ready"}'),
+  (public.__t_run('fresh'), '0a000000-0000-4000-8000-00000000000a', '9a000000-0000-4000-8000-0000000000a2', '7a000000-0000-4000-8000-0000000000a1', 'kroger', 'MOCK0001', 'Mock QFC Duvall', 'needs_review', '{"summary": "1 of 1 items ready"}');
+update public.shopping_runs set status_changed_at = now() - interval '30 days', created_at = now() - interval '30 days' where id = public.__t_run('stale');
+insert into public.shopping_run_items (run_id, household_id, display_name, product_id, product_name, qty, unit_price_usd, line_total_usd, status, alternatives, reason) values
+  (public.__t_run('stale'), '0a000000-0000-4000-8000-00000000000a', 'Whole milk', '0099020000001', 'Northfork Creamery Whole Milk', 1, 4.29, 4.29, 'matched', '[{"product_id": "0099020000004", "upc": "0099020000004", "name": "Northfork Creamery Organic Whole Milk", "size": "1/2 gal", "price": 4.99, "qty": 2}]', 'Cheaper than Northfork Creamery Organic Whole Milk'),
+  (public.__t_run('fresh'), '0a000000-0000-4000-8000-00000000000a', 'Whole milk', '0099020000001', 'Northfork Creamery Whole Milk', 1, 4.29, 4.29, 'matched', '[{"product_id": "0099020000004", "upc": "0099020000004", "name": "Northfork Creamery Organic Whole Milk", "size": "1/2 gal", "price": 4.99, "qty": 2}]', 'Cheaper than Northfork Creamery Organic Whole Milk');
+
+set local request.jwt.claims = '{"sub": "c3333333-3333-4333-8333-333333333333", "role": "authenticated"}';
+set local role authenticated;
+select throws_ok($$ select public.enqueue_shopping_run('9a000000-0000-4000-8000-0000000000a3', '7a000000-0000-4000-8000-0000000000a1', 'manual', null) $$, 'P0001', 'run_in_progress', 'a run waiting for review holds its list');
+reset role;
+
+select lives_ok($$ select public.shopping_runs_clear_expired() $$, 'the hourly job runs');
+select is((select status::text || '/' || coalesce(error, '') from public.shopping_runs where id = public.__t_run('stale')), 'cancelled/review timed out', 'a run idle in needs_review for 30 days is cancelled');
+select ok((select finished_at > now() - interval '1 minute' from public.shopping_runs where id = public.__t_run('stale')), 'it closes now, so the 24-hour clearing starts from here');
+select is((select status::text from public.shopping_runs where id = public.__t_run('fresh')), 'needs_review', 'a fresh review is untouched');
+select is((select count(*)::int from public.shopping_run_items where run_id = public.__t_run('fresh') and alternatives is not null and reason is not null), 1, 'and keeps its alternatives and reason');
+
+update public.shopping_runs set finished_at = now() - interval '25 hours' where id = public.__t_run('stale');
+select lives_ok($$ select public.shopping_runs_clear_expired() $$, 'the job runs a day later');
+select is((select cart_snapshot from public.shopping_runs where id = public.__t_run('stale')), null, 'the timed-out run loses its snapshot');
+select is((select coalesce(alternatives::text, 'cleared') || '/' || coalesce(reason, 'cleared') || '/' || coalesce(product_name, 'cleared') from public.shopping_run_items where run_id = public.__t_run('stale')), 'cleared/cleared/cleared', 'and its alternatives, reason and unapproved product');
+
+set local request.jwt.claims = '{"sub": "c3333333-3333-4333-8333-333333333333", "role": "authenticated"}';
+set local role authenticated;
+insert into __t_runs (name, id) values (
+  'c1',
+  public.enqueue_shopping_run('9a000000-0000-4000-8000-0000000000a3', '7a000000-0000-4000-8000-0000000000a1', 'manual', null)
+);
+reset role;
+select is((select policy from public.shopping_runs where id = public.__t_run('c1')), public.shopping_run_default_policy(), 'the list is free again, and a member''s run gets the default policy');
 
 select * from finish();
 rollback;

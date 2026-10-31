@@ -1,15 +1,19 @@
 // The worker's environment. Secrets are read here and nowhere else, and never logged: the
 // "starting" line reports only whether each one is set.
 import { RETAILER_MODES, type RetailerMode } from "./adapters.ts";
-import { DEFAULT_HEARTBEAT_SECONDS } from "./heartbeat.ts";
+import {
+  DEFAULT_HEARTBEAT_SECONDS,
+  MAX_HEARTBEAT_SECONDS,
+  MIN_HEARTBEAT_SECONDS,
+} from "./heartbeat.ts";
 
 export interface WorkerConfig {
   databaseUrl: string;
   /** Runs handled at once. WORKER_CONCURRENCY, 1 to 8, default 2. */
   concurrency: number;
-  /** WORKER_HEARTBEAT_SECONDS, 5 to 300, default 30. */
+  /** WORKER_HEARTBEAT_SECONDS, 5 to 30 (heartbeat.ts MAX_HEARTBEAT_SECONDS), default 30. */
   heartbeatSeconds: number;
-  /** WORKER_RETAILER_MODE: live (default) or mock. */
+  /** WORKER_RETAILER_MODE: live (default) or mock. Never mock when NODE_ENV is production. */
   retailerMode: RetailerMode;
   anthropicApiKey: string | undefined;
   /** AI_DAILY_CAP_USD, default 2. */
@@ -43,11 +47,21 @@ export function readConfig(env: Record<string, string | undefined>): WorkerConfi
   if (!(RETAILER_MODES as readonly string[]).includes(mode)) {
     throw new Error(`WORKER_RETAILER_MODE must be live or mock, not ${mode}`);
   }
+  // A mock store fills no real cart: in production it would tell people their cart is ready when
+  // nothing is in it.
+  if (mode === "mock" && text(env.NODE_ENV) === "production") {
+    throw new Error("WORKER_RETAILER_MODE=mock is refused when NODE_ENV is production");
+  }
   const cap = Number.parseFloat(env.AI_DAILY_CAP_USD ?? "");
   return {
     databaseUrl,
     concurrency: int(env.WORKER_CONCURRENCY, 2, 1, 8),
-    heartbeatSeconds: int(env.WORKER_HEARTBEAT_SECONDS, DEFAULT_HEARTBEAT_SECONDS, 5, 300),
+    heartbeatSeconds: int(
+      env.WORKER_HEARTBEAT_SECONDS,
+      DEFAULT_HEARTBEAT_SECONDS,
+      MIN_HEARTBEAT_SECONDS,
+      MAX_HEARTBEAT_SECONDS,
+    ),
     retailerMode: mode as RetailerMode,
     anthropicApiKey: text(env.ANTHROPIC_API_KEY),
     aiDailyCapUsd: Number.isFinite(cap) && cap >= 0 ? cap : 2,

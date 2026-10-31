@@ -2,7 +2,7 @@
 //
 // After sign-in on a phone it asks for permission once, registers this device's Expo push token in
 // push_tokens (the signed-in user's own row, under RLS), and opens the run a notification names
-// when the person taps it. The web build uses PushLifecycle.tsx, which does nothing. Without an
+// when the person taps it. Signing out deletes that row (pushToken.ts). The web build uses PushLifecycle.tsx, which does nothing. Without an
 // EAS project id (a fresh clone, Expo Go without one) there is no token to register, and the app
 // works the same without pushes.
 import { useSession, useSupabase } from "@mp/db";
@@ -11,6 +11,7 @@ import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { Platform } from "react-native";
+import { rememberPushToken } from "./pushToken";
 import { routeForPush } from "./routes";
 
 Notifications.setNotificationHandler({
@@ -44,12 +45,14 @@ export function PushLifecycle() {
         if (!granted || !id || cancelled) return;
         const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: id });
         if (cancelled) return;
-        await client
+        const { error } = await client
           .from("push_tokens")
           .upsert(
             { token, platform: Platform.OS === "ios" ? "ios" : "android" },
             { onConflict: "user_id,token", ignoreDuplicates: true },
           );
+        // Sign-out deletes this row (useSignOut), so it needs the token.
+        if (!error) rememberPushToken(token);
       } catch (error) {
         if (__DEV__) console.warn("push registration skipped", error);
       }

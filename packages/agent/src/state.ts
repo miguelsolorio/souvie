@@ -1,6 +1,7 @@
 // The run state machine (docs/03-ai-design.md §8). The same table is enforced in SQL by the
 // shopping_runs status guard (supabase/migrations/*_ws09_runs.sql), so a writer that skips this
-// module still cannot make an illegal move. A test keeps the two tables identical.
+// module still cannot make an illegal move. services/shopper-worker/src/store.test.ts checks
+// every (from, to) pair against shopping_run_transition_allowed, so the two tables stay identical.
 //
 //   queued ──> running ──> needs_review ──> running (push phase) ──> cart_ready
 //                │                                                     │

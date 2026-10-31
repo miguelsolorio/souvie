@@ -210,7 +210,7 @@ failed and cancelled: from queued, running, needs_review, cart_ready, checking_o
 terminal: checked_out, failed, cancelled
 ```
 
-`approved_at` tells the two `running` phases apart. A run waits for a worker with `heartbeat_at` null; the worker beats every `WORKER_HEARTBEAT_SECONDS`, and a run whose heartbeat is three intervals old is failed by the sweeper.
+`approved_at` tells the two `running` phases apart. A run waits for a worker with `heartbeat_at` null; the worker beats every `WORKER_HEARTBEAT_SECONDS` (at most 30), and the sweeper acts on a heartbeat older than 90 seconds: an approved push is requeued and resumes from the ledger, anything else is failed. A run left in `needs_review` for 48 hours is cancelled by the hourly retention job.
 
 ## 9. In-app assistant (WS06, extended by later WS)
 

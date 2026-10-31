@@ -3,7 +3,8 @@
 // cap, product_matches learned, needs_review -> running, and the dispatch message.
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { handleRunApprove, type Runtime } from "./handler.ts";
-import { SqlApproveStore } from "./store.ts";
+import type { SqlRunner } from "./sql.ts";
+import { SERVICE_ROLE_STATEMENT, SqlApproveStore } from "./store.ts";
 import { createRunsTestDb, type RunsTestDb } from "./testing/db.ts";
 
 const A = "0a000000-0000-4000-8000-0000000000aa";
@@ -209,6 +210,38 @@ describe("run-approve", () => {
     );
     expect(empty.status).toBe(409);
     expect(await empty.json()).toMatchObject({ error: "empty_cart" });
+  });
+
+  it("runs every statement the store sends as service_role", async () => {
+    // Asks the database who it is before each statement, inside the store's own transactions.
+    const roles: string[] = [];
+    const watching = (runner: SqlRunner): SqlRunner => ({
+      query: (text, params) => runner.query(text, params),
+      transaction: (fn) =>
+        runner.transaction((tx) =>
+          fn({
+            query: async (text, params) => {
+              if (text !== SERVICE_ROLE_STATEMENT) {
+                const [row] = await tx.query<{ role: string }>("select current_user as role", []);
+                roles.push(row?.role ?? "");
+              }
+              return tx.query(text, params);
+            },
+            transaction: (inner) => tx.transaction(inner),
+          }),
+        ),
+    });
+    const store = new SqlApproveStore(watching(t.runner));
+    expect(await store.resolveRun(ALICE, RUN)).toEqual({ kind: "member", householdId: A });
+    const result = await store.approve({
+      runId: RUN,
+      householdId: A,
+      userId: ALICE,
+      decisions: [],
+    });
+    expect(result.ok).toBe(true);
+    expect(roles.length).toBeGreaterThan(4);
+    expect([...new Set(roles)]).toEqual(["service_role"]);
   });
 
   it("runs as service_role, which cannot run DDL", async () => {

@@ -2,13 +2,14 @@
 // household. Realtime applies Row Level Security to inserts and updates, so a member receives only
 // their household's runs (the channel is shopping_runs:household_id=eq.<id>, under the anon key).
 //
-// A change carries the whole run row. It is laid over the cached run at once (status, progress,
-// snapshot), and when the status moved, the run's lines are refetched: shopping_run_items is not
-// in the publication, and the lines change only when the status does (proposal, approval, push).
+// A change is expected to carry the whole run row (docs/02: assumed, to be verified on the hosted
+// project). It is laid over the cached run key by key (overlayRun), so a payload that leaves out a
+// column keeps the cached value. When the status moved, the run's lines are refetched:
+// shopping_run_items is not in the publication, and the lines change only when the status does.
 import { useHousehold, useSupabase } from "@mp/db";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { type ShoppingRun, toRun } from "./logic";
+import { overlayRun, type ShoppingRun, toRun } from "./logic";
 import { shoppingRunItemsKey, shoppingRunKey, shoppingRunsKey } from "./useShoppingRun";
 
 export const runChannelName = (householdId: string) =>
@@ -48,8 +49,7 @@ export function useRunRealtime() {
           const next = toRun(row);
           const key = shoppingRunKey(householdId, runId);
           const held = queryClient.getQueryData<ShoppingRun | null>(key);
-          // The transcript comes in the payload too; keep it, it is the household's own record.
-          queryClient.setQueryData<ShoppingRun | null>(key, held ? { ...held, ...next } : next);
+          queryClient.setQueryData<ShoppingRun | null>(key, held ? overlayRun(held, row) : next);
           if (!held || held.status !== next.status) {
             void queryClient.invalidateQueries({
               queryKey: shoppingRunItemsKey(householdId, runId),
@@ -61,7 +61,7 @@ export function useRunRealtime() {
               if (!runs) return runs;
               const found = runs.some((r) => r.id === runId);
               return found
-                ? runs.map((r) => (r.id === runId ? { ...r, ...next, transcript: [] } : r))
+                ? runs.map((r) => (r.id === runId ? { ...overlayRun(r, row), transcript: [] } : r))
                 : [{ ...next, transcript: [] }, ...runs];
             },
           );

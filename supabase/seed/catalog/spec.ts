@@ -242,7 +242,6 @@ export const BRAND_NAMES: readonly string[] = [
   "Betty Crocker",
   "Duncan Hines",
   "Hershey",
-  "Nestle",
   "Nutella",
   "Spam",
   "Jell-O",
@@ -343,7 +342,6 @@ export const PERSON_AND_PUBLICATION_NAMES: readonly string[] = [
   "Minimalist Baker",
   "Smitten Kitchen",
   "Budget Bytes",
-  "Tasty",
 ];
 
 /** Words a recipe may not use (copyright posture, docs/05 and R5). */
@@ -462,8 +460,21 @@ const RULES: readonly Rule[] = [
   },
   {
     re: any("steaks?"),
+    // "cauliflower, cut into steaks" and "tuna steak" are not beef.
     unless: any(
-      "(?:cauliflower|cabbage|portobello|mushroom|eggplant|tofu|tempeh|vegetable|salmon|tuna|swordfish|halibut|fish)\\s+steaks?",
+      "cauliflower",
+      "cabbage",
+      "portobello",
+      "mushrooms?",
+      "eggplant",
+      "tofu",
+      "tempeh",
+      "squash",
+      "salmon",
+      "tuna",
+      "swordfish",
+      "halibut",
+      "fish",
     ),
     effects: { flesh: "beef" },
   },
@@ -785,6 +796,20 @@ const RULES: readonly Rule[] = [
       "lager",
       "stout",
       "brewer's yeast",
+    ),
+    effects: { gluten: true },
+  },
+  {
+    // Sausages and other processed meats often hold fillers. Gluten free only when the line says so.
+    re: any(
+      "sausages?",
+      "hot dogs?",
+      "salami",
+      "pepperoni",
+      "bratwurst",
+      "kielbasa",
+      "andouille",
+      "chorizo",
     ),
     effects: { gluten: true },
   },
@@ -1311,6 +1336,12 @@ export interface CatalogRecipe {
 }
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** Diet and allergen claims belong in the tags, which the checks back. Prose may not make them. */
+export const TITLE_CLAIM =
+  /\b(?:kid[- ]friendly|allergen|allergy|gluten[- ]free|dairy[- ]free|vegan|vegetarian)\b/i;
+export const DESCRIPTION_CLAIM =
+  /\b(?:dairy|nut|egg|soy|allergen)[- ]free\b|\bfree of\b|\ballerg|\bvegan\b|\bvegetarian\b/i;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
@@ -1350,6 +1381,12 @@ export function shapeProblems(value: unknown): string[] {
   const title = str("title", 1, 200);
   const description = str("description", 1, 4000);
   const cuisine = str("cuisine", 1, 80);
+  if (title !== null && TITLE_CLAIM.test(title)) {
+    out.push("title makes a diet, allergen, or audience claim; the tags carry that");
+  }
+  if (description !== null && DESCRIPTION_CLAIM.test(description)) {
+    out.push("description makes a diet or allergen claim; the tags carry that");
+  }
   if (cuisine !== null && cuisine !== cuisine.toLowerCase()) out.push("cuisine must be lowercase");
   if (r.servings !== COVERAGE.servings) out.push(`servings must be ${COVERAGE.servings}`);
   const prep = whole("prepMin", 0, COVERAGE.maxMinutes);
@@ -1492,7 +1529,14 @@ export function buildTags(parts: {
   methods: readonly MethodTag[];
   audience: readonly AudienceTag[];
 }): string[] {
-  return [COURSE_TAG, parts.protein, ...parts.diets, ...parts.methods, ...parts.audience];
+  // Vocabulary order, so the same recipe always carries the same tag list.
+  return [
+    COURSE_TAG,
+    parts.protein,
+    ...DIET_TAGS.filter((t) => parts.diets.includes(t)),
+    ...METHOD_TAGS.filter((t) => parts.methods.includes(t)),
+    ...AUDIENCE_TAGS.filter((t) => parts.audience.includes(t)),
+  ];
 }
 
 // ---------------------------------------------------------------------------------------
@@ -1748,7 +1792,7 @@ export const PLAN: readonly Slot[] = [
     "pork",
     ["sheet_pan"],
     ["kid_friendly"],
-    [GF, DF],
+    [DF],
     35,
     true,
   ),
@@ -2085,7 +2129,6 @@ export const PLAN: readonly Slot[] = [
     ["leftovers"],
     [VG, GF, DF],
     35,
-    true,
   ),
   slot(
     "mediterranean-chickpea-salad-bowls",

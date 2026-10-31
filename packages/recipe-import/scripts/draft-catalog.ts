@@ -51,22 +51,27 @@ import {
   MODELS,
 } from "@mp/llm";
 import {
+  AUDIENCE_TAGS,
   analyzeRecipe,
   buildTags,
   type CatalogIngredient,
   type CatalogRecipe,
   COVERAGE,
+  DESCRIPTION_CLAIM,
   freshLineCount,
   type LineInput,
+  METHOD_TAGS,
   NON_MEAT_PROTEIN_TAGS,
   offendingLines,
   PANTRY_MAX_FRESH_LINES,
   PLAN,
+  proteinOf,
   proteinPresent,
   recipeId,
   type Slot,
   shapeProblems,
   strayFlesh,
+  TITLE_CLAIM,
   textProblems,
 } from "../../../supabase/seed/catalog/spec.ts";
 import { readSeed } from "../../../supabase/seed/load.ts";
@@ -92,6 +97,8 @@ export interface DraftOptions {
   concurrency: number;
   /** Draft only these slugs (still skips the ones that exist). */
   only?: readonly string[];
+  /** Recompute the tags of existing files with the current rules. No model calls. */
+  retag?: boolean;
 }
 
 export interface DraftDeps {
@@ -148,11 +155,21 @@ export function draftTextProblems(draft: CatalogDraftOutput, slot: Slot): string
   const title = tidy(draft.title);
   if (title.length < 3 || title.length > 80) out.push("title must be 3 to 80 characters");
   for (const p of textProblems(title)) out.push(`title ${p}`);
+  if (TITLE_CLAIM.test(title)) {
+    out.push(
+      "title must not claim a diet, allergen, or audience (no vegan, gluten-free, kid friendly)",
+    );
+  }
   const description = tidy(draft.description);
   if (description.length < 20 || description.length > 260) {
     out.push("description must be 20 to 260 characters");
   }
   for (const p of textProblems(description)) out.push(`description ${p}`);
+  if (DESCRIPTION_CLAIM.test(description)) {
+    out.push(
+      "description must not claim a diet or allergen status (no dairy free, free of, vegan)",
+    );
+  }
 
   const prep = Math.round(draft.prep_minutes);
   const cook = Math.round(draft.cook_minutes);
@@ -632,7 +649,7 @@ export async function draftCatalog(options: DraftOptions, deps: DraftDeps): Prom
 // ---------------------------------------------------------------------------------------
 
 const USAGE = `usage: draft-catalog [--count N] [--max-usd USD] [--out DIR] [--log FILE]
-                     [--concurrency N] [--only slug,slug]
+                     [--concurrency N] [--only slug,slug] [--retag]
 
   --count N         plan slugs that should have a file when the run ends (default 60)
   --max-usd USD     hard stop on model spend (default 5)
@@ -641,6 +658,8 @@ const USAGE = `usage: draft-catalog [--count N] [--max-usd USD] [--out DIR] [--l
                     when --out is given)
   --concurrency N   recipes drafted at once (default 3)
   --only a,b        draft only these slugs
+  --retag           recompute the diet tags of existing files with the current rules in spec.ts
+                    (no model calls, no cost), after a rule changes
 
 The key is read from ANTHROPIC_API_KEY in the environment. The script refuses to run when CI is set.`;
 
@@ -660,6 +679,7 @@ export function parseArgs(argv: readonly string[]): DraftOptions | "help" {
     "--log",
     "--concurrency",
     "--only",
+    "--retag",
     "--help",
   ]);
   for (const a of args) {
@@ -688,7 +708,37 @@ export function parseArgs(argv: readonly string[]): DraftOptions | "help" {
     logPath: log ? resolve(log) : out ? join(outDir, "draft-log.json") : DEFAULT_LOG_PATH,
     concurrency: Math.max(1, Math.floor(positive("--concurrency", 3))),
     ...(only ? { only } : {}),
+    ...(args.includes("--retag") ? { retag: true } : {}),
   };
+}
+
+/**
+ * Recompute `tags` for every file in `outDir` with the rules in spec.ts. The protein, method and
+ * audience tags are kept; the diet tags are what the deterministic checks say now. Returns the
+ * slugs that changed.
+ */
+export function retagCatalog(outDir: string, say: (line: string) => void = console.log): string[] {
+  const { categoryOf } = loadResources();
+  const changed: string[] = [];
+  for (const slot of PLAN) {
+    const path = join(outDir, `${slot.slug}.json`);
+    if (!existsSync(path)) continue;
+    const recipe = JSON.parse(readFileSync(path, "utf8")) as CatalogRecipe;
+    const protein = proteinOf(recipe.tags);
+    if (protein === null) throw new Error(`${slot.slug}: no protein tag`);
+    const facts = analyzeRecipe(recipe.ingredients, categoryOf);
+    const tags = buildTags({
+      protein,
+      diets: facts.diets,
+      methods: METHOD_TAGS.filter((t) => recipe.tags.includes(t)),
+      audience: AUDIENCE_TAGS.filter((t) => recipe.tags.includes(t)),
+    });
+    if (tags.join(",") === recipe.tags.join(",")) continue;
+    say(`retag ${slot.slug}: ${recipe.tags.join(", ")} -> ${tags.join(", ")}`);
+    writeFileSync(path, `${JSON.stringify({ ...recipe, tags }, null, 2)}\n`);
+    changed.push(slot.slug);
+  }
+  return changed;
 }
 
 async function main(): Promise<void> {
@@ -706,6 +756,11 @@ async function main(): Promise<void> {
   }
   if (options === "help") {
     console.log(USAGE);
+    return;
+  }
+  if (options.retag) {
+    const changed = retagCatalog(options.outDir);
+    console.log(`retagged ${changed.length} file(s)`);
     return;
   }
   const apiKey = process.env.ANTHROPIC_API_KEY;

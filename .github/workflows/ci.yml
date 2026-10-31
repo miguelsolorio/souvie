@@ -116,6 +116,37 @@ jobs:
           test "$ingredients" -ge 600 || { echo "expected at least 600 ingredients"; exit 1; }
           test "$aliases" -ge 1200 || { echo "expected at least 1200 aliases"; exit 1; }
 
+      # WS16 criteria 3 to 5: the reset also loaded the starter catalog (supabase/seed/20_catalog.sql,
+      # rendered from supabase/seed/catalog/recipes/*.json). Minimums from the brief. Then the file
+      # runs a second time, and the three counts must not move (idempotent upserts).
+      - name: Catalog seed is loaded
+        run: |
+          set -euo pipefail
+          q() { psql "$DB_URL" -v ON_ERROR_STOP=1 -Atc "$1"; }
+          recipes_sql="select count(*) from public.recipes where visibility = 'catalog' and deleted_at is null"
+          lines_sql="select count(*) from public.recipe_ingredients ri join public.recipes r on r.id = ri.recipe_id where r.visibility = 'catalog' and r.deleted_at is null"
+          resolved_sql="$lines_sql and ri.ingredient_id is not null"
+          psql "$DB_URL" -c "$recipes_sql" -c "$lines_sql" -c "$resolved_sql"
+          recipes="$(q "$recipes_sql")"
+          lines="$(q "$lines_sql")"
+          resolved="$(q "$resolved_sql")"
+          echo "recipes=$recipes lines=$lines resolved=$resolved"
+          test "$recipes" -ge 60 || { echo "expected at least 60 catalog recipes"; exit 1; }
+          test "$lines" -ge 300 || { echo "expected at least 300 catalog ingredient lines"; exit 1; }
+          test $((resolved * 100)) -ge $((lines * 90)) || { echo "expected at least 90 percent of lines resolved"; exit 1; }
+
+          # One query for every invariant of a catalog row. It must count 0 violations.
+          bad="$(q "select count(*) from public.recipes where visibility = 'catalog' and (household_id is not null or source_type <> 'ai' or source_url is not null or created_by is not null or servings is distinct from 4 or embedding is not null)")"
+          echo "catalog rows breaking an invariant: $bad"
+          test "$bad" -eq 0 || { echo "a catalog row has a household, a source, an author, an embedding, or servings other than 4"; exit 1; }
+
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f supabase/seed/20_catalog.sql
+          recipes2="$(q "$recipes_sql")"
+          lines2="$(q "$lines_sql")"
+          resolved2="$(q "$resolved_sql")"
+          echo "after the second run: recipes=$recipes2 lines=$lines2 resolved=$resolved2"
+          test "$recipes2 $lines2 $resolved2" = "$recipes $lines $resolved" || { echo "the catalog seed is not idempotent"; exit 1; }
+
       # Criterion 9 (CI part)
       - name: Extensions are installed
         run: |

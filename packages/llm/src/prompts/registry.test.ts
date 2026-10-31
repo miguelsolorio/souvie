@@ -1,4 +1,12 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import {
+  CATALOG_DRAFT_V1,
+  CATALOG_DRAFT_V1_SYSTEM,
+  CatalogDraftOutput,
+} from "./catalog-draft.v1.ts";
 import { INGREDIENT_PARSE_V1 } from "./ingredient-parse.v1.ts";
 import {
   RECIPE_EXTRACT_SOURCES,
@@ -164,5 +172,79 @@ describe("ingredient-parse.v1", () => {
     expect(INGREDIENT_PARSE_V1.user({ lines: ["a", "b"] })).toBe(
       "Parse these ingredient lines.\n\n0: a\n1: b",
     );
+  });
+});
+
+describe("catalog-draft.v1", () => {
+  it("registers under its id for Sonnet", () => {
+    expect(CATALOG_DRAFT_V1.id).toBe("catalog-draft.v1");
+    expect(getPromptMeta("catalog-draft.v1")).toMatchObject({
+      name: "catalog-draft",
+      version: 1,
+      kind: "draft_catalog_recipe",
+      model: "claude-sonnet-5-5",
+    });
+    expect(listPromptIds()).toContain("catalog-draft.v1");
+    expect(latestPromptId("catalog-draft")).toBe("catalog-draft.v1");
+  });
+
+  it("keeps the system prompt stable, free of em dashes and exclamation marks", () => {
+    const system = CATALOG_DRAFT_V1.system();
+    expect(system).toBe(CATALOG_DRAFT_V1.system());
+    expect(system).not.toContain("\u2014");
+    expect(system).not.toContain("!");
+    expect(system).toMatch(/original and written from scratch/);
+  });
+
+  it("matches the readable copy in packages/llm/prompts/catalog/draft.v1.md", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const copy = readFileSync(join(here, "../../prompts/catalog/draft.v1.md"), "utf8");
+    expect(copy).toBe(`${CATALOG_DRAFT_V1_SYSTEM.join("\n")}\n`);
+  });
+
+  it("builds the user message from the spec and adds the problems of an earlier attempt", () => {
+    const vars = {
+      dish: "Lemon chicken thighs with potatoes",
+      cuisine: "american",
+      protein: "chicken",
+      methods: ["sheet_pan"],
+      maxMinutes: 50,
+      diets: ["gluten_free", "dairy_free"],
+      allergenFree: true,
+      audience: ["kid_friendly"],
+      usedTitles: ["Beef Chili"],
+    };
+    const first = CATALOG_DRAFT_V1.user(vars);
+    expect(first).toContain("Dish idea: Lemon chicken thighs with potatoes");
+    expect(first).toContain("Main protein: chicken");
+    expect(first).toContain("Method: sheet pan");
+    expect(first).toContain("Maximum total time, prep plus cook: 50 minutes");
+    expect(first).toContain("Diet requirements: gluten free, dairy free");
+    expect(first).toContain("Allergen free: yes");
+    expect(first).toContain("kid friendly (mild, familiar, no heat)");
+    expect(first).toContain("do not repeat: Beef Chili");
+    expect(first).not.toContain("Problems");
+
+    const second = CATALOG_DRAFT_V1.user({ ...vars, problems: ["line 3 names two ingredients"] });
+    expect(second).toContain("Problems with the earlier attempt. Fix every one:\n- line 3 names");
+  });
+
+  it("has an output schema that converts to a strict JSON schema", async () => {
+    const { zodOutputFormat } = await import("@anthropic-ai/sdk/helpers/zod");
+    const schema = zodOutputFormat(CatalogDraftOutput).schema as {
+      additionalProperties: boolean;
+      required: string[];
+      properties: Record<string, unknown>;
+    };
+    expect(schema.additionalProperties).toBe(false);
+    expect([...schema.required].sort()).toEqual(Object.keys(schema.properties).sort());
+    expect(Object.keys(schema.properties)).toEqual([
+      "title",
+      "description",
+      "prep_minutes",
+      "cook_minutes",
+      "ingredients",
+      "steps",
+    ]);
   });
 });

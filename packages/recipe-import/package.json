@@ -15,10 +15,12 @@
     "lint": "biome check .",
     "test": "vitest run",
     "eval": "vitest run --root ../.. --project evals packages/recipe-import/evals",
-    "eval:live": "EVAL_LIVE=1 vitest run --root ../.. --project evals packages/recipe-import/evals"
+    "eval:live": "EVAL_LIVE=1 vitest run --root ../.. --project evals packages/recipe-import/evals",
+    "draft-catalog": "node scripts/draft-catalog.ts"
   },
   "dependencies": {
     "@mp/core": "workspace:*",
+    "@mp/ingredient-parser": "workspace:*",
     "@mp/llm": "workspace:*",
     "cheerio": "^1.2.0",
     "recipe-scrapers": "^3.2.0",

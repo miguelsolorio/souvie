@@ -1,0 +1,72 @@
+{
+  "description": "A can line and a plain weight line for the same ingredient: with one known can size (15 oz), 7 oz of black beans is 0.47 can, so 2 cans plus 7 oz is 3 cans, not a guess from the 14.5 oz default.",
+  "recipes": [
+    {
+      "id": "tacos",
+      "title": "Black Bean Tacos",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "2 cans (15 oz each) black beans",
+          "qty": 2,
+          "unit": "can",
+          "ingredient": "black beans"
+        }
+      ]
+    },
+    {
+      "id": "soup",
+      "title": "Black Bean Soup",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "7 oz black beans",
+          "qty": 7,
+          "unit": "oz",
+          "ingredient": "black beans"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "tacos",
+      "servings": 4
+    },
+    {
+      "id": "e2",
+      "recipe": "soup",
+      "servings": 4
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Black beans",
+        "qty": 3,
+        "unit": "can",
+        "section": "canned",
+        "rounding": {
+          "from": 2.467,
+          "fromUnit": "can",
+          "to": 3,
+          "toUnit": "can"
+        },
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 2,
+            "unit": "can"
+          },
+          {
+            "entry": "e2",
+            "qty": 0.4667,
+            "unit": "can"
+          }
+        ]
+      }
+    ]
+  }
+}

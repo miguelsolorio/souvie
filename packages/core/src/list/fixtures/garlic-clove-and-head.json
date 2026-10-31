@@ -1,0 +1,74 @@
+{
+  "description": "2 cloves garlic plus 1 head garlic is one item in heads, rounded up: 12 cloves is 1.2 heads, so 2 heads.",
+  "recipes": [
+    {
+      "id": "bread",
+      "title": "Garlic Bread",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "2 cloves garlic, minced",
+          "qty": 2,
+          "unit": "clove",
+          "ingredient": "garlic",
+          "prep": "minced"
+        }
+      ]
+    },
+    {
+      "id": "soup",
+      "title": "Roasted Garlic Soup",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 head garlic",
+          "qty": 1,
+          "unit": "head",
+          "ingredient": "garlic"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "bread",
+      "servings": 4
+    },
+    {
+      "id": "e2",
+      "recipe": "soup",
+      "servings": 4
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Garlic",
+        "qty": 2,
+        "unit": "head",
+        "section": "produce",
+        "entries": ["e1", "e2"],
+        "rounding": {
+          "from": 12,
+          "fromUnit": "clove",
+          "to": 2,
+          "toUnit": "head"
+        },
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 2,
+            "unit": "clove"
+          },
+          {
+            "entry": "e2",
+            "qty": 10,
+            "unit": "clove"
+          }
+        ]
+      }
+    ]
+  }
+}

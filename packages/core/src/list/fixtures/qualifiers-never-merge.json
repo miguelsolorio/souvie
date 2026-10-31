@@ -1,0 +1,130 @@
+{
+  "description": "A qualified line never joins an unqualified one: gluten-free penne, unsalted butter written as a qualifier, and gluten-free flour each stay their own item with the qualifier on the name. A pantry row or the staple default does not cover a qualified item; the ontology's own 'unsalted butter' is not written twice.",
+  "recipes": [
+    {
+      "id": "pasta",
+      "title": "Pasta Night",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "8 oz penne",
+          "qty": 8,
+          "unit": "oz",
+          "ingredient": "penne"
+        },
+        {
+          "text": "2 tbsp butter",
+          "qty": 2,
+          "unit": "tbsp",
+          "ingredient": "butter"
+        }
+      ]
+    },
+    {
+      "id": "celiac",
+      "title": "Celiac Pasta Night",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "8 oz gluten-free penne",
+          "qty": 8,
+          "unit": "oz",
+          "ingredient": "penne",
+          "prep": "gluten-free"
+        },
+        {
+          "text": "1 cup gluten-free all-purpose flour blend",
+          "qty": 1,
+          "unit": "cup",
+          "ingredient": "all-purpose flour",
+          "prep": "gluten-free"
+        },
+        {
+          "text": "1/2 cup unsalted butter",
+          "qty": 0.5,
+          "unit": "cup",
+          "ingredient": "butter",
+          "prep": "unsalted"
+        },
+        {
+          "text": "1 stick unsalted butter",
+          "qty": 1,
+          "unit": "stick",
+          "ingredient": "unsalted butter"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "pasta",
+      "servings": 4
+    },
+    {
+      "id": "e2",
+      "recipe": "celiac",
+      "servings": 4
+    }
+  ],
+  "pantry": [
+    {
+      "ingredient": "penne",
+      "status": "have"
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Butter",
+        "qty": 1,
+        "unit": "stick",
+        "section": "dairy",
+        "qualifiers": [],
+        "entries": ["e1"]
+      },
+      {
+        "name": "Butter (unsalted)",
+        "qty": 1,
+        "unit": "stick",
+        "section": "dairy",
+        "qualifiers": ["unsalted"],
+        "entries": ["e2"]
+      },
+      {
+        "name": "Unsalted butter",
+        "qty": 1,
+        "unit": "stick",
+        "section": "dairy",
+        "qualifiers": [],
+        "entries": ["e2"]
+      },
+      {
+        "name": "Penne",
+        "section": "pantry",
+        "qualifiers": [],
+        "excluded": "pantry",
+        "entries": ["e1"]
+      },
+      {
+        "name": "Penne (gluten-free)",
+        "qty": 1,
+        "unit": "package",
+        "section": "pantry",
+        "qualifiers": ["gluten-free"],
+        "excluded": null,
+        "entries": ["e2"]
+      },
+      {
+        "name": "All-purpose flour (gluten-free)",
+        "qty": 1,
+        "unit": "bag",
+        "section": "baking",
+        "qualifiers": ["gluten-free"],
+        "excluded": null,
+        "entries": ["e2"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "description": "A line the parser could not place becomes an item named by its raw text, in Other, flagged needs attention. It is never dropped, and a recipe made for 2 and planned for 4 does not try to scale it.",
+  "recipes": [
+    {
+      "id": "stew",
+      "title": "Mystery Stew",
+      "servings": 2,
+      "lines": [
+        {
+          "text": "2 cups chicken broth",
+          "qty": 2,
+          "unit": "cup",
+          "ingredient": "chicken broth"
+        },
+        {
+          "text": "1 handful frobnitz leaves",
+          "qty": 1,
+          "unit": "handful",
+          "ingredient": null
+        },
+        {
+          "text": "a pinch of za'atar",
+          "qty": null,
+          "unit": null,
+          "ingredient": null
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "stew",
+      "servings": 4
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 2,
+    "items": [
+      {
+        "name": "Chicken broth",
+        "qty": 1,
+        "unit": "package",
+        "section": "pantry",
+        "attention": false,
+        "rounding": {
+          "from": 4,
+          "fromUnit": "cup",
+          "to": 1,
+          "toUnit": "package"
+        }
+      },
+      {
+        "name": "1 handful frobnitz leaves",
+        "qty": null,
+        "unit": null,
+        "section": "other",
+        "attention": true,
+        "entries": ["e1"]
+      },
+      {
+        "name": "a pinch of za'atar",
+        "qty": null,
+        "unit": null,
+        "section": "other",
+        "attention": true,
+        "entries": ["e1"]
+      }
+    ]
+  }
+}

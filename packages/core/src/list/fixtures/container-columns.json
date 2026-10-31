@@ -1,0 +1,71 @@
+{
+  "description": "CCR5 columns populated: '2 (14 oz) cans' is 2 cans holding 28 oz, '1 (28 oz) can' is 1 can. Together they are 3 cans, and the list never turns the 28 oz totals into 4 cans by weight.",
+  "recipes": [
+    {
+      "id": "soup",
+      "title": "Tomato Soup",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "2 (14 oz) cans diced tomatoes",
+          "qty": 28,
+          "unit": "oz",
+          "ingredient": "diced tomatoes",
+          "containerCount": 2,
+          "container": "can"
+        }
+      ]
+    },
+    {
+      "id": "chili",
+      "title": "Chili",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 (28 oz) can diced tomatoes",
+          "qty": 28,
+          "unit": "oz",
+          "ingredient": "diced tomatoes",
+          "containerCount": 1,
+          "container": "can"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "soup",
+      "servings": 4
+    },
+    {
+      "id": "e2",
+      "recipe": "chili",
+      "servings": 4
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Diced tomatoes",
+        "qty": 3,
+        "unit": "can",
+        "section": "canned",
+        "rounding": null,
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 2,
+            "unit": "can"
+          },
+          {
+            "entry": "e2",
+            "qty": 1,
+            "unit": "can"
+          }
+        ]
+      }
+    ]
+  }
+}

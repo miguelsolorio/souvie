@@ -145,3 +145,17 @@ These settle the open questions above and override the brief where they differ. 
 
 ## Completion report
 End with the completion report from `docs/implementation-guide.md` §6.2 (Message templates). Include the aggregate test output, Edge Function timing, and offline evidence under Verification output.
+
+## Follow-ups (recorded by the orchestrator after review, 2026-10-31)
+
+Merged as b9522ce (PR #16). Nits from the re-review of 8321739, none blocking, for a later pass on these files:
+- Replay queue sign-out race: a send that finds no session should be treated as retry, not `forbidden`, so a parked operation is not dropped in the effect-cleanup window (`ListSyncLifecycle.tsx`, `listQueue.ts`).
+- The per-user queue wiring (`ListSyncLifecycle`, `useActor`, `usePendingListOps`) has no render-level test.
+- Parked queues never expire; a user who never returns leaves item names on the device. Decide an expiry and say so in docs/05.
+- The pantry write is two statements; an update that matches zero rows (another member cleared the row in between) is lost silently. Check the row count and retry the insert.
+- The check guard still accepts another member's id when the row's previous `checked_by` already equals it; the trigger stamps the caller, so the effect is harmless, but docs/02 overstates the guard.
+- A structured per-item pack size (`{ qty, unit, container }`) for WS09; today the size is only in `detail.contributions[].rawTexts`.
+- A network-status library so reconnect is detected by event.
+- From the builder: WS03 fills `container_count` and `container` in the parser and adds densities so "1 cup diced onion" and "2 onions" can be summed; the orchestrator deploys `list-build` at the hosted release.
+
+Criteria 3 (HTTP timing), 8 (two real devices on Realtime) and 10 (a real 1280 px render) rest on stand-ins until the hosted stack exists.

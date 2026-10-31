@@ -1,0 +1,65 @@
+{
+  "description": "An onion measured in cups in one recipe and counted in another cannot be added (no density): two items, both flagged needs attention, neither dropped. A size word counts as one onion.",
+  "recipes": [
+    {
+      "id": "soup",
+      "title": "Onion Soup",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 cup diced onion",
+          "qty": 1,
+          "unit": "cup",
+          "ingredient": "yellow onion",
+          "prep": "diced"
+        }
+      ]
+    },
+    {
+      "id": "roast",
+      "title": "Roast",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "2 medium onions",
+          "qty": 2,
+          "unit": "medium",
+          "ingredient": "yellow onion"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "soup",
+      "servings": 4
+    },
+    {
+      "id": "e2",
+      "recipe": "roast",
+      "servings": 4
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 2,
+    "items": [
+      {
+        "name": "Yellow onion",
+        "qty": 1,
+        "unit": "cup",
+        "section": "produce",
+        "attention": true,
+        "entries": ["e1"]
+      },
+      {
+        "name": "Yellow onion",
+        "qty": 2,
+        "unit": "each",
+        "section": "produce",
+        "attention": true,
+        "entries": ["e2"]
+      }
+    ]
+  }
+}

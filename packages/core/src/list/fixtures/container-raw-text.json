@@ -1,0 +1,93 @@
+{
+  "description": "The parser fills no container columns yet, so the list reads the two patterns from the raw text: '2 cans (15 oz each)' arrives as 2 can, '2 (14 oz) cans' as 28 oz. Planned at 6 for a recipe of 4, 3 cans stay 3, and 1.5 cans of sauce round up to 2.",
+  "recipes": [
+    {
+      "id": "tacos",
+      "title": "Black Bean Tacos",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "2 cans (15 oz each) black beans, drained and rinsed",
+          "qty": 2,
+          "unit": "can",
+          "ingredient": "black beans",
+          "prep": "drained and rinsed"
+        },
+        {
+          "text": "2 (14 oz) cans diced tomatoes",
+          "qty": 28,
+          "unit": "oz",
+          "ingredient": "diced tomatoes"
+        },
+        {
+          "text": "1 (15 oz) can tomato sauce",
+          "qty": 15,
+          "unit": "oz",
+          "ingredient": "tomato sauce"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "tacos",
+      "servings": 6
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Black beans",
+        "qty": 3,
+        "unit": "can",
+        "section": "canned",
+        "rounding": null,
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 3,
+            "unit": "can",
+            "servings": 6
+          }
+        ]
+      },
+      {
+        "name": "Diced tomatoes",
+        "qty": 3,
+        "unit": "can",
+        "section": "canned",
+        "rounding": null,
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 3,
+            "unit": "can",
+            "servings": 6
+          }
+        ]
+      },
+      {
+        "name": "Tomato sauce",
+        "qty": 2,
+        "unit": "can",
+        "section": "canned",
+        "rounding": {
+          "from": 1.5,
+          "fromUnit": "can",
+          "to": 2,
+          "toUnit": "can"
+        },
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 1.5,
+            "unit": "can",
+            "servings": 6
+          }
+        ]
+      }
+    ]
+  }
+}

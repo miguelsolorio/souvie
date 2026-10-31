@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { LIST_ROUTE } from "../list/routes";
 import { clearPlanNotice, getPlanNotice, NOTICE_DURATION_MS, showPlanNotice } from "./notice";
 import {
   dayRoute,
@@ -23,8 +24,9 @@ describe("routes", () => {
     expect(recipeRoute("r1")).toBe("/recipes/r1");
   });
 
-  it("leaves Generate list disabled, with a reason, until WS05 provides a route", () => {
-    expect(GROCERY_LIST_ROUTE).toBeNull();
+  it("sends Generate list to the grocery list screen WS05 provides", () => {
+    // The list screen builds the list on arrival when the week has none: one tap, as the brief says.
+    expect(GROCERY_LIST_ROUTE).toBe(`${LIST_ROUTE}?build=1`);
     expect(GROCERY_LIST_PENDING_HINT.length).toBeGreaterThan(0);
   });
 });

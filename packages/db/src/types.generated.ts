@@ -98,6 +98,166 @@ export type Database = {
           },
         ];
       };
+      grocery_list_items: {
+        Row: {
+          checked: boolean;
+          checked_at: string | null;
+          checked_by: string | null;
+          created_at: string;
+          detail: NonNullable<Json>;
+          display_name: string;
+          edited: boolean;
+          excluded_reason: Database["public"]["Enums"]["grocery_list_items_excluded_reason"] | null;
+          household_id: string;
+          id: string;
+          ingredient_id: string | null;
+          is_manual: boolean;
+          list_id: string;
+          needs_attention: boolean;
+          position: number;
+          qty: number | null;
+          qualifiers: string[];
+          section: string;
+          source_entry_ids: string[];
+          unit: string | null;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          checked?: boolean;
+          checked_at?: string | null;
+          checked_by?: string | null;
+          created_at?: string;
+          detail?: NonNullable<Json>;
+          display_name: string;
+          edited?: boolean;
+          excluded_reason?:
+            | Database["public"]["Enums"]["grocery_list_items_excluded_reason"]
+            | null;
+          household_id: string;
+          id?: string;
+          ingredient_id?: string | null;
+          is_manual?: boolean;
+          list_id: string;
+          needs_attention?: boolean;
+          position?: number;
+          qty?: number | null;
+          qualifiers?: string[];
+          section?: string;
+          source_entry_ids?: string[];
+          unit?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          checked?: boolean;
+          checked_at?: string | null;
+          checked_by?: string | null;
+          created_at?: string;
+          detail?: NonNullable<Json>;
+          display_name?: string;
+          edited?: boolean;
+          excluded_reason?:
+            | Database["public"]["Enums"]["grocery_list_items_excluded_reason"]
+            | null;
+          household_id?: string;
+          id?: string;
+          ingredient_id?: string | null;
+          is_manual?: boolean;
+          list_id?: string;
+          needs_attention?: boolean;
+          position?: number;
+          qty?: number | null;
+          qualifiers?: string[];
+          section?: string;
+          source_entry_ids?: string[];
+          unit?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "grocery_list_items_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "grocery_list_items_ingredient_id_fkey";
+            columns: ["ingredient_id"];
+            isOneToOne: false;
+            referencedRelation: "ingredients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "grocery_list_items_list_id_fkey";
+            columns: ["list_id"];
+            isOneToOne: false;
+            referencedRelation: "grocery_lists";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      grocery_lists: {
+        Row: {
+          built_at: string | null;
+          created_at: string;
+          deleted_at: string | null;
+          household_id: string;
+          id: string;
+          name: string;
+          plan_fingerprint: string | null;
+          plan_id: string | null;
+          plan_version: number;
+          section_order: string[] | null;
+          status: Database["public"]["Enums"]["grocery_lists_status"];
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          built_at?: string | null;
+          created_at?: string;
+          deleted_at?: string | null;
+          household_id: string;
+          id?: string;
+          name: string;
+          plan_fingerprint?: string | null;
+          plan_id?: string | null;
+          plan_version?: number;
+          section_order?: string[] | null;
+          status?: Database["public"]["Enums"]["grocery_lists_status"];
+          updated_at?: string;
+        };
+        Update: {
+          built_at?: string | null;
+          created_at?: string;
+          deleted_at?: string | null;
+          household_id?: string;
+          id?: string;
+          name?: string;
+          plan_fingerprint?: string | null;
+          plan_id?: string | null;
+          plan_version?: number;
+          section_order?: string[] | null;
+          status?: Database["public"]["Enums"]["grocery_lists_status"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "grocery_lists_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "grocery_lists_plan_id_fkey";
+            columns: ["plan_id"];
+            isOneToOne: false;
+            referencedRelation: "meal_plans";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       household_invites: {
         Row: {
           created_at: string;
@@ -526,6 +686,43 @@ export type Database = {
             columns: ["household_id"];
             isOneToOne: false;
             referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pantry_items: {
+        Row: {
+          household_id: string;
+          ingredient_id: string;
+          status: Database["public"]["Enums"]["pantry_items_status"];
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          household_id: string;
+          ingredient_id: string;
+          status: Database["public"]["Enums"]["pantry_items_status"];
+          updated_at?: string;
+        };
+        Update: {
+          household_id?: string;
+          ingredient_id?: string;
+          status?: Database["public"]["Enums"]["pantry_items_status"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pantry_items_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pantry_items_ingredient_id_fkey";
+            columns: ["ingredient_id"];
+            isOneToOne: false;
+            referencedRelation: "ingredients";
             referencedColumns: ["id"];
           },
         ];
@@ -1048,8 +1245,11 @@ export type Database = {
           used: number;
         }[];
       };
+      section_order_is_valid: { Args: { names: string[] }; Returns: boolean };
     };
     Enums: {
+      grocery_list_items_excluded_reason: "pantry" | "manual";
+      grocery_lists_status: "draft" | "active" | "shopped";
       household_members_role: "owner" | "member";
       import_jobs_kind: "url" | "text" | "photo" | "caption";
       import_jobs_status: "queued" | "running" | "done" | "failed";
@@ -1058,6 +1258,7 @@ export type Database = {
       ingredient_parse_cache_source: "grammar" | "llm";
       meal_plan_entries_slot: "breakfast" | "lunch" | "dinner" | "snack";
       meal_plan_entries_status: "planned" | "cooked" | "skipped";
+      pantry_items_status: "have" | "low" | "out";
       product_matches_chosen_by: "agent" | "user";
       recipe_feedback_signal: "like" | "dislike" | "cooked" | "skipped" | "saved";
       recipes_source_type: "url" | "text" | "photo" | "video" | "manual" | "ai";
@@ -1181,6 +1382,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      grocery_list_items_excluded_reason: ["pantry", "manual"],
+      grocery_lists_status: ["draft", "active", "shopped"],
       household_members_role: ["owner", "member"],
       import_jobs_kind: ["url", "text", "photo", "caption"],
       import_jobs_status: ["queued", "running", "done", "failed"],
@@ -1189,6 +1392,7 @@ export const Constants = {
       ingredient_parse_cache_source: ["grammar", "llm"],
       meal_plan_entries_slot: ["breakfast", "lunch", "dinner", "snack"],
       meal_plan_entries_status: ["planned", "cooked", "skipped"],
+      pantry_items_status: ["have", "low", "out"],
       product_matches_chosen_by: ["agent", "user"],
       recipe_feedback_signal: ["like", "dislike", "cooked", "skipped", "saved"],
       recipes_source_type: ["url", "text", "photo", "video", "manual", "ai"],

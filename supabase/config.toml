@@ -446,6 +446,15 @@ verify_jwt = true
 import_map = "./functions/suggest/deno.json"
 entrypoint = "./functions/suggest/index.ts"
 
+# Grocery list (WS05): turns a week's plan into the household's list, keeping check-offs, manual
+# items and edits on a rebuild. verify_jwt stays on: it answers only for a signed-in member of the
+# household it builds for.
+[functions.list-build]
+enabled = true
+verify_jwt = true
+import_map = "./functions/list-build/deno.json"
+entrypoint = "./functions/list-build/index.ts"
+
 [analytics]
 enabled = true
 port = 54327

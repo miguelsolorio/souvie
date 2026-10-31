@@ -267,6 +267,25 @@ Realtime: `meal_plans` and `meal_plan_entries` are in the `supabase_realtime` pu
 | updated_at | timestamptz | |
 | pk (household_id, ingredient_id) | | |
 
+As built (WS05, 2026-10-30): the tables match the shapes above, with these specifics. The three enums are Postgres enums named `grocery_lists_status`, `grocery_list_items_excluded_reason` and `pantry_items_status`. `grocery_lists.plan_version` defaults to 0 and `list-build` sets it to 1 on the first build. A plan has at most one live list (a unique index on `plan_id` where `deleted_at` is null), and `plan_id` is `on delete set null`. Both list tables carry `created_at` and `updated_at`; `pantry_items` carries only `updated_at`.
+
+Columns beyond the sketch, all defaulted, so nothing that reads the sketched columns changes:
+
+| column | type | notes |
+|---|---|---|
+| grocery_lists.section_order | text[] | The household's aisle order for this list. Null means the default order from `docs/03` §6. A new list copies the order of the household's latest list. At most 40 names of 1 to 40 characters each (`section_order_is_valid`, since a check constraint cannot hold a subquery). |
+| grocery_list_items.qualifiers | text[] | What the recipe lines asked for beyond the ingredient: `gluten-free`, `unsalted`. A qualified line is never merged into an unqualified one, and a qualified item is never covered by the pantry. The qualifier is also written into `display_name` ("Penne (gluten-free)"). WS09 sends it to the retailer search. |
+| grocery_list_items.edited | boolean | True once a person changed the quantity, unit or section. A rebuild keeps those three and refreshes the rest. |
+| grocery_list_items.detail | jsonb | `core.ItemDetail`: the contributions behind the amount (recipe, servings, converted quantity, raw lines), the rounding step, and why the item needs attention. This is the "Why this amount" sheet. Only `list-build` writes it. |
+
+Meanings worth knowing. `excluded_reason = 'pantry'` rows stay on the list so the app can show them under "Already have"; a staple (`is_staple_default`) with no `pantry_items` row counts as `have`, and no row is written for it until the household changes it. `excluded_reason = 'manual'` means a person took the item off the list; a rebuild keeps it off. `checked_by` and `checked_at` record the last toggle, check or uncheck, and the pair is stamped by a trigger; a toggle that changes `checked` and sends no `checked_at` is stamped with the server time. A pantry write from the app is an insert that ignores a conflict followed by an update of `status`, never a merge upsert, which PostgREST turns into `DO UPDATE SET` every payload column and the `update (status)` grant refuses.
+
+Triggers. `grocery_list_items_sync` copies `household_id` from the list (so a client cannot forge it) and refuses an item for a list the caller cannot see (`list_not_found`). `grocery_list_items_check_guard` runs for signed-in callers when a check column changes: `checked_by` must equal `auth.uid()` (another member's id raises `checked_by_mismatch`, SQLSTATE 42501) and is stamped with it when omitted; `checked_at` is capped five minutes past the server clock; and a toggle older than the one on the row is dropped without an error, which makes a check last-writer-wins by `checked_at` so a late replay from an offline phone never overwrites a newer toggle. `grocery_lists_check_plan` refuses a plan from another household (`plan_not_found`).
+
+Grants and policies: members of a household read all three tables. Clients cannot create a list. They update a list's `name`, `status`, `section_order` and `deleted_at`. On items they insert only manual items `(id, list_id, household_id, display_name, qty, unit, section, position, is_manual)`, with a policy that requires `is_manual`; they update `(display_name, qty, unit, section, position, edited, excluded_reason, checked, checked_by, checked_at)`; and they delete only manual items. An automatic item is removed from a list by setting `excluded_reason = 'manual'`. On `pantry_items` clients insert `(household_id, ingredient_id, status)`, update `status`, and delete. The service role writes everything; `list-build` runs as it (`set local role service_role`), so it can write the tables but cannot run DDL.
+
+Realtime: `grocery_lists` and `grocery_list_items` are in the `supabase_realtime` publication, and `grocery_list_items` has `replica identity full`, because Realtime applies no row level security to deletes and can filter a delete by `household_id` or `list_id` only when the old row is fully logged. Delete exposure: a client that knows another household's UUID can subscribe with a `household_id` filter for that UUID and receive primary-key-only delete notices for that household's items. The notice carries no row content (no name, amount or section), and the UUID is not guessable, but the exposure is real and is the price of delete events reaching the other members' phones. Inserts and updates are not affected by that: Realtime checks row level security on them, so only members of the household receive them. Their payloads carry the full item row, `detail` included (the contributions behind the amount and the recipes' own ingredient lines), not only a key like the delete notice. Query keys: `['grocery-list', householdId, listId]` for a list, `['grocery-list', householdId, listId, 'items']` for its items, and `['pantry', householdId]`; the list found by its plan is under `['grocery-list', householdId, 'plan', planId]`.
+
 ### Retail
 
 **retailer_connections**
@@ -331,7 +350,7 @@ As built (WS07, 2026-10-30): `retailer_connections` and `product_matches` carry 
 | connection_id | uuid → retailer_connections | |
 | trigger | enum shopping_runs_trigger: manual, scheduled | |
 | status | enum shopping_runs_status: queued, running, needs_review, cart_ready, checking_out, checked_out, failed, cancelled | |
-| policy | jsonb | `core.RunPolicy`: budget_cap_usd, item_ceiling_usd, substitution (none/same_brand/any), auto_checkout boolean, auto_checkout_cap_usd |
+| policy | jsonb | `core.RunPolicy` (CCR6, `packages/core/src/run.ts`), stored as is: budget_cap_usd, per_item_ceiling_usd, substitution (none/same_brand/any), auto_checkout boolean, auto_checkout_cap_usd, max_tool_calls, max_wall_clock_seconds |
 | cart_snapshot | jsonb | The proposed cart shown at review. Expires: cleared by a job 24h after the run closes (Kroger terms) |
 | subtotal_usd | numeric | At review time |
 | transcript | jsonb | Array of {ts, tool, input, output_summary, screenshot_path?} |
@@ -387,7 +406,7 @@ As built (WS07, 2026-10-30): `retailer_connections` and `product_matches` carry 
 | last_enqueued_for | timestamptz | The `next_run_at` value already enqueued; idempotency guard |
 | enabled | boolean | |
 
-**push_tokens** (WS11)
+**push_tokens** (created by WS09 exactly as sketched, since its two run pushes need it; WS11 extends it)
 | column | type |
 |---|---|
 | user_id | uuid → auth.users |
@@ -496,9 +515,9 @@ Files are created with `supabase migration new <name>` and carry a timestamp pre
 | 8 | lists | grocery_lists, grocery_list_items, pantry_items, Realtime publication | WS05 |
 | 9 | retail | retailer_connections, product_matches, retailer_quota_usage, retailer_user_usage, FK `households.default_connection_id` → `retailer_connections` | WS07 |
 | 10 | ws06_preferences | profiles.preferences, onboarding_step, taste_embedding, costco_member | WS06 |
-| 11 | runs | shopping_runs, shopping_run_items, pgmq queue `shopping_run` | WS09 |
+| 11 | runs | shopping_runs, shopping_run_items, push_tokens, pgmq queue `shopping_run` | WS09 |
 | 12 | tier3 | households.tier3_consent, Storage bucket `run-screenshots` | WS08 |
-| 13 | schedules_notifications | scheduled_runs, push_tokens, notification_preferences, notification_outbox, households.quiet_hours, pg_cron jobs | WS11 |
+| 13 | schedules_notifications | scheduled_runs, notification_preferences, notification_outbox, households.quiet_hours, pg_cron jobs (push_tokens created by WS09) | WS11 |
 | 14 | orders_and_history | orders, the three history views | WS12 |
 | 15 | waitlist | waitlist | WS14 |
 | 16 | observability | households.ai_daily_cap_usd, shopping_runs.heartbeat_at, `shopping_run_dlq` queue, cost views | WS15 |

@@ -56,11 +56,14 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 - [x] CCR5: `containerCount` and `container` in `packages/core` (orchestrator) before dispatch. Merged 2026-10-30 as 6fde545 (PR #14); row-schema addendum merged as a1f37c4 (PR #15).
 - [x] Dispatch WS05 (sonnet). Dispatched 2026-10-30.
-- [ ] WS05: review, merge, wave 4 summary.
+- [x] WS05: review, merge, wave 4 summary. Merged 2026-10-31 as b9522ce (PR #16); summary in `docs/status.md`.
+- [ ] **Human (with the hosted release):** `supabase functions deploy list-build --use-api` once the token scopes allow, then one hosted build as the smoke test.
 
 ## 6. Wave 5: the shopping agent
 
-- [ ] Dispatch WS09 (opus). Expect contract change requests here; apply them on `main` yourself.
+- [ ] CCR6: `RunPolicy` in `packages/core` and `RetailerAdapter.checkout` typed to it (orchestrator). On PR #17, 2026-10-31.
+- [x] WS09 brief corrections written (2026-10-31): service-role decision, `push_tokens`, docs/03 numbers, as-built facts.
+- [x] Dispatch WS09 (opus). Dispatched 2026-10-31. Expect contract change requests here; apply them on `main` yourself.
 - [ ] Review with extra attention to policies-in-code, the write ledger, and the allergen check.
 - [ ] Merge, summary. This is the Phase 2 moment: a scheduled run should fill a real QFC cart.
 

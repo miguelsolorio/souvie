@@ -1,0 +1,93 @@
+{
+  "description": "A recipe for 4 planned at 6 servings scales every line by 1.5. 1 cup carrot is 1.5 cups, 2 tbsp soy sauce is 3 tbsp (one bottle), 1 lb chicken thigh is 1.5 lb.",
+  "recipes": [
+    {
+      "id": "chicken",
+      "title": "Weeknight Chicken",
+      "servings": 4,
+      "lines": [
+        {
+          "text": "1 cup diced carrot",
+          "qty": 1,
+          "unit": "cup",
+          "ingredient": "carrot",
+          "prep": "diced"
+        },
+        {
+          "text": "2 tbsp soy sauce",
+          "qty": 2,
+          "unit": "tbsp",
+          "ingredient": "soy sauce"
+        },
+        {
+          "text": "1 lb chicken thighs",
+          "qty": 1,
+          "unit": "lb",
+          "ingredient": "chicken thigh"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "recipe": "chicken",
+      "servings": 6
+    }
+  ],
+  "expect": {
+    "needsAttentionCount": 0,
+    "items": [
+      {
+        "name": "Carrot",
+        "qty": 1.5,
+        "unit": "cup",
+        "section": "produce",
+        "rounding": null,
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 1.5,
+            "unit": "cup",
+            "servings": 6
+          }
+        ]
+      },
+      {
+        "name": "Chicken thigh",
+        "qty": 1.5,
+        "unit": "lb",
+        "section": "meat",
+        "rounding": null,
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 1.5,
+            "unit": "lb",
+            "servings": 6
+          }
+        ]
+      },
+      {
+        "name": "Soy sauce",
+        "qty": 1,
+        "unit": "bottle",
+        "section": "pantry",
+        "rounding": {
+          "from": 3,
+          "fromUnit": "tbsp",
+          "to": 1,
+          "toUnit": "bottle"
+        },
+        "contributions": [
+          {
+            "entry": "e1",
+            "qty": 3,
+            "unit": "tbsp",
+            "servings": 6
+          }
+        ]
+      }
+    ]
+  }
+}

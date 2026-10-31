@@ -43,6 +43,32 @@ How a write behaves, and why:
 
 `src/testing/fakeClient.ts` is an in-memory stand-in for the slice of supabase-js these hooks use (rows, filters, upsert with ignore-duplicates, failures, a gate to hold a request in flight). It is for tests and is not exported.
 
+## The grocery list and pantry (WS05)
+
+| File | What it holds |
+|---|---|
+| `src/lists.ts` | Query keys, `ListError`, the typed reads and writes, the pure cache edits, and `isListStale` |
+| `src/hooks/useGroceryList.ts` | `useGroceryList({ planId \| listId })`: a list by its plan or by id, or null when the week has none. `useLatestGroceryList`, `usePlanWeekStart` |
+| `src/hooks/useGroceryListItems.ts` | `useGroceryListItems(listId)`: the server's items with this device's unsent writes laid over them. `usePendingListOps` counts what is waiting |
+| `src/hooks/useToggleItem.ts` | `useToggleItem()` (check off), `useEditItem()` (amount, unit, section), `useRemoveItem()` (delete a manual item; take an automatic one off the list) |
+| `src/hooks/useAddManualItem.ts` | `useAddManualItem(listId)`: a free-text item with a device-made id |
+| `src/hooks/useBuildList.ts` | `useBuildList()` calls the `list-build` Edge Function; `useUpdateList(listId)` renames, marks shopped, sets the aisle order |
+| `src/hooks/usePantry.ts` | `usePantry()` (staples as "have (default)" plus the household's rows), `useIngredientSearch(term)` |
+| `src/offline/replayQueue.ts` | `ReplayQueue`, `coalesceOps`, `overlayOps`: the saved queue of writes and how the screen shows them |
+| `src/offline/listQueue.ts` | Binds a queue to Supabase and the cache: `acquireListQueue`, `configureReplayStorage`, `setListWriteFailureHandler` |
+| `src/realtime/lists.ts` | `useListRealtime(householdId)`: one reference-counted channel per household that puts remote item changes straight into the cache |
+
+How a list write behaves, and why:
+
+- A tap is not a request. A check-off, edit, add or delete is an operation appended to a queue saved on the device (`configureReplayStorage`; the app passes its key-value storage). The screen shows the server's list with the queued operations laid over it, so the answer is instant, survives a restart, and a refetch or a remote change cannot undo a tap that has not been sent.
+- Operations are collapsed before they are sent (ten toggles of one item are one write; removing an item cancels what was queued for it) and sent one at a time, in order. The operation being sent is never changed or cancelled: what is queued meanwhile merges only with the operations behind it, or goes after it. Each is safe to send twice: a check is an explicit state stamped with the time of the tap (the database keeps the newest toggle and stamps `checked_by` with the caller), an add is `INSERT ... ON CONFLICT (id) DO NOTHING` with a device-made id, an edit sends only the changed columns, and a delete that finds nothing counts as done.
+- A dead connection stops the queue and retries with backoff (2 s doubling to 30 s) and never gives up. A write the server refuses (permission, invalid value) is dropped, reported through `setListWriteFailureHandler`, and the screen goes back to what the server holds. The queue is kicked on app foreground, when the browser reports it is online, and every time the Realtime channel (re)joins. There is no network-status library in the app yet, so a dead connection is found by a send failing.
+- Editing an amount, unit or section sets `edited`, which makes a rebuild keep the person's answer. `list-build` keeps checked state, manual items and edits when it rebuilds; see `supabase/functions/list-build/README.md`.
+- The queue is the signed-in person's: it is saved under `mp-list-queue:<userId>:<householdId>`, `ListSyncLifecycle` replays only that person's queue, and on sign-out or a change of user it stops the loop and timer and leaves the saved operations parked under their key, untouched, until that person signs in again. Hooks ask for the queue when an operation is made, never keep one across a sign-out.
+- A pantry write (`writePantryStatus`) is an insert that ignores a conflict followed by an update of `status`, because PostgREST turns a merge upsert into `DO UPDATE SET` every payload column and clients may update `status` only.
+- The list, its items and the pantry are persisted to device storage (`meta.persist`), with the household in every key. Nothing here touches retailer data.
+- A remote item change is applied to the cache from the Realtime payload (no refetch). A payload that does not parse, or a burst, becomes one debounced invalidation of `['grocery-list', householdId]`.
+
 ## Types
 
 `src/types.generated.ts` is generated, not edited. The committed file is the output of `supabase gen types typescript` from the CI stack, formatted by Biome. CI regenerates it on every run and fails if it differs from the committed file, and uploads the fresh copy as the `types.generated.ts` artifact. A migration that changes a table or function therefore needs the regenerated file in the same branch.

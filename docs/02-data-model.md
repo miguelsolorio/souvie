@@ -233,7 +233,8 @@ Realtime: `meal_plans` and `meal_plan_entries` are in the `supabase_realtime` pu
 | name | text | |
 | status | enum grocery_lists_status: draft, active, shopped | |
 | built_at | timestamptz | Last aggregation |
-| plan_version | int | Detects a plan changed after the build |
+| plan_version | int | Build counter, incremented on every rebuild |
+| plan_fingerprint | text | SHA-256 over the plan's entries as sorted `(id, recipe_id, servings, status)` tuples at build time; the client recomputes it to show the out-of-date banner. Decided 2026-10-30 at the WS05 dispatch, since `meal_plans` has no version counter and deletes leave no `updated_at` trace |
 
 **grocery_list_items**
 | column | type | notes |

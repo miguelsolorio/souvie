@@ -17,7 +17,7 @@ One tap turns the week's plan into a single grocery list: ingredient lines from 
 4. `docs/06-risks.md` R2, R6
 
 ## In scope
-- Migration `<timestamp>_lists.sql`: `grocery_lists`, `grocery_list_items`, `pantry_items` with RLS and Realtime publication
+- Migration `20261030160000_lists.sql`: `grocery_lists`, `grocery_list_items`, `pantry_items` with RLS and Realtime publication
 - `packages/core/src/list/aggregate.ts`: pure function `buildList(entries, recipes, ingredients, pantry, options) -> GroceryListDraft` that scales, normalizes, sums, excludes, rounds, and groups; `packages/core/src/list/sections.ts` with default section order and per-store overrides
 - Edge Function `list-build`: loads the plan for a `weekStart`, calls `buildList`, upserts a `grocery_lists` row with `plan_id` and replaces its items while preserving `checked` state and manual edits for items whose `ingredient_id` is unchanged
 - Lines with `ingredient_id = null` (unparsed) become items with `display_name = raw_text` and a "needs attention" flag; never dropped
@@ -35,8 +35,8 @@ One tap turns the week's plan into a single grocery list: ingredient lines from 
 - Recipe or plan editing (WS02, WS04)
 
 ## Deliverables
-- `supabase/migrations/<timestamp>_lists.sql`
-- `supabase/tests/005_rls_lists.sql`
+- `supabase/migrations/20261030160000_lists.sql`
+- `supabase/tests/006_rls_lists.sql`
 - `supabase/functions/list-build/index.ts`
 - `packages/core/src/list/aggregate.ts`, `src/list/sections.ts`, `src/list/types.ts` (zod `GroceryList`, `GroceryListItem`, `GroceryListDraft`, `PantryItem`, `Section`), `src/list/aggregate.test.ts`, `src/list/fixtures/*.json`
 - `packages/db/src/hooks/useGroceryList.ts`, `useGroceryListItems.ts`, `useToggleItem.ts`, `useAddManualItem.ts`, `usePantry.ts`, `useBuildList.ts`, `src/realtime/lists.ts`, `src/offline/replayQueue.ts`
@@ -81,7 +81,7 @@ If `GroceryListItem` needs fields WS09 will want (for example `retailerHints`), 
 `produce, bakery, meat, seafood, dairy, eggs, frozen, canned, pantry, baking, spices, international, snacks, beverages, household, other`
 
 ## Acceptance criteria
-1. `supabase db reset` applies the lists migration; `supabase test db` passes `005_rls_lists.sql`, including that a member cannot read another household's list and that `checked_by` must equal `auth.uid()` on update.
+1. `supabase db reset` applies the lists migration; `supabase test db` passes `006_rls_lists.sql`, including that a member cannot read another household's list and that `checked_by` must equal `auth.uid()` on update.
 2. `buildList` unit tests cover: two recipes each needing "1 cup diced onion" at the recipe's servings produce one item of 2 cups; scaling 4 servings to 6 scales quantities by 1.5; "2 cloves garlic" plus "1 head garlic" produce one item in heads, rounded up; "1 lb chicken thighs" plus "8 oz chicken thighs" produce 1.5 lb; a pantry `have` item is excluded with `excludedReason = 'pantry'`; an unparsed line becomes a `needsAttention` item named by its raw text; items are grouped by section in the default order.
 3. Building the list for a fixture week of 5 dinners produces a list in under 2 seconds (Edge Function timing in report) and `needsAttentionCount` matches the number of null `ingredient_id` lines.
 4. Rebuilding after the plan changes preserves `checked = true` on items whose `ingredient_id` is unchanged and preserves manual items.
@@ -95,7 +95,7 @@ If `GroceryListItem` needs fields WS09 will want (for example `retailerHints`), 
 
 ## Verification commands
 ```bash
-supabase db reset && supabase test db                        # lists migration applied, 005 passes
+supabase db reset && supabase test db                        # lists migration applied, 006 passes
 pnpm --filter @mp/core test -- list                          # aggregate tests pass
 pnpm typecheck && pnpm lint && pnpm test                     # exit 0
 supabase functions serve list-build                          # then:
@@ -127,6 +127,21 @@ pnpm --filter @mp/mobile start                               # manual: airplane-
 6. Pantry screen and staple pre-population on household creation.
 7. Store mode; airplane-mode and two-device checks; responsive screenshots.
 8. Completion report with timings.
+
+## Orchestrator corrections (2026-10-30, before dispatch)
+
+These settle the open questions above and override the brief where they differ. docs/01 to 04 still win over both.
+
+1. **Versions and names.** Your migration is `supabase/migrations/20261030160000_lists.sql` (the orchestrator's CCR5 holds `20261030150000`). Your pgTAP file is `supabase/tests/006_rls_lists.sql`, since `005_catalog_read.sql` exists. Scope every count in it to your own fixtures: `db reset` seeds 62 catalog recipes and the ontology.
+2. **docs/02 shapes win.** `grocery_lists.status`, `grocery_list_items.excluded_reason` and `pantry_items.status` are the Postgres enums named in docs/02 (`grocery_lists_status`, `grocery_list_items_excluded_reason`, `pantry_items_status`), not text checks. The default section order is docs/03 §6's (pantry before canned, frozen after snacks), not the list above; put it in `sections.ts`.
+3. **CCR5** (`20261030150000_recipe_ingredients_container.sql`, PR #14, landing on main 2026-10-30; merge `origin/main` before you touch container handling): `ParsedIngredient.containerCount` and `.container` in `@mp/core`, and `recipe_ingredients.container_count` and `.container`, both nullable. The parser does not fill them yet (a WS03 follow-up), so `buildList` uses them when present and otherwise detects the two patterns the WS03 review named in `raw_text` with a small, fixture-tested helper: "2 (14 oz) cans" (2 containers, 28 oz total) and "2 cans (14 oz each)". A known container count is never re-rounded into more containers by `toPurchasable`. Fixtures cover populated columns, raw-text-only lines, and the "1 (28 oz) can" double-buy.
+4. **`packages/core/src/units.ts`.** You may extend `PACK_SIZES`, `CATEGORY_PACKS`, `convert` and `toPurchasable` (and `units.test.ts`) for can sizes, container counts and `qty_max`, keeping every existing test green. No other file in `packages/core` outside `src/list/*` and the one export line in `src/index.ts`.
+5. **Staleness.** `meal_plans` has no version counter and entry deletes leave no trace in `max(updated_at)`. `grocery_lists.plan_version int` is your build counter (1, 2, 3). Add `grocery_lists.plan_fingerprint text`: a SHA-256 over the plan's entries as sorted tuples of `(id, recipe_id, servings, status)`, computed by a pure helper in `aggregate.ts` and stored by `list-build`. The client computes the same fingerprint from the entries it has and shows the out-of-date banner when they differ. docs/02 carries the column.
+6. **`list-build` connection.** Connect with postgres.js over `SUPABASE_DB_URL` as `supabase/functions/suggest` does, and run every transaction under `set local role service_role` so the function keeps table privileges and loses DDL; include a test that a `create table` inside such a transaction fails. Verify the JWT, check household membership first, and register `[functions.list-build]` in `supabase/config.toml` with the same keys as `export-data`. Imports from `packages/` outside the function folder are fine; CI runs `deno check`.
+7. **Staples.** No trigger on `households` and no pre-population rows. An ingredient with `is_staple_default = true` counts as `have` when the household has no `pantry_items` row for it (docs/03 §6 step 4); the pantry screen shows those as "have (default)" and a row is written only when the person changes it.
+8. **Realtime.** Both list tables join `supabase_realtime`; `grocery_list_items` gets `replica identity full` so filtered deletes reach clients (WS04's lesson). State the delete-notice exposure in your docs/02 note as WS04 did.
+9. **Client.** Opt list queries into persistence with `meta: { persist: true }`. Set `GROCERY_LIST_ROUTE` in `apps/mobile/src/features/plan/routes.ts` (one line in WS04's file, allowed). List screens live under `apps/mobile/app/(app)/list/` and `pantry/`, behind WS06's onboarding gate like the planner. `MealPlanEntry.why` is a required nullable key; select it or parse with a narrower schema.
+10. **Qualifiers and catalog recipes.** As the notes above say: a line's `prep_note` qualifier ("gluten-free") survives onto the item and never merges into an unqualified line; catalog recipes are planned by members, so read their `recipe_ingredients` too.
 
 ## Completion report
 End with the completion report from `docs/implementation-guide.md` §6.2 (Message templates). Include the aggregate test output, Edge Function timing, and offline evidence under Verification output.

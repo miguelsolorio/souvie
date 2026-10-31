@@ -55,7 +55,8 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 ## 5. Wave 4: grocery list
 
 - [ ] CCR5: `containerCount` and `container` in `packages/core` (orchestrator) before dispatch.
-- [ ] Dispatch WS05 (sonnet). Review, merge, summary.
+- [x] Dispatch WS05 (sonnet). Dispatched 2026-10-30.
+- [ ] WS05: review, merge, wave 4 summary.
 
 ## 6. Wave 5: the shopping agent
 

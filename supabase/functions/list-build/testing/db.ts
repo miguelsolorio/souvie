@@ -7,7 +7,7 @@
 //     suggest harness already ships (../../suggest/testing/supabase-stubs.sql), read from there so
 //     there is one copy.
 // The migrations are the repo's own files, loaded below. Nothing is copied.
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
@@ -43,17 +43,6 @@ function migrationFile(name: string): string | null {
   return match ? join(MIGRATIONS_DIR, match) : null;
 }
 
-/**
- * CCR5 (recipe_ingredients.container_count and .container) is its own migration on main. Until the
- * branch carries it, the harness adds the same two columns so list-build's query runs. Remove this
- * when the real file is present, which `existsSync` below already prefers.
- */
-const CCR5_FALLBACK = `
-  alter table public.recipe_ingredients
-    add column if not exists container_count integer,
-    add column if not exists container text;
-`;
-
 export interface TestDb {
   db: PGlite;
   /** Runs statements as the database owner and returns the result of the last. */
@@ -78,9 +67,8 @@ export async function createListTestDb(options: CreateTestDbOptions = {}): Promi
 
   for (const name of HARNESS_MIGRATIONS) {
     const file = migrationFile(name);
-    if (file && existsSync(file)) await db.exec(readFileSync(file, "utf8"));
-    else if (name === "recipe_ingredients_container") await db.exec(CCR5_FALLBACK);
-    else throw new Error(`migration ${name} not found in ${MIGRATIONS_DIR}`);
+    if (!file) throw new Error(`migration ${name} not found in ${MIGRATIONS_DIR}`);
+    await db.exec(readFileSync(file, "utf8"));
   }
   if (options.pgtap) await db.exec(readFileSync(SHIM_FILE, "utf8"));
 

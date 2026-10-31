@@ -260,3 +260,29 @@ Souvie is a meal-planning app that does the shopping. It suggests a week of dinn
 - Say what it does in concrete nouns: cart, list, Saturday, QFC. Skip "seamless," "empower," "effortless," "smart," "AI-powered."
 - Never say the app pays for you. Say the agent stops at the pay button.
 - Never show a retailer's prices next to another retailer's.
+
+## 11. Tier 3 consent screen (draft v1 for checkpoint 4)
+
+Shown once when a household connects a store the agent shops by driving the store's own website in the app (WS08). The screen fills `{store}` with the store's display name. Accepting records the store and the copy version in `households.tier3_consent`; a later copy version means the screen is shown again. The continue button stays disabled until the text has been scrolled to the end and the acknowledgment is checked. Proposed `CONSENT_VERSION`: `2026-10-31`. Proposed `TIER3_RETAILERS`: Safeway, Albertsons, Haggen, Costco (Miguel confirms at checkpoint 4).
+
+**Title:** Before Souvie shops at {store}
+
+**How this works**
+Souvie opens {store}'s own website inside this app and shops as you, on your phone, while you watch. You sign in to {store} yourself, on their page. The agent searches, adds items to your cart, and picks a pickup or delivery slot when the site offers one. It stops at the pay button. You tap it. Nothing is bought without your tap unless you later turn on auto-checkout under a spending cap in Settings.
+
+**What {store}'s terms say**
+Costco's terms bar software that interacts with its services without Costco's written consent, and say the member is responsible for the account. Safeway, Albertsons and Haggen share one set of terms that bar access other than through their visual interface, any automated system, and commercial use without approval. Souvie has none of these approvals. You are the one shopping, on your own device and account, with an assistant that works the page for you. Still, {store} could treat this as a breach of its terms and lock or close your account. That risk is yours, and we want you to know it before you continue.
+
+**What we store, and what we never store**
+We never see, store or send your {store} password. You type it on {store}'s page. After you sign in, Souvie keeps your session (the cookies and site data a browser keeps) encrypted on this phone, with a key held in our server vault that only you can fetch. That is what lets the agent shop without asking you to sign in every time. The encrypted session never leaves your phone. Souvie keeps a screenshot of each step the agent takes for 30 days so you and your household can see exactly what it did; then they are deleted.
+
+**Stopping and disconnecting**
+Disconnect {store} any time in Settings. That clears the session from this phone and deletes the key from our vault. Your {store} account itself is untouched; sign out there too if you want to end the session on their side. If {store} shows a sign-in page, a verification puzzle, or a one-time code, the agent stops and hands the phone to you. We can also switch off shopping at any store for everyone if a store objects or something breaks.
+
+**Personal use only**
+This is for your household's own groceries. Do not use it to shop for a business or for resale. Costco requires an active membership; the agent cannot shop there without one.
+
+**Acknowledgment (checkbox):** I understand that Souvie will shop at {store} as me, on my device, that this may conflict with {store}'s terms and could affect my account, that my password is never stored, and that the agent stops at the pay button.
+
+Open for Miguel at checkpoint 4: approve or edit this copy; confirm the four stores; decide whether Haggen is listed by name on the screen (it is a Safeway banner and shares the account) or folded into "Safeway and Albertsons".
+

@@ -126,6 +126,7 @@ pnpm --filter mobile start                                    # manual: Assisted
 ```
 
 ## Risks and notes
+- From the WS16 review (2026-10-30): when a list item carries a qualifier ("gluten-free", "dairy-free"), the search query typed into the retailer's site and the product the agent picks must honor it; a match that drops the qualifier is a wrong product, not a near miss. Same rule as the Kroger adapter. (Moved here from the retired Instacart brief; product matching is adapter work, not the WS08 host.)
 - R16: bot detection. Mode A runs in a real WebView on the user's device with the user's cookies and IP, which is the lowest-risk posture available. Still expect challenges; the design pauses and lets the human clear them. Never add evasion.
 - R17: terms. Costco and Albertsons both prohibit this in their terms; the exposure is the user's account. Consent was recorded once at connect (WS08) and names each retailer; this WS must refuse to construct an adapter without it. The flag is a kill switch, default on. Keep per-retailer kill switch behavior: a flag payload may list disabled retailers.
 - R19: this is the only route to hands-off checkout and the product should say "with your final tap" unless `autoCheckout` is on.

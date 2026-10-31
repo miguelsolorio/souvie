@@ -235,13 +235,15 @@ interface IngredientNameRow {
 
 export interface BackfillResult {
   embedded: number;
-  /** Recipes in the household that still have no embedding. */
+  /** Recipes visible to the household (its own and the catalog) that still have no embedding. */
   remaining: number;
 }
 
 /**
- * Embeds up to `limit` of the household's recipes that have no embedding (oldest first) and
- * stores the vectors. Safe to call repeatedly: it only touches rows whose embedding is null.
+ * Embeds up to `limit` recipes that have no embedding and stores the vectors: the household's own
+ * first, oldest first, then the starter catalog (`visibility = 'catalog'`, shared by every
+ * household, so any household's call may fill it). Safe to call repeatedly: it only touches rows
+ * whose embedding is null, so a second call finds less to do and the same rows never change.
  */
 export async function embedMissingRecipes(
   sql: SqlRunner,
@@ -250,8 +252,9 @@ export async function embedMissingRecipes(
   const rows = await sql.query<MissingRow>(
     `select r.id, r.title, r.cuisine, r.tags
        from public.recipes r
-      where r.household_id = $1::uuid and r.embedding is null and r.deleted_at is null
-      order by r.created_at, r.id
+      where (r.household_id = $1::uuid or r.visibility = 'catalog')
+        and r.embedding is null and r.deleted_at is null
+      order by (r.household_id is null), r.created_at, r.id
       limit $2::int`,
     [options.householdId, options.limit],
   );
@@ -284,14 +287,16 @@ export async function embedMissingRecipes(
       if (!vector) continue;
       await sql.query(
         `update public.recipes set embedding = $1::extensions.vector
-          where id = $2::uuid and household_id = $3::uuid`,
+          where id = $2::uuid and embedding is null
+            and (household_id = $3::uuid or visibility = 'catalog')`,
         [formatVector(vector), row.id, options.householdId],
       );
     }
   }
   const remaining = await sql.query<{ n: number | string }>(
     `select count(*)::int as n from public.recipes
-      where household_id = $1::uuid and embedding is null and deleted_at is null`,
+      where (household_id = $1::uuid or visibility = 'catalog')
+        and embedding is null and deleted_at is null`,
     [options.householdId],
   );
   return { embedded: rows.length, remaining: Number(remaining[0]?.n ?? 0) };

@@ -203,7 +203,7 @@ describe("embedMissingRecipes", () => {
     await t.close();
   });
 
-  it("embeds the household's recipes only, in batches, and says how many are left", async () => {
+  it("embeds the household's recipes first, then the catalog's, never another household's", async () => {
     const seen: string[] = [];
     const embed = async (texts: readonly string[]) => {
       seen.push(...texts);
@@ -218,6 +218,11 @@ describe("embedMissingRecipes", () => {
     expect(first.remaining).toBeGreaterThan(0);
     // Ingredient names are part of the text.
     expect(seen.some((text) => text.includes("ingredients:"))).toBe(true);
+    // The household's own recipes come first: the catalog waits until they are done.
+    const catalogAfterFirst = await t.query<{ n: number }>(
+      "select count(*)::int as n from public.recipes where visibility = 'catalog' and embedding is not null",
+    );
+    expect(catalogAfterFirst[0]?.n).toBe(0);
 
     const total = first.embedded + first.remaining;
     const second = await embedMissingRecipes(t.runner, {
@@ -230,7 +235,7 @@ describe("embedMissingRecipes", () => {
     expect(first.embedded + second.embedded).toBe(total);
 
     const stored = await t.query<{ n: number }>(
-      "select count(*)::int as n from public.recipes where household_id = $1 and embedding is not null",
+      "select count(*)::int as n from public.recipes where (household_id = $1 or visibility = 'catalog') and embedding is not null",
       [FIXTURE_HOUSEHOLD],
     );
     expect(stored[0]?.n).toBe(total);
@@ -239,12 +244,59 @@ describe("embedMissingRecipes", () => {
       [OTHER_HOUSEHOLD],
     );
     expect(other[0]?.n).toBe(0);
-    // Catalog recipes belong to nobody's household and are not touched here.
+    // The starter catalog (visibility = 'catalog', no household) is embedded too.
     const catalog = await t.query<{ n: number }>(
-      "select count(*)::int as n from public.recipes where household_id is null and embedding is not null",
+      "select count(*)::int as n from public.recipes where visibility = 'catalog' and embedding is not null",
     );
-    expect(catalog[0]?.n).toBe(0);
+    expect(catalog[0]?.n).toBeGreaterThan(0);
+    // A deleted recipe is not embedded.
+    const deleted = await t.query<{ n: number }>(
+      "select count(*)::int as n from public.recipes where deleted_at is not null and embedding is not null",
+    );
+    expect(deleted[0]?.n).toBe(0);
     expect(corpus.ids.size).toBeGreaterThan(0);
+  });
+
+  it("lets another household's call fill what is left, and never rewrites a stored vector", async () => {
+    const before = await t.query<{ id: string; embedding: string }>(
+      "select id, embedding::text as embedding from public.recipes where embedding is not null order by id",
+    );
+    const embed = vi.fn(async (texts: readonly string[]) => texts.map(() => unit(9)));
+    // The fixture household's call above left the other household's own recipes.
+    const result = await embedMissingRecipes(t.runner, {
+      householdId: OTHER_HOUSEHOLD,
+      limit: 100,
+      embed,
+    });
+    expect(result.embedded).toBeGreaterThan(0);
+    expect(result.remaining).toBe(0);
+    const after = await t.query<{ id: string; embedding: string }>(
+      "select id, embedding::text as embedding from public.recipes where id = any($1::uuid[]) order by id",
+      [before.map((row) => row.id)],
+    );
+    expect(after).toEqual(before);
+    // The catalog was already done, so the call embedded only the other household's own recipes.
+    const own = await t.query<{ n: number }>(
+      "select count(*)::int as n from public.recipes where household_id = $1 and deleted_at is null",
+      [OTHER_HOUSEHOLD],
+    );
+    expect(result.embedded).toBe(own[0]?.n);
+  });
+
+  it("fills the catalog for whichever household asks", async () => {
+    await t.query("update public.recipes set embedding = null where visibility = 'catalog'");
+    const embed = async (texts: readonly string[]) => texts.map(() => unit(3));
+    const result = await embedMissingRecipes(t.runner, {
+      householdId: OTHER_HOUSEHOLD,
+      limit: 100,
+      embed,
+    });
+    const catalog = await t.query<{ n: number }>(
+      "select count(*)::int as n from public.recipes where visibility = 'catalog' and deleted_at is null and embedding is not null",
+    );
+    expect(catalog[0]?.n).toBeGreaterThan(0);
+    expect(result.embedded).toBe(catalog[0]?.n);
+    expect(result.remaining).toBe(0);
   });
 
   it("does nothing when every recipe already has a vector", async () => {

@@ -111,10 +111,10 @@ reset role;
 set local request.jwt.claims = '{"sub": "a1111111-1111-4111-8111-111111111111", "role": "authenticated"}';
 set local role authenticated;
 
-select is((select count(*)::int from public.recipes), 2, 'alice sees the two recipes of household A, including the soft-deleted one');
+select is((select count(*)::int from public.recipes where household_id in ('0a000000-0000-4000-8000-00000000000a', '0b000000-0000-4000-8000-00000000000b')), 2, 'alice sees the two recipes of household A, including the soft-deleted one (scoped to fixtures)');
 select is_empty($$select 1 from public.recipes where household_id = '0b000000-0000-4000-8000-00000000000b'$$, 'alice reads no recipe of household B');
 select is_empty($$select 1 from public.recipes where id = 'bb000000-0000-4000-8000-000000000001'$$, 'alice cannot fetch a recipe of B by id');
-select is((select count(*)::int from public.recipe_ingredients), 2, 'alice sees only the ingredient lines of A''s recipes');
+select is((select count(*)::int from public.recipe_ingredients where recipe_id in ('aa000000-0000-4000-8000-000000000001', 'aa000000-0000-4000-8000-000000000002', 'bb000000-0000-4000-8000-000000000001')), 2, 'alice sees only the ingredient lines of A''s recipes (scoped to fixtures)');
 select is_empty($$select 1 from public.recipe_ingredients where recipe_id = 'bb000000-0000-4000-8000-000000000001'$$, 'alice reads no ingredient line of B''s recipe');
 select is((select count(*)::int from public.import_jobs), 1, 'alice sees one import job');
 select is_empty($$select 1 from public.import_jobs where household_id = '0b000000-0000-4000-8000-00000000000b'$$, 'alice reads no import job of household B');
@@ -200,9 +200,9 @@ reset role;
 set local request.jwt.claims = '{"sub": "b2222222-2222-4222-8222-222222222222", "role": "authenticated"}';
 set local role authenticated;
 
-select is((select count(*)::int from public.recipes), 1, 'bob sees one recipe, his own');
+select is((select count(*)::int from public.recipes where household_id in ('0a000000-0000-4000-8000-00000000000a', '0b000000-0000-4000-8000-00000000000b')), 1, 'bob sees one recipe, his own (scoped to fixtures)');
 select is_empty($$select 1 from public.recipes where household_id = '0a000000-0000-4000-8000-00000000000a'$$, 'bob reads no recipe of household A');
-select is((select count(*)::int from public.recipe_ingredients), 2, 'bob sees only his own ingredient lines');
+select is((select count(*)::int from public.recipe_ingredients where recipe_id in ('aa000000-0000-4000-8000-000000000001', 'aa000000-0000-4000-8000-000000000002', 'bb000000-0000-4000-8000-000000000001')), 2, 'bob sees only his own ingredient lines (scoped to fixtures)');
 select is((select count(*)::int from public.import_jobs), 1, 'bob sees only his own import job');
 select is((select count(*)::int from public.ai_runs), 1, 'bob sees only his own ai_runs row');
 select is(public.__t_affected($$update public.recipes set title = 'Hijacked' where id = 'aa000000-0000-4000-8000-000000000001'$$), 0::bigint, 'bob cannot edit a recipe of A');
@@ -217,8 +217,8 @@ reset role;
 set local request.jwt.claims = '{"sub": "d4444444-4444-4444-8444-444444444444", "role": "authenticated"}';
 set local role authenticated;
 
-select is((select count(*)::int from public.recipes), 0, 'a user with no household sees no recipes');
-select is((select count(*)::int from public.recipe_ingredients), 0, 'a user with no household sees no ingredient lines');
+select is((select count(*)::int from public.recipes where household_id in ('0a000000-0000-4000-8000-00000000000a', '0b000000-0000-4000-8000-00000000000b')), 0, 'a user with no household sees no recipes (scoped to fixtures)');
+select is((select count(*)::int from public.recipe_ingredients where recipe_id in ('aa000000-0000-4000-8000-000000000001', 'aa000000-0000-4000-8000-000000000002', 'bb000000-0000-4000-8000-000000000001')), 0, 'a user with no household sees no ingredient lines (scoped to fixtures)');
 select is((select count(*)::int from public.import_jobs), 0, 'a user with no household sees no import jobs');
 select is((select count(*)::int from public.ai_runs), 0, 'a user with no household sees no ai_runs');
 select is((select count(*)::int from storage.objects where bucket_id = 'recipe-images'), 0, 'a user with no household sees no recipe images');

@@ -16,6 +16,7 @@ The app holds retailer credentials by proxy, moves money by handing off to retai
 - Tier 3 browser sessions store cookies and local storage state only, encrypted in Vault, scoped to one connection. Retailer passwords are never stored, logged, or transmitted to our servers. Sign-in happens in the retailer's own page inside the WebView.
 - A "Disconnect" action revokes the Kroger token where the API allows, deletes the Vault secret, and sets `status = 'revoked'`. For browser sessions it deletes the stored state and clears the WebView cookie store.
 - Connections flip to `needs_reauth` on a 401 and the app prompts the owning user; the agent never retries auth in a loop.
+- Edge Functions that need SQL beyond PostgREST (`suggest` today, the WS09 worker next) connect with `SUPABASE_DB_URL` as the database owner, which bypasses Row Level Security, so every query in them scopes by household by hand and the reviewer reads each one. Before WS09 is dispatched the orchestrator decides whether those connections run under `set local role service_role` so they lose DDL and keep only table privileges. Recorded 2026-10-30 from the WS06 review.
 
 ## Money
 

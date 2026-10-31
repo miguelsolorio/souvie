@@ -139,6 +139,8 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | prep_note | text | "diced" |
 | optional | boolean | |
 | parse_confidence | numeric | 0–1 |
+| container_count | int | Nullable. Containers the line names when it gives a size: "2 (14 oz) cans" is 2. Added 2026-10-30 (CCR5 from WS03) |
+| container | text | Nullable. The container word (can, jar, package, bag). `qty` and `unit` stay the total contents, 28 oz in that example |
 
 **ingredients**: the canonical ontology, global (no household_id, readable by all, writable by service role).
 | column | type | notes |

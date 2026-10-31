@@ -685,6 +685,8 @@ export type Database = {
       };
       recipe_ingredients: {
         Row: {
+          container: string | null;
+          container_count: number | null;
           group_name: string | null;
           id: string;
           ingredient_id: string | null;
@@ -700,6 +702,8 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          container?: string | null;
+          container_count?: number | null;
           group_name?: string | null;
           id?: string;
           ingredient_id?: string | null;
@@ -714,6 +718,8 @@ export type Database = {
           unit?: string | null;
         };
         Update: {
+          container?: string | null;
+          container_count?: number | null;
           group_name?: string | null;
           id?: string;
           ingredient_id?: string | null;

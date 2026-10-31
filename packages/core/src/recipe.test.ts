@@ -231,8 +231,14 @@ describe("row schemas", () => {
       optional: false,
       parse_confidence: 0.9,
     };
-    expect(RecipeIngredient.safeParse({ ...line, container_count: 2, container: "can" }).success).toBe(true);
-    expect(RecipeIngredient.safeParse({ ...line, container_count: null, container: null }).success).toBe(true);
-    expect(RecipeIngredient.safeParse({ ...line, container_count: 0, container: "can" }).success).toBe(false);
+    expect(
+      RecipeIngredient.safeParse({ ...line, container_count: 2, container: "can" }).success,
+    ).toBe(true);
+    expect(
+      RecipeIngredient.safeParse({ ...line, container_count: null, container: null }).success,
+    ).toBe(true);
+    expect(
+      RecipeIngredient.safeParse({ ...line, container_count: 0, container: "can" }).success,
+    ).toBe(false);
   });
 });

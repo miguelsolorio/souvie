@@ -1,0 +1,20 @@
+# Build context for services/shopper-worker/Dockerfile (BuildKit reads <Dockerfile>.dockerignore).
+# Everything is excluded, then the workspace manifests and the packages the worker runs are let in.
+**
+!.npmrc
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!tsconfig.base.json
+!apps/*/package.json
+!packages/*/package.json
+!packages/agent/src/**
+!packages/core/src/**
+!packages/llm/src/**
+!packages/llm/prompts/**
+!packages/retailers/src/**
+!services/*/package.json
+!services/shopper-worker/src/**
+**/*.test.ts
+**/node_modules
+**/.env*

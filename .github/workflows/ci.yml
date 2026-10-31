@@ -232,10 +232,10 @@ jobs:
           echo "$body"
           case "$body" in *'"ok":true'*) ;; *) cat functions.log; exit 1 ;; esac
 
-      # The WS09 runs migration owns the real queue. Create it here only, so the worker
-      # exercises pgmq.list_queues and pgmq.read instead of the queue-missing path.
-      - name: Create the shopping_run queue (CI only)
-        run: psql "$DB_URL" -v ON_ERROR_STOP=1 -c "select pgmq.create('shopping_run')"
+      # The WS09 runs migration creates the queue; the worker steps below read it.
+      - name: The shopping_run queue exists
+        run: |
+          test "$(psql "$DB_URL" -Atc "select count(*) from pgmq.list_queues() where queue_name = 'shopping_run'")" -eq 1
 
       # Criterion 11 (CI part)
       - name: Worker connects and polls
@@ -250,6 +250,11 @@ jobs:
             echo "worker did not read the real queue"; exit 1
           fi
           test "$(grep -c "\] idle " worker.log)" -ge 2
+
+      # WS09 criteria 12 (the mock half) and 15, and the brief's psql checks: a mock run from
+      # enqueue to needs_review to cart_ready on the real stack, then a clean exit on SIGTERM.
+      - name: Worker runs a mock shopping run end to end
+        run: services/shopper-worker/scripts/smoke.sh
 
       # WS05 follow-up (2026-10-31). list-build's store, through postgres.js, on this stack's own
       # Postgres: the five-dinner build and a rebuild. The PGlite store tests bind JSON parameters

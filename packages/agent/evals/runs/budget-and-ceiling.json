@@ -1,0 +1,329 @@
+{
+  "name": "budget-and-ceiling",
+  "description": "A $30 budget and an $8 per-item limit: the proposal goes to review over budget with the salmon flagged, and the household removes the salmon to approve under the cap.",
+  "model": "claude-sonnet-5-5",
+  "adapter": {
+    "seed": 2
+  },
+  "context": {
+    "runId": "replay-budget-and-ceiling",
+    "householdId": "replay-household",
+    "storeId": "MOCK0001",
+    "policy": {
+      "budget_cap_usd": 30,
+      "per_item_ceiling_usd": 8
+    },
+    "allergies": [],
+    "preferences": {
+      "preferredBrands": [],
+      "avoidBrands": [],
+      "preferOrganic": false
+    },
+    "lines": [
+      {
+        "id": "B01",
+        "displayName": "Salmon fillets",
+        "qty": 1.5,
+        "unit": "lb",
+        "section": "seafood",
+        "position": 0,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "name": "salmon fillet",
+          "category": "seafood",
+          "defaultUnit": "lb",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 170
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "B02",
+        "displayName": "Whole milk",
+        "qty": 1,
+        "unit": "gallon",
+        "section": "dairy",
+        "position": 1,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "name": "milk",
+          "category": "dairy",
+          "defaultUnit": "cup",
+          "densityGPerMl": 1.03,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "B03",
+        "displayName": "Large eggs",
+        "qty": 12,
+        "unit": "each",
+        "section": "eggs",
+        "position": 2,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "name": "egg",
+          "category": "eggs",
+          "defaultUnit": "each",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 50
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "B04",
+        "displayName": "Yellow onions",
+        "qty": 3,
+        "unit": "each",
+        "section": "produce",
+        "position": 3,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "name": "yellow onion",
+          "category": "produce",
+          "defaultUnit": "each",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 150
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "B05",
+        "displayName": "Garlic",
+        "qty": 1,
+        "unit": "head",
+        "section": "produce",
+        "position": 4,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "name": "garlic",
+          "category": "produce",
+          "defaultUnit": "clove",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 5
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "B06",
+        "displayName": "Chicken broth",
+        "qty": 4,
+        "unit": "cup",
+        "section": "pantry",
+        "position": 5,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000009",
+          "name": "chicken broth",
+          "category": "pantry",
+          "defaultUnit": "cup",
+          "densityGPerMl": 1,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "B07",
+        "displayName": "Diced tomatoes",
+        "qty": 2,
+        "unit": "can",
+        "section": "canned",
+        "position": 6,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000008",
+          "name": "diced tomatoes",
+          "category": "canned",
+          "defaultUnit": "can",
+          "densityGPerMl": 1,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": ["2 (14.5 oz) cans diced tomatoes"]
+      }
+    ],
+    "choices": []
+  },
+  "turns": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Chicken broth, 4 cups = 32 fl oz. Candidate 0 is low sodium, and candidate 1 is plain chicken broth. The line says \"Chicken broth\" with no qualifier, so plain broth is the closer match. Candidate 1 is low stock, but it is available."
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_01T7qNuQcbDcrgVDj352xPuy",
+          "name": "choose_product",
+          "input": {
+            "listItemId": "B06",
+            "candidateIndex": 1,
+            "quantity": 1,
+            "reason": "Plain chicken broth, 32 fl oz equals the 4 cups needed."
+          },
+          "caller": {
+            "type": "direct"
+          }
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_01FbhH4mUydU5ejshjGt2guz",
+          "name": "request_review",
+          "input": {},
+          "caller": {
+            "type": "direct"
+          }
+        }
+      ],
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 4,
+        "output_tokens": 269,
+        "cache_read_input_tokens": 1556,
+        "cache_creation_input_tokens": 242
+      }
+    }
+  ],
+  "review": {
+    "decisions": [
+      {
+        "listItemId": "B01",
+        "action": "remove"
+      }
+    ]
+  },
+  "expected": {
+    "planned": [
+      {
+        "listItemId": "B01",
+        "status": "matched",
+        "productId": "0099030000028",
+        "qty": 2,
+        "flags": ["over_item_ceiling"]
+      },
+      {
+        "listItemId": "B02",
+        "status": "matched",
+        "productId": "0099020000001",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "B03",
+        "status": "matched",
+        "productId": "0099020000012",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "B04",
+        "status": "matched",
+        "productId": "0099010000004",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "B05",
+        "status": "matched",
+        "productId": "0099010000006",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "B06",
+        "status": "matched",
+        "productId": "0099040000026",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "B07",
+        "status": "matched",
+        "productId": "0099040000023",
+        "qty": 2,
+        "flags": []
+      }
+    ],
+    "toolCalls": 15,
+    "finalStatus": "cart_ready",
+    "ledger": [
+      {
+        "listItemId": "B01",
+        "cartQty": 0,
+        "deltaResult": null
+      },
+      {
+        "listItemId": "B02",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "B03",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "B04",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "B05",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "B06",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "B07",
+        "cartQty": 2,
+        "deltaResult": "204"
+      }
+    ],
+    "cart": [
+      {
+        "productId": "0099010000004",
+        "quantity": 1
+      },
+      {
+        "productId": "0099010000006",
+        "quantity": 1
+      },
+      {
+        "productId": "0099020000001",
+        "quantity": 1
+      },
+      {
+        "productId": "0099020000012",
+        "quantity": 1
+      },
+      {
+        "productId": "0099040000023",
+        "quantity": 2
+      },
+      {
+        "productId": "0099040000026",
+        "quantity": 1
+      }
+    ]
+  },
+  "recorded": {
+    "at": "2026-10-31T16:49:06.967Z",
+    "note": "Recorded live against MockRetailer seed 2: 1 model turns, $0.0036."
+  }
+}

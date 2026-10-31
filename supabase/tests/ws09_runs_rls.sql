@@ -23,7 +23,7 @@
 
 begin;
 
-select plan(93);
+select plan(94);
 
 -- ---------------------------------------------------------------------------------------
 -- Fixtures (as the postgres role, which bypasses RLS)
@@ -282,8 +282,13 @@ update public.shopping_runs set finished_at = now() - interval '25 hours' where 
 update public.shopping_runs set finished_at = now() - interval '1 hour' where id = public.__t_run('b1');
 insert into public.shopping_run_items (run_id, household_id, display_name, product_id, product_name, qty, status, alternatives) values
   (public.__t_run('b1'), '0b000000-0000-4000-8000-00000000000b', 'Bananas', '0099010000001', 'Harbor Fields Bananas', 1, 'matched', '[{"product_id": "0099010000003", "upc": null, "name": "Honeycrisp Apples", "size": "1 lb", "price": 2.99, "qty": 1}]');
+-- A2 was cancelled before anyone approved it: its proposal is no purchase record.
+update public.shopping_runs set finished_at = now() - interval '25 hours' where id = public.__t_run('a2');
+insert into public.shopping_run_items (run_id, household_id, display_name, product_id, upc, product_name, size, qty, unit_price_usd, line_total_usd, status) values
+  (public.__t_run('a2'), '0a000000-0000-4000-8000-00000000000a', 'Garlic', '0099010000006', '0099010000006', 'Garlic', '3 ct', 1, 1.99, 1.99, 'matched');
 
 select ok(public.shopping_runs_clear_expired() >= 1, 'retention clears at least the expired fixture run');
+select is((select coalesce(product_name, 'cleared') || '/' || coalesce(unit_price_usd::text, 'cleared') from public.shopping_run_items where run_id = public.__t_run('a2')), 'cleared/cleared', 'a proposal cancelled before approval loses its products and prices');
 select is((select cart_snapshot from public.shopping_runs where id = public.__t_run('a1')), null, 'a run closed 25 hours ago loses its cart snapshot');
 select is((select count(*)::int from public.shopping_run_items where run_id = public.__t_run('a1') and alternatives is not null), 0, 'and its items lose their alternatives');
 select is((select product_name || ' x' || qty::text from public.shopping_run_items where id = '6a000000-0000-4000-8000-0000000000a1'), 'Harbor Fields Yellow Onions x1', 'the reviewed product and quantity stay as the purchase record');

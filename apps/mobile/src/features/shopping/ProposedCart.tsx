@@ -27,7 +27,8 @@ export function ProposedCart({
   draft: ReviewDraft;
   preview: ReviewPreview;
   editable: boolean;
-  onDraft: (next: ReviewDraft) => void;
+  /** Takes an updater, so two quick taps never overwrite each other. */
+  onDraft: (update: (current: ReviewDraft) => ReviewDraft) => void;
 }) {
   const groups = groupBySection(items);
   return (
@@ -47,10 +48,10 @@ export function ProposedCart({
               approved={preview.items.get(item.id)}
               edit={draft[item.id]}
               editable={editable}
-              onSwap={(index) => onDraft(swap(draft, item.id, index))}
-              onRemove={() => onDraft(remove(draft, item.id))}
-              onRestore={() => onDraft(restore(draft, item.id))}
-              onQuantity={(quantity) => onDraft(setQuantity(draft, item.id, quantity))}
+              onSwap={(index) => onDraft((d) => swap(d, item.id, index))}
+              onRemove={() => onDraft((d) => remove(d, item.id))}
+              onRestore={() => onDraft((d) => restore(d, item.id))}
+              onQuantity={(quantity) => onDraft((d) => setQuantity(d, item.id, quantity))}
             />
           ))}
         </View>

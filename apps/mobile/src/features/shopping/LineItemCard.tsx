@@ -83,7 +83,7 @@ export function LineItemCard({
         {name && price !== null ? (
           <View className="items-end">
             <Text className="text-base font-semibold text-neutral-900">{formatPrice(price)}</Text>
-            {qty !== null && qty > 1 && total !== null ? (
+            {!removed && qty !== null && qty > 1 && total !== null ? (
               <Text className="text-xs text-neutral-500">
                 {qty} for {formatPrice(total)}
               </Text>

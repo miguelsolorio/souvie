@@ -691,7 +691,9 @@ grant execute on function public.shopping_run_dispatch(uuid) to service_role;
 -- ---------------------------------------------------------------------------------------
 -- Retention (docs/02 §Retention, Kroger terms): 24 hours after a run closes, its cart_snapshot is
 -- cleared and its items' alternatives are nulled. The approved product, quantity and price stay
--- as the household's own purchase record. `p_after` is the config: lower it to tighten.
+-- as the household's own purchase record. A proposal nobody approved is no purchase record: a
+-- run that failed or was cancelled before approval loses its proposed products and prices too.
+-- `p_after` is the config: lower it to tighten.
 -- ---------------------------------------------------------------------------------------
 
 create or replace function public.shopping_runs_clear_expired(
@@ -711,6 +713,17 @@ begin
   where i.run_id = r.id
     and i.alternatives is not null
     and r.status in ('cart_ready', 'checked_out', 'failed', 'cancelled')
+    and r.finished_at < now() - p_after;
+
+  update public.shopping_run_items i
+  set product_id = null, upc = null, product_name = null, size = null, unit_price_usd = null,
+      line_total_usd = null
+  from public.shopping_runs r
+  where i.run_id = r.id
+    and i.product_id is not null
+    and i.cart_qty = 0
+    and r.approved_at is null
+    and r.status in ('failed', 'cancelled')
     and r.finished_at < now() - p_after;
 
   update public.shopping_runs r

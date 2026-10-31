@@ -35,17 +35,17 @@ describe("recorded runs replay against MockRetailer", () => {
     },
   );
 
-  it("never lets a recorded model choice reach the cart unchecked: every carted product was a candidate", async () => {
+  it("the real model named products by index only: no id or UPC in any recorded tool call (R13)", () => {
     for (const fixture of fixtures) {
-      const mock = new MockRetailer({ seed: fixture.adapter.seed });
-      const result = await replayRun(fixture, mock);
-      const proposed = new Set(result.planned.flatMap((p) => (p.productId ? [p.productId] : [])));
-      for (const line of result.cart) {
-        // A swap at review moves to an alternative, which is a candidate too; the ledger names it.
-        expect(result.ledger.some((l) => l.cartQty > 0)).toBe(true);
-        expect(typeof line.productId).toBe("string");
+      const calls = fixture.turns.flatMap((turn) =>
+        turn.content.filter((block) => block.type === "tool_use"),
+      );
+      expect(calls.length, fixture.name).toBeGreaterThan(0);
+      for (const call of calls) {
+        const input = JSON.stringify((call as { input?: unknown }).input ?? {});
+        expect(input, fixture.name).not.toMatch(/\d{8,14}/);
+        expect(input, fixture.name).not.toMatch(/"(productId|upc|product_id)"/);
       }
-      expect(proposed.size).toBeGreaterThan(0);
     }
   });
 });

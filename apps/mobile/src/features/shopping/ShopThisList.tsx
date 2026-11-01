@@ -2,6 +2,7 @@ import { useHousehold, useSession } from "@mp/db";
 import { useRouter } from "expo-router";
 import { Text, View } from "react-native";
 import { Button } from "../../components/Button";
+import { useFlag } from "../../observability/useFlag";
 import { useRetailerConnection } from "../retailers/useRetailerConnection";
 import { runRoute } from "./routes";
 import { useStartRun } from "./useShoppingRun";
@@ -16,6 +17,16 @@ export function ShopThisList({ listId }: { listId: string }) {
   const session = useSession();
   const { connection } = useRetailerConnection(household.data?.id, session.user?.id);
   const start = useStartRun();
+  // The kill switch (docs/05 §Incident basics): on unless PostHog says off.
+  const agentEnabled = useFlag("shopping_agent_enabled");
+
+  if (!agentEnabled) {
+    return (
+      <Text testID="shop-paused" className="text-sm text-neutral-500">
+        Shopping is paused right now. Your list is safe. Try again later.
+      </Text>
+    );
+  }
 
   if (!connection) {
     return (

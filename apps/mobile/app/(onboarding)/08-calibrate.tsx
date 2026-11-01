@@ -1,3 +1,4 @@
+import { ONBOARDING_STEP_COUNT } from "@mp/core";
 import { useSupabase } from "@mp/db";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -22,6 +23,8 @@ import { SuggestError, suggestErrorMessage } from "../../src/features/onboarding
 import { useOnboarding } from "../../src/features/onboarding/useOnboarding";
 import { useStepNav } from "../../src/features/onboarding/useStepNav";
 import { useCalibrationCards, useSuggestWeek } from "../../src/features/onboarding/useSuggestWeek";
+import { useRetailerConnection } from "../../src/features/retailers/useRetailerConnection";
+import { track } from "../../src/observability/track";
 
 type Phase = "swiping" | "saving" | "drafting" | "draft-failed";
 
@@ -38,6 +41,7 @@ export default function CalibrateStep() {
   const { goBack } = useStepNav(8);
   const cards = useCalibrationCards();
   const suggest = useSuggestWeek();
+  const { connection } = useRetailerConnection(householdId ?? undefined, userId ?? undefined);
 
   const [deck, setDeck] = useState<CalibrationState | null>(null);
   const [phase, setPhase] = useState<Phase>("swiping");
@@ -78,6 +82,10 @@ export default function CalibrateStep() {
       setPhase("swiping");
       return;
     }
+    track.onboardingCompleted({
+      steps_completed: ONBOARDING_STEP_COUNT,
+      store_connected: connection?.status === "active",
+    });
     if (state.cards.length === 0) {
       goHome();
       return;

@@ -6,8 +6,13 @@ export const publicEnv = {
   supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
   // Origin of the deployed web app, used to build invite links (WS01). Empty in a fresh clone.
   webOrigin: process.env.EXPO_PUBLIC_WEB_ORIGIN,
-  // PostHog is wired in WS15. WS00 only reads the variable.
+  // PostHog (WS15): events and feature flags. Without the key nothing is sent and flags are on.
   posthogKey: process.env.EXPO_PUBLIC_POSTHOG_KEY,
+  posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST,
+  // Sentry (WS15). Without the DSN the SDK never starts. The release is the git SHA of the build.
+  sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  gitSha: process.env.EXPO_PUBLIC_GIT_SHA,
+  sentryEnvironment: process.env.EXPO_PUBLIC_SENTRY_ENVIRONMENT,
 };
 
 export interface SupabaseEnv {

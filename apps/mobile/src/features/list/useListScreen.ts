@@ -19,6 +19,7 @@ import {
   usePlanWeekStart,
 } from "@mp/db";
 import { useCallback, useMemo } from "react";
+import { track } from "../../observability/track";
 import "../plan/ids";
 import "../plan/persistHousehold";
 import "./queueStorage";
@@ -106,7 +107,15 @@ export function useListScreen(args: {
   const weekForBuild = byList ? (planWeek.data ?? null) : weekStart;
   const { mutate } = buildMutation;
   const run = useCallback(() => {
-    if (weekForBuild) mutate({ weekStart: weekForBuild });
+    if (!weekForBuild) return;
+    mutate(
+      { weekStart: weekForBuild },
+      // Counts only: how many lines the list has and how many the pantry took out.
+      {
+        onSuccess: (built) =>
+          track.listBuilt({ items: built.itemCount, pantry_excluded: built.alreadyHaveCount }),
+      },
+    );
   }, [mutate, weekForBuild]);
 
   const waitingOnHousehold = household.isPending;

@@ -1,4 +1,5 @@
 import "../global.css";
+import "../src/observability/init";
 
 import { SupabaseProvider } from "@mp/db";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -8,6 +9,7 @@ import { Text, View } from "react-native";
 import { AuthLifecycle } from "../src/features/auth/AuthLifecycle";
 import { persistOptions, queryClient } from "../src/lib/queryClient";
 import { getSupabase, isSupabaseConfigured } from "../src/lib/supabase";
+import { ObservabilityLifecycle } from "../src/observability/ObservabilityLifecycle";
 
 function NotConfigured() {
   return (
@@ -27,6 +29,7 @@ export default function RootLayout() {
       {isSupabaseConfigured ? (
         <SupabaseProvider client={getSupabase()}>
           <AuthLifecycle />
+          <ObservabilityLifecycle />
           <Stack screenOptions={{ headerShown: false }} />
         </SupabaseProvider>
       ) : (

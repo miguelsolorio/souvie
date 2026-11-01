@@ -21,6 +21,7 @@ export type Database = {
           output_tokens: number;
           prompt_version: string | null;
           run_id: string | null;
+          user_id: string | null;
         };
         ComputedFields: never;
         Insert: {
@@ -38,6 +39,7 @@ export type Database = {
           output_tokens?: number;
           prompt_version?: string | null;
           run_id?: string | null;
+          user_id?: string | null;
         };
         Update: {
           cache_read_tokens?: number;
@@ -54,6 +56,7 @@ export type Database = {
           output_tokens?: number;
           prompt_version?: string | null;
           run_id?: string | null;
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -69,6 +72,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "shopping_runs";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ai_runs_run_id_fkey";
+            columns: ["run_id"];
+            isOneToOne: false;
+            referencedRelation: "v_runs_stalled";
+            referencedColumns: ["run_id"];
           },
         ];
       };
@@ -345,6 +355,7 @@ export type Database = {
       };
       households: {
         Row: {
+          ai_daily_cap_usd: number;
           created_at: string;
           created_by: string | null;
           default_connection_id: string | null;
@@ -358,6 +369,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          ai_daily_cap_usd?: number;
           created_at?: string;
           created_by?: string | null;
           default_connection_id?: string | null;
@@ -370,6 +382,7 @@ export type Database = {
           zip?: string | null;
         };
         Update: {
+          ai_daily_cap_usd?: number;
           created_at?: string;
           created_by?: string | null;
           default_connection_id?: string | null;
@@ -1275,6 +1288,13 @@ export type Database = {
             referencedRelation: "shopping_runs";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "shopping_run_items_run_id_fkey";
+            columns: ["run_id"];
+            isOneToOne: false;
+            referencedRelation: "v_runs_stalled";
+            referencedColumns: ["run_id"];
+          },
         ];
       };
       shopping_runs: {
@@ -1408,7 +1428,75 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      v_ai_cost_by_prompt: {
+        Row: {
+          avg_latency_ms: number | null;
+          calls: number | null;
+          error_rate: number | null;
+          prompt_version: string | null;
+        };
+        ComputedFields: never;
+        Relationships: [];
+      };
+      v_ai_cost_daily: {
+        Row: {
+          calls: number | null;
+          cost_usd: number | null;
+          day: string | null;
+          household_id: string | null;
+          kind: string;
+          model: string;
+        };
+        ComputedFields: never;
+        Relationships: [
+          {
+            foreignKeyName: "ai_runs_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      v_runs_stalled: {
+        Row: {
+          heartbeat_at: string | null;
+          household_id: string;
+          retailer: Database["public"]["Enums"]["retailer"];
+          run_id: string;
+          silent_seconds: number | null;
+          status: Database["public"]["Enums"]["shopping_runs_status"];
+          status_changed_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          heartbeat_at?: string | null;
+          household_id?: string | null;
+          retailer?: Database["public"]["Enums"]["retailer"] | null;
+          run_id?: string | null;
+          silent_seconds?: never;
+          status?: Database["public"]["Enums"]["shopping_runs_status"] | null;
+          status_changed_at?: string | null;
+        };
+        Update: {
+          heartbeat_at?: string | null;
+          household_id?: string | null;
+          retailer?: Database["public"]["Enums"]["retailer"] | null;
+          run_id?: string | null;
+          silent_seconds?: never;
+          status?: Database["public"]["Enums"]["shopping_runs_status"] | null;
+          status_changed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shopping_runs_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Functions: {
       cancel_shopping_run: {
@@ -1542,6 +1630,7 @@ export type Database = {
       tier3_consent_version: { Args: Record<PropertyKey, never>; Returns: string };
       tier3_new_session_key: { Args: { p_connection_id: string }; Returns: string };
       tier3_retailer_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
+      user_ai_spend_since: { Args: { p_since: string; p_user_id: string }; Returns: number };
     };
     Enums: {
       grocery_list_items_excluded_reason: "pantry" | "manual";

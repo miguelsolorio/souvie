@@ -18,6 +18,7 @@ import {
   useUpsertEntry,
 } from "@mp/db";
 import { useCallback, useMemo } from "react";
+import { track } from "../../observability/track";
 import { showPlanNotice } from "./notice";
 import "./ids";
 import { swapPatch } from "./swap";
@@ -83,6 +84,9 @@ export function usePlanActions(householdId: string | null | undefined) {
         },
         recipe: toPlannedRecipe(args.recipe),
       });
+      // The first entry of a week creates its plan: that is a manual plan (the model's go through
+      // useSuggestWeek). Sent when the person adds it; a save that then fails is rare.
+      if (!args.plan) track.planCreated({ entries: 1, source: "manual" });
       return id;
     },
     [householdId, upsertMutate],

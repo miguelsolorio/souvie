@@ -152,31 +152,34 @@ export function ChipGroup({ children }: { children: ReactNode }) {
   return <View className="flex-row flex-wrap gap-2">{children}</View>;
 }
 
-/** One choice out of a few, with a line of explanation. */
+/** One choice out of a few, with a line of explanation. `disabled` shows it but ignores taps. */
 export function OptionRow({
   label,
   description,
   selected,
   onPress,
   testID,
+  disabled = false,
 }: {
   label: string;
   description?: string;
   selected: boolean;
   onPress: () => void;
   testID?: string;
+  disabled?: boolean;
 }) {
   return (
     <Pressable
       testID={testID}
       accessibilityRole="radio"
       accessibilityLabel={description ? `${label}. ${description}` : label}
-      accessibilityState={{ selected }}
+      accessibilityState={{ selected, disabled }}
       aria-checked={selected}
+      disabled={disabled}
       onPress={onPress}
       className={`min-h-12 gap-0.5 rounded-xl border p-3 ${
         selected ? "border-brand bg-brand/5" : "border-neutral-200 bg-white"
-      }`}
+      } ${disabled ? "opacity-60" : ""}`}
     >
       <Text className="text-base font-medium text-neutral-900">{label}</Text>
       {description ? <Text className="text-sm text-neutral-600">{description}</Text> : null}

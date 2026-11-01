@@ -1,12 +1,13 @@
-import type { EntriesByDay } from "@mp/core";
-import { MEAL_SLOTS, type MealSlot, weekDates } from "@mp/core";
+import type { EntriesByDay, PlanMode } from "@mp/core";
+import { type MealSlot, slotsForMode, weekDates } from "@mp/core";
 import type { PlanEntry } from "@mp/db";
 import { useRef } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useIsDesktop } from "../../lib/useBreakpoint";
-import { longDate, shortDayName, shortMonthDay } from "./format";
+import { longDate, SLOT_LABELS, shortDayName, shortMonthDay } from "./format";
 import { GridDesktopInput } from "./GridDesktopInput";
-import { SlotCell } from "./SlotCell";
+import { moreMealsOf } from "./mode";
+import { EntryChip, MoreMeals, SlotCell } from "./SlotCell";
 
 /** At the desktop breakpoint (1024 and up) the week is seven columns; below it, a list of days. */
 export function useIsWideGrid(): boolean {
@@ -14,12 +15,15 @@ export function useIsWideGrid(): boolean {
 }
 
 /**
- * The seven days of a week, each with a breakfast, lunch, dinner, and snack slot. On a phone it is
- * a list of day cards that open the day screen; on a wide window it is seven columns, so the whole
- * week is on screen at once.
+ * The seven days of a week. In Every meal mode each day has a breakfast, lunch, dinner, and snack
+ * slot; in Just dinners mode it has the dinner slot only, and any meal planned in another slot
+ * waits under a collapsed "More meals" row for its day (never hidden for good, and still on the
+ * grocery list). On a phone it is a list of day cards that open the day screen; on a wide window
+ * it is seven columns, so the whole week is on screen at once.
  */
 export function WeekGrid({
   weekStart,
+  mode,
   byDay,
   today,
   onAdd,
@@ -28,6 +32,8 @@ export function WeekGrid({
   onTodayOffset,
 }: {
   weekStart: string;
+  /** How much the household plans: decides which slots get a cell. */
+  mode: PlanMode;
   byDay: EntriesByDay<PlanEntry>;
   /** The calendar date of today, to mark the current day. */
   today: string;
@@ -43,6 +49,9 @@ export function WeekGrid({
   const wide = useIsWideGrid();
   const days = weekDates(weekStart);
   const gridY = useRef(0);
+  const slots = slotsForMode(mode);
+  const moreByDay = Object.fromEntries(days.map((date) => [date, moreMealsOf(byDay[date], mode)]));
+  const anyMore = days.some((date) => (moreByDay[date]?.length ?? 0) > 0);
 
   if (wide) {
     return (
@@ -58,8 +67,8 @@ export function WeekGrid({
             </View>
           ))}
         </View>
-        {MEAL_SLOTS.map((slot) => (
-          <View key={slot} className="flex-row gap-2">
+        {slots.map((slot) => (
+          <View key={slot} testID={`slot-row-${slot}`} className="flex-row gap-2">
             {days.map((date) => (
               <View key={date} className="min-w-0 flex-1">
                 <SlotCell
@@ -74,6 +83,19 @@ export function WeekGrid({
             ))}
           </View>
         ))}
+        {anyMore ? (
+          <View testID="more-meals-row" className="flex-row items-start gap-2">
+            {days.map((date) => (
+              <View key={date} className="min-w-0 flex-1">
+                <MoreMealsOfDay
+                  date={date}
+                  entries={moreByDay[date] ?? []}
+                  onOpenEntry={onOpenEntry}
+                />
+              </View>
+            ))}
+          </View>
+        ) : null}
       </View>
     );
   }
@@ -101,7 +123,7 @@ export function WeekGrid({
           }`}
         >
           <DayHeader date={date} today={today} onOpenDay={onOpenDay} />
-          {MEAL_SLOTS.map((slot) => (
+          {slots.map((slot) => (
             <SlotCell
               key={slot}
               date={date}
@@ -112,9 +134,35 @@ export function WeekGrid({
               onOpen={onOpenEntry}
             />
           ))}
+          <MoreMealsOfDay date={date} entries={moreByDay[date] ?? []} onOpenEntry={onOpenEntry} />
         </View>
       ))}
     </View>
+  );
+}
+
+/** The collapsed "More meals" row for a day, or nothing when the day has no such meals. */
+function MoreMealsOfDay({
+  date,
+  entries,
+  onOpenEntry,
+}: {
+  date: string;
+  entries: readonly PlanEntry[];
+  onOpenEntry: (entry: PlanEntry) => void;
+}) {
+  if (entries.length === 0) return null;
+  return (
+    <MoreMeals date={date} count={entries.length}>
+      {entries.map((entry) => (
+        <EntryChip
+          key={entry.id}
+          entry={entry}
+          onOpen={onOpenEntry}
+          slotLabel={SLOT_LABELS[entry.slot]}
+        />
+      ))}
+    </MoreMeals>
   );
 }
 

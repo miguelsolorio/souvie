@@ -16,7 +16,6 @@ export * from "./browser/index.ts";
 export {
   automates,
   CAPABILITY_NAMES,
-  INSTACART_CAPABILITIES,
   KROGER_CAPABILITIES,
   MOCK_CAPABILITIES,
   RETAILER_CAPABILITIES,

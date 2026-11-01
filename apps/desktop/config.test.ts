@@ -198,6 +198,8 @@ describe("Cargo.toml", () => {
     expect(cargo).toMatch(/^tauri = \{ version = "2"/m);
     expect(cargo).toMatch(/^tauri-plugin-deep-link = "2"/m);
     expect(cargo).toMatch(/^tauri-plugin-opener = "2"/m);
+    // generate_context! expands to code that names serde_json; CI failed without it.
+    expect(cargo).toMatch(/^serde_json = "1"/m);
     expect(cargo).toMatch(
       /tauri-plugin-single-instance = \{ version = "2", features = \["deep-link"\] \}/,
     );

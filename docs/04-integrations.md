@@ -70,7 +70,7 @@ The agent and the UI only ever see this contract. Adding a store is a new adapte
 | `costco` (browser) | 3 | all browser | Main path. Mode A on-device. Consent shown once at connect. Membership required; non-members are not supported at Costco | Not yet (host WS08, adapter WS10) |
 | `kroger` browser adapter | 3 | slots browser · checkout browser | Finishes slot and pay on kroger.com after the API filled the cart; "Finish in app" on a Kroger run | Not yet (WS10) |
 
-`instacart` (Tier 2, retired 2026-10-30) still exists as a value in `RetailerId`, `INSTACART_CAPABILITIES` and the `retailer` Postgres enum as WS07 built them. No adapter is registered for it. The orchestrator removes the value in a contract change with a new migration.
+`instacart` (Tier 2, retired 2026-10-30) was removed from `RetailerId` and the capability table on 2026-10-31 (CCR9). The Postgres `retailer` enum keeps the value, because Postgres cannot drop one, and check constraints keep every row off it.
 
 **Cross-store splitting** stays inside Kroger's terms because the only prices we display come from the Kroger API (one retailer family), and other stores are assigned by household rules ("bulk and paper goods → Costco," "produce → QFC") and learned preferences, never by comparing prices across retailers on one screen. Browser adapters read prices during a run for the household's own cart; those prices are never shown next to Kroger prices.
 

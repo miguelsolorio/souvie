@@ -229,7 +229,7 @@ select throws_ok($$update public.retailer_connections set status = 'active'$$, '
 select throws_ok($$update public.retailer_connections set vault_secret_id = null$$, '42501', null, 'alice cannot touch vault_secret_id');
 select throws_ok($$update public.retailer_connections set household_id = '0b000000-0000-4000-8000-00000000000b'$$, '42501', null, 'alice cannot move a connection to another household');
 select throws_ok(
-  $$insert into public.retailer_connections (household_id, user_id, retailer, auth_type) values ('0a000000-0000-4000-8000-00000000000a', 'a1111111-1111-4111-8111-111111111111', 'instacart', 'none')$$,
+  $$insert into public.retailer_connections (household_id, user_id, retailer, auth_type) values ('0a000000-0000-4000-8000-00000000000a', 'a1111111-1111-4111-8111-111111111111', 'safeway', 'none')$$,
   '42501', null, 'alice cannot insert a connection directly'
 );
 select throws_ok($$delete from public.retailer_connections$$, '42501', null, 'alice cannot delete a connection directly');

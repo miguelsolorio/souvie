@@ -1,9 +1,8 @@
 import type { EntriesByDay } from "@mp/core";
-import { type PlanEntry, useHousehold } from "@mp/db";
-import { type ComponentRef, useEffect, useMemo, useRef } from "react";
-import { View } from "react-native";
-import { attachGridInput } from "./gridInput";
-import { usePlanActions } from "./usePlanActions";
+import type { PlanEntry } from "@mp/db";
+import { type ComponentType, useEffect, useState } from "react";
+
+type Live = ComponentType<{ byDay: EntriesByDay<PlanEntry> }>;
 
 /**
  * Mouse and keyboard input for the seven-column week on the web and in the desktop app (WS13):
@@ -13,39 +12,24 @@ import { usePlanActions } from "./usePlanActions";
  *
  * Moving is `moveEntry`, the same call the entry sheet's Move panel makes, so a drag saves the
  * way every other change does: at once on screen, in the background to the database, and put back
- * with a notice if the save fails.
+ * with a notice if the save fails (LiveGridInput.tsx).
+ *
+ * It starts after the first render, in the browser, and loads its working half then. The static
+ * export, and a test that renders the grid to markup, draw the grid alone: this is behavior for a
+ * live page, not content, and it keeps the grid's own imports light.
  */
 export function GridDesktopInput({ byDay }: { byDay: EntriesByDay<PlanEntry> }) {
-  const household = useHousehold();
-  const actions = usePlanActions(household.data?.id);
-  const entries = useMemo(
-    () => Object.values(byDay).flatMap((day) => Object.values(day).flat()),
-    [byDay],
-  );
+  const [Live, setLive] = useState<Live | null>(null);
 
-  // The listeners are attached once; they read the latest entries and actions through this ref.
-  const latest = useRef({ entries, actions });
-  latest.current = { entries, actions };
-
-  const marker = useRef<ComponentRef<typeof View>>(null);
   useEffect(() => {
-    const node = marker.current as unknown as HTMLElement | null;
-    const root = (node?.closest('[data-testid="week-grid"]') ?? null) as HTMLElement | null;
-    if (!root) return;
-    return attachGridInput(root, {
-      onMove: (entryId, target) => {
-        const { entries: current, actions: act } = latest.current;
-        const entry = current.find((candidate) => candidate.id === entryId);
-        if (entry) act.moveEntry(entry, target, current);
-      },
+    let cancelled = false;
+    void import("./LiveGridInput").then((module) => {
+      if (!cancelled) setLive(() => module.LiveGridInput);
     });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  return (
-    <View
-      ref={marker}
-      accessibilityElementsHidden
-      style={{ position: "absolute", width: 0, height: 0, pointerEvents: "none" }}
-    />
-  );
+  return Live ? <Live byDay={byDay} /> : null;
 }

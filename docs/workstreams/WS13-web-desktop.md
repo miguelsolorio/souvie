@@ -118,3 +118,15 @@ WS13-specific:
 6. **Responsive work that does not exist yet:** the grocery two-pane layout, the run-review table, any drag-and-drop in the planner (`moveEntry` and menus are the move path; `react-native-gesture-handler` is not a dependency). Scope drag-and-drop out unless the brief's criterion requires it; say so in Deviations.
 7. **Docs.** docs/00 has no §1: use "v1 must-haves" and "Explicitly out of v1". docs/01 has no "Clients" heading: "Why Expo web instead of a separate Next.js app" and "Platform versions". Tokens: `borderFocus` exists in light and dark.
 
+
+## Follow-ups recorded after review (2026-11-01, merged 04fcd1d)
+
+Non-blocking items from the two review rounds, for a later round or for the workstreams named:
+1. docs/01's phone-layout sentence says labels below 768 are unchanged; three label strings did change on every platform ("Add another recipe to ...", "Open recipe for ...", the Sheet close label "Done, close X"). Reword it. Meaning is equivalent and no layout moves.
+2. `e2e-web/support/test.ts` sets the non-loopback route guard on `page` only; a spec using `browser.newContext()`, `context.newPage()` or the `request` fixture would bypass it. Move the guard onto the `context` fixture.
+3. The wide planner is never tested in `plan_mode: "simple"` (`world.ts:46` is `"full"`), the default for new households. Add a simple-mode scan and drag test.
+4. Drag-and-drop ran only in Chromium; add a WebKit or Firefox project, and run it once in WKWebView and WebView2.
+5. `_headers` carries no CSP or HSTS.
+6. Miguel: create the Cloudflare Pages project and set `CF_PAGES_PROJECT_WEB`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` in GitHub; add `https://<origin>/callback` to the Supabase redirect list; then run the sign-in check on the preview URL and record the live URL in docs/status.md.
+7. Desktop: sign and notarize the macOS app, then add `"dmg"` to `bundle.targets`; an updater behind the placeholder menu item; run the Windows installer on a real machine; mount WS08's host and WS10's adapters in the desktop shell; a real `souvie://` deep link on an installed `.app`.
+8. Cache Playwright's browsers in CI; consider `sitemap: false` in the expo-router plugin for production; the Sheet's initial focus lands on the backdrop Close button; a genuinely unknown URL logs React error 418.

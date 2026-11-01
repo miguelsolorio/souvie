@@ -80,6 +80,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] Brief corrections written for all five (2026-10-31). WS11, WS12, WS13, WS15 (sonnet) dispatched 2026-10-31; WS10 (opus) dispatches when checkpoint 5 clears.
 - [x] WS12 merged 3b47cae (2026-11-01); migration on hosted, `export-data` redeployed. WS11 in its fix round (PR #29); WS13 (PR #31) and WS15 (PR #30) in review.
 - [x] WS11 merged 248bc01 (2026-11-01); migration on hosted with `--include-all`. WS13 (PR #31) and WS15 (PR #30) in fix rounds.
+- [x] WS13 merged 04fcd1d (2026-11-01); no migration or function. Web deploy waits on Miguel's Cloudflare Pages project. WS15 (PR #30) in its fix round.
 - [ ] CCR10: `households.weekly_nudge` (orchestrator migration, after WS06 asks for it).
 - [ ] Review each as it finishes. WS10 reviewer runs the Tier 3 checklist and a manual Safeway run on a real account.
 - [ ] Merge all, wave 6 summary.

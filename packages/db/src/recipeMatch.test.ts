@@ -11,6 +11,7 @@ import {
   importErrorMessage,
   importRecipe,
   importRecipeAndMatch,
+  useImportRecipe,
 } from "./hooks/useImportRecipe";
 import {
   createRecipe,
@@ -22,13 +23,30 @@ import {
   needsIngredientMatch,
   PARSE_BUDGET_MS,
   PARSE_FUNCTION,
+  parseAfterWrite,
   parseRecipeIngredients,
   parseWithinBudget,
   type RecipeDraft,
   RecipeError,
   recipeErrorMessage,
+  recipeQueryKey,
+  refreshRecipe,
   updateRecipeAndMatch,
+  useCreateRecipe,
+  useMatchIngredients,
+  useUpdateRecipe,
 } from "./hooks/useRecipe";
+
+// The hooks are called as plain functions here, with the three things they lean on replaced:
+// useMutation hands back the options it was given (so a test can run `mutationFn` and
+// `onSuccess` itself), useQueryClient returns a spy, and useSupabase returns the recorder.
+const h = vi.hoisted(() => ({ client: null as unknown, queryClient: null as unknown }));
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-query")>()),
+  useMutation: (options: unknown) => options,
+  useQueryClient: () => h.queryClient,
+}));
+vi.mock("./context", () => ({ useSupabase: () => h.client }));
 
 type Result = { data?: unknown; error?: { message: string; code?: string } | null };
 type Call = { op: string; args: unknown[] };
@@ -168,6 +186,117 @@ describe("parseRecipeIngredients", () => {
       ok: false,
       reason: "failed",
     });
+  });
+});
+
+describe("one match at a time per recipe", () => {
+  // The parser inserts a row for each extra ingredient of a split line. Two calls running at once
+  // would both read the same unparsed rows and both insert those extras.
+  const OTHER_RECIPE = "5ec1be00-0000-4000-8000-0000000000bb";
+
+  /** An invoke that holds each call until the test lets one go, and counts how many run at once. */
+  function gated() {
+    const waiting: Array<() => void> = [];
+    const state = { started: 0, active: 0, max: 0, ids: [] as string[] };
+    const invoke: Invoke = async (_name, opts) => {
+      state.started += 1;
+      state.active += 1;
+      state.max = Math.max(state.max, state.active);
+      state.ids.push((opts.body as { recipeId: string }).recipeId);
+      await new Promise<void>((resolve) => waiting.push(resolve));
+      state.active -= 1;
+      return { data: { ok: true, parsedRows: 1, unresolved: 0 }, error: null };
+    };
+    const release = () => waiting.shift()?.();
+    return { invoke, state, release };
+  }
+  /** Gives pending promise callbacks time to run. */
+  const settle = () => new Promise<void>((resolve) => setTimeout(resolve, 5));
+
+  it("makes the second call wait for the first, so they never overlap", async () => {
+    const { invoke, state, release } = gated();
+    const { client } = recorder([], { invoke });
+
+    const first = parseRecipeIngredients(client, RECIPE);
+    await vi.waitFor(() => expect(state.started).toBe(1));
+    const second = parseRecipeIngredients(client, RECIPE);
+    await settle();
+    expect(state.started).toBe(1); // the second has not gone out
+
+    release();
+    await expect(first).resolves.toMatchObject({ ok: true });
+    await vi.waitFor(() => expect(state.started).toBe(2));
+    release();
+    await expect(second).resolves.toMatchObject({ ok: true });
+    expect(state.max).toBe(1);
+  });
+
+  it("lets calls that arrive while one is waiting share it", async () => {
+    const { invoke, state, release } = gated();
+    const { client } = recorder([], { invoke });
+
+    const first = parseRecipeIngredients(client, RECIPE);
+    await vi.waitFor(() => expect(state.started).toBe(1));
+    const second = parseRecipeIngredients(client, RECIPE);
+    const third = parseRecipeIngredients(client, RECIPE);
+    expect(third).toBe(second);
+
+    release();
+    await first;
+    await vi.waitFor(() => expect(state.started).toBe(2));
+    release();
+    await Promise.all([second, third]);
+    expect(state.started).toBe(2);
+    expect(state.max).toBe(1);
+  });
+
+  it("does not hold up another recipe", async () => {
+    const { invoke, state, release } = gated();
+    const { client } = recorder([], { invoke });
+
+    const a = parseRecipeIngredients(client, RECIPE);
+    const b = parseRecipeIngredients(client, OTHER_RECIPE);
+    await vi.waitFor(() => expect(state.started).toBe(2));
+    expect(state.max).toBe(2);
+    expect(state.ids.sort()).toEqual([RECIPE, OTHER_RECIPE].sort());
+    release();
+    release();
+    await Promise.all([a, b]);
+  });
+
+  it("goes out at once when nothing is running, and a failure does not block the next call", async () => {
+    let calls = 0;
+    const { client } = recorder([], {
+      invoke: async () => {
+        calls += 1;
+        return calls === 1
+          ? { data: null, error: new Error("down") }
+          : { data: { ok: true, parsedRows: 2, unresolved: 0 }, error: null };
+      },
+    });
+    expect((await parseRecipeIngredients(client, RECIPE)).ok).toBe(false);
+    expect((await parseRecipeIngredients(client, RECIPE)).ok).toBe(true);
+    expect(calls).toBe(2);
+  });
+
+  it("covers a tap on Match ingredients while a slow match is still running past its budget", async () => {
+    const { invoke, state, release } = gated();
+    const { client } = recorder([], { invoke });
+
+    // The save stopped waiting after its budget; the call carries on.
+    const saving = parseWithinBudget(client, RECIPE, { budgetMs: 10 });
+    await vi.waitFor(() => expect(state.started).toBe(1));
+    expect(await saving).toEqual({ ok: false, reason: "timeout" });
+
+    const tapped = matchRecipeIngredients(client, { id: RECIPE, visibility: "household" });
+    await settle();
+    expect(state.started).toBe(1);
+
+    release();
+    await vi.waitFor(() => expect(state.started).toBe(2));
+    release();
+    await expect(tapped).resolves.toMatchObject({ ok: true });
+    expect(state.max).toBe(1);
   });
 });
 
@@ -919,5 +1048,327 @@ describe("createRecipe and a recipe the household already has", () => {
         sourceUrl: "https://www.tiktok.com/@a/video/1",
       }),
     ).rejects.toMatchObject({ code: "unknown" });
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The hooks themselves. Their job is to put the parse call behind every write; a hook that went
+// back to the plain write (importRecipe, createRecipe, updateRecipe) would still save the recipe
+// and leave every line unmatched, which is how Miguel's six recipes were left. So these run each
+// hook's own `mutationFn` and look for the call to parse-ingredients, and for the token on it.
+// ---------------------------------------------------------------------------------------
+
+interface HookOptions<Vars, Out = unknown> {
+  mutationFn: (vars: Vars) => Promise<Out>;
+  onSuccess?: (...args: unknown[]) => unknown;
+}
+
+/** The hook's options, as the mocked useMutation received them. */
+const hookOptions = <Vars = never, Out = unknown>(hook: unknown) => hook as HookOptions<Vars, Out>;
+
+/** A query client that only records what it was asked to invalidate. */
+function spyClient() {
+  const invalidateQueries = vi.fn(async (_filters: unknown) => undefined);
+  return { client: { invalidateQueries } as unknown as QueryClient, invalidateQueries };
+}
+
+const invalidated = (spy: ReturnType<typeof spyClient>["invalidateQueries"]) =>
+  spy.mock.calls.map(([filters]) => (filters as { queryKey: unknown[] }).queryKey);
+
+const AUTH_ON_PARSE = {
+  body: { recipeId: RECIPE },
+  headers: { Authorization: `Bearer ${TOKEN}` },
+};
+
+describe("useImportRecipe", () => {
+  const jobId = "0c000000-0000-4000-8000-00000000000c";
+  const saved = { ok: true, jobId, path: "jsonld", recipeId: RECIPE, warnings: [] };
+
+  /** recipe-import answers `body`; parse-ingredients answers its usual success. */
+  function setup(body: unknown) {
+    const r = recorder([], {
+      invoke: async (name) =>
+        name === "recipe-import"
+          ? { data: body, error: null }
+          : { data: { ok: true, parsedRows: 8, unresolved: 0 }, error: null },
+    });
+    const q = spyClient();
+    h.client = r.client;
+    h.queryClient = q.client;
+    return { ...r, ...q };
+  }
+
+  it("imports, then matches the new recipe with the person's token", async () => {
+    const { calls } = setup(saved);
+    const result = await hookOptions<unknown, { recipeId?: string }>(useImportRecipe()).mutationFn({
+      kind: "url",
+      input: "https://example.test/r",
+    });
+    expect(result.recipeId).toBe(RECIPE);
+    const invokes = calls.filter((c) => c.op.startsWith("functions.invoke:"));
+    expect(invokes.map((c) => c.op)).toEqual([
+      "functions.invoke:recipe-import",
+      "functions.invoke:parse-ingredients",
+    ]);
+    expect(invokes[1]?.args[0]).toEqual(AUTH_ON_PARSE);
+  });
+
+  it("matches nothing for a draft or a failed import", async () => {
+    const draftBody = {
+      ok: true,
+      jobId,
+      path: "vision",
+      draft: { title: "Soup", ingredients: [{ rawText: "stock" }], instructions: [] },
+      warnings: [],
+    };
+    const drafted = setup(draftBody);
+    await hookOptions<unknown>(useImportRecipe()).mutationFn({
+      kind: "image",
+      input: { path: `${HOUSEHOLD}/a.jpg` },
+      save: false,
+    });
+    expect(parseCalls(drafted.calls)).toHaveLength(0);
+
+    const failed = setup({ ok: false, error: "blocked" });
+    await expect(
+      hookOptions<unknown>(useImportRecipe()).mutationFn({
+        kind: "url",
+        input: "https://example.test/r",
+      }),
+    ).rejects.toMatchObject({ code: "blocked" });
+    expect(parseCalls(failed.calls)).toHaveLength(0);
+  });
+
+  it("refreshes the recipe list for a saved recipe and not for a draft", async () => {
+    const { invalidateQueries } = setup(saved);
+    const hook = hookOptions(useImportRecipe());
+    await hook.onSuccess?.({ ...saved });
+    expect(invalidated(invalidateQueries)).toContainEqual(["recipes"]);
+
+    invalidateQueries.mockClear();
+    await hook.onSuccess?.({ ok: true, jobId, path: "vision", warnings: [] });
+    expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+});
+
+describe("useCreateRecipe", () => {
+  it("saves the recipe, then matches it with the person's token", async () => {
+    const r = recorder([{ data: { id: RECIPE }, error: null }, { error: null }]);
+    h.client = r.client;
+    h.queryClient = spyClient().client;
+
+    const id = await hookOptions<unknown, string>(useCreateRecipe()).mutationFn({
+      householdId: HOUSEHOLD,
+      draft: draft(),
+      sourceType: "manual",
+    });
+    expect(id).toBe(RECIPE);
+    const order = r.calls.map((c) => c.op);
+    expect(order.indexOf("recipe_ingredients.insert")).toBeLessThan(
+      order.indexOf("functions.invoke:parse-ingredients"),
+    );
+    expect(parseCalls(r.calls)[0]?.args[0]).toEqual(AUTH_ON_PARSE);
+  });
+
+  it("refreshes the recipe list when it is saved", async () => {
+    const q = spyClient();
+    h.client = recorder().client;
+    h.queryClient = q.client;
+    await hookOptions(useCreateRecipe()).onSuccess?.();
+    expect(invalidated(q.invalidateQueries)).toContainEqual(["recipes"]);
+  });
+});
+
+describe("useUpdateRecipe", () => {
+  const before = [
+    { id: "l1", raw_text: "8 chicken thighs", group_name: null, position: 0 },
+    { id: "l2", raw_text: "1 lemon", group_name: null, position: 1 },
+  ];
+
+  it("matches the lines an edit changed, with the person's token", async () => {
+    const r = recorder([
+      { data: [{ id: RECIPE }], error: null },
+      { data: before, error: null },
+      { error: null },
+    ]);
+    h.client = r.client;
+    h.queryClient = spyClient().client;
+    await hookOptions<RecipeDraft>(useUpdateRecipe(RECIPE)).mutationFn(
+      draft({
+        ingredients: [
+          { id: "l1", rawText: "8 chicken thighs" },
+          { id: "l2", rawText: "2 lemons" },
+        ],
+      }),
+    );
+    expect(parseCalls(r.calls)[0]?.args[0]).toEqual(AUTH_ON_PARSE);
+  });
+
+  it("matches nothing when the edit left the lines alone", async () => {
+    const r = recorder([
+      { data: [{ id: RECIPE }], error: null },
+      { data: before, error: null },
+    ]);
+    h.client = r.client;
+    h.queryClient = spyClient().client;
+    await hookOptions<RecipeDraft>(useUpdateRecipe(RECIPE)).mutationFn(
+      draft({
+        title: "Better Lemon Chicken",
+        ingredients: [
+          { id: "l1", rawText: "8 chicken thighs" },
+          { id: "l2", rawText: "1 lemon" },
+        ],
+      }),
+    );
+    expect(parseCalls(r.calls)).toHaveLength(0);
+  });
+
+  it("has no recipe to edit without an id, and touches nothing", () => {
+    const r = recorder();
+    h.client = r.client;
+    h.queryClient = spyClient().client;
+    expect(() => hookOptions<RecipeDraft>(useUpdateRecipe(null)).mutationFn(draft())).toThrow(
+      RecipeError,
+    );
+    expect(r.calls).toHaveLength(0);
+  });
+
+  it("refreshes that recipe and the list when the edit is saved", async () => {
+    const q = spyClient();
+    h.client = recorder().client;
+    h.queryClient = q.client;
+    await hookOptions(useUpdateRecipe(RECIPE)).onSuccess?.();
+    expect(invalidated(q.invalidateQueries)).toEqual([recipeQueryKey(RECIPE), ["recipes"]]);
+  });
+});
+
+describe("useMatchIngredients (the Match ingredients button)", () => {
+  type Target = { id: string; visibility: "household" | "catalog" };
+
+  it("matches a household recipe with the person's token", async () => {
+    const r = recorder();
+    h.client = r.client;
+    h.queryClient = spyClient().client;
+    const outcome = await hookOptions<Target, { ok: boolean }>(useMatchIngredients()).mutationFn({
+      id: RECIPE,
+      visibility: "household",
+    });
+    expect(outcome.ok).toBe(true);
+    expect(parseCalls(r.calls)).toHaveLength(1);
+    expect(parseCalls(r.calls)[0]?.args[0]).toEqual(AUTH_ON_PARSE);
+  });
+
+  it("sends a starter recipe nowhere, and tells the person when matching fails", async () => {
+    const catalog = recorder();
+    h.client = catalog.client;
+    h.queryClient = spyClient().client;
+    await expect(
+      hookOptions<Target>(useMatchIngredients()).mutationFn({ id: RECIPE, visibility: "catalog" }),
+    ).rejects.toBeInstanceOf(RecipeError);
+    expect(catalog.calls).toHaveLength(0);
+
+    h.client = recorder([], {
+      invoke: async () => ({ data: null, error: new Error("down") }),
+    }).client;
+    await expect(
+      hookOptions<Target>(useMatchIngredients()).mutationFn({
+        id: RECIPE,
+        visibility: "household",
+      }),
+    ).rejects.toMatchObject({ message: MATCH_ERROR_MESSAGE });
+  });
+
+  it("refreshes the recipe it matched, and the list", async () => {
+    const q = spyClient();
+    h.client = recorder().client;
+    h.queryClient = q.client;
+    await hookOptions(useMatchIngredients()).onSuccess?.({ ok: true }, { id: OTHER });
+    expect(invalidated(q.invalidateQueries)).toEqual([recipeQueryKey(OTHER), ["recipes"]]);
+  });
+});
+
+describe("refreshRecipe", () => {
+  it("refreshes the one recipe it was given and the list, and no other recipe", async () => {
+    const q = spyClient();
+    await refreshRecipe(q.client, OTHER);
+    expect(invalidated(q.invalidateQueries)).toEqual([["recipe", OTHER], ["recipes"]]);
+    expect(invalidated(q.invalidateQueries)).not.toContainEqual(["recipe", RECIPE]);
+  });
+});
+
+describe("parseAfterWrite: the wait, and the refresh when the match ends", () => {
+  /** A match that ends when the test says so, or fails when told to. */
+  function slowMatch() {
+    let finish: (value: unknown) => void = () => {};
+    const done = new Promise((resolve) => {
+      finish = resolve;
+    });
+    const r = recorder([], { invoke: () => done });
+    return {
+      db: r.client,
+      end: () => finish({ data: { ok: true, parsedRows: 4, unresolved: 0 }, error: null }),
+      fail: () => finish({ data: null, error: new Error("down") }),
+    };
+  }
+
+  it("stops waiting after the 25-second budget, and not before", async () => {
+    vi.useFakeTimers();
+    const m = slowMatch();
+    const q = spyClient();
+    const seen: { outcome?: unknown } = {};
+    parseAfterWrite(m.db, q.client, RECIPE).then((o) => {
+      seen.outcome = o;
+    });
+
+    await vi.advanceTimersByTimeAsync(PARSE_BUDGET_MS - 1000);
+    expect(seen.outcome).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(seen.outcome).toEqual({ ok: false, reason: "timeout" });
+    expect(PARSE_BUDGET_MS).toBe(25_000);
+
+    m.end();
+    await vi.advanceTimersByTimeAsync(0);
+  });
+
+  it("does not refresh while the match is still running", async () => {
+    vi.useFakeTimers();
+    const m = slowMatch();
+    const q = spyClient();
+    parseAfterWrite(m.db, q.client, RECIPE);
+    await vi.advanceTimersByTimeAsync(PARSE_BUDGET_MS);
+    expect(q.invalidateQueries).not.toHaveBeenCalled();
+
+    m.end();
+    await vi.advanceTimersByTimeAsync(0);
+  });
+
+  it("refreshes that recipe, and the list, when a match that outlasted the wait ends", async () => {
+    vi.useFakeTimers();
+    const m = slowMatch();
+    const q = spyClient();
+    parseAfterWrite(m.db, q.client, RECIPE);
+    await vi.advanceTimersByTimeAsync(PARSE_BUDGET_MS);
+
+    m.end();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(invalidated(q.invalidateQueries)).toEqual([recipeQueryKey(RECIPE), ["recipes"]]);
+  });
+
+  it("refreshes the recipe it matched when the match ends in time", async () => {
+    const m = slowMatch();
+    const q = spyClient();
+    const waiting = parseAfterWrite(m.db, q.client, OTHER);
+    m.end();
+    expect(await waiting).toMatchObject({ ok: true });
+    expect(invalidated(q.invalidateQueries)).toEqual([recipeQueryKey(OTHER), ["recipes"]]);
+  });
+
+  it("does not refresh for a match that failed", async () => {
+    const m = slowMatch();
+    const q = spyClient();
+    const waiting = parseAfterWrite(m.db, q.client, RECIPE);
+    m.fail();
+    expect(await waiting).toMatchObject({ ok: false, reason: "failed" });
+    expect(q.invalidateQueries).not.toHaveBeenCalled();
   });
 });

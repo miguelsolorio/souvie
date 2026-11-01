@@ -19,7 +19,7 @@
 
 begin;
 
-select plan(31);
+select plan(40);
 
 -- ---------------------------------------------------------------------------------------
 -- Fixtures (as the postgres role, which bypasses RLS)
@@ -54,6 +54,25 @@ select is(
   true,
   'the unique index covers (household_id, source_url_normalized) for live rows only'
 );
+
+-- ---------------------------------------------------------------------------------------
+-- Function grants: the repo's convention (identity.sql, planning.sql). Not executable by PUBLIC
+-- or anon. The app calls normalize_source_url as a signed-in person, so authenticated keeps it;
+-- the trigger function is for the trigger alone.
+-- ---------------------------------------------------------------------------------------
+
+select is(has_function_privilege('anon', 'public.normalize_source_url(text)', 'execute'), false, 'anon cannot execute normalize_source_url');
+select is(has_function_privilege('authenticated', 'public.normalize_source_url(text)', 'execute'), true, 'authenticated can execute normalize_source_url');
+select is(has_function_privilege('service_role', 'public.normalize_source_url(text)', 'execute'), true, 'service_role can execute normalize_source_url');
+select is(has_function_privilege('anon', 'public.recipes_set_source_url_normalized()', 'execute'), false, 'anon cannot execute the trigger function');
+select is(has_function_privilege('authenticated', 'public.recipes_set_source_url_normalized()', 'execute'), false, 'authenticated cannot execute the trigger function');
+
+set local role anon;
+
+select throws_ok($$select public.normalize_source_url('https://example.test/a')$$, '42501', 'permission denied for function normalize_source_url', 'anon cannot call normalize_source_url');
+select throws_ok($$select public.recipes_set_source_url_normalized()$$, '42501', 'permission denied for function recipes_set_source_url_normalized', 'anon cannot call the trigger function');
+
+reset role;
 
 -- ---------------------------------------------------------------------------------------
 -- normalize_source_url
@@ -123,6 +142,9 @@ select lives_ok($$insert into public.recipes (household_id, title, source_type, 
 select is((select source_url_normalized from public.recipes where title = 'Fresh link' and household_id = '0a000000-0000-4000-8000-00000000000a'), 'https://example.test/Fresh', 'and the trigger fills its key');
 select throws_ok($$insert into public.recipes (household_id, title, source_type, source_url, source_url_normalized) values ('0a000000-0000-4000-8000-00000000000a', 'Forged key', 'url', 'https://example.test/Forged', 'https://example.test/other')$$, '42501', 'permission denied for table recipes', 'a client cannot insert the key');
 select throws_ok($$update public.recipes set source_url_normalized = null where title = 'Fresh link'$$, '42501', 'permission denied for table recipes', 'a client cannot update the key');
+
+select is(public.normalize_source_url('https://Example.test/Fresh/'), 'https://example.test/Fresh', 'a signed-in person can still call normalize_source_url (the app does, to find a lost race)');
+select throws_ok($$select public.recipes_set_source_url_normalized()$$, '42501', 'permission denied for function recipes_set_source_url_normalized', 'a signed-in person cannot call the trigger function');
 
 -- ---------------------------------------------------------------------------------------
 -- Bob (another household) sees none of it

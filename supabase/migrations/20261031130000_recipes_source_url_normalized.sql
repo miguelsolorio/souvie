@@ -67,6 +67,11 @@ $$;
 comment on function public.normalize_source_url(text) is
   'The comparison form of a recipe link. Mirrors normalizeSourceUrl in packages/recipe-import/src/dedupe.ts.';
 
+-- Not executable by PUBLIC or anon, as every other function in this schema (identity.sql,
+-- planning.sql). authenticated keeps it: the trigger runs as the caller and calls it, and the app
+-- calls it to find the existing recipe when two saves of one link race.
+revoke all on function public.normalize_source_url(text) from public, anon;
+
 create function public.recipes_set_source_url_normalized() returns trigger
 language plpgsql
 set search_path = ''
@@ -76,6 +81,10 @@ begin
   return new;
 end;
 $$;
+
+-- The trigger function is for the trigger alone. Execute is checked when the trigger is created,
+-- not when it fires, so the roles that write recipes lose nothing.
+revoke all on function public.recipes_set_source_url_normalized() from public, anon, authenticated;
 
 -- Only an insert or a change to source_url can alter the key. Clients cannot update source_url
 -- at all (it is attribution), so in practice this runs on insert.

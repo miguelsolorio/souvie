@@ -140,11 +140,41 @@ function numberOr(value: unknown, fallback: number): number {
  * Calls `parse-ingredients` with `{ recipeId }` as the signed-in person. Never throws: matching is
  * a convenience on top of a saved recipe, so a failure comes back as a value and the recipe stays
  * as it was (the detail screen offers "Match ingredients" to try again).
+ *
+ * One call per recipe at a time. The function adds a row for each extra ingredient of a split
+ * line, so two calls running together would both read the same unparsed rows and both add them. A
+ * call that arrives while one is running waits for it and then goes out, which is cheap when the
+ * first already read every row (the function skips parsed rows) and right when an edit added lines
+ * in between. Calls that arrive while one is waiting share it.
  */
-export async function parseRecipeIngredients(
-  client: MpClient,
-  recipeId: string,
-): Promise<ParseOutcome> {
+export function parseRecipeIngredients(client: MpClient, recipeId: string): Promise<ParseOutcome> {
+  const slot = parseSlots.get(recipeId);
+  if (!slot) return startParse(client, recipeId);
+  slot.next ??= slot.running.then(() => startParse(client, recipeId));
+  return slot.next;
+}
+
+interface ParseSlot {
+  running: Promise<ParseOutcome>;
+  /** The call waiting for `running` to end, if anyone asked meanwhile. */
+  next?: Promise<ParseOutcome>;
+}
+
+const parseSlots = new Map<string, ParseSlot>();
+
+function startParse(client: MpClient, recipeId: string): Promise<ParseOutcome> {
+  const slot: ParseSlot = { running: callParse(client, recipeId) };
+  parseSlots.set(recipeId, slot);
+  const release = () => {
+    // A waiting call replaces this slot when it starts; until then the slot stays so that nobody
+    // slips in between.
+    if (parseSlots.get(recipeId) === slot && !slot.next) parseSlots.delete(recipeId);
+  };
+  slot.running.then(release, release);
+  return slot.running;
+}
+
+async function callParse(client: MpClient, recipeId: string): Promise<ParseOutcome> {
   try {
     const { data: auth } = await client.auth.getSession();
     const token = auth.session?.access_token;

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   createHandler,
@@ -6,6 +8,8 @@ import {
   type ExportSource,
   ORDER,
   type Row,
+  SHOPPING_RUN_COLUMNS,
+  SHOPPING_RUN_ITEM_COLUMNS,
 } from "./handler.ts";
 
 const url = "http://localhost:54321/functions/v1/export-data";
@@ -15,12 +19,20 @@ const HOUSEHOLD = "0a000000-0000-4000-8000-00000000000a";
 /** An in-memory source that records which filters and sort order each query used. */
 function fakeSource(tables: Record<string, Row[]>) {
   const calls: string[] = [];
+  /** The column list each table was read with, when it had one. */
+  const columns: Record<string, readonly string[]> = {};
   const source: ExportSource = {
-    async select(table, eq, order) {
+    async select(table, eq, order, wanted) {
       calls.push(`select ${table} ${JSON.stringify(eq)} order ${order.join(",")}`);
-      return (tables[table] ?? []).filter((row) =>
-        Object.entries(eq).every(([column, value]) => row[column] === value),
-      );
+      if (wanted) columns[table] = wanted;
+      return (tables[table] ?? [])
+        .filter((row) => Object.entries(eq).every(([column, value]) => row[column] === value))
+        .map((row) =>
+          // A real read returns only the columns asked for.
+          wanted
+            ? Object.fromEntries(Object.entries(row).filter(([key]) => wanted.includes(key)))
+            : row,
+        );
     },
     async rpc(fn, args) {
       calls.push(`rpc ${fn} ${JSON.stringify(args)}`);
@@ -29,7 +41,7 @@ function fakeSource(tables: Record<string, Row[]>) {
         : [];
     },
   };
-  return { source, calls };
+  return { source, calls, columns };
 }
 
 const tables: Record<string, Row[]> = {
@@ -41,6 +53,46 @@ const tables: Record<string, Row[]> = {
   households: [{ id: HOUSEHOLD, name: "Alice Home" }],
   household_invites: [{ household_id: HOUSEHOLD, token: "secret-invite-token", used_at: null }],
   audit_events: [{ household_id: HOUSEHOLD, kind: "member_added" }],
+  // WS12. One household's rows and another's, so a leak shows.
+  orders: [
+    { id: "o1", household_id: HOUSEHOLD, run_id: "r1", total_usd: 100, confirmed_at: "2026-11-02" },
+    {
+      id: "o-other",
+      household_id: "other",
+      run_id: "r-other",
+      total_usd: 7,
+      confirmed_at: "2026-11-02",
+    },
+  ],
+  shopping_runs: [
+    {
+      id: "r1",
+      household_id: HOUSEHOLD,
+      status: "cart_ready",
+      store_name: "Mock QFC Duvall",
+      subtotal_usd: 98,
+      created_at: "2026-11-02",
+      transcript: [{ tool: "search_products", output_summary: "secret-transcript-line" }],
+      cart_snapshot: { summary: "secret-cart-snapshot" },
+    },
+    { id: "r-other", household_id: "other", status: "cart_ready", created_at: "2026-11-02" },
+  ],
+  shopping_run_items: [
+    {
+      id: "i1",
+      run_id: "r1",
+      household_id: HOUSEHOLD,
+      product_name: "Harbor Fields Yellow Onions",
+      cart_qty: 1,
+      created_at: "2026-11-02",
+      alternatives: [{ name: "secret-alternative" }],
+    },
+    { id: "i-other", run_id: "r-other", household_id: "other", created_at: "2026-11-02" },
+  ],
+  meal_plan_entries: [
+    { id: "e1", household_id: HOUSEHOLD, date: "2026-11-03", status: "cooked" },
+    { id: "e-other", household_id: "other", date: "2026-11-03", status: "cooked" },
+  ],
 };
 
 function deps(overrides: Partial<ExportDeps> = {}) {
@@ -125,6 +177,104 @@ describe("export-data", () => {
       true,
     );
     expect(calls.every((c) => !c.includes('"other"'))).toBe(true);
+  });
+
+  it("includes the household's orders, runs, run lines and meal plan entries (WS12)", async () => {
+    const res = await createHandler(deps().deps)(authed());
+    const body = await res.json();
+    expect(body.orders).toEqual([expect.objectContaining({ id: "o1", total_usd: 100 })]);
+    expect(body.shopping_runs).toEqual([
+      expect.objectContaining({ id: "r1", status: "cart_ready", store_name: "Mock QFC Duvall" }),
+    ]);
+    expect(body.shopping_run_items).toEqual([
+      expect.objectContaining({ id: "i1", product_name: "Harbor Fields Yellow Onions" }),
+    ]);
+    expect(body.meal_plan_entries).toEqual([expect.objectContaining({ id: "e1" })]);
+  });
+
+  it("leaves the transcript, the cart snapshot and the search alternatives out of the file", async () => {
+    const res = await createHandler(deps().deps)(authed());
+    const body = await res.json();
+    const [run] = body.shopping_runs;
+    expect(run).not.toHaveProperty("transcript");
+    expect(run).not.toHaveProperty("cart_snapshot");
+    expect(body.shopping_run_items[0]).not.toHaveProperty("alternatives");
+    const text = JSON.stringify(body);
+    expect(text).not.toContain("secret-transcript-line");
+    expect(text).not.toContain("secret-cart-snapshot");
+    expect(text).not.toContain("secret-alternative");
+  });
+
+  it("asks the database for the allowed columns, so a transcript never leaves it", async () => {
+    const { deps: d, columns } = (() => {
+      const made = fakeSource(tables);
+      return { deps: deps({ sourceFor: () => made.source }).deps, columns: made.columns };
+    })();
+    await createHandler(d)(authed());
+    expect(columns.shopping_runs).toBe(SHOPPING_RUN_COLUMNS);
+    expect(columns.shopping_run_items).toBe(SHOPPING_RUN_ITEM_COLUMNS);
+    expect(columns.shopping_runs).not.toContain("transcript");
+    expect(columns.shopping_runs).not.toContain("cart_snapshot");
+    expect(columns.shopping_run_items).not.toContain("alternatives");
+  });
+
+  it("reads the WS12 tables only for the caller's own households, each in a total order", async () => {
+    const { deps: d, calls } = deps();
+    const body = await (await createHandler(d)(authed())).json();
+    for (const table of ["orders", "shopping_runs", "shopping_run_items", "meal_plan_entries"]) {
+      const call = `select ${table} {"household_id":"${HOUSEHOLD}"} order ${ORDER[table as keyof typeof ORDER].join(",")}`;
+      expect(calls, table).toContain(call);
+    }
+    expect(JSON.stringify(body)).not.toContain("other");
+    expect(calls.every((c) => !c.includes('"other"'))).toBe(true);
+  });
+
+  it("reads each WS12 table once per household, for a caller in two", async () => {
+    const second = "0b000000-0000-4000-8000-00000000000b";
+    const two: Record<string, Row[]> = {
+      ...tables,
+      household_members: [
+        ...(tables.household_members ?? []),
+        {
+          household_id: second,
+          user_id: ALICE,
+          role: "member",
+          created_at: "2026-10-05T00:00:00Z",
+        },
+      ],
+      orders: [
+        ...(tables.orders ?? []),
+        { id: "o2", household_id: second, confirmed_at: "2026-11-03" },
+      ],
+    };
+    const made = fakeSource(two);
+    const body = await (
+      await createHandler(deps({ sourceFor: () => made.source }).deps)(authed())
+    ).json();
+    expect(body.orders.map((o: Row) => o.id).sort()).toEqual(["o1", "o2"]);
+    expect(made.calls.filter((c) => c.startsWith("select orders "))).toHaveLength(2);
+  });
+
+  it("exports every column of the run tables except the ones it leaves out", () => {
+    // The column lists are written out, so a column added to a table later would silently stay
+    // out of the export. The generated types list every column; this fails until the list does.
+    const types = readFileSync(
+      fileURLToPath(new URL("../../../packages/db/src/types.generated.ts", import.meta.url)),
+      "utf8",
+    );
+    const columnsOf = (table: string): string[] => {
+      const block = new RegExp(
+        `\n      ${table}: \\{\n        Row: \\{\n([\\s\\S]*?)\n        \\};`,
+      ).exec(types);
+      if (!block?.[1]) throw new Error(`${table} is not in types.generated.ts`);
+      return [...block[1].matchAll(/^\s+(\w+):/gm)].map((m) => m[1] ?? "");
+    };
+    const runs = columnsOf("shopping_runs").filter(
+      (c) => !["transcript", "cart_snapshot"].includes(c),
+    );
+    expect([...SHOPPING_RUN_COLUMNS].sort()).toEqual(runs.sort());
+    const items = columnsOf("shopping_run_items").filter((c) => c !== "alternatives");
+    expect([...SHOPPING_RUN_ITEM_COLUMNS].sort()).toEqual(items.sort());
   });
 
   it("runs sections added by later workstreams", async () => {

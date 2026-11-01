@@ -120,3 +120,14 @@ WS12-specific:
 6. **Views.** Postgres 17: use `security_invoker` views. No views exist yet.
 7. **Docs.** docs/03 §3 (not §4.3); docs/04 "Kroger, terms that shape the product" (not §5.2) and "Feasibility matrix" (not §5.3) for the order-history column.
 
+
+## Follow-ups recorded after review (2026-11-01, merged 3b47cae)
+
+Non-blocking items from the review, for a later round or for the workstreams named:
+1. Spend weeks follow `confirmed_at`, not the run date, so a run confirmed ten days late lands in the later week (docs/02 says so; the run-detail prompt keeps asking after the banner's seven days).
+2. "Spent this week" on the Spend tab uses the device date while the views cut weeks through `history_time_zone()` in Pacific time. Once WS11's `households.timezone` is on main, swap the body of `history_time_zone` for it and read the same zone in `SpendTab.tsx`.
+3. `EditOrderSheet`'s `buildWindow` assumes a same-day pickup window; the table allows up to 24 hours, which only a service-role (WS10) order can produce.
+4. Count labels ("Bought 3 times", "2 orders", "Last 12 weeks") use numerals under ten against docs/08 §10; low priority.
+5. `orders.raw` is readable by household members and included in the export by decision (it is the household's own Tier 3 confirmation details); WS10 writes it as the service role.
+6. The banner is not on the planner home; WS13 may mount `OrderPromptBanner` there.
+7. Short WS12 sections in `packages/db/README.md` and `supabase/README.md`; a delete-account function remains out of scope.

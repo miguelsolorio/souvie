@@ -24,6 +24,13 @@ export const FAKE_ANON_KEY = "fake-anon-key-for-browser-tests";
 
 export type FakeRow = Record<string, unknown>;
 
+export interface RecordedUpload {
+  /** "recipe-images/<household>/<file>.jpg": the bucket, then the path in it. */
+  path: string;
+  contentType: string;
+  bytes: Buffer;
+}
+
 export interface RecordedRequest {
   method: string;
   /** "meal_plan_entries" for /rest/v1/meal_plan_entries, "rpc/<name>" for a function. */
@@ -100,6 +107,10 @@ export class FakeSupabase {
   /** Where /auth/v1/authorize sends the browser back to, set by the sign-in test. */
   private appOrigin = "http://127.0.0.1:4173";
   signedInUser: FakeRow | null = null;
+  /** Files the app uploaded to Storage, in order. */
+  readonly uploads: RecordedUpload[] = [];
+  /** The instant sessions are issued at. Set it to the page's fixed clock (support/app.ts). */
+  now: Date = new Date();
 
   seed(table: string, rows: FakeRow[]): this {
     this.tables.set(table, structuredClone(rows));
@@ -225,6 +236,24 @@ export class FakeSupabase {
       return void (await this.json(route, 200, answer(body)));
     }
     if (url.pathname.startsWith("/rest/v1/")) return this.rest(route, url, method, body);
+    if (url.pathname.startsWith("/storage/v1/object/")) {
+      const path = url.pathname.slice("/storage/v1/object/".length);
+      this.requests.push({
+        method,
+        table: `storage/${path}`,
+        query: url.searchParams,
+        body: undefined,
+      });
+      if (method === "POST" || method === "PUT") {
+        this.uploads.push({
+          path,
+          contentType: request.headers()["content-type"] ?? "",
+          bytes: request.postDataBuffer() ?? Buffer.alloc(0),
+        });
+        return void (await this.json(route, 200, { Key: path, Id: "fake-object-id" }));
+      }
+      return void (await this.json(route, 404, { error: "not_found", message: "Not found" }));
+    }
 
     this.unhandled.push(`${method} ${url.pathname}${url.search}`);
     await this.json(route, 200, {});
@@ -263,7 +292,7 @@ export class FakeSupabase {
 
   /** A session for `user`, as /auth/v1/token returns it. */
   sessionFor(user: FakeRow | null): unknown {
-    return makeSession(user ?? { id: "00000000-0000-4000-8000-000000000000" });
+    return makeSession(user ?? { id: "00000000-0000-4000-8000-000000000000" }, this.now);
   }
 
   // --- PostgREST ----------------------------------------------------------------------------

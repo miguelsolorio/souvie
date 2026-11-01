@@ -52,6 +52,7 @@ export function worldSupabase(): FakeSupabase {
  */
 export async function openSignedIn(page: Page, fake: FakeSupabase): Promise<void> {
   await page.clock.setFixedTime(NOW);
+  fake.now = NOW;
   await fake.install(page);
   const session = makeSession({ ...USER }, NOW);
   await page.addInitScript(
@@ -65,5 +66,6 @@ export async function openSignedIn(page: Page, fake: FakeSupabase): Promise<void
 /** Starts a page nobody is signed in on. The fake still answers, for the sign-in round trip. */
 export async function openSignedOut(page: Page, fake: FakeSupabase): Promise<void> {
   await page.clock.setFixedTime(NOW);
+  fake.now = NOW;
   await fake.install(page);
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MpClient } from "./client";
-import { fetchActiveHousehold } from "./hooks/useHousehold";
+import { fetchActiveHousehold, planModeOf } from "./hooks/useHousehold";
 import {
   avatarPath,
   createHousehold,
@@ -14,6 +14,7 @@ import {
   redeemInvite,
   removeMember,
   renameHousehold,
+  setPlanMode,
   toIdentityError,
   updateDisplayName,
   uploadAvatar,
@@ -227,12 +228,69 @@ describe("table helpers", () => {
     await expect(fetchActiveHousehold(client, "u1")).resolves.toEqual({
       id: "h2",
       name: "Newest",
+      plan_mode: "simple",
       role: "member",
     });
     expect(calls.find((c) => c.op === "household_members.order")?.args).toEqual([
       "created_at",
       { ascending: false },
     ]);
+  });
+
+  it("fetchActiveHousehold carries the household's plan mode", async () => {
+    const household = { id: "h2", name: "Every meal", plan_mode: "full" };
+    const { client } = fakeClient([
+      { data: [{ role: "owner", created_at: "t", households: household }] },
+    ]);
+    await expect(fetchActiveHousehold(client, "u1")).resolves.toMatchObject({
+      plan_mode: "full",
+      role: "owner",
+    });
+  });
+
+  it("fetchActiveHousehold falls back to simple for a missing or unknown plan mode", async () => {
+    for (const plan_mode of [undefined, null, "weekly"]) {
+      const household = { id: "h2", name: "Old copy", plan_mode };
+      const { client } = fakeClient([
+        { data: [{ role: "owner", created_at: "t", households: household }] },
+      ]);
+      await expect(fetchActiveHousehold(client, "u1")).resolves.toMatchObject({
+        plan_mode: "simple",
+      });
+    }
+  });
+
+  it("planModeOf reads the two modes and defaults everything else to simple", () => {
+    expect(planModeOf("simple")).toBe("simple");
+    expect(planModeOf("full")).toBe("full");
+    expect(planModeOf(undefined)).toBe("simple");
+    expect(planModeOf("")).toBe("simple");
+    expect(planModeOf("FULL")).toBe("simple");
+  });
+
+  it("setPlanMode writes only plan_mode, on the one household", async () => {
+    const { client, calls } = fakeClient([{ data: [{ id: "h1" }] }]);
+    await expect(setPlanMode(client, "h1", "full")).resolves.toBeUndefined();
+    expect(calls.find((c) => c.op === "households.update")?.args).toEqual([{ plan_mode: "full" }]);
+    expect(calls.find((c) => c.op === "households.eq")?.args).toEqual(["id", "h1"]);
+  });
+
+  it("setPlanMode treats zero updated rows as not_owner, so a member is told so", async () => {
+    const { client } = fakeClient([{ data: [] }]);
+    await expect(setPlanMode(client, "h1", "simple")).rejects.toMatchObject({
+      code: "not_owner",
+    });
+  });
+
+  it("setPlanMode maps a database error and refuses a mode it does not know", async () => {
+    const failing = fakeClient([{ data: null, error: { message: "not_owner" } }]);
+    await expect(setPlanMode(failing.client, "h1", "full")).rejects.toMatchObject({
+      code: "not_owner",
+    });
+    const { client, calls } = fakeClient();
+    // @ts-expect-error a mode outside the enum never reaches the database
+    await expect(setPlanMode(client, "h1", "dinner-only")).rejects.toThrow();
+    expect(calls.some((c) => c.op === "households.update")).toBe(false);
   });
 
   it("fetchActiveHousehold returns null when the user has no household", async () => {

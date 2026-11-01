@@ -36,6 +36,7 @@ export function ListTwoPane({
                 testID={`list-pane-${entry.key}`}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isSelected }}
+                aria-selected={isSelected}
                 accessibilityLabel={paneAccessibilityLabel(entry)}
                 onPress={() => onSelect(entry.key)}
                 className={`min-h-11 flex-row items-center justify-between gap-3 rounded-xl px-3 ${
@@ -50,10 +51,17 @@ export function ListTwoPane({
                 >
                   {entry.label}
                 </Text>
+                {/*
+                  The count is in the tab's spoken label, so it is hidden from the reading. The
+                  leading space is collapsed on screen but keeps "Produce 3" from reading as
+                  "Produce3" to tools that join the text of side by side boxes, which is how a
+                  label that must contain the visible words (WCAG 2.5.3) is checked.
+                */}
                 <Text
+                  aria-hidden
                   className={`text-sm ${isSelected ? "font-semibold text-brand" : "text-neutral-500"}`}
                 >
-                  {entry.remaining}
+                  {` ${entry.remaining}`}
                 </Text>
               </Pressable>
             );

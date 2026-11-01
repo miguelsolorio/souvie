@@ -343,6 +343,8 @@ function ThumbButton({
       accessibilityRole="radio"
       accessibilityLabel={label}
       accessibilityState={{ selected, checked: selected }}
+      // react-native-web writes aria-* props and ignores accessibilityState (WS13).
+      aria-checked={selected}
       onPress={onPress}
       className={`min-h-12 flex-1 flex-row items-center justify-center gap-2 rounded-xl border px-4 ${
         selected ? "border-brand bg-green-50" : "border-neutral-300 bg-white"
@@ -388,6 +390,7 @@ function MovePanel({
                 accessibilityRole="radio"
                 accessibilityLabel={longDate(day)}
                 accessibilityState={{ selected, checked: selected }}
+                aria-checked={selected}
                 onPress={() => setDate(day)}
                 className={`min-h-12 min-w-16 items-center justify-center rounded-xl border px-3 ${
                   selected ? "border-brand bg-brand" : "border-neutral-300 bg-white"

@@ -383,6 +383,7 @@ export function ListView({
                 </View>
                 <View
                   accessibilityRole="progressbar"
+                  accessibilityLabel="Items checked off"
                   accessibilityValue={{ min: 0, max: data.progress.total, now: data.progress.done }}
                   className="h-2 overflow-hidden rounded-full bg-neutral-200"
                 >

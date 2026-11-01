@@ -64,8 +64,18 @@ export function ItemRow({
         testID={`item-${item.id}`}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: item.checked }}
+        // react-native-web 0.21 writes aria-* props and ignores accessibilityState, so without this
+        // a screen reader on the web hears a checkbox that is never checked (WS13).
+        aria-checked={item.checked}
         accessibilityLabel={rowAccessibilityLabel(item)}
         onPress={() => onToggle?.(item)}
+        // A checkbox is toggled by Space as well as by a click. react-native-web's Pressable
+        // answers Enter on any role but Space only on a button, so Space is handled here (WS13).
+        onKeyDown={(event) => {
+          if (event.nativeEvent.key !== " ") return;
+          event.preventDefault();
+          onToggle?.(item);
+        }}
         className="min-h-11 flex-1 flex-row items-center gap-3 py-2 pr-2"
       >
         <View
@@ -80,7 +90,9 @@ export function ItemRow({
         <View className="flex-1">
           <Text
             className={`font-medium ${large ? "text-xl" : "text-base"} ${
-              item.checked ? "text-neutral-400 line-through" : "text-neutral-900"
+              item.checked
+                ? "text-neutral-400 line-through web:text-neutral-500"
+                : "text-neutral-900"
             }`}
           >
             {item.display_name}
@@ -92,7 +104,7 @@ export function ItemRow({
         {amount ? (
           <Text
             className={`${large ? "text-lg" : "text-sm"} ${
-              item.checked ? "text-neutral-400" : "text-neutral-600"
+              item.checked ? "text-neutral-400 web:text-neutral-500" : "text-neutral-600"
             }`}
           >
             {amount}

@@ -7,6 +7,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
+    "e2e:build": "EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=fake-anon-key-for-browser-tests pnpm --filter @mp/mobile export:web",
     "e2e": "playwright test",
     "install:browsers": "playwright install --with-deps chromium"
   },

@@ -1,4 +1,5 @@
 import { isIsoDate, isoDateOf, type MealSlot, shiftWeek, weekStartFor } from "@mp/core";
+import { usePlanMode } from "@mp/db";
 import { EmptyState } from "@mp/ui/primitives";
 import { Redirect, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useRef, useState } from "react";
@@ -29,9 +30,10 @@ function resolveWeek(raw: string | undefined, thisWeek: string): string {
 }
 
 /**
- * The planner's week view, and the app's home screen. Seven days, each with breakfast, lunch,
- * dinner, and snack slots; tap a slot to add a recipe, tap a meal to change it. Changes made by
- * another member of the household appear here on their own.
+ * The planner's week view, and the app's home screen. Seven days; tap a slot to add a recipe, tap
+ * a meal to change it. A household on Just dinners (the default) sees one dinner slot a day, with
+ * meals planned in other slots under "More meals"; on Every meal it sees breakfast, lunch, dinner,
+ * and snack. Changes made by another member of the household appear here on their own.
  */
 export default function PlanScreen() {
   const router = useRouter();
@@ -40,6 +42,7 @@ export default function PlanScreen() {
   const thisWeek = weekStartFor(today);
   const weekStart = resolveWeek(params.week, thisWeek);
 
+  const mode = usePlanMode();
   const data = usePlanWeek(weekStart);
   const actions = usePlanActions(data.householdId);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -130,7 +133,7 @@ export default function PlanScreen() {
             testID="plan-empty"
             icon="🍽"
             title="Nothing planned this week"
-            message="Pick a day below and add a recipe. Your household sees every change as it happens."
+            message={`Pick a day below and add a ${mode === "simple" ? "dinner" : "recipe"}. Your household sees every change as it happens.`}
             action={{
               label: "Plan a dinner",
               testID: "plan-first-dinner",
@@ -142,6 +145,7 @@ export default function PlanScreen() {
         {data.weekLoading ? null : (
           <WeekGrid
             weekStart={weekStart}
+            mode={mode}
             byDay={data.byDay}
             today={today}
             onAdd={addTo}

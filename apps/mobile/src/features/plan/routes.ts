@@ -20,6 +20,24 @@ export function planRoute(weekStart?: string): string {
 
 export const dayRoute = (date: string) => `${PLAN_ROUTE}/${date}`;
 
+/**
+ * The meal the picker opens for when its link names none: dinner, the one meal Just dinners mode
+ * plans and the one most households plan in Every meal mode too. A link that names a slot
+ * (`slot=lunch`) keeps working in either mode, so existing entries and deep links survive.
+ */
+export const DEFAULT_PICK_SLOT: MealSlot = "dinner";
+
+/**
+ * The picker's slot from its `slot` param: the default when the link has none, the named slot
+ * when it is a real one, and null for anything else (the picker then sends the person to the
+ * plan, as it always has for a malformed link).
+ */
+export function resolvePickSlot(raw: unknown): MealSlot | null {
+  if (raw === undefined || raw === "") return DEFAULT_PICK_SLOT;
+  const slot = MealSlot.safeParse(raw);
+  return slot.success ? slot.data : null;
+}
+
 /** What the recipe picker was opened for: a day and slot, and the entry being swapped if any. */
 export interface PickerTarget {
   date: string;

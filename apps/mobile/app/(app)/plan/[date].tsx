@@ -1,4 +1,5 @@
-import { isIsoDate, isoDateOf, MEAL_SLOTS, weekStartFor } from "@mp/core";
+import { isIsoDate, isoDateOf, slotsForMode, weekStartFor } from "@mp/core";
+import { usePlanMode } from "@mp/db";
 import { Redirect, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
@@ -9,14 +10,18 @@ import { CREATE_HOUSEHOLD_ROUTE } from "../../../src/features/auth/routes";
 import { EntryCard } from "../../../src/features/plan/EntryCard";
 import { EntrySheet } from "../../../src/features/plan/EntrySheet";
 import { longDate, neighborDay, SLOT_LABELS } from "../../../src/features/plan/format";
+import { moreMealsOf } from "../../../src/features/plan/mode";
 import { PlanNoticeBar, SyncStatus } from "../../../src/features/plan/PlanNotice";
 import { pickRoute, planRoute } from "../../../src/features/plan/routes";
+import { MoreMeals } from "../../../src/features/plan/SlotCell";
 import { usePlanActions } from "../../../src/features/plan/usePlanActions";
 import { usePlanWeek } from "../../../src/features/plan/usePlanWeek";
 
 /**
- * One day of the plan, larger than the week view's cell: every slot with its meals as cards. The
- * arrows step to the day before and after, across week boundaries.
+ * One day of the plan, larger than the week view's cell: the day's slots with their meals as
+ * cards. A household on Just dinners (the default) sees the dinner slot, with meals planned in
+ * other slots under a collapsed "More meals"; on Every meal it sees all four slots. The arrows
+ * step to the day before and after, across week boundaries.
  */
 export default function DayScreen() {
   const router = useRouter();
@@ -25,6 +30,7 @@ export default function DayScreen() {
   const day = valid ? date : isoDateOf(new Date());
   const weekStart = weekStartFor(day);
 
+  const mode = usePlanMode();
   const data = usePlanWeek(weekStart);
   const actions = usePlanActions(data.householdId);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -39,6 +45,7 @@ export default function DayScreen() {
 
   const today = isoDateOf(new Date());
   const step = (direction: 1 | -1) => router.setParams({ date: neighborDay(day, direction) });
+  const more = moreMealsOf(data.byDay[day], mode);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
@@ -86,7 +93,7 @@ export default function DayScreen() {
           </View>
         ) : null}
 
-        {(data.weekLoading ? [] : MEAL_SLOTS).map((slot) => {
+        {(data.weekLoading ? [] : slotsForMode(mode)).map((slot) => {
           const entries = data.byDay[day]?.[slot] ?? [];
           return (
             <View key={slot} testID={`day-slot-${slot}`} className="gap-3">
@@ -109,6 +116,19 @@ export default function DayScreen() {
             </View>
           );
         })}
+
+        {more.length > 0 && !data.weekLoading ? (
+          <MoreMeals date={day} count={more.length}>
+            {more.map((entry) => (
+              <View key={entry.id} className="gap-2">
+                <Text className="text-sm font-semibold text-neutral-600">
+                  {SLOT_LABELS[entry.slot]}
+                </Text>
+                <EntryCard entry={entry} onOpen={(e) => setOpenId(e.id)} />
+              </View>
+            ))}
+          </MoreMeals>
+        ) : null}
 
         <Pressable
           testID="back-to-week"

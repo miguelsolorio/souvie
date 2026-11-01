@@ -361,9 +361,57 @@ describe("coming back from the add-recipe screen with a new recipe", () => {
   });
 });
 
+describe("the slot the picker plans for", () => {
+  const fresh = recipe("r9", "Zucchini fritters", { servings: 3 });
+
+  it("is dinner when the link names a date and no slot", () => {
+    const screen = show({ recipes: [lemon, fresh], params: { date: "2026-11-03", added: "r9" } });
+    expect(screen.has("redirect")).toBe(false);
+    expect(screen.html).toContain("Dinner on Tuesday. The recipe makes 3 servings.");
+    expect(screen.html).toContain("Add to Tuesday dinner");
+    screen.press("pick-add");
+    expect(h.actions.addRecipe).toHaveBeenCalledWith(
+      expect.objectContaining({ date: "2026-11-03", slot: "dinner", recipe: fresh }),
+    );
+  });
+
+  it("is dinner for the add-recipe return target too, so the person lands back on dinner", () => {
+    const screen = show({ recipes: [lemon], params: { date: "2026-11-03" } });
+    screen.press("picker-add-recipe");
+    expect(h.router.push).toHaveBeenCalledWith(
+      "/recipes/new?returnTo=pick&date=2026-11-03&slot=dinner",
+    );
+  });
+
+  it("is the slot the link names, for every slot, so deep links and stray meals keep working", () => {
+    for (const [slot, label] of [
+      ["breakfast", "Breakfast"],
+      ["lunch", "Lunch"],
+      ["dinner", "Dinner"],
+      ["snack", "Snack"],
+    ] as const) {
+      const screen = show({
+        recipes: [fresh],
+        params: { date: "2026-11-05", slot, added: "r9" },
+      });
+      expect(screen.html).toContain(`${label} on Thursday`);
+    }
+  });
+
+  it("sends a link with a slot that is not one back to the plan", () => {
+    const screen = show({ recipes: [lemon], params: { date: "2026-11-03", slot: "brunch" } });
+    expect(screen.props("redirect").href).toBe("/plan");
+  });
+});
+
 describe("other states", () => {
   it("sends a picker opened without a date and slot back to the plan", () => {
     const screen = show({ recipes: [lemon], params: {} });
+    expect(screen.props("redirect").href).toBe("/plan");
+  });
+
+  it("sends a picker opened with a slot and no date back to the plan", () => {
+    const screen = show({ recipes: [lemon], params: { slot: "dinner" } });
     expect(screen.props("redirect").href).toBe("/plan");
   });
 

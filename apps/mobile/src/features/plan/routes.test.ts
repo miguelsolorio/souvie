@@ -1,8 +1,10 @@
+import { MEAL_SLOTS, slotsForMode } from "@mp/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LIST_ROUTE } from "../list/routes";
 import { clearPlanNotice, getPlanNotice, NOTICE_DURATION_MS, showPlanNotice } from "./notice";
 import {
   afterRecipeSaved,
+  DEFAULT_PICK_SLOT,
   dayRoute,
   GROCERY_LIST_PENDING_HINT,
   GROCERY_LIST_ROUTE,
@@ -12,6 +14,7 @@ import {
   pickRoute,
   planRoute,
   recipeRoute,
+  resolvePickSlot,
 } from "./routes";
 
 describe("routes", () => {
@@ -187,6 +190,36 @@ describe("recipe entry points in the picker", () => {
         href: recipeRoute("r9"),
       });
     });
+  });
+});
+
+describe("slots and plan modes", () => {
+  it("keeps the day and picker links working for every slot, in either mode", () => {
+    // A deep link, a stray lunch left from Every meal mode, or a housemate's snack all open.
+    for (const slot of MEAL_SLOTS) {
+      expect(pickRoute({ date: "2026-11-03", slot })).toBe(
+        `/plan/pick?date=2026-11-03&slot=${slot}`,
+      );
+      expect(resolvePickSlot(slot)).toBe(slot);
+    }
+    expect(dayRoute("2026-11-03")).toBe("/plan/2026-11-03");
+  });
+
+  it("opens the picker for dinner when the link names no slot", () => {
+    expect(DEFAULT_PICK_SLOT).toBe("dinner");
+    expect(resolvePickSlot(undefined)).toBe("dinner");
+    expect(resolvePickSlot("")).toBe("dinner");
+  });
+
+  it("makes the default the one slot Just dinners mode plans", () => {
+    expect(slotsForMode("simple")).toEqual([DEFAULT_PICK_SLOT]);
+    expect(slotsForMode("full")).toContain(DEFAULT_PICK_SLOT);
+  });
+
+  it("refuses a slot that is not one, so the picker sends the person to the plan", () => {
+    for (const bad of ["brunch", "Dinner", " dinner", "dinner,lunch", null, 4, ["dinner"], {}]) {
+      expect(resolvePickSlot(bad), String(bad)).toBeNull();
+    }
   });
 });
 

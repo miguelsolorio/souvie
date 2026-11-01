@@ -69,6 +69,8 @@ export interface RunsTestDb {
 export interface CreateRunsTestDbOptions {
   /** Load the pgTAP shim, for a test that runs supabase/tests files. */
   pgtap?: boolean;
+  /** Migrations after ws09_runs, by name (WS15 loads "ws15_observability"). Applied in order. */
+  extraMigrations?: readonly string[];
 }
 
 export async function createRunsTestDb(options: CreateRunsTestDbOptions = {}): Promise<RunsTestDb> {
@@ -79,7 +81,7 @@ export async function createRunsTestDb(options: CreateRunsTestDbOptions = {}): P
   await db.exec("create extension pg_trgm with schema extensions;");
   await db.exec("create extension pgcrypto with schema extensions;");
   await db.exec('set search_path = "$user", public, extensions;');
-  for (const name of HARNESS_MIGRATIONS) {
+  for (const name of [...HARNESS_MIGRATIONS, ...(options.extraMigrations ?? [])]) {
     try {
       await db.exec(migrationSql(name));
     } catch (err) {

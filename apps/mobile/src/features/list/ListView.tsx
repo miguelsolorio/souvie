@@ -23,6 +23,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "../../components/Button";
 import { LoadingScreen } from "../../components/Screen";
+import { useIsDesktop } from "../../lib/useBreakpoint";
 import { CREATE_HOUSEHOLD_ROUTE } from "../auth/routes";
 import { weekRangeLabel } from "../plan/format";
 import { PlanNoticeBar } from "../plan/PlanNotice";
@@ -30,8 +31,17 @@ import { planRoute } from "../plan/routes";
 import { ShopThisList } from "../shopping/ShopThisList";
 import { AddItemBar } from "./AddItemBar";
 import { ItemRow } from "./ItemRow";
+import { ListTwoPane } from "./ListTwoPane";
 import { sectionsToShow, syncNote } from "./logic";
 import { OutOfDateBanner } from "./OutOfDateBanner";
+import {
+  PANE_ALL,
+  PANE_HAVE,
+  PANE_REMOVED,
+  paneEntries,
+  resolvePane,
+  sectionOfPane,
+} from "./panes";
 import { PANTRY_ROUTE, storeModeRoute } from "./routes";
 import { SectionGroup } from "./SectionGroup";
 import { SectionOrderSheet } from "./SectionOrderSheet";
@@ -84,6 +94,18 @@ export function ListView({
     [data.split.toBuy, list?.section_order],
   );
 
+  // WS13: at the desktop breakpoint the list is two panes, store sections on the left and the
+  // chosen section's items on the right. Phones and tablets keep the single column.
+  const desktop = useIsDesktop();
+  const [pane, setPane] = useState(PANE_ALL);
+  const haveCount = data.split.haveAlready.length;
+  const removedCount = data.split.removed.length;
+  const entries = useMemo(
+    () => paneEntries(groups, haveCount, removedCount),
+    [groups, haveCount, removedCount],
+  );
+  const activePane = resolvePane(entries, pane);
+
   // "Generate list" is one tap: arriving with the build request and no list builds it, once.
   const autoBuilt = useRef(false);
   const { list: loadedList, mealCount, loading } = data;
@@ -103,6 +125,118 @@ export function ListView({
   const shopped = list?.status === "shopped";
   const note = syncNote(data.pending);
   const weekLabel = data.weekStart ? weekRangeLabel(data.weekStart) : "Groceries";
+
+  // The pieces of the list body, as functions so the single column and the two panes draw the
+  // same rows. `only` limits the groups to one section.
+  const renderGroups = (only: string | null) =>
+    groups
+      .filter((group) => only === null || group.section === only)
+      .map((group) => (
+        <SectionGroup
+          key={group.section}
+          testID={`section-${group.section}`}
+          title={sectionLabel(group.section)}
+          count={group.items.length}
+        >
+          {group.items.map((item) => (
+            <ItemRow
+              key={item.id}
+              item={item}
+              onToggle={(row) => toggle(row)}
+              onInfo={(row) => setOpenId(row.id)}
+            />
+          ))}
+        </SectionGroup>
+      ));
+
+  const renderHave = (collapsible: boolean) =>
+    haveCount > 0 ? (
+      <SectionGroup
+        testID="section-already-have"
+        title="Already have"
+        count={haveCount}
+        collapsible={collapsible}
+        defaultCollapsed={collapsible}
+      >
+        {data.split.haveAlready.map((item) => (
+          <ItemRow
+            key={item.id}
+            item={item}
+            mode="have"
+            onAction={(row) => {
+              // Out of it after all: say so in the pantry, so the next build keeps it
+              // on the list, and put it on this one now.
+              if (row.ingredient_id) {
+                pantry.setStatus({ ingredientId: row.ingredient_id, status: "out" });
+              }
+              restore(row.id);
+            }}
+          />
+        ))}
+      </SectionGroup>
+    ) : null;
+
+  const renderRemoved = (collapsible: boolean) =>
+    removedCount > 0 ? (
+      <SectionGroup
+        testID="section-removed"
+        title="Removed"
+        count={removedCount}
+        collapsible={collapsible}
+        defaultCollapsed={collapsible}
+      >
+        {data.split.removed.map((item) => (
+          <ItemRow key={item.id} item={item} mode="removed" onAction={(row) => restore(row.id)} />
+        ))}
+      </SectionGroup>
+    ) : null;
+
+  const renderPane = () => {
+    if (activePane === PANE_HAVE) return renderHave(false);
+    if (activePane === PANE_REMOVED) return renderRemoved(false);
+    const section = sectionOfPane(activePane);
+    if (section) return renderGroups(section);
+    return (
+      <>
+        {renderGroups(null)}
+        {renderHave(true)}
+        {renderRemoved(true)}
+      </>
+    );
+  };
+
+  const actions = list ? (
+    <View className="gap-3 pt-2">
+      {data.stale ? null : (
+        <Button
+          testID="list-rebuild-anyway"
+          label="Rebuild from the plan"
+          variant="secondary"
+          loading={data.build.building}
+          onPress={data.build.run}
+        />
+      )}
+      <Button
+        testID="list-aisle-order"
+        label="Aisle order"
+        variant="secondary"
+        onPress={() => setOrderOpen(true)}
+      />
+      <Button
+        testID="list-pantry"
+        label="Pantry"
+        variant="secondary"
+        onPress={() => router.push(PANTRY_ROUTE)}
+      />
+      <Button
+        testID="list-mark-shopped"
+        label={shopped ? "Reopen list" : "Mark as shopped"}
+        variant="ghost"
+        loading={updateList.isPending}
+        onPress={() => updateList.mutate({ status: shopped ? "active" : "shopped" })}
+      />
+    </View>
+  ) : null;
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
@@ -128,7 +262,7 @@ export function ListView({
         <ScrollView
           testID="list-scroll"
           keyboardShouldPersistTaps="handled"
-          contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-4 py-4"
+          contentContainerClassName={`mx-auto w-full gap-5 px-4 py-4 ${desktop ? "max-w-6xl" : "max-w-2xl"}`}
           refreshControl={<RefreshControl refreshing={data.refreshing} onRefresh={data.refetch} />}
         >
           {onWeekChange && data.weekStart ? (
@@ -281,99 +415,23 @@ export function ListView({
                 </Text>
               ) : null}
 
-              {groups.map((group) => (
-                <SectionGroup
-                  key={group.section}
-                  testID={`section-${group.section}`}
-                  title={sectionLabel(group.section)}
-                  count={group.items.length}
+              {desktop ? (
+                <ListTwoPane
+                  entries={entries}
+                  selected={activePane}
+                  onSelect={setPane}
+                  footer={actions}
                 >
-                  {group.items.map((item) => (
-                    <ItemRow
-                      key={item.id}
-                      item={item}
-                      onToggle={(row) => toggle(row)}
-                      onInfo={(row) => setOpenId(row.id)}
-                    />
-                  ))}
-                </SectionGroup>
-              ))}
-
-              {data.split.haveAlready.length > 0 ? (
-                <SectionGroup
-                  testID="section-already-have"
-                  title="Already have"
-                  count={data.split.haveAlready.length}
-                  collapsible
-                  defaultCollapsed
-                >
-                  {data.split.haveAlready.map((item) => (
-                    <ItemRow
-                      key={item.id}
-                      item={item}
-                      mode="have"
-                      onAction={(row) => {
-                        // Out of it after all: say so in the pantry, so the next build keeps it
-                        // on the list, and put it on this one now.
-                        if (row.ingredient_id) {
-                          pantry.setStatus({ ingredientId: row.ingredient_id, status: "out" });
-                        }
-                        restore(row.id);
-                      }}
-                    />
-                  ))}
-                </SectionGroup>
-              ) : null}
-
-              {data.split.removed.length > 0 ? (
-                <SectionGroup
-                  testID="section-removed"
-                  title="Removed"
-                  count={data.split.removed.length}
-                  collapsible
-                  defaultCollapsed
-                >
-                  {data.split.removed.map((item) => (
-                    <ItemRow
-                      key={item.id}
-                      item={item}
-                      mode="removed"
-                      onAction={(row) => restore(row.id)}
-                    />
-                  ))}
-                </SectionGroup>
-              ) : null}
-
-              <View className="gap-3 pt-2">
-                {data.stale ? null : (
-                  <Button
-                    testID="list-rebuild-anyway"
-                    label="Rebuild from the plan"
-                    variant="secondary"
-                    loading={data.build.building}
-                    onPress={data.build.run}
-                  />
-                )}
-                <Button
-                  testID="list-aisle-order"
-                  label="Aisle order"
-                  variant="secondary"
-                  onPress={() => setOrderOpen(true)}
-                />
-                <Button
-                  testID="list-pantry"
-                  label="Pantry"
-                  variant="secondary"
-                  onPress={() => router.push(PANTRY_ROUTE)}
-                />
-                <Button
-                  testID="list-mark-shopped"
-                  label={shopped ? "Reopen list" : "Mark as shopped"}
-                  variant="ghost"
-                  loading={updateList.isPending}
-                  onPress={() => updateList.mutate({ status: shopped ? "active" : "shopped" })}
-                />
-              </View>
+                  {renderPane()}
+                </ListTwoPane>
+              ) : (
+                <>
+                  {renderGroups(null)}
+                  {renderHave(true)}
+                  {renderRemoved(true)}
+                  {actions}
+                </>
+              )}
             </>
           ) : null}
 
@@ -382,7 +440,7 @@ export function ListView({
 
         {list ? (
           <View className="border-t border-neutral-200 bg-white px-4 py-3">
-            <View className="mx-auto w-full max-w-2xl">
+            <View className={`mx-auto w-full ${desktop ? "max-w-6xl" : "max-w-2xl"}`}>
               <AddItemBar onAdd={(name) => add({ display_name: name })} />
             </View>
           </View>

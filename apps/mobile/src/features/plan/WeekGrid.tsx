@@ -2,16 +2,15 @@ import type { EntriesByDay } from "@mp/core";
 import { MEAL_SLOTS, type MealSlot, weekDates } from "@mp/core";
 import type { PlanEntry } from "@mp/db";
 import { useRef } from "react";
-import { Pressable, Text, useWindowDimensions, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import { useIsDesktop } from "../../lib/useBreakpoint";
 import { longDate, shortDayName, shortMonthDay } from "./format";
+import { GridDesktopInput } from "./GridDesktopInput";
 import { SlotCell } from "./SlotCell";
 
-/** At this width and up the week is seven columns; below it, a list of days. */
-export const WIDE_GRID_MIN_WIDTH = 900;
-
+/** At the desktop breakpoint (1024 and up) the week is seven columns; below it, a list of days. */
 export function useIsWideGrid(): boolean {
-  const { width } = useWindowDimensions();
-  return width >= WIDE_GRID_MIN_WIDTH;
+  return useIsDesktop();
 }
 
 /**
@@ -50,6 +49,8 @@ export function WeekGrid({
       // One row per slot, seven cells across, so breakfast, lunch, dinner and snack line up from
       // day to day and a tall cell stretches its neighbors.
       <View testID="week-grid" accessibilityLabel="Week plan, seven columns" className="gap-2">
+        {/* WS13: drag a meal to another slot, and arrow keys between days (web only). */}
+        <GridDesktopInput byDay={byDay} />
         <View className="flex-row gap-2">
           {days.map((date) => (
             <View key={date} testID={`day-${date}`} className="min-w-0 flex-1">

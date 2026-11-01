@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./tokens": "./src/tokens.ts",
     "./css": "./src/css.ts",
+    "./layout": "./src/layout.ts",
     "./primitives": "./src/primitives/index.ts",
     "./tailwind.preset": "./tailwind.preset.js",
     "./tailwind.preset.js": "./tailwind.preset.js"

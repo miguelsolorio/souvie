@@ -82,6 +82,9 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] WS11 merged 248bc01 (2026-11-01); migration on hosted with `--include-all`. WS13 (PR #31) and WS15 (PR #30) in fix rounds.
 - [x] WS13 merged 04fcd1d (2026-11-01); no migration or function. Web deploy waits on Miguel's Cloudflare Pages project. WS15 (PR #30) in its fix round.
 - [x] WS15 merged 403dd29 (2026-11-01); migration on hosted; `suggest`, `recipe-import`, `llm-proxy`, `parse-ingredients` redeployed. `SENTRY_DSN` and the PostHog key stay unset until the accounts exist.
+- [x] WS10 brief: wave 6 as-built addendum (2026-11-01).
+- [ ] Wave 6 follow-ups round on `ws/w6-followups` (brief `docs/workstreams/WAVE6-followups.md`, Sonnet, dispatched 2026-11-01): review, merge, apply `20261101100000` to hosted, redeploy `suggest`, `recipe-import`, `llm-proxy`, `parse-ingredients`.
+- [ ] WS14 deploy-gates round, non-human parts (stores wording, listing sentence, wordmark numbers, waitlist rate limit), after the follow-ups round merges.
 - [ ] CCR10: `households.weekly_nudge` (orchestrator migration, after WS06 asks for it).
 - [ ] Review each as it finishes. WS10 reviewer runs the Tier 3 checklist and a manual Safeway run on a real account.
 - [x] Merge all but WS10, wave 6 summary written (2026-11-01). WS10 follows checkpoint 5; its brief gets a wave 6 as-built addendum before dispatch.

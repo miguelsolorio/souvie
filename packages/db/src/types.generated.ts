@@ -352,7 +352,9 @@ export type Database = {
           id: string;
           name: string;
           plan_mode: Database["public"]["Enums"]["households_plan_mode"];
+          quiet_hours: Json | null;
           tier3_consent: Json | null;
+          timezone: string | null;
           updated_at: string;
           zip: string | null;
         };
@@ -365,7 +367,9 @@ export type Database = {
           id?: string;
           name: string;
           plan_mode?: Database["public"]["Enums"]["households_plan_mode"];
+          quiet_hours?: Json | null;
           tier3_consent?: Json | null;
+          timezone?: string | null;
           updated_at?: string;
           zip?: string | null;
         };
@@ -377,7 +381,9 @@ export type Database = {
           id?: string;
           name?: string;
           plan_mode?: Database["public"]["Enums"]["households_plan_mode"];
+          quiet_hours?: Json | null;
           tier3_consent?: Json | null;
+          timezone?: string | null;
           updated_at?: string;
           zip?: string | null;
         };
@@ -705,6 +711,76 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      notification_outbox: {
+        Row: {
+          attempts: number;
+          created_at: string;
+          dedupe_key: string | null;
+          deliver_after: string;
+          household_id: string;
+          id: string;
+          last_error: string | null;
+          payload: NonNullable<Json>;
+          sent_at: string | null;
+          type: Database["public"]["Enums"]["notification_type"];
+        };
+        ComputedFields: never;
+        Insert: {
+          attempts?: number;
+          created_at?: string;
+          dedupe_key?: string | null;
+          deliver_after?: string;
+          household_id: string;
+          id?: string;
+          last_error?: string | null;
+          payload?: NonNullable<Json>;
+          sent_at?: string | null;
+          type: Database["public"]["Enums"]["notification_type"];
+        };
+        Update: {
+          attempts?: number;
+          created_at?: string;
+          dedupe_key?: string | null;
+          deliver_after?: string;
+          household_id?: string;
+          id?: string;
+          last_error?: string | null;
+          payload?: NonNullable<Json>;
+          sent_at?: string | null;
+          type?: Database["public"]["Enums"]["notification_type"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notification_outbox_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notification_preferences: {
+        Row: {
+          enabled: boolean;
+          type: Database["public"]["Enums"]["notification_type"];
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          enabled?: boolean;
+          type: Database["public"]["Enums"]["notification_type"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          enabled?: boolean;
+          type?: Database["public"]["Enums"]["notification_type"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
       };
       pantry_items: {
         Row: {
@@ -1170,6 +1246,67 @@ export type Database = {
         };
         Relationships: [];
       };
+      scheduled_runs: {
+        Row: {
+          connection_id: string;
+          created_at: string;
+          created_by: string | null;
+          cron: string;
+          enabled: boolean;
+          household_id: string;
+          id: string;
+          last_enqueued_for: string | null;
+          next_run_at: string;
+          policy: NonNullable<Json>;
+          tz: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          connection_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          cron: string;
+          enabled?: boolean;
+          household_id: string;
+          id?: string;
+          last_enqueued_for?: string | null;
+          next_run_at?: string;
+          policy?: NonNullable<Json>;
+          tz?: string;
+          updated_at?: string;
+        };
+        Update: {
+          connection_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          cron?: string;
+          enabled?: boolean;
+          household_id?: string;
+          id?: string;
+          last_enqueued_for?: string | null;
+          next_run_at?: string;
+          policy?: NonNullable<Json>;
+          tz?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_runs_connection_id_fkey";
+            columns: ["connection_id"];
+            isOneToOne: false;
+            referencedRelation: "retailer_connections";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "scheduled_runs_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       shopping_run_items: {
         Row: {
           alternatives: Json | null;
@@ -1423,16 +1560,25 @@ export type Database = {
       create_household: { Args: { name: string }; Returns: string };
       create_invite: { Args: { household_id: string }; Returns: string };
       current_household_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
+      enqueue_due_scheduled_runs: { Args: { p_now?: string }; Returns: number };
+      enqueue_notification_generators: { Args: Record<PropertyKey, never>; Returns: number };
+      enqueue_pickup_reminders: { Args: { p_lead?: string; p_now?: string }; Returns: number };
       enqueue_shopping_run: {
         Args: { connection_id: string; list_id: string; policy: Json; trigger: string };
         Returns: string;
       };
+      enqueue_weekly_nudges: {
+        Args: { p_at?: string; p_now?: string; p_weekday?: number };
+        Returns: number;
+      };
       expire_run_screenshots: { Args: Record<PropertyKey, never>; Returns: number };
+      forget_push_token: { Args: { p_token: string }; Returns: undefined };
       household_ai_spend_since: {
         Args: { p_household_id: string; p_since: string };
         Returns: number;
       };
       is_household_peer: { Args: { other_user: string }; Returns: boolean };
+      is_valid_time_zone: { Args: { p_tz: string }; Returns: boolean };
       leave_household: { Args: { household_id: string }; Returns: undefined };
       list_household_members: {
         Args: { household_id: string };
@@ -1453,7 +1599,19 @@ export type Database = {
         }[];
       };
       normalize_source_url: { Args: { raw: string }; Returns: string };
+      notification_outbox_add: {
+        Args: {
+          p_dedupe_key?: string;
+          p_deliver_after?: string;
+          p_household: string;
+          p_payload: Json;
+          p_type: Database["public"]["Enums"]["notification_type"];
+        };
+        Returns: string;
+      };
+      notification_outbox_prune: { Args: { p_keep?: string }; Returns: number };
       owned_household_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
+      quiet_hours_is_valid: { Args: { q: Json }; Returns: boolean };
       record_ingredient_alias_proposal: {
         Args: {
           p_household_id?: string;
@@ -1468,6 +1626,10 @@ export type Database = {
         Returns: Json;
       };
       redeem_invite: { Args: { token: string }; Returns: string };
+      register_push_token: {
+        Args: { p_platform: Database["public"]["Enums"]["push_tokens_platform"]; p_token: string };
+        Returns: undefined;
+      };
       retailer_disconnect: {
         Args: { p_actor_user_id: string; p_connection_id: string };
         Returns: undefined;
@@ -1523,7 +1685,18 @@ export type Database = {
       revoke_browser_connection: { Args: { connection_id: string }; Returns: undefined };
       run_screenshot_readable: { Args: { object_name: string }; Returns: boolean };
       run_screenshots_max_age: { Args: Record<PropertyKey, never>; Returns: string };
+      scheduled_run_cron_is_valid: { Args: { p_cron: string }; Returns: boolean };
+      scheduled_run_next: {
+        Args: { p_after: string; p_cron: string; p_tz: string };
+        Returns: string;
+      };
+      scheduled_run_target_week: { Args: { p_at: string; p_tz: string }; Returns: string };
+      scheduled_run_weekdays: { Args: { p_field: string }; Returns: number[] };
       section_order_is_valid: { Args: { names: string[] }; Returns: boolean };
+      set_notification_preference: {
+        Args: { p_enabled: boolean; p_type: Database["public"]["Enums"]["notification_type"] };
+        Returns: undefined;
+      };
       shopping_run_default_policy: { Args: Record<PropertyKey, never>; Returns: Json };
       shopping_run_dispatch: { Args: { run_id: string }; Returns: number };
       shopping_run_policy_is_valid: { Args: { p: Json }; Returns: boolean };
@@ -1555,6 +1728,14 @@ export type Database = {
       ingredient_parse_cache_source: "grammar" | "llm";
       meal_plan_entries_slot: "breakfast" | "lunch" | "dinner" | "snack";
       meal_plan_entries_status: "planned" | "cooked" | "skipped";
+      notification_type:
+        | "cart_ready"
+        | "items_need_review"
+        | "pickup_reminder"
+        | "weekly_nudge"
+        | "import_finished"
+        | "run_failed"
+        | "schedule_skipped";
       pantry_items_status: "have" | "low" | "out";
       product_matches_chosen_by: "agent" | "user";
       push_tokens_platform: "ios" | "android" | "web";
@@ -1703,6 +1884,15 @@ export const Constants = {
       ingredient_parse_cache_source: ["grammar", "llm"],
       meal_plan_entries_slot: ["breakfast", "lunch", "dinner", "snack"],
       meal_plan_entries_status: ["planned", "cooked", "skipped"],
+      notification_type: [
+        "cart_ready",
+        "items_need_review",
+        "pickup_reminder",
+        "weekly_nudge",
+        "import_finished",
+        "run_failed",
+        "schedule_skipped",
+      ],
       pantry_items_status: ["have", "low", "out"],
       product_matches_chosen_by: ["agent", "user"],
       push_tokens_platform: ["ios", "android", "web"],

@@ -237,8 +237,9 @@ create table public.scheduled_runs (
   -- core.RunPolicy keys (CCR6), validated by shopping_run_policy_is_valid. The editor writes
   -- budget_cap_usd, per_item_ceiling_usd and substitution.
   policy jsonb not null default '{}'::jsonb,
-  -- Set by the trigger below; clients cannot write it.
-  next_run_at timestamptz not null,
+  -- Set by the trigger below; clients cannot write it. The default only lets an insert that omits
+  -- it through to the trigger.
+  next_run_at timestamptz not null default now(),
   -- The next_run_at value that was handled (enqueued or skipped). The scheduler refuses a
   -- schedule whose next_run_at equals it, so a value is handled at most once.
   last_enqueued_for timestamptz,

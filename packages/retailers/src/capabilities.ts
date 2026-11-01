@@ -12,15 +12,6 @@ export const KROGER_CAPABILITIES: Readonly<Capabilities> = Object.freeze({
   orders: "none",
 });
 
-export const INSTACART_CAPABILITIES: Readonly<Capabilities> = Object.freeze({
-  search: "none",
-  cartAdd: "handoff",
-  cartRead: "none",
-  slots: "handoff",
-  checkout: "handoff",
-  orders: "none",
-});
-
 const ALL_BROWSER: Readonly<Capabilities> = Object.freeze({
   search: "browser",
   cartAdd: "browser",
@@ -43,7 +34,6 @@ export const MOCK_CAPABILITIES: Readonly<Capabilities> = Object.freeze({
 export const RETAILER_CAPABILITIES: Readonly<Record<RetailerId, Readonly<Capabilities>>> =
   Object.freeze({
     kroger: KROGER_CAPABILITIES,
-    instacart: INSTACART_CAPABILITIES,
     safeway: ALL_BROWSER,
     costco: ALL_BROWSER,
   });

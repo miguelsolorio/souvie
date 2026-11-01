@@ -1,4 +1,4 @@
-// Retail enums shared by the retailer adapters (WS07), the Instacart adapter (WS08), the
+// Retail enums shared by the retailer adapters (WS07), the assisted-checkout host (WS08), the
 // shopping agent (WS09) and history (WS12). Added by the orchestrator on WS07's contract
 // change request. Two spellings exist on purpose: storage uses the lowercase Postgres enums
 // from docs/02-data-model.md, and the adapter contract in docs/04-integrations.md uses the
@@ -6,8 +6,12 @@
 
 import { z } from "zod";
 
-/** Retailers the app knows. Matches the Postgres enum `retailer`. */
-export const RetailerId = z.enum(["kroger", "instacart", "safeway", "costco"]);
+/**
+ * Retailers the app knows. The Postgres enum `retailer` also holds `instacart`, retired on
+ * 2026-10-30 (CCR9): Postgres cannot drop an enum value, so check constraints keep every row off
+ * it and the TypeScript vocabulary no longer names it.
+ */
+export const RetailerId = z.enum(["kroger", "safeway", "costco"]);
 export type RetailerId = z.infer<typeof RetailerId>;
 
 /** Fulfilment as stored in `retailer_connections.modality`. */

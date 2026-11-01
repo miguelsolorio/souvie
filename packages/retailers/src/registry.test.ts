@@ -16,10 +16,10 @@ afterEach(() => defaultRegistry.clear());
 describe("registry", () => {
   it("lists every retailer with its documented capabilities before anything registers", () => {
     const listing = new AdapterRegistry().listAdapters();
-    expect(listing.map((l) => l.id)).toEqual(["kroger", "instacart", "safeway", "costco"]);
+    expect(listing.map((l) => l.id)).toEqual(["kroger", "safeway", "costco"]);
     expect(listing.every((l) => !l.available)).toBe(true);
     expect(listing[0]?.capabilities.cartRead).toBe("none");
-    expect(listing[1]?.capabilities.cartAdd).toBe("handoff");
+    expect(listing[1]?.capabilities.checkout).toBe("browser");
     expect(listing[2]?.capabilities.checkout).toBe("browser");
   });
 

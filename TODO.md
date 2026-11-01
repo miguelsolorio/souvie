@@ -84,6 +84,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] WS13 merged 04fcd1d (2026-11-01); no migration or function. Web deploy waits on Miguel's Cloudflare Pages project. WS15 (PR #30) in its fix round.
 - [x] WS15 merged 403dd29 (2026-11-01); migration on hosted; `suggest`, `recipe-import`, `llm-proxy`, `parse-ingredients` redeployed. `SENTRY_DSN` and the PostHog key stay unset until the accounts exist.
 - [x] WS10 brief: wave 6 as-built addendum (2026-11-01).
+- [ ] WS07 web sign-in round on `ws/07b-web-connect` (Sonnet, dispatched 2026-11-01): Kroger connect from the web through a redirect allowlist; review, merge, deploy `retailer-oauth`, set `KROGER_WEB_REDIRECT_URIS`.
 - [ ] WS13 web-space fix on `ws/13b-webspace` (Sonnet, dispatched 2026-11-01): the bare `WEB_SPACE` string under a Pressable logs an RNW text-node error on the web; review, merge.
 - [ ] Wave 6 follow-ups round on `ws/w6-followups` (brief ready at `docs/workstreams/WAVE6-followups.md`, Sonnet; held until Miguel says go): dispatch, review, merge, apply `20261101100000` to hosted, redeploy `suggest`, `recipe-import`, `llm-proxy`, `parse-ingredients`.
 - [ ] WS14 deploy-gates round, non-human parts (stores wording, listing sentence, wordmark numbers, waitlist rate limit); held until Miguel says go.
@@ -108,6 +109,7 @@ Collected from the ledger so one list is enough. Each unblocks something named.
 - [ ] `VOYAGE_API_KEY` as a function secret once Miguel has one (`pnpm supabase secrets set --project-ref <ref> VOYAGE_API_KEY=...`). Suggestions already run without it (no profile embeddings); `EXPO_PUBLIC_SUGGEST_ENABLED=1` was added to `.env.local` on 2026-10-31.
 - [ ] Supabase dashboard, Authentication, URL Configuration: Site URL `http://localhost:8081`; redirect URLs `http://localhost:8081/**`, `souvie://**`, `exp://**`. Needed before magic-link sign-in works from the dev server.
 - [ ] Skim `supabase/seed/catalog/README.md`, then say so: the orchestrator loads `supabase/seed/20_catalog.sql` into the hosted project the same way (the schema is ready; `catalog recipes: 0` today).
+- [ ] Kroger developer app: add `http://localhost:8081/oauth/kroger` as a redirect URL (keep `souvie://oauth/kroger`). Needed for Connect QFC on the web once the WS07 web sign-in round merges.
 - [ ] Kroger sign-in: after `git pull` in the primary checkout, `pnpm --filter @mp/retailers kroger:login`. Unblocks WS07 criterion 12 (live cart add) and WS09 criterion 13 (real QFC run).
 - [ ] `VOYAGE_API_KEY` in `.env.local`. Unblocks live embeddings for `suggest`.
 - [x] `git pull` in `/Users/miguelsolorio/dev/meal-planner`. Current at b946a60 on 2026-10-31.

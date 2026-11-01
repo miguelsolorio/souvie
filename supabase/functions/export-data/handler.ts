@@ -4,9 +4,9 @@
 // point: profile, memberships, households, rosters, invites, audit events. It runs under the
 // caller's own JWT, so RLS decides what is included. There is no service-role path here.
 //
-// Later workstreams extend it by appending to SECTIONS (WS12 adds orders, runs, plan entries).
-// Do not replace this file. This module has no Deno globals and no `npm:` imports so Vitest
-// can load it; index.ts wires in supabase-js.
+// Later workstreams extend it by appending to SECTIONS. WS12 added orders, shopping runs and their
+// lines, and meal plan entries. Do not replace this file. This module has no Deno globals and no
+// `npm:` imports so Vitest can load it; index.ts wires in supabase-js.
 
 export type Row = Record<string, unknown>;
 
@@ -20,15 +20,90 @@ export const ORDER = {
   households: ["id"],
   household_invites: ["created_at", "id"],
   audit_events: ["created_at", "id"],
+  // WS12. Each is total: the second column is the primary key.
+  orders: ["confirmed_at", "id"],
+  shopping_runs: ["created_at", "id"],
+  shopping_run_items: ["created_at", "id"],
+  meal_plan_entries: ["date", "id"],
 } as const;
+
+/**
+ * The columns of `shopping_runs` the export carries: every column except `transcript` (the tool
+ * log, large, and the run's steps are not the household's data) and `cart_snapshot` (the retailer's
+ * cart display data, which Kroger's terms end with the session and which is cleared 24 hours after
+ * a run closes). A column added to the table later is added here; handler.test.ts compares this
+ * list with the generated types and fails until it is.
+ */
+export const SHOPPING_RUN_COLUMNS = [
+  "id",
+  "household_id",
+  "list_id",
+  "connection_id",
+  "retailer",
+  "store_id",
+  "store_name",
+  "trigger",
+  "status",
+  "policy",
+  "subtotal_usd",
+  "error",
+  "progress",
+  "created_by",
+  "approved_at",
+  "approved_by",
+  "started_at",
+  "finished_at",
+  "heartbeat_at",
+  "status_changed_at",
+  "created_at",
+  "updated_at",
+] as const;
+
+/**
+ * The columns of `shopping_run_items` the export carries: every column except `alternatives`,
+ * the other products shown at review, which are retailer search results rather than the
+ * household's purchase record (the approved product, quantity and amount stay).
+ */
+export const SHOPPING_RUN_ITEM_COLUMNS = [
+  "id",
+  "run_id",
+  "household_id",
+  "list_item_id",
+  "position",
+  "display_name",
+  "section",
+  "product_id",
+  "upc",
+  "product_name",
+  "size",
+  "qty",
+  "unit_price_usd",
+  "line_total_usd",
+  "status",
+  "user_decision",
+  "flags",
+  "reason",
+  "delta_sent",
+  "cart_qty",
+  "sent_at",
+  "delta_result",
+  "created_at",
+  "updated_at",
+] as const;
 
 /** The few things the export needs from a database client. index.ts implements it. */
 export interface ExportSource {
   /**
    * All rows of a table matching every `eq` filter, paged past the API row limit in the given
-   * `order` (column names, ascending). The order must be total or pages can overlap.
+   * `order` (column names, ascending). The order must be total or pages can overlap. `columns`
+   * names the columns to read; leave it out for all of them.
    */
-  select(table: string, eq: Record<string, string>, order: readonly string[]): Promise<Row[]>;
+  select(
+    table: string,
+    eq: Record<string, string>,
+    order: readonly string[],
+    columns?: readonly string[],
+  ): Promise<Row[]>;
   /** A table-returning RPC. */
   rpc(fn: string, args: Record<string, string>): Promise<Row[]>;
 }
@@ -53,6 +128,27 @@ export interface ExportSection {
  */
 export function redactInvite(invite: Row): Row {
   return { ...invite, token: "[redacted]" };
+}
+
+/**
+ * Every row of one table for each of the caller's households, as one list. The rows carry their
+ * household_id. RLS decides what the caller may read; the household filter only narrows the query.
+ */
+function perHousehold(
+  key: string,
+  table: keyof typeof ORDER,
+  columns?: readonly string[],
+): ExportSection {
+  return {
+    key,
+    async collect({ source, householdIds }) {
+      const out: Row[] = [];
+      for (const id of householdIds) {
+        out.push(...(await source.select(table, { household_id: id }, ORDER[table], columns)));
+      }
+      return out;
+    },
+  };
 }
 
 export const SECTIONS: ExportSection[] = [
@@ -92,6 +188,13 @@ export const SECTIONS: ExportSection[] = [
       return out;
     },
   },
+  // WS12: what the household bought and cooked. Orders are the household's own record of what it
+  // placed; runs and their lines are the ledger behind them (no transcript, cart snapshot, or
+  // search alternatives, see the column lists above); entries are the meal plan.
+  perHousehold("orders", "orders"),
+  perHousehold("shopping_runs", "shopping_runs", SHOPPING_RUN_COLUMNS),
+  perHousehold("shopping_run_items", "shopping_run_items", SHOPPING_RUN_ITEM_COLUMNS),
+  perHousehold("meal_plan_entries", "meal_plan_entries"),
 ];
 
 export interface AuthedUser {

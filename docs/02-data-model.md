@@ -433,6 +433,14 @@ As built (WS09, 2026-10-31, migration `20261031100000_ws09_runs.sql`): the three
 
 Realtime: `shopping_runs` is in the `supabase_realtime` publication; `shopping_run_items` is not (the run screen refetches the items when the run's status changes). Realtime applies RLS to inserts and updates, so a member receives only their household's runs. Each update payload is assumed to carry the whole run row: status, `progress`, `cart_snapshot` (summary, flags, `handoffUrl`; product names are not in it), `subtotal_usd`, the `transcript` (tool names, list line ids, counts, a search's query text; no product data), and `error`. That is to be verified on the hosted project, not asserted: Postgres can leave a large unchanged value out of a change, so the app lays each payload over its cached run key by key and keeps any column the payload leaves out. The worker's heartbeat updates the row every `WORKER_HEARTBEAT_SECONDS`, so a subscriber sees an update that often while a run is held. Runs are never deleted by clients, so the default replica identity is kept. Query keys: `['shopping-runs', householdId]`, `['shopping-runs', householdId, runId]`, and `['shopping-runs', householdId, runId, 'items']`; none is persisted to the device.
 
+As built (WS12, 2026-10-31, migration `20261031180000_ws12_orders_history.sql`): `orders` matches the shape above, with these specifics.
+
+- Columns. `total_usd` is `numeric(12,2)` from 0 to 100000. `confirmed_by` defaults to `auth.uid()`; it is null for an order the worker writes (WS10) and after the member's account is gone. `confirmed_at` defaults to now. `created_at` and `updated_at` follow the convention. A trigger copies `household_id` and `retailer` from the run, whatever the writer sends. Checks: a window needs a start, ends after it and runs at most 24 hours; `retailer` is never the retired value (CCR9). `run_id` and `household_id` cascade, so a household delete removes its orders. Indexes on `(household_id, created_at desc)`, `(household_id, confirmed_at desc)`, and `slot_start` for confirmed orders (the pickup reminder, WS11).
+- Writes. Clients read orders and cannot insert or delete one. A member records one with `confirm_order(run_id, total_usd, modality, slot_start, slot_end, retailer_order_id, notes)`: the run must be in their household, approved, and `cart_ready` or `checked_out` (R19: a ready cart is not an order). The modality defaults to the run's connection, then pickup. The refusals are plain codes in the message: `not_authenticated`, `run_not_found`, `run_not_confirmable`, `already_confirmed` (the unique key on `run_id`, also for two taps at once), `invalid_total`, `invalid_window`. After that a member can correct `modality`, `slot_start`, `slot_end`, `total_usd`, `retailer_order_id`, `notes` and `status` by column grant. The service role writes directly.
+- Views. All three are `security_invoker`, so the caller's row level security decides every row. A week is Monday to Sunday. `v_meals_cooked_weekly` uses the plan's own `week_start` and has a row only for a week with a cooked entry; `entries` is an array of `{id, date, slot, recipe_id, title}`. `v_spend_weekly_by_store` cuts weeks from `orders.confirmed_at` in the zone `history_time_zone(household_id)` returns, leaves cancelled orders out, and takes `store_name` from the run (the brief's `total` is `total_usd` here, like the table). Until households carry their own zone (WS11), that function returns `America/Los_Angeles`; replacing its body is the whole switch. `v_most_bought_products` counts a line when the order is not cancelled, the run was approved, the line has a product, its status is `matched` or `substituted`, the person did not remove it, and the store's cart holds it (`cart_qty > 0`). One row per `(retailer, store_id, ingredient_id, product_id)`, the key `product_matches` is pinned by; `ingredient_id` is null for a free-text line, which cannot be pinned. `pinned` reads `product_matches.pinned`. The view is ordered by `times_bought` then `last_bought_at`, and the app asks for the top 20.
+- Retailer terms. `orders.total_usd` is the only amount WS12 adds. The views carry totals, counts and names, never a per-product amount, and no table keeps a price for a product outside its run (price trends stay deferred, R21).
+- Export. `export-data` adds `orders`, `shopping_runs` (without `transcript` or `cart_snapshot`), `shopping_run_items` (without `alternatives`) and `meal_plan_entries`, each for the caller's households through RLS.
+
 **notification_preferences** (WS11): per user, per type.
 | column | type |
 |---|---|
@@ -492,9 +500,9 @@ Realtime: `shopping_runs` is in the `supabase_realtime` publication; `shopping_r
 
 | View | Purpose | WS |
 |---|---|---|
-| `v_meals_cooked_weekly` | Cooked entries per household per week | WS12 |
-| `v_spend_weekly_by_store` | Sum of order totals per household, week, retailer | WS12 |
-| `v_most_bought_products` | Product counts from accepted run items | WS12 |
+| `v_meals_cooked_weekly` | Cooked entries per household per week: `(household_id, week_start, cooked_count, entries jsonb)` | WS12 |
+| `v_spend_weekly_by_store` | Sum of order totals per household, week, retailer and store: `(household_id, week_start, retailer, store_name, total_usd, order_count)` | WS12 |
+| `v_most_bought_products` | Product counts from the cart lines of confirmed orders: `(household_id, retailer, store_id, store_name, ingredient_id, product_id, upc, product_name, size, times_bought, units_bought, last_bought_at, pinned)` | WS12 |
 | `v_ai_cost_daily` | `ai_runs` cost per household per day | WS15 |
 | `v_ai_cost_by_prompt` | Cost and latency per prompt version | WS15 |
 
@@ -537,7 +545,7 @@ Files are created with `supabase migration new <name>` and carry a timestamp pre
 | 11 | runs | shopping_runs, shopping_run_items, push_tokens, pgmq queue `shopping_run` | WS09 |
 | 12 | tier3 | households.tier3_consent, Storage bucket `run-screenshots` | WS08 |
 | 13 | schedules_notifications | scheduled_runs, notification_preferences, notification_outbox, households.quiet_hours, pg_cron jobs (push_tokens created by WS09) | WS11 |
-| 14 | orders_and_history | orders, the three history views | WS12 |
+| 14 | ws12_orders_history | orders, `confirm_order`, `history_time_zone`, the three history views | WS12 |
 | 15 | waitlist | waitlist | WS14 |
 | 16 | observability | households.ai_daily_cap_usd, shopping_runs.heartbeat_at, `shopping_run_dlq` queue, cost views | WS15 |
 

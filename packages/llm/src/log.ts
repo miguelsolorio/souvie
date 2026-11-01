@@ -7,6 +7,11 @@
 // per user. Before any request goes out the guard compares today's spend plus the call's
 // estimated input cost with the cap. A refusal writes an `ai_runs` row (ok false, error
 // 'cost_cap') and then throws `LlmError("cost_cap")`, so the dashboard counts what the cap stopped.
+// The guard fails closed: when today's spend cannot be read (the lookup throws, or answers with
+// something that is not a number) the call is refused with `LlmError("cost_unknown")`, a refusal
+// row (error 'cost_unknown') and a report to `report`, so an outage in `ai_runs` shows up in Sentry
+// and cannot run up an uncapped bill. A household cap that cannot be read is different: the guard
+// falls back to AI_DAILY_CAP_USD with a warning and still compares the spend against it.
 
 import { LlmError } from "./client.ts";
 
@@ -165,6 +170,18 @@ export interface CostGuard {
   check(householdId: string | null, call?: CostCall): Promise<void>;
 }
 
+/** What `createDailyCapGuard` throws when today's spend cannot be read. `LlmError` code "cost_unknown". */
+export class CostUnknownError extends LlmError {
+  constructor(cause: unknown) {
+    super(
+      "cost_unknown",
+      "today's model spend could not be read, so the call was not made; try again",
+      { cause },
+    );
+    this.name = "CostUnknownError";
+  }
+}
+
 /** The refusal `createDailyCapGuard` throws. Still an `LlmError` with code "cost_cap". */
 export class CostCapError extends LlmError {
   readonly scope: "household" | "user";
@@ -209,17 +226,24 @@ export interface DailyCapOptions {
   /** What a user has spent today on calls with no household (`user_ai_spend_since`). */
   userSpentTodayUsd?: (userId: string) => Promise<number>;
   userCapUsd?: number;
-  /** Receives the `ai_runs` row of a refusal (ok false, error 'cost_cap'). Must not throw. */
+  /** Receives the `ai_runs` row of a refusal (ok false, error 'cost_cap' or 'cost_unknown'). Must not throw. */
   sink?: AiRunSink;
+  /**
+   * Receives the error when today's spend cannot be read and the call is refused for it. Wire it
+   * to the caller's error reporting (Sentry). A throw from it is swallowed.
+   */
+  report?: (error: CostUnknownError) => void;
   onWarning?: (message: string) => void;
 }
 
 /**
  * Caps model spend per day: per household, and per user for calls that carry no household. System
- * jobs (no household, no user) are not capped here. A failing spend lookup lets the call through:
- * the cap is a cost control, not a security boundary, and an outage in `ai_runs` must not take
- * imports down. A refusal is written to `sink` (when the caller says what the call was) before
- * `LlmError("cost_cap")` is thrown.
+ * jobs (no household, no user) are not capped here. A spend that cannot be read (the lookup
+ * throws, or answers with something that is not a number) refuses the call with
+ * `LlmError("cost_unknown")`: the cap fails closed, because an outage in `ai_runs` is exactly when
+ * nobody can see what is being spent. A household cap that cannot be read falls back to `capUsd`.
+ * A refusal is written to `sink` (when the caller says what the call was) before the error is
+ * thrown; an unreadable spend is also passed to `report`.
  */
 export function createDailyCapGuard(options: DailyCapOptions): CostGuard {
   const warn = options.onWarning ?? ((message: string) => console.warn(message));
@@ -235,6 +259,51 @@ export function createDailyCapGuard(options: DailyCapOptions): CostGuard {
     }
     const value = cap === null || cap === undefined ? Number.NaN : Number(cap);
     return Number.isFinite(value) && value >= 0 ? value : options.capUsd;
+  }
+
+  /** Writes the row of a refusal, when the caller said what the call was. */
+  async function recordRefusal(
+    householdId: string | null,
+    call: CostCall | undefined,
+    error: string,
+  ) {
+    if (!call || !options.sink) return;
+    try {
+      await options.sink({
+        householdId,
+        kind: call.kind,
+        model: call.model,
+        promptVersion: call.promptVersion ?? null,
+        inputTokens: 0,
+        outputTokens: 0,
+        cacheReadTokens: 0,
+        costUsd: 0,
+        latencyMs: 0,
+        ok: false,
+        error,
+        ...(call.runId !== undefined ? { runId: call.runId } : {}),
+        ...(call.userId !== undefined ? { userId: call.userId } : {}),
+      });
+    } catch (err) {
+      warn(`ai_runs refusal row failed: ${describe(err)}`);
+    }
+  }
+
+  /** The spend could not be read: record it, report it, refuse the call. */
+  async function refuseUnknown(
+    householdId: string | null,
+    call: CostCall | undefined,
+    cause: unknown,
+  ): Promise<never> {
+    warn(`daily cost lookup failed: ${describe(cause)}`);
+    const error = new CostUnknownError(cause);
+    await recordRefusal(householdId, call, "cost_unknown");
+    try {
+      options.report?.(error);
+    } catch {
+      // Reporting must never replace the refusal.
+    }
+    throw error;
   }
 
   return {
@@ -255,33 +324,14 @@ export function createDailyCapGuard(options: DailyCapOptions): CostGuard {
           return;
         }
       } catch (err) {
-        warn(`daily cost lookup failed: ${describe(err)}`);
-        return;
+        return refuseUnknown(householdId, call, err);
       }
-      if (!Number.isFinite(spent)) return;
+      if (!Number.isFinite(spent)) {
+        return refuseUnknown(householdId, call, new Error(`spend is not a number: ${spent}`));
+      }
       if (spent + Math.max(0, call?.estimatedCostUsd ?? 0) < cap) return;
 
-      if (call && options.sink) {
-        try {
-          await options.sink({
-            householdId,
-            kind: call.kind,
-            model: call.model,
-            promptVersion: call.promptVersion ?? null,
-            inputTokens: 0,
-            outputTokens: 0,
-            cacheReadTokens: 0,
-            costUsd: 0,
-            latencyMs: 0,
-            ok: false,
-            error: "cost_cap",
-            ...(call.runId !== undefined ? { runId: call.runId } : {}),
-            ...(call.userId !== undefined ? { userId: call.userId } : {}),
-          });
-        } catch (err) {
-          warn(`ai_runs refusal row failed: ${describe(err)}`);
-        }
-      }
+      await recordRefusal(householdId, call, "cost_cap");
       throw new CostCapError(scope, cap, spent);
     },
   };

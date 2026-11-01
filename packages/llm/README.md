@@ -33,7 +33,7 @@ What it does on every call:
 - Validates the answer with the schema and the optional `check` callback. A failure retries once with the problem described. A second failure throws `LlmError("invalid")`.
 - Calls `log` once per model call, retries and failures included, with tokens, estimated cost, latency, `kind`, and `promptVersion`.
 
-`LlmError.code` is one of `refusal`, `truncated`, `invalid`, `api`, `cost_cap`, `not_configured`.
+`LlmError.code` is one of `refusal`, `truncated`, `invalid`, `api`, `cost_cap`, `cost_unknown`, `not_configured`.
 
 Pass `images` (base64 JPEG, PNG, WebP, or GIF) for vision. Pass `client` to use a fake in tests; the SDK loads lazily.
 
@@ -49,7 +49,8 @@ Pass `images` (base64 JPEG, PNG, WebP, or GIF) for vision. Pass `client` to use 
 
 - `capUsd` is the fallback cap (`AI_DAILY_CAP_USD`, default 2). `capFor(householdId)` reads the household's own, `households.ai_daily_cap_usd` (WS15); a null or a failing lookup falls back to `capUsd`.
 - `spentTodayUsd(householdId)` is today's UTC spend (`household_ai_spend_since`). `userSpentTodayUsd(userId)` is the same for a user's household-less calls (`user_ai_spend_since`); a call with no household and a `userId` is capped per user.
-- `check(householdId, call)` refuses when spend plus the call's `estimatedCostUsd` (its input at the model's price) reaches the cap. A refusal writes an `ai_runs` row through `sink` (`ok` false, `error` `cost_cap`, cost 0) and throws `CostCapError`, an `LlmError` with code `cost_cap`, `scope`, `capUsd` and `spentUsd`. A failing spend lookup lets the call through with a warning; a call with no household and no user is never capped.
+- `check(householdId, call)` refuses when spend plus the call's `estimatedCostUsd` (its input at the model's price) reaches the cap. A refusal writes an `ai_runs` row through `sink` (`ok` false, `error` `cost_cap`, cost 0) and throws `CostCapError`, an `LlmError` with code `cost_cap`, `scope`, `capUsd` and `spentUsd`. A call with no household and no user is never capped.
+- The guard fails closed. When `spentTodayUsd` (or `userSpentTodayUsd`) throws, or answers with something that is not a number, `check` refuses the call: it writes the refusal row (`error` `cost_unknown`), calls `report(error)` so the caller can send it to Sentry (a throw from `report` is swallowed), and throws `CostUnknownError`, an `LlmError` with code `cost_unknown`. A `capFor` that fails is different: the guard warns and uses `capUsd`.
 - The callers: `suggest`, `recipe-import`, `llm-proxy` and the worker's `models.ts` pass their `ai_runs` sink as `sink` and their store's cap lookup as `capFor`; `parse-ingredients` wraps the parser's model client in `cost-guard.ts`.
 
 ## Scripts

@@ -466,7 +466,7 @@ describe("downloadImage and spentSince", () => {
     ]);
   });
 
-  it("throws when the spend cannot be read, so the guard lets the call through with a warning", async () => {
+  it("throws when the spend cannot be read, so the guard refuses the call (cost_unknown)", async () => {
     const { s, service } = store();
     service.rpcResult = { data: null, error: { message: "function does not exist" } };
     await expect(s.spentSince(HOUSEHOLD, "2026-10-30T00:00:00.000Z")).rejects.toThrow(
@@ -495,6 +495,9 @@ describe("householdCapUsd (WS15)", () => {
   it("is null for a missing row, and throws on a database error", async () => {
     const { s, service } = store();
     service.queue("households", "select", { data: null, error: null });
+    expect(await s.householdCapUsd(HOUSEHOLD)).toBeNull();
+    // A null value is no cap of its own, not a cap of zero (Number(null) is 0).
+    service.queue("households", "select", { data: { ai_daily_cap_usd: null }, error: null });
     expect(await s.householdCapUsd(HOUSEHOLD)).toBeNull();
     service.queue("households", "select", { data: null, error: { message: "no such column" } });
     await expect(s.householdCapUsd(HOUSEHOLD)).rejects.toThrow(/households read failed/);

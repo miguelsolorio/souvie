@@ -198,6 +198,8 @@ async function runSuggest(
     capFor: (id) => store.householdCapUsd(id),
     spentTodayUsd: (id) => store.spentSince(id, startOfUtcDay(now)),
     sink: log,
+    // A spend that cannot be read refuses the call; Sentry hears about it.
+    report: (error) => reportError(error, { function: "suggest", householdId }),
   });
   const embedFn: EmbedFn | undefined = runtime.voyageKey
     ? (texts, inputType) =>

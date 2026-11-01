@@ -109,6 +109,8 @@ export function runtimeFromEnv(env: Env): Runtime {
         spentTodayUsd: (id) => spend.householdSpentSince(id, startOfUtcDay(new Date())),
         userSpentTodayUsd: (id) => spend.userSpentSince(id, startOfUtcDay(new Date())),
         sink: (record) => logAiRun(serviceDb.from("ai_runs"), record),
+        // A spend that cannot be read refuses the call; Sentry hears about it.
+        report: (error) => reportError(error, { function: "parse-ingredients", householdId }),
       });
       const model = anthropicKey ? createAnthropicParseClient({ apiKey: anthropicKey }) : undefined;
       const llm = model ? withCostGuard(model, guard, { householdId, userId }) : undefined;

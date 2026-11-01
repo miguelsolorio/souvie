@@ -75,8 +75,8 @@ grant execute on function public.user_ai_spend_since(uuid, timestamptz) to servi
 -- ---------------------------------------------------------------------------------------
 -- security_invoker: the view reads ai_runs as the caller, so the "ai_runs: members read" policy
 -- decides the rows. A member sees their own households' numbers; the service role sees all of
--- them. A row the cap refused (error = 'cost_cap', cost 0, no model call) is not a model call and
--- is left out of the counts.
+-- them. A row the guard refused (error = 'cost_cap' for a spent budget, 'cost_unknown' for a spend
+-- it could not read; cost 0, no model call) is not a model call and is left out of the counts.
 
 create view public.v_ai_cost_daily
 with (security_invoker = true) as
@@ -88,7 +88,7 @@ select
   sum(r.cost_usd) as cost_usd,
   count(*)::integer as calls
 from public.ai_runs r
-where r.error is distinct from 'cost_cap'
+where r.error is distinct from 'cost_cap' and r.error is distinct from 'cost_unknown'
 group by r.household_id, (r.created_at at time zone 'utc')::date, r.kind, r.model;
 
 comment on view public.v_ai_cost_daily is
@@ -102,7 +102,7 @@ select
   round(avg(r.latency_ms), 1) as avg_latency_ms,
   round(avg(case when r.ok then 0 else 1 end), 4) as error_rate
 from public.ai_runs r
-where r.error is distinct from 'cost_cap'
+where r.error is distinct from 'cost_cap' and r.error is distinct from 'cost_unknown'
 group by r.prompt_version;
 
 comment on view public.v_ai_cost_by_prompt is

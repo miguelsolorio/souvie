@@ -70,7 +70,9 @@ export function createServiceStore(db: ServiceDb): ProxyStore {
         .eq("id", householdId)
         .limit(1);
       if (error) throw new Error(error.message);
-      const cap = Number(data?.[0]?.ai_daily_cap_usd);
+      // Number(null) is 0, which would read as a cap of zero; a missing value is no cap of its own.
+      const raw = data?.[0]?.ai_daily_cap_usd;
+      const cap = raw === null || raw === undefined ? Number.NaN : Number(raw);
       return Number.isFinite(cap) ? cap : null;
     },
 

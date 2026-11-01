@@ -8,7 +8,7 @@
 --     client (UPDATE is granted by column and the new column is not on the list), is bounded, and
 --     the service role can raise it
 --   * v_ai_cost_daily totals equal the sum of ai_runs.cost_usd per household and day, grouped by
---     kind and model; a row the cap refused (error = 'cost_cap') is not counted as a call
+--     kind and model; a row the guard refused (error = 'cost_cap' or 'cost_unknown') is not counted as a call
 --   * v_ai_cost_by_prompt gives calls, average latency and error rate per prompt version
 --   * both views are security_invoker: a member sees only their household's rows, a user with no
 --     household sees nothing, anon sees nothing
@@ -55,7 +55,7 @@ insert into public.household_members (household_id, user_id, role) values
   ('0a000000-0000-4000-8000-00000000000a', 'c3333333-3333-4333-8333-333333333333', 'member'),
   ('0b000000-0000-4000-8000-00000000000b', 'b2222222-2222-4222-8222-222222222222', 'owner');
 
--- Model calls. Household A over two days (one call refused by the cap), household B on one day,
+-- Model calls. Household A over two days (two calls refused: one by the cap, one for an unreadable spend), household B on one day,
 -- and dave's household-less parsing calls. Prompt versions are this file's own.
 insert into public.ai_runs (household_id, user_id, kind, model, prompt_version, cost_usd, latency_ms, ok, error, created_at) values
   ('0a000000-0000-4000-8000-00000000000a', 'a1111111-1111-4111-8111-111111111111', 'extract_recipe', 'claude-sonnet-5-5', 'ws15-extract.v1', 0.10, 2000, true, null, '2026-10-30 10:00:00+00'),
@@ -63,6 +63,7 @@ insert into public.ai_runs (household_id, user_id, kind, model, prompt_version, 
   ('0a000000-0000-4000-8000-00000000000a', null, 'suggest', 'claude-sonnet-5-5', 'ws15-compose.v1', 0.30, 4000, true, null, '2026-10-30 12:00:00+00'),
   ('0a000000-0000-4000-8000-00000000000a', 'a1111111-1111-4111-8111-111111111111', 'extract_recipe', 'claude-sonnet-5-5', 'ws15-extract.v1', 0.20, 3000, true, null, '2026-10-31 09:00:00+00'),
   ('0a000000-0000-4000-8000-00000000000a', 'a1111111-1111-4111-8111-111111111111', 'extract_recipe', 'claude-sonnet-5-5', 'ws15-extract.v1', 0, 0, false, 'cost_cap', '2026-10-31 09:30:00+00'),
+  ('0a000000-0000-4000-8000-00000000000a', 'a1111111-1111-4111-8111-111111111111', 'extract_recipe', 'claude-sonnet-5-5', 'ws15-extract.v1', 0, 0, false, 'cost_unknown', '2026-10-31 09:45:00+00'),
   ('0b000000-0000-4000-8000-00000000000b', 'b2222222-2222-4222-8222-222222222222', 'extract_recipe', 'claude-sonnet-5-5', 'ws15-extract.v1', 1.00, 5000, true, null, '2026-10-30 10:00:00+00'),
   (null, 'd4444444-4444-4444-8444-444444444444', 'parse_ingredients', 'claude-haiku-5-5', 'ws15-parse.v1', 0.01, 400, true, null, '2026-10-30 08:00:00+00'),
   (null, 'd4444444-4444-4444-8444-444444444444', 'parse_ingredients', 'claude-haiku-5-5', 'ws15-parse.v1', 0.02, 600, true, null, '2026-10-31 08:00:00+00'),
@@ -137,7 +138,7 @@ select is((select cost_usd from public.v_ai_cost_daily where household_id = '0a0
 select is((select calls from public.v_ai_cost_daily where household_id = '0a000000-0000-4000-8000-00000000000a' and day = '2026-10-30' and kind = 'extract_recipe'), 2, 'and that is two calls');
 select is((select cost_usd from public.v_ai_cost_daily where household_id = '0a000000-0000-4000-8000-00000000000a' and day = '2026-10-30' and kind = 'suggest'), 0.30::numeric, 'A, 30 October, suggest: $0.30');
 select is((select cost_usd from public.v_ai_cost_daily where household_id = '0a000000-0000-4000-8000-00000000000a' and day = '2026-10-31' and kind = 'extract_recipe'), 0.20::numeric, 'A, 31 October: $0.20');
-select is((select calls from public.v_ai_cost_daily where household_id = '0a000000-0000-4000-8000-00000000000a' and day = '2026-10-31' and kind = 'extract_recipe'), 1, 'and the refused call is not counted as a call');
+select is((select calls from public.v_ai_cost_daily where household_id = '0a000000-0000-4000-8000-00000000000a' and day = '2026-10-31' and kind = 'extract_recipe'), 1, 'and neither refused call (cost_cap, cost_unknown) is counted as a call');
 select is((select sum(cost_usd) from public.v_ai_cost_daily where household_id = '0a000000-0000-4000-8000-00000000000a'), (select sum(cost_usd) from public.ai_runs where household_id = '0a000000-0000-4000-8000-00000000000a'), 'the view totals equal the sum of ai_runs.cost_usd for household A');
 select is((select sum(cost_usd) from public.v_ai_cost_daily where household_id = '0b000000-0000-4000-8000-00000000000b'), 1.00::numeric, 'and for household B');
 select is((select sum(cost_usd) from public.v_ai_cost_daily where household_id is null and kind = 'parse_ingredients' and day = '2026-10-31'), 0.52::numeric, 'household-less calls group under a null household');

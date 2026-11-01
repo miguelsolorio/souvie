@@ -29,6 +29,8 @@ export type LlmErrorCode =
   | "api"
   /** The household is over its daily model budget. */
   | "cost_cap"
+  /** Today's spend could not be read, so the call was refused (the cap fails closed). Try again. */
+  | "cost_unknown"
   /** No API key, so no model can be called. */
   | "not_configured";
 

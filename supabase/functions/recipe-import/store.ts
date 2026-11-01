@@ -289,7 +289,9 @@ export class SupabaseImportStore implements ImportStore {
       .eq("id", householdId)
       .maybeSingle();
     if (error) throw new Error(`households read failed: ${error.message}`);
-    const cap = Number((data as { ai_daily_cap_usd?: unknown } | null)?.ai_daily_cap_usd);
+    // Number(null) is 0, which would read as a cap of zero; a missing value is no cap of its own.
+    const raw = (data as { ai_daily_cap_usd?: unknown } | null)?.ai_daily_cap_usd;
+    const cap = raw === null || raw === undefined ? Number.NaN : Number(raw);
     return Number.isFinite(cap) ? cap : null;
   }
 }

@@ -161,7 +161,7 @@ const SHELLFISH_HOUSE = {
 };
 
 beforeAll(async () => {
-  t = await createTestDb();
+  t = await createTestDb({ observability: true });
   corpus = await loadCorpus(t);
   await insertHousehold(t, {
     userId: LONELY_USER,
@@ -748,14 +748,9 @@ describe("logging (criterion 9)", () => {
 });
 
 describe("the household's own daily cap (WS15)", () => {
-  // This harness loads the migrations suggest needs, not 20261031190000_ws15_observability.sql,
-  // which also creates a view over shopping_runs. The column is added here as that migration
-  // defines it; the migration itself is tested by supabase/tests/ws15_observability.sql.
-  beforeAll(async () => {
-    await t.exec(
-      "alter table public.households add column if not exists ai_daily_cap_usd numeric(8, 2) not null default 2.00",
-    );
-  });
+  // The harness applies 20261031190000_ws15_observability.sql (createTestDb's `observability`
+  // option), so households.ai_daily_cap_usd is the real column for every test in this file, not
+  // only these. Without it each suggest test logged "household cap lookup failed" in CI.
   afterEach(async () => {
     await t.query("update public.households set ai_daily_cap_usd = 2.00 where id = $1", [
       FIXTURE_HOUSEHOLD,
@@ -801,6 +796,69 @@ describe("the household's own daily cap (WS15)", () => {
     );
     expect(SuggestPlanResponse.parse(await res.json()).composedBy).toBe("model");
     expect(model.sonnetCalls()).toBe(1);
+  });
+
+  // Skipping the guard stayed green for both embedding paths until these two (WS15 review): the
+  // recipe embeddings go through `embed(..., { guard })` and the taste summary through
+  // `buildTasteEmbedding(..., { guard })`, and each is a model call that costs money.
+  it("makes no Voyage request for recipe embeddings once the household is over its cap", async () => {
+    await spend(5);
+    const voyage = fakeVoyage();
+    const model = fakeModel();
+    const res = await post(
+      { householdId: FIXTURE_HOUSEHOLD, weekStart: WEEK, mode: "draft" },
+      "Bearer fixture",
+      runtimeWith({
+        anthropic: async () => model.client,
+        voyageKey: "pa-test",
+        fetch: voyage.fetch,
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(voyage.calls).toEqual([]);
+    const refused = await t.query<{ model: string; ok: boolean; error: string | null }>(
+      "select model, ok, error from public.ai_runs where kind = 'suggest.embed'",
+    );
+    expect(refused).toEqual([{ model: "voyage-3", ok: false, error: "cost_cap" }]);
+  });
+
+  it("makes no Haiku call for the taste summary once the household is over its cap", async () => {
+    // Every recipe already has an embedding, so the only model call left to guard is the summary.
+    await t.exec(
+      "update public.recipes set embedding = array_fill(0.01::real, array[1024])::vector",
+    );
+    await t.query(
+      `insert into public.recipe_feedback (household_id, user_id, recipe_id, signal)
+       values ($1, $2, $3, 'like')`,
+      [FIXTURE_HOUSEHOLD, FIXTURE_USER, corpus.ids.get("black-bean-tacos")],
+    );
+    await spend(5);
+    const voyage = fakeVoyage();
+    const model = fakeModel();
+    const res = await post(
+      { householdId: FIXTURE_HOUSEHOLD, weekStart: WEEK, mode: "draft" },
+      "Bearer fixture",
+      runtimeWith({
+        anthropic: async () => model.client,
+        voyageKey: "pa-test",
+        fetch: voyage.fetch,
+      }),
+    );
+    expect(res.status).toBe(200);
+    const haikuCalls = model.parse.mock.calls.filter(
+      ([params]) => (params as { model?: string }).model === "claude-haiku-5-5",
+    );
+    expect(haikuCalls).toEqual([]);
+    expect(voyage.calls).toEqual([]);
+    const refused = await t.query<{ model: string; ok: boolean; error: string | null }>(
+      "select model, ok, error from public.ai_runs where kind = 'suggest.embed'",
+    );
+    // The summary is refused, and so is the plain-text embedding the taste profile falls back to.
+    expect(refused.every((row) => !row.ok)).toBe(true);
+    expect(refused.map((row) => `${row.model}:${row.error}`).sort()).toEqual([
+      "claude-haiku-5-5:cost_cap",
+      "voyage-3:cost_cap",
+    ]);
   });
 });
 

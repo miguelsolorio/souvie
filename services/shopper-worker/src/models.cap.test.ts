@@ -156,4 +156,31 @@ describe("the worker's model calls and the household's cap", () => {
     await expect(models.callModel(HOUSEHOLD)(request)).rejects.toMatchObject({ code: "cost_cap" });
     expect(warn).toHaveBeenCalledWith("household cap lookup failed: column does not exist");
   });
+
+  it("refuses the call, writes the row and logs an error (which reaches Sentry) when today's spend cannot be read", async () => {
+    const error = vi.fn();
+    const broken = Object.create(store) as RunStore;
+    broken.spentTodayUsd = async () => {
+      throw new Error("connection terminated");
+    };
+    const create = vi.fn();
+    const models = createModelSource({
+      toolClient: { messages: { create } },
+      parseClient: { messages: { parse: vi.fn() } },
+      store: broken,
+      dailyCapUsd: 2,
+      log: { info() {}, warn() {}, error },
+    });
+    await expect(models.callModel(HOUSEHOLD)(request)).rejects.toMatchObject({
+      code: "cost_unknown",
+    });
+    expect(create).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledWith("daily cost lookup failed; model call refused", {
+      error: expect.stringContaining("could not be read"),
+    });
+    const rows = await t.query<{ error: string | null; ok: boolean }>(
+      "select error, ok from public.ai_runs",
+    );
+    expect(rows).toEqual([{ error: "cost_unknown", ok: false }]);
+  });
 });

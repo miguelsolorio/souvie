@@ -61,6 +61,8 @@ interface Harness {
   proposals: AliasProposal[];
   saved: { updates: RowUpdate[]; inserts: RowInsert[] }[];
   households: (string | null)[];
+  /** The signed-in caller each run was made for (WS15: it is what the per-user cap counts). */
+  users: (string | null | undefined)[];
   finished: number;
   model: FakeModel;
 }
@@ -77,6 +79,7 @@ function harness(
     proposals: [],
     saved: [],
     households: [],
+    users: [],
     finished: 0,
     model: new FakeModel(),
     runtime: undefined as never,
@@ -96,8 +99,9 @@ function harness(
         h.saved.push({ updates, inserts });
       },
     },
-    createRun(householdId) {
+    createRun(householdId, userId) {
       h.households.push(householdId);
+      h.users.push(userId);
       return {
         deps: {
           ontology,
@@ -221,6 +225,8 @@ describe("lines mode", () => {
     });
     expect(h.proposals.map((p) => p.proposedName)).toEqual(["gochugaru"]);
     expect(h.households).toEqual([null]);
+    // The "lines" mode has no household, so the user is all the daily cap has to count.
+    expect(h.users).toEqual(["user-1"]);
     expect(h.finished).toBe(1);
   });
 
@@ -284,6 +290,7 @@ describe("recipe mode", () => {
       ingredient_id: ingredientId("black pepper"),
     });
     expect(h.households).toEqual([HOUSEHOLD_ID]);
+    expect(h.users).toEqual(["user-1"]);
     expect(h.finished).toBe(1);
   });
 

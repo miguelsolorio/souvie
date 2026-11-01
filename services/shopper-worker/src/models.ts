@@ -42,6 +42,9 @@ export function createModelSource(options: ModelSourceOptions): ModelSource {
     spentTodayUsd: (householdId) => store.spentTodayUsd(householdId),
     sink,
     onWarning: (message) => log.warn(message),
+    // A spend that cannot be read refuses the call; the error log reaches Sentry (observability).
+    report: (error) =>
+      log.error("daily cost lookup failed; model call refused", { error: errorMessage(error) }),
   });
   return {
     callModel: (householdId) => (request) =>

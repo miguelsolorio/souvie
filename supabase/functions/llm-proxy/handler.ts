@@ -380,7 +380,10 @@ export async function handleLlmProxy(req: Request, runtime: Runtime): Promise<Re
     // The refusal is a row, like every other call (WS15). The projected worst case is not billed,
     // so the row costs nothing.
     sink: (row) => runtime.store.logAiRun(row, request.runId),
-    onWarning: () => console.warn("llm-proxy: daily spend lookup failed; the cap was not applied"),
+    onWarning: (message) => console.warn(`llm-proxy: ${message}`),
+    // A spend that cannot be read refuses the call (503 cost_unknown); Sentry hears about it.
+    report: (error) =>
+      reportError(error, { function: "llm-proxy", householdId: request.householdId }),
   });
   try {
     await daily.check(request.householdId, {
@@ -396,6 +399,14 @@ export async function handleLlmProxy(req: Request, runtime: Runtime): Promise<Re
         error: "cost_cap",
         message: "The household reached today's model budget.",
         extra: { scope: "daily" },
+      });
+    }
+    // The spend could not be read, so nothing was called. Not the household's doing: try again.
+    if (err instanceof LlmError && err.code === "cost_unknown") {
+      return fail({
+        status: 503,
+        error: "cost_unknown",
+        message: "Today's model spend could not be checked. Try again.",
       });
     }
     throw err;

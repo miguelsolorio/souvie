@@ -257,6 +257,25 @@ jobs:
       - name: Worker runs a mock shopping run end to end
         run: services/shopper-worker/scripts/smoke.sh
 
+      # WS15 criterion 10, on the real pgmq: a message archived the way the worker dead-letters one
+      # shows in `dlq:list`, and `dlq:retry --force` puts it back on shopping_run and out of the archive.
+      - name: Dead letter commands list and re-send from pgmq's archive
+        env:
+          WORKER_DATABASE_URL: ${{ env.DB_URL }}
+        run: |
+          set -euo pipefail
+          run_id="5d000000-0000-4000-8000-0000000000d1"
+          msg="$(psql "$DB_URL" -Atc "select pgmq.send('shopping_run', jsonb_build_object('run_id', '$run_id'))")"
+          psql "$DB_URL" -Atc "select pgmq.archive('shopping_run', $msg)" > /dev/null
+          pnpm --filter @mp/shopper-worker dlq:list | tee dlq-list.txt
+          grep -q "msg $msg " dlq-list.txt
+          grep -q "run $run_id" dlq-list.txt
+          pnpm --filter @mp/shopper-worker dlq:retry "$msg" --force | tee dlq-retry.txt
+          grep -q "Put back on shopping_run" dlq-retry.txt
+          test "$(psql "$DB_URL" -Atc "select count(*) from pgmq.q_shopping_run where message ->> 'run_id' = '$run_id'")" -eq 1
+          test "$(psql "$DB_URL" -Atc "select count(*) from pgmq.a_shopping_run where msg_id = $msg")" -eq 0
+          psql "$DB_URL" -Atc "delete from pgmq.q_shopping_run where message ->> 'run_id' = '$run_id'" > /dev/null
+
       # WS05 follow-up (2026-10-31). list-build's store, through postgres.js, on this stack's own
       # Postgres: the five-dinner build and a rebuild. The PGlite store tests bind JSON parameters
       # through a model of the driver, and an earlier version of that model let a double-encoded

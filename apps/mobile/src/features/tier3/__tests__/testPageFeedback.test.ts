@@ -2,7 +2,9 @@
 // note) changes how the page looks and nothing the host reads. The tree after a click differs from
 // the tree before it only by the cart's text, and the keyframes move colour and shadow only. The
 // committed fixture is held to the page by bridge.test.ts and snapshot.test.ts; this file holds
-// the feedback to its promise.
+// the feedback to its promise. The last group covers the one thing that is not on for every visit:
+// with ?demo=1 the search box asks for no keyboard and scrolls itself into view. The default page
+// leaves both alone, so the host and the device checks see the real keyboard.
 import { diffSnapshots, findByRole, findByText, nearestButton } from "@mp/retailers";
 import { afterEach, describe, expect, it } from "vitest";
 import { createPageHarness, type PageHarness, TEST_PAGE_HTML, TEST_PAGE_URL } from "./jsdomPage";
@@ -13,9 +15,13 @@ afterEach(() => {
   page = null;
 });
 
-async function open() {
+/** The test page with the demo flag, as demo mode opens it. */
+const DEMO_PAGE_URL = `${TEST_PAGE_URL}?demo=1`;
+
+async function open(url = TEST_PAGE_URL) {
+  page?.close();
   page = createPageHarness();
-  await page.host.navigate(TEST_PAGE_URL);
+  await page.host.navigate(url);
   return page;
 }
 
@@ -92,19 +98,66 @@ describe("test page feedback", () => {
     await p.host.waitFor((t) => findByText(t, 'Showing results for "oat milk"').length > 0, 5_000);
     expect(p.window().document.getElementById("results-note")?.getAttribute("role")).toBe("status");
   });
+});
 
-  it("keeps the keyboard down and scrolls the search box into view when it takes focus", async () => {
+/** Types into the search box and returns what the page did to it: its inputmode and its scrolls. */
+async function typeIntoSearch(p: PageHarness) {
+  const search = p.window().document.getElementById("search");
+  if (!search) throw new Error("no search input");
+  const scrolls: unknown[] = [];
+  (search as unknown as { scrollIntoView: (o: unknown) => void }).scrollIntoView = (o) =>
+    scrolls.push(o);
+  const tree = await p.host.snapshot();
+  const [box] = findByRole(tree, "searchbox");
+  if (!box) throw new Error("no search box");
+  await p.host.type(box.id, "oat", { clear: true });
+  return { inputmode: search.getAttribute("inputmode"), scrolls };
+}
+
+describe("the keyboard and the scroll on the search box", () => {
+  it("leave the default page alone, so the iOS keyboard rises over the app as it really does", async () => {
     const p = await open();
-    const doc = p.window().document;
-    const search = doc.getElementById("search");
-    expect(search?.getAttribute("inputmode")).toBe("none");
-    const scrolls: unknown[] = [];
-    (search as unknown as { scrollIntoView: (o: unknown) => void }).scrollIntoView = (o) =>
-      scrolls.push(o);
-    const tree = await p.host.snapshot();
-    const [box] = findByRole(tree, "searchbox");
-    if (!box) throw new Error("no search box");
-    await p.host.type(box.id, "oat", { clear: true });
-    expect(scrolls).toContainEqual({ block: "center" });
+    const { inputmode, scrolls } = await typeIntoSearch(p);
+    expect(inputmode).toBeNull();
+    expect(scrolls).toEqual([]);
+  });
+
+  it("are on with ?demo=1: no keyboard, and the box scrolls itself into view on focus", async () => {
+    const p = await open(DEMO_PAGE_URL);
+    const { inputmode, scrolls } = await typeIntoSearch(p);
+    expect(inputmode).toBe("none");
+    expect(scrolls).toEqual([{ block: "center" }]);
+  });
+
+  it("stay off for other query parameters, and for demo values other than 1", async () => {
+    for (const query of ["?slow=100", "?demo=0", "?demo=", "?signin=1"]) {
+      const p = await open(`${TEST_PAGE_URL}${query}`);
+      const { inputmode, scrolls } = await typeIntoSearch(p);
+      expect([query, inputmode, scrolls]).toEqual([query, null, []]);
+      p.close();
+      page = null;
+    }
+  });
+
+  it("do not change the tree the host reads: the demo page and the default page are the same", async () => {
+    const plain = await open();
+    const bare = await plain.host.snapshot();
+    plain.close();
+    const demo = await open(DEMO_PAGE_URL);
+    const flagged = await demo.host.snapshot();
+    expect(flagged.url).toBe(DEMO_PAGE_URL);
+    expect(bare.url).toBe(TEST_PAGE_URL);
+    expect(flagged.nodeCount).toBe(bare.nodeCount);
+    // The one difference is the "Back to top" link, whose #top resolves against the page's own URL.
+    const [back] = findByRole(bare, "link", "Back to top");
+    if (!back) throw new Error("no Back to top link");
+    expect(diffSnapshots(bare, flagged)).toEqual([{ id: back.id, fields: ["href"] }]);
+    expect(back.href).toBe(`${TEST_PAGE_URL}#top`);
+    expect(findByRole(flagged, "link", "Back to top")[0]?.href).toBe(`${DEMO_PAGE_URL}#top`);
+  });
+
+  it("are set by the page script, not written into the markup", () => {
+    expect(TEST_PAGE_HTML).not.toMatch(/<input[^>]*inputmode="none"/);
+    expect(TEST_PAGE_HTML).toMatch(/params\.get\("demo"\) === "1"/);
   });
 });

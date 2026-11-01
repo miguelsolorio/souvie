@@ -13,20 +13,30 @@
 #      the Debug app with xcodebuild. `expo run:ios` is not used: on a Mac with no signing identity
 #      it takes the physical-device path and fails with "No code signing certificates"
 #   3. starts the test page server (tier3:test-page, port 8790) and Metro, with placeholder
-#      Supabase values. Nothing here reads .env.local, and no account or hosted data is touched
+#      Supabase values. No account or hosted data is touched (see the note on .env.local below)
 #   4. warms the bundle, so no bundling shows in the recording
 #   5. points the app at Metro (the RCT_jsLocation default), opens the demo screen with
 #      `simctl openurl` on a cold start (no Safari, no "Open in" prompt), and waits for the app to
 #      print "[tier3-demo] ready", which it does once the screen is up and the page has loaded
 #   6. records until the app prints "[tier3-demo] done", plus two seconds
-#   7. puts the Simulator back: bundler setting restored, app closed, servers stopped
+#   7. puts everything back: package.json, the bundler setting, the app, the servers, the logs
+#
+# About .env.local: this script never opens it. Metro's own config (metro.config.js) does. On
+# `expo start` it reads the repo-root .env.local and copies each EXPO_PUBLIC_* value whose name is
+# not already set in the environment. Before starting Metro, this script sets every EXPO_PUBLIC_*
+# name that .env.example lists to empty (and the two Supabase values to placeholders), so Metro
+# finds each of those names already set and discards the file's values. That is why none of them
+# reaches the demo build. A name in .env.local that .env.example does not list would still be
+# copied; every name the app reads is listed there.
 #
 # Environment (all optional):
 #   SIM_NAME      Simulator name, default "iPhone 17 Pro"
 #   SIM_UDID      use this device instead of looking SIM_NAME up
 #   METRO_PORT    first port to try for Metro, default 8083 (8081 is where most people run theirs)
 #   SKIP_BUILD=1  reuse the app already built under ios/build
+#   REUSE_SERVER=1  record whatever already serves the test page port, instead of refusing
 #   TAIL_SECONDS  how long to keep recording after the Done caption, default 2
+#   KEEP_LOGS=1   keep the log directory (it is removed on exit; a failure prints the log's tail)
 #   PNPM          the pnpm command, default "corepack pnpm" (no global pnpm on this Mac)
 set -euo pipefail
 
@@ -51,6 +61,7 @@ mkdir -p "$(dirname "$OUT")"
 
 PNPM="${PNPM:-corepack pnpm}"
 SIM_NAME="${SIM_NAME:-iPhone 17 Pro}"
+SIM_UDID="${SIM_UDID:-}"
 BUNDLE_ID="com.miguelsolorio.souvie"
 DEMO_URL="souvie://snapshot?demo=1"
 TEST_PAGE_PORT="${TIER3_TEST_PAGE_PORT:-8790}"
@@ -62,25 +73,13 @@ WORK="$(mktemp -d "${TMPDIR:-/tmp}/tier3-demo.XXXXXX")"
 export LANG="${LANG:-en_US.UTF-8}"
 export LC_ALL="${LC_ALL:-en_US.UTF-8}"
 
-log() { printf '[record-tier3-demo] %s\n' "$*"; }
-fail() {
-  printf '[record-tier3-demo] FAILED: %s\n' "$*" >&2
-  exit 1
-}
-
-command -v xcrun >/dev/null || fail "xcrun not found. This needs Xcode on a Mac."
-
-# --- the Simulator -------------------------------------------------------------------------------
-if [ -z "${SIM_UDID:-}" ]; then
-  SIM_UDID="$(xcrun simctl list devices available | sed -nE "s/^ *${SIM_NAME} \(([0-9A-F-]{36})\).*/\1/p" | head -n 1)"
-fi
-[ -n "$SIM_UDID" ] || fail "no available Simulator named \"$SIM_NAME\""
-log "Simulator: $SIM_NAME ($SIM_UDID)"
-xcrun simctl bootstatus "$SIM_UDID" -b >/dev/null 2>&1 || fail "could not boot the Simulator"
-
 # --- cleanup, whatever happens -------------------------------------------------------------------
+# Everything this script changes is undone here: package.json (prebuild rewrites it), the
+# Simulator's bundler setting, the app, the recorder, the servers and the log directory. The traps
+# are set before anything is changed, and each change sets its flag before it is made.
 PIDS=()
 REC_PID=""
+PACKAGE_JSON_BACKUP=""
 BUNDLER_SETTING_CHANGED=0
 PREVIOUS_JS_LOCATION=""
 
@@ -92,33 +91,91 @@ kill_tree() {
   kill "$pid" 2>/dev/null || true
 }
 
+# stop_recorder: ask the recorder to close the file (INT), give it ten seconds, then kill it.
+# Returns 1 when it had to be killed, because the video is then not finished.
+stop_recorder() {
+  local pid="$REC_PID" ticks=0 result=0
+  [ -n "$pid" ] || return 0
+  REC_PID=""
+  kill -INT "$pid" 2>/dev/null || return 0
+  while kill -0 "$pid" 2>/dev/null; do
+    ticks=$((ticks + 1))
+    if [ "$ticks" -ge 50 ]; then
+      kill -KILL "$pid" 2>/dev/null
+      result=1
+      break
+    fi
+    sleep 0.2
+  done
+  wait "$pid" 2>/dev/null
+  return "$result"
+}
+
+# restore_package_json: put package.json back as it was before expo prebuild rewrote it.
+restore_package_json() {
+  if [ -n "$PACKAGE_JSON_BACKUP" ] && [ -f "$PACKAGE_JSON_BACKUP" ]; then
+    cp "$PACKAGE_JSON_BACKUP" "$MOBILE_DIR/package.json"
+  fi
+  PACKAGE_JSON_BACKUP=""
+}
+
 cleanup() {
   local status=$?
   set +e
-  if [ -n "$REC_PID" ] && kill -0 "$REC_PID" 2>/dev/null; then
-    kill -INT "$REC_PID" 2>/dev/null
-    wait "$REC_PID" 2>/dev/null
-  fi
-  xcrun simctl terminate "$SIM_UDID" "$BUNDLE_ID" >/dev/null 2>&1
-  if [ "$BUNDLER_SETTING_CHANGED" = 1 ]; then
-    if [ -n "$PREVIOUS_JS_LOCATION" ]; then
-      xcrun simctl spawn "$SIM_UDID" defaults write "$BUNDLE_ID" RCT_jsLocation "$PREVIOUS_JS_LOCATION"
-    else
-      xcrun simctl spawn "$SIM_UDID" defaults delete "$BUNDLE_ID" RCT_jsLocation >/dev/null 2>&1
+  stop_recorder
+  restore_package_json
+  if [ -n "$SIM_UDID" ]; then
+    xcrun simctl terminate "$SIM_UDID" "$BUNDLE_ID" >/dev/null 2>&1
+    if [ "$BUNDLER_SETTING_CHANGED" = 1 ]; then
+      if [ -n "$PREVIOUS_JS_LOCATION" ]; then
+        xcrun simctl spawn "$SIM_UDID" defaults write "$BUNDLE_ID" RCT_jsLocation "$PREVIOUS_JS_LOCATION"
+      else
+        xcrun simctl spawn "$SIM_UDID" defaults delete "$BUNDLE_ID" RCT_jsLocation >/dev/null 2>&1
+      fi
+      log "bundler setting restored"
     fi
-    log "bundler setting restored"
   fi
   local pid
   for pid in ${PIDS[@]+"${PIDS[@]}"}; do
     kill_tree "$pid"
   done
-  if [ "$status" -ne 0 ]; then
-    log "logs are in $WORK"
+  if [ "${KEEP_LOGS:-0}" = 1 ]; then
+    log "logs kept in $WORK"
+  else
+    # Only ever a directory this script made with mktemp.
+    case "$WORK" in
+      */tier3-demo.*) rm -rf "$WORK" ;;
+    esac
   fi
   exit "$status"
 }
+
+log() { printf '[record-tier3-demo] %s\n' "$*"; }
+
+# fail <message> [log file]: say what went wrong, with the end of the log that explains it.
+fail() {
+  printf '[record-tier3-demo] FAILED: %s\n' "$1" >&2
+  if [ -n "${2:-}" ] && [ -s "$2" ]; then
+    printf '[record-tier3-demo] last lines of %s:\n' "$(basename "$2")" >&2
+    tail -n 30 "$2" >&2
+  fi
+  exit 1
+}
+
 trap cleanup EXIT
-trap 'exit 130' INT TERM
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+command -v xcrun >/dev/null || fail "xcrun not found. This needs Xcode on a Mac."
+
+# --- the Simulator -------------------------------------------------------------------------------
+if [ -z "$SIM_UDID" ]; then
+  SIM_UDID="$(xcrun simctl list devices available | sed -nE "s/^ *${SIM_NAME} \(([0-9A-F-]{36})\).*/\1/p" | head -n 1)"
+fi
+[ -n "$SIM_UDID" ] || fail "no available Simulator named \"$SIM_NAME\""
+log "Simulator: $SIM_NAME ($SIM_UDID)"
+xcrun simctl bootstatus "$SIM_UDID" -b >/dev/null 2>&1 || fail "could not boot the Simulator"
 
 # wait_for_log <file> <fixed text> <seconds>
 wait_for_log() {
@@ -138,17 +195,28 @@ seen_since() {
 
 port_in_use() { lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; }
 
+# A test page server that is already up may serve another checkout's page. Refuse it now, before the
+# build, unless the person says to record it anyway.
+START_TEST_PAGE_SERVER=1
+if port_in_use "$TEST_PAGE_PORT"; then
+  [ "${REUSE_SERVER:-0}" = 1 ] ||
+    fail "port $TEST_PAGE_PORT is already in use. If that is a test page server from another checkout, its page, not this one, would be in the recording. Stop it, or set REUSE_SERVER=1 to record what it serves."
+  START_TEST_PAGE_SERVER=0
+fi
+
 # --- the native app ------------------------------------------------------------------------------
 cd "$MOBILE_DIR"
 if [ ! -d ios/Souvie.xcworkspace ]; then
   log "generating the native project (expo prebuild, then pod install)"
-  # prebuild rewrites the ios and android scripts in package.json. Put the file back afterwards.
-  cp package.json "$WORK/package.json.bak"
+  # prebuild rewrites the ios and android scripts in package.json. The backup is registered before
+  # prebuild starts, so cleanup restores the file on any exit, an interrupt included.
+  PACKAGE_JSON_BACKUP="$WORK/package.json.bak"
+  cp package.json "$PACKAGE_JSON_BACKUP"
   prebuild_status=0
   CI=1 $PNPM exec expo prebuild --platform ios --no-install >"$WORK/prebuild.log" 2>&1 || prebuild_status=$?
-  cp "$WORK/package.json.bak" package.json
-  [ "$prebuild_status" -eq 0 ] || fail "expo prebuild failed (see $WORK/prebuild.log)"
-  (cd ios && pod install >"$WORK/pod-install.log" 2>&1) || fail "pod install failed (see $WORK/pod-install.log)"
+  restore_package_json
+  [ "$prebuild_status" -eq 0 ] || fail "expo prebuild failed" "$WORK/prebuild.log"
+  (cd ios && pod install >"$WORK/pod-install.log" 2>&1) || fail "pod install failed" "$WORK/pod-install.log"
 fi
 
 if [ "${SKIP_BUILD:-0}" = 1 ] && [ -d "$APP" ]; then
@@ -162,22 +230,19 @@ else
     -sdk iphonesimulator \
     -destination "id=$SIM_UDID" \
     -derivedDataPath ios/build \
-    build >"$WORK/xcodebuild.log" 2>&1 || {
-    tail -n 40 "$WORK/xcodebuild.log" >&2
-    fail "xcodebuild failed (see $WORK/xcodebuild.log)"
-  }
+    build >"$WORK/xcodebuild.log" 2>&1 || fail "xcodebuild failed" "$WORK/xcodebuild.log"
 fi
 [ -d "$APP" ] || fail "no app at $APP"
 xcrun simctl install "$SIM_UDID" "$APP"
 
 # --- the test page and Metro ---------------------------------------------------------------------
-if curl -fs -o /dev/null "$TEST_PAGE_URL"; then
-  log "test page already served at $TEST_PAGE_URL"
-else
+if [ "$START_TEST_PAGE_SERVER" = 1 ]; then
   $PNPM run tier3:test-page >"$WORK/test-page.log" 2>&1 &
   PIDS+=("$!")
-  wait_for_log "$WORK/test-page.log" "Tier 3 test page at" 30 || fail "the test page server did not start"
+  wait_for_log "$WORK/test-page.log" "Tier 3 test page at" 30 || fail "the test page server did not start" "$WORK/test-page.log"
   log "test page at $TEST_PAGE_URL"
+else
+  log "reusing the server on port $TEST_PAGE_PORT (REUSE_SERVER=1)"
 fi
 
 METRO_PORT="${METRO_PORT:-8083}"
@@ -185,10 +250,9 @@ while port_in_use "$METRO_PORT"; do
   METRO_PORT=$((METRO_PORT + 1))
 done
 
-# Metro copies EXPO_PUBLIC_* values from a repo-root .env.local for any name that is not already set.
-# Name every public variable here, empty, so none of that file's values (a PostHog or Sentry key,
-# the hosted Supabase project) reach the demo build. The two Supabase values are placeholders: the
-# app only needs them to render, and 127.0.0.1:54321 is this Mac.
+# The environment for Metro: every EXPO_PUBLIC_* name .env.example lists is set, empty, so Metro's
+# own .env.local reading (see the note at the top) finds nothing left to copy. The two Supabase
+# values are placeholders: the app only needs them to render, and 127.0.0.1:54321 is this Mac.
 while IFS= read -r name; do
   export "$name="
 done < <(grep -oE '^EXPO_PUBLIC_[A-Z0-9_]+' "$MOBILE_DIR/../../.env.example" 2>/dev/null || true)
@@ -203,20 +267,20 @@ ticks=0
 until [ "$(curl -fs "http://localhost:$METRO_PORT/status" 2>/dev/null || true)" = "packager-status:running" ]; do
   sleep 0.5
   ticks=$((ticks + 1))
-  [ "$ticks" -lt 120 ] || fail "Metro did not start (see $WORK/metro.log)"
+  [ "$ticks" -lt 120 ] || fail "Metro did not start" "$WORK/metro.log"
 done
 log "Metro on port $METRO_PORT"
 
 # --- point the app at Metro ----------------------------------------------------------------------
 PREVIOUS_JS_LOCATION="$(xcrun simctl spawn "$SIM_UDID" defaults read "$BUNDLE_ID" RCT_jsLocation 2>/dev/null || true)"
-xcrun simctl spawn "$SIM_UDID" defaults write "$BUNDLE_ID" RCT_jsLocation "localhost:$METRO_PORT"
 BUNDLER_SETTING_CHANGED=1
+xcrun simctl spawn "$SIM_UDID" defaults write "$BUNDLE_ID" RCT_jsLocation "localhost:$METRO_PORT"
 
 # Warm the bundle: the first launch makes Metro build it, which takes a while. Do that unrecorded.
 xcrun simctl terminate "$SIM_UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
 xcrun simctl launch "$SIM_UDID" "$BUNDLE_ID" >/dev/null
 log "bundling (first launch)"
-wait_for_log "$WORK/metro.log" "Bundled" 240 || fail "Metro did not bundle the app (see $WORK/metro.log)"
+wait_for_log "$WORK/metro.log" "Bundled" 240 || fail "Metro did not bundle the app" "$WORK/metro.log"
 sleep 6
 xcrun simctl terminate "$SIM_UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
 sleep 1
@@ -232,7 +296,7 @@ ticks=0
 until seen_since "$WORK/metro.log" "$READY_FROM" "[tier3-demo] ready"; do
   sleep 0.1
   ticks=$((ticks + 1))
-  [ "$ticks" -lt 600 ] || fail "the demo screen did not come up (see $WORK/metro.log)"
+  [ "$ticks" -lt 600 ] || fail "the demo screen did not come up" "$WORK/metro.log"
 done
 
 rm -f "$OUT"
@@ -245,23 +309,23 @@ until seen_since "$WORK/metro.log" "$READY_FROM" "[tier3-demo] done" ||
   seen_since "$WORK/metro.log" "$READY_FROM" "[tier3-demo] failed"; do
   sleep 0.1
   ticks=$((ticks + 1))
-  [ "$ticks" -lt 450 ] || fail "the demo did not finish within 45 s (see $WORK/metro.log)"
+  [ "$ticks" -lt 450 ] || fail "the demo did not finish within 45 s" "$WORK/metro.log"
 done
 if seen_since "$WORK/metro.log" "$READY_FROM" "[tier3-demo] failed"; then
-  fail "the demo stopped with an error (see $WORK/metro.log)"
+  fail "the demo stopped with an error" "$WORK/metro.log"
 fi
 
 # Two seconds on the Done caption. The log line reaches Metro about as late as the recorder takes to
 # close, so a plain two seconds gives a tail of two (measured: 1.8 from a wait of 1.8). The PNG is
 # taken after the recorder stops, so taking it does not stretch the tail.
 sleep "${TAIL_SECONDS:-2}"
-kill -INT "$REC_PID"
-wait "$REC_PID" 2>/dev/null || true
-REC_PID=""
+stop_recorder || fail "the recorder did not stop when asked, so the video may be cut off" "$WORK/record.log"
 # The screen still shows the Done caption: nothing moves after it.
-xcrun simctl io "$SIM_UDID" screenshot --type=png "$PNG" >/dev/null 2>&1
+xcrun simctl io "$SIM_UDID" screenshot --type=png "$PNG" >"$WORK/screenshot.log" 2>&1 ||
+  fail "could not take the final screenshot" "$WORK/screenshot.log"
 
-[ -s "$OUT" ] || fail "no video was written (see $WORK/record.log)"
+[ -s "$OUT" ] || fail "no video was written" "$WORK/record.log"
+[ -s "$PNG" ] || fail "no final screenshot was written" "$WORK/screenshot.log"
 log "video: $OUT"
 log "final frame: $PNG"
 if command -v ffprobe >/dev/null; then

@@ -41,6 +41,21 @@ import { WebViewHost } from "../../src/features/tier3/WebViewHost";
 // Expo inlines EXPO_PUBLIC_* only when read literally. A public URL replaces the local one later.
 const TEST_PAGE_URL = process.env.EXPO_PUBLIC_TIER3_TEST_PAGE_URL || "http://localhost:8790/";
 
+/** `url` with `demo=1` added to its query, before any #fragment. */
+function withDemoFlag(url: string): string {
+  const hash = url.indexOf("#");
+  const base = hash < 0 ? url : url.slice(0, hash);
+  const fragment = hash < 0 ? "" : url.slice(hash);
+  return `${base}${base.includes("?") ? "&" : "?"}demo=1${fragment}`;
+}
+
+/**
+ * What demo mode opens. The page's ?demo=1 turns off the on-screen keyboard for the search box, so
+ * the recording is not covered by it. Normal mode, the fixture capture and the bridge tests use the
+ * bare TEST_PAGE_URL, where the keyboard rises as it does on a real page.
+ */
+const DEMO_PAGE_URL = withDemoFlag(TEST_PAGE_URL);
+
 interface Step {
   label: string;
   status: "running" | "ok" | "failed";
@@ -330,11 +345,12 @@ interface DemoNarration {
 
 /**
  * The same bridge calls as "Run the demo" (navigate, snapshot, click, snapshot, type, waitFor,
- * screenshot, snapshot), narrated. Returns the screenshot the host took.
+ * screenshot, snapshot), with the same arguments, narrated. The one difference is the page it opens:
+ * the test page with ?demo=1 (DEMO_PAGE_URL). Returns the screenshot the host took.
  */
 async function runDemoScript(host: BridgeHost, narrate: DemoNarration): Promise<Uint8Array> {
   narrate.say("Opening the page", 1);
-  await host.navigate(TEST_PAGE_URL);
+  await host.navigate(DEMO_PAGE_URL);
   await narrate.pause();
 
   const first = await host.snapshot();
@@ -470,7 +486,7 @@ function DemoScreen() {
     // The page and the strip share the screen, 7 parts to 3.
     <SafeAreaView className="flex-1 bg-white" testID="snapshot-demo-screen">
       <View style={{ flex: 7 }} className="overflow-hidden border-b border-neutral-300">
-        <WebViewHost initialUrl={TEST_PAGE_URL} onHost={setHost} testID="snapshot-webview" />
+        <WebViewHost initialUrl={DEMO_PAGE_URL} onHost={setHost} testID="snapshot-webview" />
       </View>
       <View style={{ flex: 3 }} className="bg-neutral-100" testID="demo-strip">
         <View className="h-1 bg-neutral-300">

@@ -15,17 +15,20 @@
       form (for userRequired: login), and two buttons that add a verification iframe (captcha) and
       a one-time-code field (mfa).
 
-      Query parameters: slow=<ms> delays the late node (default 1200); signin=1 opens the form.
+      Query parameters: slow=<ms> delays the late node (default 1200); signin=1 opens the form;
+      demo=1 is for the recorded demo only (below).
 
       Visible feedback for the recorded demo: a pressed Add button, the cart counter when it
       changes and the "Showing results for" note when it appears each flash once. The animations
       are CSS and move only box-shadow and colour, so no layout, role, name or text changes and the
-      snapshot tree is the same with or without them. Two small things sit beside the CSS: the page
-      script adds a class to the pressed button and the counter (CSS cannot see a click that a
-      script makes, or a text change), and the search box says inputmode="none" so the on-screen
-      keyboard does not rise over the recording when the host types into it, with a focus handler
-      that scrolls the box into view in the keyboard's place. The header is sticky, so the cart
-      counter stays on screen while the page scrolls to the control being used.
+      snapshot tree is the same with or without them. The page script adds a class to the pressed
+      button and the counter, because CSS cannot see a click that a script makes or a text change.
+      The header is sticky, so the cart counter stays on screen while the page scrolls to the
+      control being used. All of that is on for every visit.
+
+      Only with ?demo=1: the search box says inputmode="none" and scrolls itself into view when it
+      takes focus. Without it the iOS keyboard rises over the app while the host types, which is
+      what the host and the device checks need to see, so the default page leaves it alone.
     -->
     <style>
       :root {
@@ -219,14 +222,7 @@
       <search>
         <form id="search-form" class="row">
           <label for="search">Search products</label>
-          <input
-            id="search"
-            type="search"
-            name="q"
-            placeholder="Try oat milk"
-            autocomplete="off"
-            inputmode="none"
-          />
+          <input id="search" type="search" name="q" placeholder="Try oat milk" autocomplete="off" />
           <button type="submit">Search</button>
         </form>
       </search>
@@ -369,10 +365,16 @@
 
         // The late node: appears slowMs after the search box last changed.
         var search = document.getElementById("search");
-        // With no keyboard to push it into view, show the box when it takes focus, as a phone would.
-        search.addEventListener("focus", () => {
-          if (search.scrollIntoView) search.scrollIntoView({ block: "center" });
-        });
+        // Recorded demo only (?demo=1). The default page keeps the real behaviour: the on-screen
+        // keyboard rises over the app while the host types, and the host and the device checks must
+        // see that. For a recording the box asks for no keyboard, and scrolls itself into view when
+        // it takes focus, as the page would have been scrolled with a keyboard up.
+        if (params.get("demo") === "1") {
+          search.setAttribute("inputmode", "none");
+          search.addEventListener("focus", () => {
+            if (search.scrollIntoView) search.scrollIntoView({ block: "center" });
+          });
+        }
         search.addEventListener("input", () => {
           if (lateTimer) clearTimeout(lateTimer);
           var slot = document.getElementById("late-slot");

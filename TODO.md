@@ -71,7 +71,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] Dispatch WS09 (opus). Dispatched 2026-10-31. Expect contract change requests here; apply them on `main` yourself.
 - [x] Review with extra attention to policies-in-code, the write ledger, the allergen check, and the service-role authorization in `run-approve` and the worker. Done 2026-10-31: one fix round, re-review merge.
 - [x] Merge, summary. Merged 2026-10-31 as 8ba30d8 (PR #21); wave 5 summary in `docs/status.md`. The real QFC cart (criterion 13) still needs Miguel's Kroger sign-in and a deployed worker.
-- [ ] Orchestrator contract change: remove `instacart` (CCR9). On PR #26 since 2026-10-31; merge when green and apply migration `20261031150000` to hosted.
+- [x] Orchestrator contract change: remove `instacart` (CCR9). Merged 2026-10-31 as 547f238 (PR #26); migration applied to hosted.
 - [ ] **Human:** deploy the worker to Fly.io or Railway once the account exists, with `WORKER_DATABASE_URL`, `ANTHROPIC_API_KEY`, `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET` and `EXPO_PUSH_ACCESS_TOKEN` as its secrets, and set `extra.eas.projectId` in `app.json`. (`run-approve` is deployed; `llm-proxy` deploys with WS08's merge.)
 
 ## 7. Wave 6: everything that consumes the agent

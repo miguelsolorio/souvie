@@ -63,7 +63,7 @@ try {
       newRun: flags.has("--new-run"),
     });
     console.log(describeRetry(outcome, msgId));
-    if (outcome.kind === "not_found" || outcome.kind === "run_closed") process.exitCode = 1;
+    if (outcome.kind !== "requeued" && outcome.kind !== "new_run") process.exitCode = 1;
   }
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));

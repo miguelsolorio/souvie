@@ -6,6 +6,7 @@ import { createAdapterSource } from "./adapters.ts";
 import { describeConfig, readConfig } from "./config.ts";
 import { Heartbeat } from "./heartbeat.ts";
 import { createModelSource } from "./models.ts";
+import { mountObservability } from "./observability/index.ts";
 import { sendPush } from "./push.ts";
 import {
   createPgmqClient,
@@ -158,6 +159,15 @@ async function main(): Promise<void> {
         errors: result.errors.length,
       });
     },
+  });
+
+  // Sentry, PostHog and the stall watch (WS15). Each is off without its key.
+  await mountObservability({
+    env: process.env,
+    runs,
+    store: runStore,
+    log,
+    signal: controller.signal,
   });
 
   try {

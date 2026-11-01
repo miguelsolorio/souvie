@@ -1,7 +1,11 @@
 # Fly.io config for the shopper worker (WS09). A worker, not a web service: no ports, no health
 # check over HTTP. Deploy from the repo root so the Docker context holds the workspace:
 #
-#   fly deploy . --config services/shopper-worker/fly.toml --dockerfile services/shopper-worker/Dockerfile
+#   fly deploy . --config services/shopper-worker/fly.toml --dockerfile services/shopper-worker/Dockerfile \
+#     --build-arg GIT_SHA="$(git rev-parse HEAD)"
+#
+# GIT_SHA is the Sentry release (WS15). SENTRY_DSN and POSTHOG_API_KEY are secrets; without them
+# Sentry and PostHog stay off.
 #
 # Secrets (never in this file):
 #   fly secrets set --config services/shopper-worker/fly.toml \

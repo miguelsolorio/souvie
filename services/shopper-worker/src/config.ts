@@ -82,6 +82,6 @@ export function describeConfig(config: WorkerConfig): Record<string, unknown> {
     model: config.anthropicApiKey ? "on" : "off (code picks close calls)",
     kroger: config.krogerClientId && config.krogerClientSecret ? "configured" : "not configured",
     push: config.expoPushAccessToken ? "expo with access token" : "expo",
-    sentry: config.sentryDsn ? "dsn set, not wired until WS15" : "off",
+    sentry: config.sentryDsn ? "dsn set" : "off",
   };
 }

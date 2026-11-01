@@ -1,0 +1,346 @@
+{
+  "name": "pinned-same-brand",
+  "description": "Pinned products: whole milk is pinned and offered, eggs are pinned to a product the store no longer carries, so a same-brand substitute is proposed. The household removes a line at review.",
+  "model": "claude-sonnet-5-5",
+  "adapter": {
+    "seed": 1
+  },
+  "context": {
+    "runId": "replay-pinned-same-brand",
+    "householdId": "replay-household",
+    "storeId": "MOCK0001",
+    "policy": {
+      "substitution": "same_brand"
+    },
+    "allergies": [],
+    "preferences": {
+      "preferredBrands": ["Harbor Fields"],
+      "avoidBrands": [],
+      "preferOrganic": false
+    },
+    "lines": [
+      {
+        "id": "P01",
+        "displayName": "Whole milk",
+        "qty": 1,
+        "unit": "gallon",
+        "section": "dairy",
+        "position": 0,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "name": "milk",
+          "category": "dairy",
+          "defaultUnit": "cup",
+          "densityGPerMl": 1.03,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "P02",
+        "displayName": "Large eggs",
+        "qty": 12,
+        "unit": "each",
+        "section": "eggs",
+        "position": 1,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "name": "egg",
+          "category": "eggs",
+          "defaultUnit": "each",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 50
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "P03",
+        "displayName": "Yellow onions",
+        "qty": 3,
+        "unit": "each",
+        "section": "produce",
+        "position": 2,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "name": "yellow onion",
+          "category": "produce",
+          "defaultUnit": "each",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 150
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "P04",
+        "displayName": "Chicken thighs",
+        "qty": 2,
+        "unit": "lb",
+        "section": "meat",
+        "position": 3,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "name": "chicken thigh",
+          "category": "meat",
+          "defaultUnit": "lb",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 115
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "P05",
+        "displayName": "Chicken broth",
+        "qty": 4,
+        "unit": "cup",
+        "section": "pantry",
+        "position": 4,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000009",
+          "name": "chicken broth",
+          "category": "pantry",
+          "defaultUnit": "cup",
+          "densityGPerMl": 1,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "P06",
+        "displayName": "Salmon fillets",
+        "qty": 1,
+        "unit": "lb",
+        "section": "seafood",
+        "position": 5,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "name": "salmon fillet",
+          "category": "seafood",
+          "defaultUnit": "lb",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 170
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      }
+    ],
+    "choices": [
+      {
+        "ingredientId": "00000000-0000-4000-8000-000000000004",
+        "productId": "0099020000001",
+        "upc": "0099020000001",
+        "productName": "Northfork Creamery Whole Milk",
+        "size": "1 gal",
+        "pinned": true,
+        "lastChosenAt": "2026-10-24T17:00:00.000Z"
+      },
+      {
+        "ingredientId": "00000000-0000-4000-8000-000000000005",
+        "productId": "0099029999999",
+        "upc": "0099029999999",
+        "productName": "Northfork Creamery Pasture Eggs",
+        "size": "12 ct",
+        "pinned": true,
+        "lastChosenAt": "2026-10-24T17:00:00.000Z"
+      },
+      {
+        "ingredientId": "00000000-0000-4000-8000-000000000003",
+        "productId": "0099030000003",
+        "upc": "0099030000003",
+        "productName": "Harbor Fields Bone-In Chicken Thighs",
+        "size": "1 lb",
+        "pinned": false,
+        "lastChosenAt": "2026-10-24T17:00:00.000Z"
+      }
+    ]
+  },
+  "turns": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Line P05 needs 4 cups, which is 32 fl oz, so one unit covers it. I'm choosing the best value broth for P05 and the best value salmon for P06."
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_01WquKmkuczJFp3FwEsbFZms",
+          "name": "choose_product",
+          "input": {
+            "listItemId": "P05",
+            "candidateIndex": 0,
+            "quantity": 1,
+            "reason": "Plain chicken broth, 32 fl oz equals 4 cups, best value."
+          },
+          "caller": {
+            "type": "direct"
+          }
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_01EhGKyiS6uKAgEmUA7Bywzv",
+          "name": "choose_product",
+          "input": {
+            "listItemId": "P06",
+            "candidateIndex": 0,
+            "quantity": 1,
+            "reason": "Salmon fillet at 1 lb, best value."
+          },
+          "caller": {
+            "type": "direct"
+          }
+        }
+      ],
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 4,
+        "output_tokens": 343,
+        "cache_read_input_tokens": 1509,
+        "cache_creation_input_tokens": 435
+      }
+    },
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01Qi1TEbpXxJAnRYrtJGwCVx",
+          "name": "request_review",
+          "input": {},
+          "caller": {
+            "type": "direct"
+          }
+        }
+      ],
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2,
+        "output_tokens": 26,
+        "cache_read_input_tokens": 1944,
+        "cache_creation_input_tokens": 469
+      }
+    }
+  ],
+  "review": {
+    "decisions": [
+      {
+        "listItemId": "P06",
+        "action": "remove"
+      }
+    ]
+  },
+  "expected": {
+    "planned": [
+      {
+        "listItemId": "P01",
+        "status": "matched",
+        "productId": "0099020000001",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "P02",
+        "status": "substituted",
+        "productId": "0099020000013",
+        "qty": 1,
+        "flags": ["pinned_unavailable"]
+      },
+      {
+        "listItemId": "P03",
+        "status": "matched",
+        "productId": "0099010000004",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "P04",
+        "status": "matched",
+        "productId": "0099030000003",
+        "qty": 2,
+        "flags": []
+      },
+      {
+        "listItemId": "P05",
+        "status": "matched",
+        "productId": "0099040000026",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "P06",
+        "status": "matched",
+        "productId": "0099030000028",
+        "qty": 1,
+        "flags": []
+      }
+    ],
+    "toolCalls": 13,
+    "finalStatus": "cart_ready",
+    "ledger": [
+      {
+        "listItemId": "P01",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "P02",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "P03",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "P04",
+        "cartQty": 2,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "P05",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "P06",
+        "cartQty": 0,
+        "deltaResult": null
+      }
+    ],
+    "cart": [
+      {
+        "productId": "0099010000004",
+        "quantity": 1
+      },
+      {
+        "productId": "0099020000001",
+        "quantity": 1
+      },
+      {
+        "productId": "0099020000013",
+        "quantity": 1
+      },
+      {
+        "productId": "0099030000003",
+        "quantity": 2
+      },
+      {
+        "productId": "0099040000026",
+        "quantity": 1
+      }
+    ]
+  },
+  "recorded": {
+    "at": "2026-10-31T16:49:03.971Z",
+    "note": "Recorded live against MockRetailer seed 1: 2 model turns, $0.0067."
+  }
+}

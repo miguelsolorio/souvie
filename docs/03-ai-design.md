@@ -172,6 +172,46 @@ Where an adapter can read the cart (browser adapters), step 5 diffs against the 
 
 Every tool call appends to `shopping_runs.transcript` (timestamp, tool, input, output summary, optional screenshot path for browser steps). The review screen can show the transcript.
 
+### As built (WS09)
+
+The agent is `packages/agent` (no Node, Deno or browser API) and runs in `services/shopper-worker`; `supabase/functions/run-approve` takes the approval. Where the build differs from the text above:
+
+- **Who calls the tools.** The model gets only the planning tools, and only for the lines code could not settle: a free-text or unclear line, or two candidates tied on pinned and past pick and within one unit-price band. Code searches every other line, chooses where the scorer has a clear winner, and runs the push and checkout tools itself. Every call, code's or the model's, is one transcript entry.
+- **Always a review.** A proposal always stops at `needs_review` before any cart write, also when no line is flagged (R1). Step 3's "or `cart_ready`" happens after the push.
+- **Allergen data.** No Open Food Facts lookup is made. A product with no allergen data is flagged "allergen data unavailable" when its name or the line's ontology category points at a household allergen (`dairy`, `eggs`, `seafood`, `bakery`).
+- **Cost.** Five recorded runs (`packages/agent/evals/runs/`) took one or two Sonnet turns each and cost $0.003 to $0.010; the 12-line week was $0.0095.
+
+Tools as implemented (`packages/agent/src/tools.ts`). Each is a `strict: true` Anthropic tool with a closed schema; bounds that strict mode cannot carry (a search `limit` of at most 25) are enforced in code. A call is checked for the capability first, then the run status and phase, then the review gate. A refusal is a structured `not_supported`, `wrong_state` or `needs_approval` result with a hint.
+
+| Tool | Capability | Status, phase | Who calls it | What it does |
+|---|---|---|---|---|
+| `find_store` | search not none | running, planning | model | Stores near a ZIP; the run's store is fixed by the connection |
+| `search_products` | search api or browser | running, planning | code once per unpinned line; model to refine | Up to 25 results, narrowed and ranked, shown as up to 8 numbered candidates; kept in memory only |
+| `get_product` | search api or browser | running, planning | code (pinned batch, push re-check); model | One batch per 50 ids for pinned products; one candidate's details for the model |
+| `choose_product` | none | running, planning | code or model | Index into the line's candidates; code maps it to the adapter's Product (`pickCandidate`, `assertRefInCandidates`); a bad index is refused, retried once, then the line is left unmatched |
+| `mark_unmatched` | none | running, planning | code or model | Leaves the line for the person, with a reason |
+| `request_review` | none | running, planning | model, else code | Ends planning; code runs the final allergen check and the policies, writes the proposal, moves to `needs_review`, notifies |
+| `add_to_cart` | cartAdd api or browser | running, push, approved | code | Ledger write, then the cart call, then the result |
+| `set_quantity` | cartAdd api or browser | running, push, approved | code | Signed delta from the ledger, or from the live cart where it can be read |
+| `remove_from_cart` | cartRead or cartAdd | running, push, approved | code | A negative delta of what this run added, never more |
+| `view_cart` | cartRead api or browser | running or cart_ready | code | The live cart, for the diff |
+| `get_slots`, `select_slot` | slots browser | cart_ready, checkout, approved | code (WS10 hosts) | Tier 3 only; Kroger hands both to the person |
+| `checkout` | checkout browser | cart_ready, checkout, approved | code (WS10 hosts) | Tier 3 only, after the person taps or under `auto_checkout_cap_usd` |
+| `finish` | none | running or checking_out | code | `cart_ready` with the hand-off link (Kroger), or `checked_out` |
+
+The run state machine as implemented (`packages/agent/src/state.ts`, enforced again for every writer by the `shopping_runs` status guard trigger):
+
+```text
+queued ──▶ running ──▶ needs_review ──▶ running (push phase) ──▶ cart_ready ──▶ checking_out ──▶ checked_out
+   ▲          │                                                     (Tier 1 rests here;
+   └──────────┘ handed back: shutdown, a retry                       the person pays in the store's app)
+
+failed and cancelled: from queued, running, needs_review, cart_ready, checking_out
+terminal: checked_out, failed, cancelled
+```
+
+`approved_at` tells the two `running` phases apart. A run waits for a worker with `heartbeat_at` null; the worker beats every `WORKER_HEARTBEAT_SECONDS` (at most 30), and the sweeper acts on a heartbeat older than 90 seconds: an approved push is requeued and resumes from the ledger, anything else is failed. A run left in `needs_review` for 48 hours is cancelled by the hourly retention job.
+
 ## 9. In-app assistant (WS06, extended by later WS)
 
 A chat surface over the same domain services the UI uses: "swap Tuesday for something faster," "make the week vegetarian," "what can I cook with what's in the pantry," "move the Costco items to Saturday's run." It reads household context, plan, and list, and writes through the same functions as buttons do, so nothing the assistant does bypasses validation.

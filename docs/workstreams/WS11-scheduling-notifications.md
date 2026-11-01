@@ -111,3 +111,14 @@ pnpm --filter mobile start                      # manual: open Settings → Sche
 
 ## Completion report
 End with the completion report format from `docs/implementation-guide.md` §6.2 (Message templates). Nothing else is read by the orchestrator.
+
+## Preconditions from the WS09 review (orchestrator, 2026-10-31)
+
+WS09 shipped `push_tokens` and the two run pushes; WS11 extends them. Carry these from the WS09 re-review:
+- `apps/mobile/src/features/auth/useSignOut.ts` deletes this device's `push_tokens` row before the session ends, and nothing tests it (removing the call leaves every test green). Add a hook test, and cover a sign-out before registration finishes and a remote or forced sign-out, so no phone keeps receiving "Cart ready" after someone else signs in.
+- The review-timeout lower bound in `shopping_runs_clear_expired` is not pinned by pgTAP (a timeout of 0 hours passes because `now()` is constant inside the test transaction); set the fresh run's `status_changed_at` 47 hours back and the stale one 49.
+- `useRunRealtime.ts` overlays only the keys a payload carries, but only the pure function is tested; add a hook test.
+- A run that times out after a partial push keeps its pushed lines' product and quantity until clearing, and the app's in-cart warning applies only to `failed` runs; extend it to `cancelled` runs with `cart_qty > 0`.
+- The sweeper's requeue has no fencing against a paused-but-alive worker; the at-least-once window is the same as the in-flight resend. Acceptable for v1; note it in the ops runbook WS15 writes.
+- Not verified on the hosted project yet: Realtime payload completeness, the sweeper's dispatch on real pgmq, PostgREST binding of a JSON null policy, the Docker build, and criteria 12 and 13 (Simulator flow needs `extra.eas.projectId` and a dev build; the live Kroger run needs Miguel's sign-in).
+

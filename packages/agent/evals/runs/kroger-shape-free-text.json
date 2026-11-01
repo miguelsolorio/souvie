@@ -1,0 +1,307 @@
+{
+  "name": "kroger-shape-free-text",
+  "description": "The Kroger capability shape (no cart read, slots and pay hand off) on the mock, so the push runs on the ledger alone; three free-text lines the model has to read.",
+  "model": "claude-sonnet-5-5",
+  "adapter": {
+    "seed": 3,
+    "capabilities": {
+      "search": "api",
+      "cartAdd": "api",
+      "cartRead": "none",
+      "slots": "handoff",
+      "checkout": "handoff",
+      "orders": "none"
+    }
+  },
+  "context": {
+    "runId": "replay-kroger-shape-free-text",
+    "householdId": "replay-household",
+    "storeId": "MOCK0003",
+    "policy": {},
+    "allergies": [],
+    "preferences": {
+      "preferredBrands": [],
+      "avoidBrands": [],
+      "preferOrganic": false
+    },
+    "lines": [
+      {
+        "id": "K01",
+        "displayName": "something for tacos: tortillas",
+        "qty": 1,
+        "unit": null,
+        "section": "pantry",
+        "position": 0,
+        "ingredient": null,
+        "qualifiers": [],
+        "needsAttention": true,
+        "rawTexts": []
+      },
+      {
+        "id": "K02",
+        "displayName": "a big bag of frozen fries",
+        "qty": 1,
+        "unit": null,
+        "section": "frozen",
+        "position": 1,
+        "ingredient": null,
+        "qualifiers": [],
+        "needsAttention": true,
+        "rawTexts": []
+      },
+      {
+        "id": "K03",
+        "displayName": "strawberry jam for toast",
+        "qty": 1,
+        "unit": null,
+        "section": "pantry",
+        "position": 2,
+        "ingredient": null,
+        "qualifiers": [],
+        "needsAttention": true,
+        "rawTexts": []
+      },
+      {
+        "id": "K04",
+        "displayName": "Large eggs",
+        "qty": 12,
+        "unit": "each",
+        "section": "eggs",
+        "position": 3,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "name": "egg",
+          "category": "eggs",
+          "defaultUnit": "each",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 50
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "K05",
+        "displayName": "Whole milk",
+        "qty": 1,
+        "unit": "gallon",
+        "section": "dairy",
+        "position": 4,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "name": "milk",
+          "category": "dairy",
+          "defaultUnit": "cup",
+          "densityGPerMl": 1.03,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "K06",
+        "displayName": "Baby spinach",
+        "qty": 1,
+        "unit": "bag",
+        "section": "produce",
+        "position": 5,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "name": "spinach",
+          "category": "produce",
+          "defaultUnit": "cup",
+          "densityGPerMl": 0.12,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      }
+    ],
+    "choices": []
+  },
+  "turns": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01KZUCGYkvWtuqpHreSQVqEA",
+          "name": "choose_product",
+          "input": {
+            "listItemId": "K01",
+            "candidateIndex": 0,
+            "quantity": 1,
+            "reason": "Corn tortillas are the usual taco choice and cheaper."
+          },
+          "caller": {
+            "type": "direct"
+          }
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_01BFeT9cyL6x87LoTfb39SrE",
+          "name": "choose_product",
+          "input": {
+            "listItemId": "K02",
+            "candidateIndex": 0,
+            "quantity": 1,
+            "reason": "Regular fries in the larger bag."
+          },
+          "caller": {
+            "type": "direct"
+          }
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_01EMvZ825QYchU7qk2Q4mcS2",
+          "name": "choose_product",
+          "input": {
+            "listItemId": "K03",
+            "candidateIndex": 0,
+            "quantity": 1,
+            "reason": "Only candidate and matches the line."
+          },
+          "caller": {
+            "type": "direct"
+          }
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_018q6hGBgVcM6DxPFuwMZuYy",
+          "name": "request_review",
+          "input": {},
+          "caller": {
+            "type": "direct"
+          }
+        }
+      ],
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 4,
+        "output_tokens": 427,
+        "cache_read_input_tokens": 1509,
+        "cache_creation_input_tokens": 443
+      }
+    }
+  ],
+  "review": {
+    "decisions": [
+      {
+        "listItemId": "K05",
+        "action": "quantity",
+        "quantity": 2
+      }
+    ]
+  },
+  "expected": {
+    "planned": [
+      {
+        "listItemId": "K01",
+        "status": "matched",
+        "productId": "0099040000041",
+        "qty": 1,
+        "flags": ["needs_attention"]
+      },
+      {
+        "listItemId": "K02",
+        "status": "matched",
+        "productId": "0099050000014",
+        "qty": 1,
+        "flags": ["needs_attention"]
+      },
+      {
+        "listItemId": "K03",
+        "status": "matched",
+        "productId": "0099040000034",
+        "qty": 1,
+        "flags": ["needs_attention"]
+      },
+      {
+        "listItemId": "K04",
+        "status": "matched",
+        "productId": "0099020000012",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "K05",
+        "status": "matched",
+        "productId": "0099020000001",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "K06",
+        "status": "matched",
+        "productId": "0099010000018",
+        "qty": 1,
+        "flags": []
+      }
+    ],
+    "toolCalls": 13,
+    "finalStatus": "cart_ready",
+    "ledger": [
+      {
+        "listItemId": "K01",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "K02",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "K03",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "K04",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "K05",
+        "cartQty": 2,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "K06",
+        "cartQty": 1,
+        "deltaResult": "204"
+      }
+    ],
+    "cart": [
+      {
+        "productId": "0099010000018",
+        "quantity": 1
+      },
+      {
+        "productId": "0099020000001",
+        "quantity": 2
+      },
+      {
+        "productId": "0099020000012",
+        "quantity": 1
+      },
+      {
+        "productId": "0099040000034",
+        "quantity": 1
+      },
+      {
+        "productId": "0099040000041",
+        "quantity": 1
+      },
+      {
+        "productId": "0099050000014",
+        "quantity": 1
+      }
+    ]
+  },
+  "recorded": {
+    "at": "2026-10-31T16:49:10.179Z",
+    "note": "Recorded live against MockRetailer seed 3: 1 model turns, $0.0057."
+  }
+}

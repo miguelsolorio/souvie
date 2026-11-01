@@ -1,0 +1,348 @@
+{
+  "name": "allergies-milk-peanut",
+  "description": "A household allergic to milk and peanuts: butter, peanut butter and cheddar are left out before the model sees them, oat milk stays, the rest is accepted.",
+  "model": "claude-sonnet-5-5",
+  "adapter": {
+    "seed": 1
+  },
+  "context": {
+    "runId": "replay-allergies-milk-peanut",
+    "householdId": "replay-household",
+    "storeId": "MOCK0001",
+    "policy": {},
+    "allergies": ["milk", "peanut"],
+    "preferences": {
+      "preferredBrands": [],
+      "avoidBrands": [],
+      "preferOrganic": false
+    },
+    "lines": [
+      {
+        "id": "A01",
+        "displayName": "Unsalted butter",
+        "qty": 8,
+        "unit": "oz",
+        "section": "dairy",
+        "position": 0,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "name": "unsalted butter",
+          "category": "dairy",
+          "defaultUnit": "tbsp",
+          "densityGPerMl": 0.96,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "A02",
+        "displayName": "Peanut butter",
+        "qty": 16,
+        "unit": "oz",
+        "section": "pantry",
+        "position": 1,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000012",
+          "name": "peanut butter",
+          "category": "pantry",
+          "defaultUnit": "tbsp",
+          "densityGPerMl": 1.09,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "A03",
+        "displayName": "Shredded cheddar",
+        "qty": 8,
+        "unit": "oz",
+        "section": "dairy",
+        "position": 2,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000015",
+          "name": "cheddar",
+          "category": "dairy",
+          "defaultUnit": "cup",
+          "densityGPerMl": 0.48,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "A04",
+        "displayName": "Oat milk",
+        "qty": 8,
+        "unit": "cup",
+        "section": "dairy",
+        "position": 3,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000013",
+          "name": "oat milk",
+          "category": "dairy",
+          "defaultUnit": "cup",
+          "densityGPerMl": 1,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "A05",
+        "displayName": "Large eggs",
+        "qty": 12,
+        "unit": "each",
+        "section": "eggs",
+        "position": 4,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "name": "egg",
+          "category": "eggs",
+          "defaultUnit": "each",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 50
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "A06",
+        "displayName": "Chicken broth",
+        "qty": 4,
+        "unit": "cup",
+        "section": "pantry",
+        "position": 5,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000009",
+          "name": "chicken broth",
+          "category": "pantry",
+          "defaultUnit": "cup",
+          "densityGPerMl": 1,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "A07",
+        "displayName": "Lemons",
+        "qty": 4,
+        "unit": "each",
+        "section": "produce",
+        "position": 6,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000016",
+          "name": "lemon",
+          "category": "produce",
+          "defaultUnit": "each",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 58
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "A08",
+        "displayName": "Bananas",
+        "qty": 6,
+        "unit": "each",
+        "section": "produce",
+        "position": 7,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000017",
+          "name": "banana",
+          "category": "produce",
+          "defaultUnit": "each",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 118
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      }
+    ],
+    "choices": []
+  },
+  "turns": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Need 4 cups = 32 fl oz, so buy 1. Candidate 0 is plain chicken broth and best value."
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_01EnPDQGLFBtxVwktQNe1kyj",
+          "name": "choose_product",
+          "input": {
+            "listItemId": "A06",
+            "candidateIndex": 0,
+            "quantity": 1,
+            "reason": "Plain chicken broth, 32 fl oz equals 4 cups, best value."
+          },
+          "caller": {
+            "type": "direct"
+          }
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_018yKpsh9LmsW58sV28nGSzQ",
+          "name": "request_review",
+          "input": {},
+          "caller": {
+            "type": "direct"
+          }
+        }
+      ],
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 4,
+        "output_tokens": 214,
+        "cache_read_input_tokens": 1556,
+        "cache_creation_input_tokens": 241
+      }
+    }
+  ],
+  "review": {
+    "decisions": []
+  },
+  "expected": {
+    "planned": [
+      {
+        "listItemId": "A01",
+        "status": "unmatched",
+        "productId": null,
+        "qty": null,
+        "flags": ["allergen", "unmatched"]
+      },
+      {
+        "listItemId": "A02",
+        "status": "unmatched",
+        "productId": null,
+        "qty": null,
+        "flags": ["allergen", "unmatched"]
+      },
+      {
+        "listItemId": "A03",
+        "status": "unmatched",
+        "productId": null,
+        "qty": null,
+        "flags": ["allergen", "unmatched"]
+      },
+      {
+        "listItemId": "A04",
+        "status": "matched",
+        "productId": "0099020000007",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "A05",
+        "status": "matched",
+        "productId": "0099020000012",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "A06",
+        "status": "matched",
+        "productId": "0099040000026",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "A07",
+        "status": "matched",
+        "productId": "0099010000024",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "A08",
+        "status": "matched",
+        "productId": "0099010000001",
+        "qty": 2,
+        "flags": []
+      }
+    ],
+    "toolCalls": 17,
+    "finalStatus": "cart_ready",
+    "ledger": [
+      {
+        "listItemId": "A01",
+        "cartQty": 0,
+        "deltaResult": null
+      },
+      {
+        "listItemId": "A02",
+        "cartQty": 0,
+        "deltaResult": null
+      },
+      {
+        "listItemId": "A03",
+        "cartQty": 0,
+        "deltaResult": null
+      },
+      {
+        "listItemId": "A04",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "A05",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "A06",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "A07",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "A08",
+        "cartQty": 2,
+        "deltaResult": "204"
+      }
+    ],
+    "cart": [
+      {
+        "productId": "0099010000001",
+        "quantity": 2
+      },
+      {
+        "productId": "0099010000024",
+        "quantity": 1
+      },
+      {
+        "productId": "0099020000007",
+        "quantity": 1
+      },
+      {
+        "productId": "0099020000012",
+        "quantity": 1
+      },
+      {
+        "productId": "0099040000026",
+        "quantity": 1
+      }
+    ]
+  },
+  "recorded": {
+    "at": "2026-10-31T16:49:00.499Z",
+    "note": "Recorded live against MockRetailer seed 1: 1 model turns, $0.0031."
+  }
+}

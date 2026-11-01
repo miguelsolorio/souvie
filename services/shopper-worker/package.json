@@ -15,7 +15,10 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@mp/agent": "workspace:*",
     "@mp/core": "workspace:*",
+    "@mp/llm": "workspace:*",
+    "@mp/retailers": "workspace:*",
     "postgres": "3.4.9"
   },
   "devDependencies": {

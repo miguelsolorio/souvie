@@ -127,7 +127,6 @@ declare
   item text;
   first_day int;
   last_day int;
-  d int;
   found int[] := '{}';
 begin
   if p_field = '*' then
@@ -162,7 +161,6 @@ declare
   v_start date;
   v_day date;
   v_at timestamptz;
-  i int;
 begin
   if not public.scheduled_run_cron_is_valid(p_cron) then
     raise exception 'invalid_cron' using errcode = 'P0001';
@@ -811,11 +809,14 @@ set search_path = ''
 as $$
 declare
   v_count integer;
+  v_orders text;
 begin
-  if to_regclass('public.orders') is null then
+  -- Looked up at run time, so the schema linter does not demand a table WS12 has not made yet.
+  v_orders := to_regclass('public.orders')::text;
+  if v_orders is null then
     return 0;
   end if;
-  execute $q$
+  execute format($q$
     insert into public.notification_outbox (household_id, type, payload, deliver_after, dedupe_key)
     select o.household_id,
            'pickup_reminder'::public.notification_type,
@@ -827,13 +828,13 @@ begin
            ),
            greatest(o.slot_start - $1, $2),
            'pickup_reminder:' || o.id
-    from public.orders o
+    from %s o
     where o.status = 'confirmed'
       and o.slot_start is not null
       and o.slot_start > $2
       and o.slot_start - $1 <= $2 + interval '20 minutes'
     on conflict (dedupe_key) where dedupe_key is not null do nothing
-  $q$ using p_lead, p_now;
+  $q$, v_orders) using p_lead, p_now;
   get diagnostics v_count = row_count;
   return v_count;
 end;

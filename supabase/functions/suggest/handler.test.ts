@@ -747,6 +747,63 @@ describe("logging (criterion 9)", () => {
   });
 });
 
+describe("the household's own daily cap (WS15)", () => {
+  // This harness loads the migrations suggest needs, not 20261031190000_ws15_observability.sql,
+  // which also creates a view over shopping_runs. The column is added here as that migration
+  // defines it; the migration itself is tested by supabase/tests/ws15_observability.sql.
+  beforeAll(async () => {
+    await t.exec(
+      "alter table public.households add column if not exists ai_daily_cap_usd numeric(8, 2) not null default 2.00",
+    );
+  });
+  afterEach(async () => {
+    await t.query("update public.households set ai_daily_cap_usd = 2.00 where id = $1", [
+      FIXTURE_HOUSEHOLD,
+    ]);
+  });
+
+  async function spend(usd: number) {
+    await t.query(
+      `insert into public.ai_runs (household_id, kind, model, cost_usd, ok) values ($1, 'extract_recipe', 'claude-sonnet-5-5', $2, true)`,
+      [FIXTURE_HOUSEHOLD, usd],
+    );
+  }
+
+  it("stops at the household's cap when it is lower than AI_DAILY_CAP_USD", async () => {
+    await t.query("update public.households set ai_daily_cap_usd = 0.01 where id = $1", [
+      FIXTURE_HOUSEHOLD,
+    ]);
+    await spend(0.02);
+    const model = fakeModel();
+    const res = await post(
+      { householdId: FIXTURE_HOUSEHOLD, weekStart: WEEK, mode: "draft" },
+      "Bearer fixture",
+      runtimeWith({ anthropic: async () => model.client }),
+    );
+    expect(SuggestPlanResponse.parse(await res.json()).composedBy).toBe("fallback");
+    expect(model.parse).not.toHaveBeenCalled();
+    const rows = await t.query<{ kind: string; ok: boolean; error: string | null }>(
+      "select kind, ok, error from public.ai_runs where error = 'cost_cap'",
+    );
+    expect(rows).toEqual([{ kind: "suggest.compose", ok: false, error: "cost_cap" }]);
+  });
+
+  it("goes on past AI_DAILY_CAP_USD when the household's cap is higher", async () => {
+    await t.query("update public.households set ai_daily_cap_usd = 20 where id = $1", [
+      FIXTURE_HOUSEHOLD,
+    ]);
+    await spend(5);
+    const model = fakeModel();
+    const res = await post(
+      { householdId: FIXTURE_HOUSEHOLD, weekStart: WEEK, mode: "draft" },
+      "Bearer fixture",
+      runtimeWith({ anthropic: async () => model.client }),
+    );
+    expect(SuggestPlanResponse.parse(await res.json()).composedBy).toBe("model");
+    expect(model.sonnetCalls()).toBe(1);
+  });
+});
+
 describe("embeddings", () => {
   it("embeds the household's recipes and the taste profile, logs suggest.embed, and ranks with them", async () => {
     const voyage = fakeVoyage();

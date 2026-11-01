@@ -15,7 +15,9 @@ import {
   type ParserDeps,
   parseLinesGrouped,
 } from "../../../packages/ingredient-parser/src/index.ts";
+import { createDailyCapGuard, logAiRun } from "../../../packages/llm/src/index.ts";
 import { createClient } from "./client.ts";
+import { withCostGuard } from "./cost-guard.ts";
 import {
   type RecipeStore,
   type RowInsert,
@@ -26,6 +28,7 @@ import {
   SupabaseParseCache,
   SupabaseProposalSink,
   SupabaseRecipeStore,
+  SupabaseSpendStore,
 } from "./store.ts";
 
 export const MAX_LINES = 200;
@@ -49,10 +52,28 @@ export interface Run {
 export interface Runtime {
   authenticate(authHeader: string): Promise<{ userId: string } | null>;
   recipes: RecipeStore;
-  createRun(householdId: string | null): Run;
+  /**
+   * `userId` is the signed-in caller. The daily cap counts it when there is no household (the
+   * "lines" mode), so one user cannot send 200 lines per call all day (WS03 review, WS15).
+   */
+  createRun(householdId: string | null, userId?: string | null): Run;
 }
 
 type Env = (name: string) => string | undefined;
+
+/** USD a household (or, with no household, a user) may spend on model calls per UTC day. */
+export const DEFAULT_DAILY_CAP_USD = 2;
+
+function dailyCap(env: Env): number {
+  const raw = Number(env("AI_DAILY_CAP_USD"));
+  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_DAILY_CAP_USD;
+}
+
+function startOfUtcDay(now: Date): string {
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+  ).toISOString();
+}
 
 /** Builds the real runtime from the environment Supabase provides plus ANTHROPIC_API_KEY. */
 export function runtimeFromEnv(env: Env): Runtime {
@@ -78,9 +99,18 @@ export function runtimeFromEnv(env: Env): Runtime {
       return error || !data.user ? null : { userId: data.user.id };
     },
     recipes: new SupabaseRecipeStore(userClient),
-    createRun(householdId) {
+    createRun(householdId, userId = null) {
       const usages: LlmUsage[] = [];
-      const llm = anthropicKey ? createAnthropicParseClient({ apiKey: anthropicKey }) : undefined;
+      const spend = new SupabaseSpendStore(serviceDb);
+      const guard = createDailyCapGuard({
+        capUsd: dailyCap(env),
+        capFor: (id) => spend.householdCapUsd(id),
+        spentTodayUsd: (id) => spend.householdSpentSince(id, startOfUtcDay(new Date())),
+        userSpentTodayUsd: (id) => spend.userSpentSince(id, startOfUtcDay(new Date())),
+        sink: (record) => logAiRun(serviceDb.from("ai_runs"), record),
+      });
+      const model = anthropicKey ? createAnthropicParseClient({ apiKey: anthropicKey }) : undefined;
+      const llm = model ? withCostGuard(model, guard, { householdId, userId }) : undefined;
       const deps: ParserDeps = {
         ontology: new SupabaseOntologyStore(serviceDb),
         cache: new SupabaseParseCache(serviceDb),
@@ -97,7 +127,13 @@ export function runtimeFromEnv(env: Env): Runtime {
         hasModel: llm !== undefined,
         async finish() {
           for (const usage of usages)
-            await recordAiRun(serviceDb, usage, estimateCostUsd(usage), householdId);
+            await recordAiRun(
+              serviceDb,
+              usage,
+              estimateCostUsd(usage),
+              householdId,
+              householdId === null ? userId : null,
+            );
         },
       };
     },
@@ -196,7 +232,7 @@ export async function handleParseIngredients(req: Request, runtime: Runtime): Pr
 
   try {
     if (body.kind === "lines") {
-      const run = runtime.createRun(null);
+      const run = runtime.createRun(null, user.userId);
       const results = await parseLinesGrouped(body.lines, run.deps);
       await run.finish();
       return json({
@@ -224,7 +260,7 @@ export async function handleParseIngredients(req: Request, runtime: Runtime): Pr
       });
     }
 
-    const run = runtime.createRun(recipe.householdId);
+    const run = runtime.createRun(recipe.householdId, user.userId);
     const grouped = await parseLinesGrouped(
       recipe.rows.map((r) => r.rawText),
       run.deps,

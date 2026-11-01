@@ -14,7 +14,13 @@
 // from the cache.
 
 import { type ApiUsage, DEFAULT_MODEL, type Effort, LlmError } from "./client.ts";
-import { type AiRunRecord, type AiRunSink, type CostGuard, estimateCostUsd } from "./log.ts";
+import {
+  type AiRunRecord,
+  type AiRunSink,
+  type CostGuard,
+  estimateCostUsd,
+  estimateInputCostUsd,
+} from "./log.ts";
 
 /** A tool as the API takes it. */
 export interface ToolDefinition {
@@ -97,6 +103,8 @@ export interface ToolTurnRequest {
   /** ai_runs.prompt_version */
   promptVersion: string;
   householdId: string | null;
+  /** ai_runs.user_id, and the user the cost guard caps when there is no household. */
+  userId?: string | null;
 }
 
 export interface ToolTurnContext {
@@ -151,7 +159,18 @@ export async function callWithTools(
 ): Promise<ToolTurnResult> {
   const model = request.model ?? DEFAULT_MODEL;
   const now = context.now ?? (() => Date.now());
-  await context.guard?.check(request.householdId);
+  await context.guard?.check(request.householdId, {
+    kind: request.kind,
+    model,
+    promptVersion: request.promptVersion,
+    userId: request.userId ?? null,
+    estimatedCostUsd: context.guard
+      ? estimateInputCostUsd(
+          model,
+          JSON.stringify([request.system, request.messages, request.tools]).length,
+        )
+      : 0,
+  });
 
   const params: Record<string, unknown> = {
     model,
@@ -189,6 +208,7 @@ export async function callWithTools(
       latencyMs: Math.max(0, now() - started),
       ok,
       error,
+      ...(request.userId !== undefined ? { userId: request.userId } : {}),
     };
     try {
       await context.log?.(record);

@@ -8,6 +8,7 @@
 // Vitest drives it with fakes; this file only builds the real one.
 
 import {
+  type AiRunRecord,
   createAnthropicClient,
   createDailyCapGuard,
   extract,
@@ -79,17 +80,16 @@ export function runtimeFromEnv(env: Env, deno?: DenoLike): Runtime {
     now: () => new Date(),
     modelFor(householdId) {
       if (!anthropicKey) return undefined;
+      const log = (run: AiRunRecord) => logAiRun(serviceDb.from("ai_runs"), run);
       const guard = createDailyCapGuard({
         capUsd,
+        capFor: (id) => store.householdCapUsd(id),
         spentTodayUsd: (id) => store.spentSince(id, startOfUtcDay(new Date())),
+        sink: log,
       });
       const model: ModelExtract = async (schema, request) => {
         anthropic ??= await createAnthropicClient({ apiKey: anthropicKey });
-        return extract(
-          schema,
-          { ...request, householdId },
-          { client: anthropic, guard, log: (run) => logAiRun(serviceDb.from("ai_runs"), run) },
-        );
+        return extract(schema, { ...request, householdId }, { client: anthropic, guard, log });
       };
       return model;
     },

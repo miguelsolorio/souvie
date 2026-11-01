@@ -58,6 +58,8 @@ export interface ProxyStore {
   isMember(householdId: string, userId: string): Promise<boolean>;
   /** USD the household spent on model calls since `sinceIso`. */
   spentSince(householdId: string, sinceIso: string): Promise<number>;
+  /** households.ai_daily_cap_usd (WS15); null when unknown, so AI_DAILY_CAP_USD applies. */
+  householdCapUsd?(householdId: string): Promise<number | null>;
   /** USD this household spent in this run so far; null when it cannot be known (see index.ts). */
   runSpentUsd(householdId: string, runId: string): Promise<number | null>;
   /** Writes one ai_runs row. Must not throw. */
@@ -364,14 +366,27 @@ export async function handleLlmProxy(req: Request, runtime: Runtime): Promise<Re
   // Caps, before any model call.
   const projected = worstCaseCostUsd(request);
   const now = runtime.now();
+  const refused = (): AiRunRecord =>
+    record(request, { inputTokens: 0, outputTokens: 0 }, 0, false, "cost_cap");
   const daily = createDailyCapGuard({
     capUsd: runtime.dailyCapUsd,
+    ...(runtime.store.householdCapUsd
+      ? { capFor: (id: string) => runtime.store.householdCapUsd?.(id) ?? Promise.resolve(null) }
+      : {}),
     spentTodayUsd: async (id) =>
       (await runtime.store.spentSince(id, startOfUtcDay(now))) + projected,
+    // The refusal is a row, like every other call (WS15). The projected worst case is not billed,
+    // so the row costs nothing.
+    sink: (row) => runtime.store.logAiRun(row, request.runId),
     onWarning: () => console.warn("llm-proxy: daily spend lookup failed; the cap was not applied"),
   });
   try {
-    await daily.check(request.householdId);
+    await daily.check(request.householdId, {
+      kind: request.kind,
+      model: request.model,
+      promptVersion: request.promptVersion,
+      runId: request.runId,
+    });
   } catch (err) {
     if (err instanceof LlmError && err.code === "cost_cap") {
       return fail({
@@ -393,6 +408,7 @@ export async function handleLlmProxy(req: Request, runtime: Runtime): Promise<Re
     console.warn("llm-proxy: run spend lookup failed; only this call counts toward the run cap");
   }
   if ((spent ?? 0) + projected >= runCap) {
+    await runtime.store.logAiRun(refused(), request.runId);
     return fail({
       status: 402,
       error: "cost_cap",

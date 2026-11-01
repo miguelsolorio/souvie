@@ -68,6 +68,8 @@ function harness(
     key?: string | undefined;
     dailyCapUsd?: number;
     runCapUsd?: number;
+    /** households.ai_daily_cap_usd; undefined leaves the store without the lookup (older database). */
+    householdCap?: number | null;
   } = {},
 ): Harness {
   const rows: Harness["rows"] = [];
@@ -80,6 +82,9 @@ function harness(
     async spentSince() {
       return store.spent;
     },
+    ...(opts.householdCap !== undefined
+      ? { householdCapUsd: async () => opts.householdCap ?? null }
+      : {}),
     async runSpentUsd() {
       return store.runSpent;
     },
@@ -311,7 +316,42 @@ describe("llm-proxy cost caps", () => {
     expect(res.status).toBe(402);
     expect(await res.json()).toMatchObject({ ok: false, error: "cost_cap", scope: "daily" });
     expect(h.fetch).not.toHaveBeenCalled();
-    expect(h.rows).toHaveLength(0);
+    // The refusal is a row (WS15): ok false, error cost_cap, nothing billed, tied to the run.
+    expect(h.rows).toHaveLength(1);
+    expect(h.rows[0]).toMatchObject({
+      runId: RUN,
+      record: {
+        householdId: HOUSEHOLD,
+        kind: "agent_step",
+        model: "claude-sonnet-5-5",
+        ok: false,
+        error: "cost_cap",
+        costUsd: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+      },
+    });
+  });
+
+  it("WS15: the household's own cap decides, not AI_DAILY_CAP_USD", async () => {
+    // $0.50 spent: under the server's $2, over this household's $0.01.
+    const low = harness({ spent: 0.5, dailyCapUsd: 2, householdCap: 0.01 });
+    const res = await handleLlmProxy(post(body()), low.runtime);
+    expect(res.status).toBe(402);
+    expect(await res.json()).toMatchObject({ error: "cost_cap", scope: "daily" });
+    expect(low.fetch).not.toHaveBeenCalled();
+    expect(low.rows).toHaveLength(1);
+    expect(low.rows[0]?.record).toMatchObject({ ok: false, error: "cost_cap" });
+
+    // $5 spent under a household cap of $10 goes through, where the server's $2 would stop it.
+    const high = harness({ spent: 5, dailyCapUsd: 2, householdCap: 10 });
+    const ok = await handleLlmProxy(post(body()), high.runtime);
+    expect(ok.status).toBe(200);
+    await ok.text();
+
+    // A household with no cap of its own (null) falls back to the server's.
+    const fallback = harness({ spent: 5, dailyCapUsd: 2, householdCap: null });
+    expect((await handleLlmProxy(post(body()), fallback.runtime)).status).toBe(402);
   });
 
   it("a household already at its cap is refused even for a tiny call", async () => {
@@ -330,6 +370,12 @@ describe("llm-proxy cost caps", () => {
     expect(res.status).toBe(402);
     expect(await res.json()).toMatchObject({ error: "cost_cap", scope: "run" });
     expect(h.fetch).not.toHaveBeenCalled();
+    // The run cap's refusal is a row too (WS15).
+    expect(h.rows).toHaveLength(1);
+    expect(h.rows[0]).toMatchObject({
+      runId: RUN,
+      record: { ok: false, error: "cost_cap", costUsd: 0 },
+    });
   });
 
   it("the request's run cap can lower the server's, never raise it", async () => {
@@ -467,6 +513,12 @@ describe("the service store", () => {
                 resolve({ data: [{ cost_usd: 0.1 }, { cost_usd: "0.15" }], error: null }),
               );
             }
+            if (table === "households") {
+              const known = filters.some(([c, v]) => c === "id" && v === HOUSEHOLD);
+              return Promise.resolve(
+                resolve({ data: known ? [{ ai_daily_cap_usd: "0.75" }] : [], error: null }),
+              );
+            }
             const member = filters.some(([c, v]) => c === "user_id" && v === ALICE);
             return Promise.resolve(
               resolve({ data: member ? [{ user_id: ALICE }] : [], error: null }),
@@ -523,6 +575,13 @@ describe("the service store", () => {
       household_id: HOUSEHOLD,
       kind: "agent_step",
     });
+  });
+
+  it("WS15: reads the household's own daily cap from its row", async () => {
+    const { db } = fakeDb({ runIdColumn: true });
+    const store = createServiceStore(db);
+    expect(await store.householdCapUsd?.(HOUSEHOLD)).toBe(0.75);
+    expect(await store.householdCapUsd?.("0f000000-0000-4000-8000-00000000000f")).toBeNull();
   });
 
   it("writes and sums by run_id once the column exists", async () => {

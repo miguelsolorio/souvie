@@ -361,6 +361,16 @@ export class SqlSuggestStore {
     return Number(rows[0]?.spent ?? 0);
   }
 
+  /** The household's own daily cap (WS15), or null when the row is not there. Throws without the column. */
+  async householdCapUsd(householdId: string): Promise<number | null> {
+    const rows = await this.sql.query<{ cap: number | string | null }>(
+      `select ai_daily_cap_usd as cap from public.households where id = $1::uuid`,
+      [householdId],
+    );
+    const cap = rows[0]?.cap;
+    return cap === null || cap === undefined ? null : Number(cap);
+  }
+
   async logAiRun(record: AiRunRecord): Promise<void> {
     await this.sql.query(
       `insert into public.ai_runs

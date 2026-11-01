@@ -1,6 +1,12 @@
-// ai_runs logging and the per-household daily cost cap (docs/03-ai-design.md §1, docs/05
-// §Audit, risk R3). Every model call produces one `AiRunRecord`; the caller decides where it
-// goes. The Edge Functions write it to the `ai_runs` table with the service role.
+// ai_runs logging and the daily cost cap (docs/03-ai-design.md §1, docs/05 §Audit, risk R3).
+// Every model call produces one `AiRunRecord`; the caller decides where it goes. The Edge
+// Functions write it to the `ai_runs` table with the service role.
+//
+// The cap (WS15): a household has its own `households.ai_daily_cap_usd` (default 2.00) and the
+// guard falls back to AI_DAILY_CAP_USD when it cannot read it. A call with no household is capped
+// per user. Before any request goes out the guard compares today's spend plus the call's
+// estimated input cost with the cap. A refusal writes an `ai_runs` row (ok false, error
+// 'cost_cap') and then throws `LlmError("cost_cap")`, so the dashboard counts what the cap stopped.
 
 import { LlmError } from "./client.ts";
 
@@ -22,6 +28,8 @@ export interface AiRunRecord {
   error: string | null;
   /** The shopping run the call belongs to, when any (ai_runs.run_id, 2026-10-31). Omit outside a run. */
   runId?: string | null;
+  /** The signed-in user behind a household-less call (ai_runs.user_id, WS15). Omit when unknown. */
+  userId?: string | null;
 }
 
 /** Receives one record per model call, including failed ones. A sink must not throw. */
@@ -41,6 +49,7 @@ export interface AiRunRow {
   ok: boolean;
   error: string | null;
   run_id?: string | null;
+  user_id?: string | null;
 }
 
 export function toAiRunRow(record: AiRunRecord): AiRunRow {
@@ -59,6 +68,8 @@ export function toAiRunRow(record: AiRunRecord): AiRunRow {
     error: record.error ? record.error.slice(0, 500) : null,
     // Only when the caller set it, so a database without the column is never sent the key.
     ...(record.runId !== undefined ? { run_id: record.runId } : {}),
+    // Same for user_id (WS15), so a database that predates the column is never sent the key.
+    ...(record.userId !== undefined ? { user_id: record.userId } : {}),
   };
 }
 
@@ -132,39 +143,146 @@ export function estimateCostUsd(model: string, usage: TokenUsage): number {
 // Daily cap
 // ---------------------------------------------------------------------------------------
 
+/** What a guard is told about the call it is checking, so a refusal can be recorded as a row. */
+export interface CostCall {
+  /** ai_runs.kind. */
+  kind: string;
+  /** ai_runs.model. */
+  model: string;
+  promptVersion?: string | null;
+  runId?: string | null;
+  /** The signed-in user. A call with no household is capped per user when this is set. */
+  userId?: string | null;
+  /**
+   * What the call will cost at least, in USD: its input at the model's price. Added to today's
+   * spend before the comparison, so a call that would cross the cap is refused instead of paid.
+   */
+  estimatedCostUsd?: number;
+}
+
 /** Called before every model call. Throws `LlmError("cost_cap")` when the call must not run. */
 export interface CostGuard {
-  check(householdId: string | null): Promise<void>;
+  check(householdId: string | null, call?: CostCall): Promise<void>;
+}
+
+/** The refusal `createDailyCapGuard` throws. Still an `LlmError` with code "cost_cap". */
+export class CostCapError extends LlmError {
+  readonly scope: "household" | "user";
+  readonly capUsd: number;
+  readonly spentUsd: number;
+  constructor(scope: "household" | "user", capUsd: number, spentUsd: number) {
+    super(
+      "cost_cap",
+      `daily model budget of $${capUsd.toFixed(2)} reached ($${spentUsd.toFixed(2)} spent)`,
+    );
+    this.name = "CostCapError";
+    this.scope = scope;
+    this.capUsd = capUsd;
+    this.spentUsd = spentUsd;
+  }
+}
+
+/** About four characters a token: close enough to refuse early, and never a network call. */
+export const CHARS_PER_TOKEN = 4;
+
+/** USD for the input of a request of `chars` characters on `model`, from the price table. */
+export function estimateInputCostUsd(model: string, chars: number): number {
+  return estimateCostUsd(model, {
+    inputTokens: Math.ceil(Math.max(0, chars) / CHARS_PER_TOKEN),
+    outputTokens: 0,
+  });
+}
+
+export interface DailyCapOptions {
+  /**
+   * The cap when the household has none of its own (AI_DAILY_CAP_USD, default 2), and the cap
+   * for a user's household-less calls unless `userCapUsd` says otherwise.
+   */
+  capUsd: number;
+  /**
+   * The household's own cap (`households.ai_daily_cap_usd`). Null or undefined falls back to
+   * `capUsd`; a failing lookup does too, with a warning.
+   */
+  capFor?: (householdId: string) => Promise<number | null | undefined>;
+  /** What the household has spent today (UTC): the sum of today's `ai_runs.cost_usd`. */
+  spentTodayUsd: (householdId: string) => Promise<number>;
+  /** What a user has spent today on calls with no household (`user_ai_spend_since`). */
+  userSpentTodayUsd?: (userId: string) => Promise<number>;
+  userCapUsd?: number;
+  /** Receives the `ai_runs` row of a refusal (ok false, error 'cost_cap'). Must not throw. */
+  sink?: AiRunSink;
+  onWarning?: (message: string) => void;
 }
 
 /**
- * Caps a household's model spend per day. `spentTodayUsd` reads what the household has spent so
- * far (the Edge Functions sum today's `ai_runs.cost_usd`). System jobs (no household) are not
- * capped here. A failing spend lookup lets the call through: the cap is a cost control, not a
- * security boundary, and an outage in `ai_runs` must not take imports down.
+ * Caps model spend per day: per household, and per user for calls that carry no household. System
+ * jobs (no household, no user) are not capped here. A failing spend lookup lets the call through:
+ * the cap is a cost control, not a security boundary, and an outage in `ai_runs` must not take
+ * imports down. A refusal is written to `sink` (when the caller says what the call was) before
+ * `LlmError("cost_cap")` is thrown.
  */
-export function createDailyCapGuard(options: {
-  capUsd: number;
-  spentTodayUsd: (householdId: string) => Promise<number>;
-  onWarning?: (message: string) => void;
-}): CostGuard {
+export function createDailyCapGuard(options: DailyCapOptions): CostGuard {
   const warn = options.onWarning ?? ((message: string) => console.warn(message));
+  const describe = (err: unknown) => (err instanceof Error ? err.message : String(err));
+
+  async function resolveCap(householdId: string): Promise<number> {
+    let cap: number | null | undefined;
+    try {
+      cap = await options.capFor?.(householdId);
+    } catch (err) {
+      warn(`household cap lookup failed: ${describe(err)}`);
+      return options.capUsd;
+    }
+    const value = cap === null || cap === undefined ? Number.NaN : Number(cap);
+    return Number.isFinite(value) && value >= 0 ? value : options.capUsd;
+  }
+
   return {
-    async check(householdId) {
-      if (householdId === null) return;
+    async check(householdId, call) {
+      let scope: "household" | "user";
+      let cap: number;
       let spent: number;
       try {
-        spent = await options.spentTodayUsd(householdId);
+        if (householdId !== null) {
+          scope = "household";
+          cap = await resolveCap(householdId);
+          spent = Number(await options.spentTodayUsd(householdId));
+        } else if (call?.userId && options.userSpentTodayUsd) {
+          scope = "user";
+          cap = options.userCapUsd ?? options.capUsd;
+          spent = Number(await options.userSpentTodayUsd(call.userId));
+        } else {
+          return;
+        }
       } catch (err) {
-        warn(`daily cost lookup failed: ${err instanceof Error ? err.message : String(err)}`);
+        warn(`daily cost lookup failed: ${describe(err)}`);
         return;
       }
-      if (spent >= options.capUsd) {
-        throw new LlmError(
-          "cost_cap",
-          `daily model budget of $${options.capUsd.toFixed(2)} reached ($${spent.toFixed(2)} spent)`,
-        );
+      if (!Number.isFinite(spent)) return;
+      if (spent + Math.max(0, call?.estimatedCostUsd ?? 0) < cap) return;
+
+      if (call && options.sink) {
+        try {
+          await options.sink({
+            householdId,
+            kind: call.kind,
+            model: call.model,
+            promptVersion: call.promptVersion ?? null,
+            inputTokens: 0,
+            outputTokens: 0,
+            cacheReadTokens: 0,
+            costUsd: 0,
+            latencyMs: 0,
+            ok: false,
+            error: "cost_cap",
+            ...(call.runId !== undefined ? { runId: call.runId } : {}),
+            ...(call.userId !== undefined ? { userId: call.userId } : {}),
+          });
+        } catch (err) {
+          warn(`ai_runs refusal row failed: ${describe(err)}`);
+        }
       }
+      throw new CostCapError(scope, cap, spent);
     },
   };
 }

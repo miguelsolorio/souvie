@@ -63,6 +63,17 @@ export function createServiceStore(db: ServiceDb): ProxyStore {
       return Number.isFinite(value) ? value : 0;
     },
 
+    async householdCapUsd(householdId) {
+      const { data, error } = await db
+        .from("households")
+        .select("ai_daily_cap_usd")
+        .eq("id", householdId)
+        .limit(1);
+      if (error) throw new Error(error.message);
+      const cap = Number(data?.[0]?.ai_daily_cap_usd);
+      return Number.isFinite(cap) ? cap : null;
+    },
+
     async runSpentUsd(householdId, runId) {
       if (!(await hasRunId())) return null;
       const { data, error } = await db

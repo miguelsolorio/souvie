@@ -193,7 +193,9 @@ async function runSuggest(
   };
   const guard = createDailyCapGuard({
     capUsd: runtime.dailyCapUsd,
+    capFor: (id) => store.householdCapUsd(id),
     spentTodayUsd: (id) => store.spentSince(id, startOfUtcDay(now)),
+    sink: log,
   });
   const embedFn: EmbedFn | undefined = runtime.voyageKey
     ? (texts, inputType) =>
@@ -468,8 +470,8 @@ async function runSuggest(
   let notes = "";
 
   const noCall = async (reason: string) => {
-    // extract() throws before it logs when there is no key or no budget. Record the attempt, so
-    // every plan leaves a row saying what happened to its model call.
+    // extract() throws before it logs when there is no key. Record the attempt, so every plan
+    // leaves a row saying what happened to its model call. (No budget is recorded by the guard.)
     await log({
       householdId,
       kind: SUGGEST_COMPOSE_V1.kind,
@@ -502,7 +504,8 @@ async function runSuggest(
       composedBy = "model";
     } catch (err) {
       if (!(err instanceof ComposeError)) throw err;
-      if (err.code === "cost_cap" || err.code === "not_configured") await noCall(err.code);
+      // A refusal by the daily cap is already a row: the guard writes it (WS15).
+      if (err.code === "not_configured") await noCall(err.code);
       warn(`suggest: composing fell back to ranking (${err.code})`);
       entries = fallbackWeek(candidates, useDates, {
         servings: defaultServings(me),

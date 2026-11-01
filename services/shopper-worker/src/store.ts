@@ -760,6 +760,18 @@ export class RunStore {
     );
   }
 
+  /** The household's own daily cap (WS15), or null when the row is not there. */
+  async householdCapUsd(householdId: string): Promise<number | null> {
+    const rows = await this.inServiceRole((tx) =>
+      tx.query<{ cap: number | string | null }>(
+        `select h.ai_daily_cap_usd as cap from public.households h where h.id = $1::uuid`,
+        [householdId],
+      ),
+    );
+    const cap = rows[0]?.cap;
+    return cap === null || cap === undefined ? null : Number(cap);
+  }
+
   /** What the household spent on models today (UTC), for the daily cap. */
   async spentTodayUsd(householdId: string): Promise<number> {
     const rows = await this.inServiceRole((tx) =>

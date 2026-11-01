@@ -790,6 +790,13 @@ export type Database = {
             referencedRelation: "shopping_runs";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "orders_run_id_fkey";
+            columns: ["run_id"];
+            isOneToOne: true;
+            referencedRelation: "v_runs_stalled";
+            referencedColumns: ["run_id"];
+          },
         ];
       };
       pantry_items: {

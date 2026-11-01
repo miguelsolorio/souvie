@@ -77,7 +77,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 ## 7. Wave 6: everything that consumes the agent
 
 - [ ] **Human checkpoint 5** gates WS10 only: Miguel accepts the WS08 host demo (recording and screenshot sent 2026-10-31: the agent drives the test page in the real WebView on the iPhone 17 Pro Simulator; consent and disconnect are covered by tests against the real SQL, not yet by a signed-in device run). The other four may start without it.
-- [ ] Dispatch WS10 (opus), WS11, WS12, WS13, WS15 (sonnet) in one message. Five builders at once is the maximum. WS10 needs WS08 and WS09 merged; the other four need WS09 merged. Write each brief's orchestrator corrections first (as-built shapes from WS05, WS08 and WS09).
+- [x] Brief corrections written for all five (2026-10-31). WS11, WS12, WS13, WS15 (sonnet) dispatched 2026-10-31; WS10 (opus) dispatches when checkpoint 5 clears.
 - [ ] Review each as it finishes. WS10 reviewer runs the Tier 3 checklist and a manual Safeway run on a real account.
 - [ ] Merge all, wave 6 summary.
 

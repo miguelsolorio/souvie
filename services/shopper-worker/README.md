@@ -38,7 +38,9 @@ While a run is held the heartbeat writes `heartbeat_at` and pushes the message's
 
 `src/observability/` is mounted by one call in `src/index.ts`. It wraps the runner's `handle` and `onFailure` and the logger on the instances, so the runner, the queue and the store are as WS09 wrote them. Everything is off without its key: no `SENTRY_DSN` and no Sentry SDK is loaded, no `POSTHOG_API_KEY` and nothing is sent.
 
-**What Sentry gets.** The release (`GIT_SHA`), the environment, a `household_id` tag and a `run_id` tag, and the stack. `scrub.ts` runs in `beforeSend` and removes the user, request bodies, headers, cookies, query strings, and every email, token, key and URL with credentials from every string. The worker never sends a prompt, a model answer, a recipe or a list.
+**What Sentry gets.** The release (`GIT_SHA`), the environment, a `household_id` tag and a `run_id` tag, and the stack. `scrub.ts` runs in `beforeSend` and `beforeSendTransaction`: it removes the user, request bodies, headers, cookies, query strings and host name, the value of any key named like a secret or a query string, and in every string the emails, JWTs, `Bearer` and `Basic` credentials, `Cookie:` and `Set-Cookie:` lines, known key shapes, DSNs, database URLs, US phone numbers and the values after a `?` or `&`. It does not know a product name or a street address: the worker keeps those out by what it sends (ids, counts and short codes as `extra`), never a prompt, a model answer, a recipe or a list.
+
+**Spans.** The SDK runs with `traceLifecycle: 'static'`, so a run is a transaction that carries its spans and `beforeSendTransaction` runs (the SDK's default, `'stream'`, sends spans on their own and skips it). `beforeSendSpan` and `scrubSpanData` drop every `url.*` and `http.*` attribute of a span except the method, the status code, the scheme and the host, keep a URL without its query, fragment and credentials, and drop the peer's address and port. A Kroger search therefore reaches Sentry as `GET https://api.kroger.com/v1/products` with a status code, never with `filter.term`. `src/observability/sentry.sdk.test.ts` starts the real SDK and proves it.
 
 | Event | When | Level |
 |---|---|---|
@@ -53,7 +55,7 @@ Each handled message is one Sentry transaction, `shopping_run`. It is marked fai
 
 **What PostHog gets.** `run_started` (every run, manual or scheduled, when a worker first takes it: `{retailer, trigger}`) and `cart_ready` (`{retailer, items, subtotal_bucket}`), with the household id as the distinct id and as the `household` group. The other five events come from the app. Properties are counts, booleans and small enums; a key that is not on the event's list is dropped (`events.ts`). A price is a bucket (`under_50`, `50_100`, `100_150`, `150_200`, `over_200`), never a number.
 
-**Flags.** `getFlag(name, householdId)` follows the kill-switch rule from WS08: on unless PostHog answers an explicit `false` (or, for `tier3_browser_checkout`, a payload `{"off": ["costco"]}` naming the retailer). A worker with no key, no network or a slow answer reads every flag as on. `shopping_agent_enabled` is enforced here: with it off, a run waiting for a worker is failed with `agent_disabled` instead of started.
+**Flags.** `getFlag(name, householdId)` follows the kill-switch rule from WS08: on unless PostHog answers an explicit `false` (or, for `tier3_browser_checkout`, a payload `{"off": ["costco"]}` naming the retailer). A worker with no key, no network or a slow answer reads every flag as on. `shopping_agent_enabled` is enforced here: with it off, a run waiting for a worker is failed with `agent_disabled` instead of started, and the app shows that run the same "Shopping is paused right now" copy it shows before a run starts.
 
 ### Heartbeat semantics and run health (R10)
 
@@ -68,7 +70,7 @@ Create two projects, `souvie-app` (React Native) and `souvie-worker` (Node), and
 
 1. **Stalled run.** Alerts, Create Alert, Issues. Environment: production. When: *A new issue is created*. If: *The event's tags match* `event` *equals* `run_stalled`. Then: notify Miguel (email, or Slack). Action interval: 5 minutes. Each stalled run has its own issue (fingerprint `run_stalled` and the run id), so every run alerts once.
 2. **Dead letter.** The same rule with `event` equals `run_dead_lettered`.
-3. **Worker error rate.** Alerts, Create Alert, Metric. Dataset: Transactions. Query: `transaction:shopping_run`. Aggregate: `failure_rate()`. Time window: 10 minutes. Critical when above `0.05`, resolved when `0.05` or below. Environment: production. With few runs a single failure is above 5%; that is the setting the brief asks for.
+3. **Worker error rate.** Alerts, Create Alert, Metric. Dataset: Transactions. Query: `transaction:shopping_run`. Aggregate: `failure_rate()`. (The static trace lifecycle is what fills the Transactions dataset; `sentry.sdk.test.ts` checks that a run arrives as a `transaction` and that a failed one carries a status the failure rate counts.) Time window: 10 minutes. Critical when above `0.05`, resolved when `0.05` or below. Environment: production. With few runs a single failure is above 5%; that is the setting the brief asks for.
 4. **No worker alive.** Crons, `shopper-worker` (created by the first check-in): expected every 1 minute, margin 4 minutes, failure issue threshold 1. A missed check-in opens an issue; add an Issues alert with *A new issue is created* and the filter `issue.category:cron` to the same notification.
 
 ### The dead letter queue
@@ -80,7 +82,13 @@ pnpm --filter @mp/shopper-worker dlq:list
 pnpm --filter @mp/shopper-worker dlq:retry <msg_id> [--new-run] [--force]
 ```
 
-`dlq:list` prints each message, its run's status and the run's error. `dlq:retry` puts the message back on `shopping_run` when its run can still be claimed (`queued`, or `running` with no heartbeat) and removes it from the archive. A `failed` run cannot be revived (the state machine has no way out of `failed`), so for a closed run the command says so and exits 1: `--new-run` starts a replacement run of the same list, store and policy through `enqueue_shopping_run`, and `--force` re-sends the message anyway (a worker acks it as not claimable). Both commands connect with `WORKER_DATABASE_URL` as the database owner, because pgmq belongs to that role.
+`dlq:list` prints each message, its run's status and the run's error. `dlq:retry` puts the message back on `shopping_run` when its run can still be claimed (`queued`, or `running` with no heartbeat) and removes it from the archive. A `failed` run cannot be revived (the state machine has no way out of `failed`), so for a closed run the command says so and exits 1. Its options:
+
+- `--new-run` starts a replacement run of the same list and store through `enqueue_shopping_run`. It is for a run that ended without a cart: `failed` or `cancelled`. It is refused, with or without `--force`, for `queued`, `running`, `needs_review`, `cart_ready`, `checking_out` and `checked_out`: a second run on the same list could shop it again or place a second order. The replacement keeps the old policy except that `auto_checkout` is off and `auto_checkout_cap_usd` is null, so the replacement never checks out by itself. A run whose record is gone has no list to copy, so nothing starts.
+- `--force` re-sends the message although its run is closed (a worker acks it as not claimable). It does not lift the `--new-run` refusal.
+- Whichever you use, the retry refuses when the run already has a live message on `shopping_run` (two messages would let two workers take one run). The check and the send happen under an advisory lock on the run id, so two retries at once cannot both pass it. The refused dead letter stays in the archive.
+
+Both commands connect with `WORKER_DATABASE_URL` as the database owner, because pgmq belongs to that role.
 
 ## Local development with the mock store
 

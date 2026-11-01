@@ -4,6 +4,12 @@
 // bundled test page through the bridge: navigate, snapshot, click the third tile's Add, type
 // "oat milk" into the search box, wait for the slow node, screenshot. Each step's result shows.
 //
+// Demo mode, souvie://snapshot?demo=1, is the same script made watchable for a recording (WS08
+// demo round): only the WebView and a caption strip, auto-started once the page is ready, a pause
+// after each step so the action shows on the page, plain-word captions, then "Done in N s" with the
+// screenshot and a Replay button. It marks its progress with `[tier3-demo]` log lines so
+// apps/mobile/scripts/record-tier3-demo.sh knows when to start and stop recording.
+//
 // Development builds only: release builds leave this file out of the bundle (metro.config.js) and,
 // as a second guard, the screen redirects home when __DEV__ is false. Reach it at souvie://snapshot.
 import {
@@ -14,9 +20,10 @@ import {
   type UserRequiredReason,
 } from "@mp/retailers";
 import { File, Paths } from "expo-file-system";
-import { Redirect } from "expo-router";
-import { useState } from "react";
-import { Image, Platform, Pressable, Share, Text, View } from "react-native";
+import { Redirect, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Image, LogBox, Platform, Pressable, Share, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "../../src/components/Button";
 import { Screen, Section } from "../../src/components/Screen";
 import { TextField } from "../../src/components/TextField";
@@ -33,6 +40,21 @@ import { WebViewHost } from "../../src/features/tier3/WebViewHost";
 
 // Expo inlines EXPO_PUBLIC_* only when read literally. A public URL replaces the local one later.
 const TEST_PAGE_URL = process.env.EXPO_PUBLIC_TIER3_TEST_PAGE_URL || "http://localhost:8790/";
+
+/** `url` with `demo=1` added to its query, before any #fragment. */
+function withDemoFlag(url: string): string {
+  const hash = url.indexOf("#");
+  const base = hash < 0 ? url : url.slice(0, hash);
+  const fragment = hash < 0 ? "" : url.slice(hash);
+  return `${base}${base.includes("?") ? "&" : "?"}demo=1${fragment}`;
+}
+
+/**
+ * What demo mode opens. The page's ?demo=1 turns off the on-screen keyboard for the search box, so
+ * the recording is not covered by it. Normal mode, the fixture capture and the bridge tests use the
+ * bare TEST_PAGE_URL, where the keyboard rises as it does on a real page.
+ */
+const DEMO_PAGE_URL = withDemoFlag(TEST_PAGE_URL);
 
 interface Step {
   label: string;
@@ -302,7 +324,220 @@ function SnapshotTool() {
   );
 }
 
+// Demo mode ---------------------------------------------------------------------------------------
+
+/** After the page is ready, before the script starts. */
+const DEMO_START_DELAY_MS = 1_500;
+/** After every step, so the action is visible on the page and the caption can be read. */
+const DEMO_PAUSE_MS = 1_200;
+const DEMO_READY_POLL_MS = 100;
+const DEMO_READY_TIMEOUT_MS = 20_000;
+const DEMO_STEP_COUNT = 8;
+/** What the recording script looks for in Metro's output. */
+const DEMO_LOG = "[tier3-demo]";
+
+interface DemoNarration {
+  /** Shows what is happening, in plain words. `step` is 1 to DEMO_STEP_COUNT. */
+  say(caption: string, step: number): void;
+  /** Waits between steps. Rejects when the run was stopped. */
+  pause(): Promise<void>;
+}
+
+/**
+ * The same bridge calls as "Run the demo" (navigate, snapshot, click, snapshot, type, waitFor,
+ * screenshot, snapshot), with the same arguments, narrated. The one difference is the page it opens:
+ * the test page with ?demo=1 (DEMO_PAGE_URL). Returns the screenshot the host took.
+ */
+async function runDemoScript(host: BridgeHost, narrate: DemoNarration): Promise<Uint8Array> {
+  narrate.say("Opening the page", 1);
+  await host.navigate(DEMO_PAGE_URL);
+  await narrate.pause();
+
+  const first = await host.snapshot();
+  narrate.say(`Reading the page (${first.nodeCount} elements)`, 2);
+  await narrate.pause();
+
+  const tile = findByRole(first, "article")[2];
+  const add = tile ? nearestButton(first, tile.id, "Add") : null;
+  if (!add) throw new Error("no Add button in the third tile");
+  narrate.say("Picking the third product", 3);
+  await narrate.pause();
+
+  narrate.say("Adding it to the cart", 4);
+  await host.click(add.id);
+  await narrate.pause();
+
+  const afterClick = await host.snapshot();
+  const cart = findByText(afterClick, /^Cart:/)[0];
+  narrate.say(cart?.text ?? cart?.name ?? "Cart: ?", 5);
+  await narrate.pause();
+
+  const [box] = findByRole(afterClick, "searchbox");
+  if (!box) throw new Error("no search box");
+  narrate.say("Searching for oat milk", 6);
+  await host.type(box.id, "oat milk", { clear: true });
+  await narrate.pause();
+
+  narrate.say("Waiting for the results", 7);
+  await host.waitFor((t) => findByText(t, 'Showing results for "oat milk"').length > 0, 10_000);
+  await narrate.pause();
+
+  narrate.say("Taking a screenshot for the review", 8);
+  const bytes = await host.screenshot();
+  await narrate.pause();
+
+  await host.snapshot();
+  return bytes;
+}
+
+type DemoView =
+  | { phase: "waiting"; caption: string; step: number }
+  | { phase: "running"; caption: string; step: number }
+  | { phase: "done"; caption: string; step: number; shot: string }
+  | { phase: "failed"; caption: string; step: number };
+
+function DemoScreen() {
+  const [host, setHost] = useState<BridgeHost | null>(null);
+  // A recording must not show a yellow warning badge over the caption.
+  useEffect(() => {
+    LogBox.ignoreAllLogs(true);
+    return () => LogBox.ignoreAllLogs(false);
+  }, []);
+  const [view, setView] = useState<DemoView>({
+    phase: "waiting",
+    caption: "Getting ready",
+    step: 0,
+  });
+  // Each run takes a number; a run whose number is no longer current has been stopped or replaced.
+  const run = useRef(0);
+
+  const play = useCallback(async (target: BridgeHost) => {
+    run.current += 1;
+    const id = run.current;
+    const live = () => run.current === id;
+    const started = Date.now();
+    try {
+      const bytes = await runDemoScript(target, {
+        say(caption, step) {
+          if (!live()) return;
+          console.log(`${DEMO_LOG} step ${step} ${caption}`);
+          setView({ phase: "running", caption, step });
+        },
+        pause: () =>
+          new Promise<void>((resolve, reject) => {
+            setTimeout(() => (live() ? resolve() : reject(new Error("stopped"))), DEMO_PAUSE_MS);
+          }),
+      });
+      if (!live()) return;
+      const seconds = Math.max(1, Math.round((Date.now() - started) / 1000));
+      setView({
+        phase: "done",
+        caption: `Done in ${seconds} s`,
+        step: DEMO_STEP_COUNT,
+        shot: bytesToBase64(bytes),
+      });
+      console.log(`${DEMO_LOG} done ${seconds}`);
+    } catch (err) {
+      if (!live()) return;
+      const detail = err instanceof Error ? err.message : String(err);
+      setView({ phase: "failed", caption: `Stopped. ${detail}`, step: 0 });
+      console.log(`${DEMO_LOG} failed ${detail}`);
+    }
+  }, []);
+
+  // Start once the page is ready, after a short beat. Give up if the test page never loads.
+  useEffect(() => {
+    if (!host) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const waitingSince = Date.now();
+    const check = () => {
+      if (host.isReady()) {
+        console.log(`${DEMO_LOG} ready`);
+        timer = setTimeout(() => void play(host), DEMO_START_DELAY_MS);
+      } else if (Date.now() - waitingSince > DEMO_READY_TIMEOUT_MS) {
+        setView({
+          phase: "failed",
+          caption: "The test page did not load. Start it with tier3:test-page.",
+          step: 0,
+        });
+        console.log(`${DEMO_LOG} failed the test page did not load`);
+      } else {
+        timer = setTimeout(check, DEMO_READY_POLL_MS);
+      }
+    };
+    check();
+    return () => {
+      clearTimeout(timer);
+      run.current += 1;
+    };
+  }, [host, play]);
+
+  const finished = view.phase === "done" || view.phase === "failed";
+  const label =
+    view.phase === "running"
+      ? `Step ${view.step} of ${DEMO_STEP_COUNT}`
+      : view.phase === "done"
+        ? "Finished"
+        : view.phase === "failed"
+          ? "Problem"
+          : "Test page";
+
+  return (
+    // The page and the strip share the screen, 7 parts to 3.
+    <SafeAreaView className="flex-1 bg-white" testID="snapshot-demo-screen">
+      <View style={{ flex: 7 }} className="overflow-hidden border-b border-neutral-300">
+        <WebViewHost initialUrl={DEMO_PAGE_URL} onHost={setHost} testID="snapshot-webview" />
+      </View>
+      <View style={{ flex: 3 }} className="bg-neutral-100" testID="demo-strip">
+        <View className="h-1 bg-neutral-300">
+          <View
+            testID="demo-progress"
+            style={{ width: `${Math.round((view.step / DEMO_STEP_COUNT) * 100)}%` }}
+            className="h-1 bg-brand"
+          />
+        </View>
+        <View className="flex-1 flex-row items-center gap-4 px-6">
+          {view.phase === "done" ? (
+            <Image
+              source={{ uri: `data:image/jpeg;base64,${view.shot}` }}
+              style={{ width: 104, height: 140, borderRadius: 8 }}
+              resizeMode="cover"
+              accessibilityLabel="Screenshot taken by the host"
+              testID="demo-shot"
+            />
+          ) : null}
+          <View className="flex-1 gap-2">
+            <Text
+              testID="demo-step"
+              className="text-xs font-semibold uppercase tracking-wide text-neutral-500"
+            >
+              {label}
+            </Text>
+            <Text
+              testID="demo-caption"
+              accessibilityRole="header"
+              className={`font-semibold text-neutral-900 ${view.phase === "failed" ? "text-lg" : "text-3xl"}`}
+            >
+              {view.caption}
+            </Text>
+            {finished && host ? (
+              <Button
+                label="Replay"
+                variant="secondary"
+                onPress={() => void play(host)}
+                testID="demo-replay"
+              />
+            ) : null}
+          </View>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 export default function SnapshotScreen() {
+  const params = useLocalSearchParams<{ demo?: string | string[] }>();
   if (!__DEV__) return <Redirect href="/" />;
-  return <SnapshotTool />;
+  const demo = Array.isArray(params.demo) ? params.demo[0] : params.demo;
+  return demo === "1" ? <DemoScreen /> : <SnapshotTool />;
 }

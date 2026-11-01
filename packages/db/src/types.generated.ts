@@ -341,6 +341,7 @@ export type Database = {
           deleted_at: string | null;
           id: string;
           name: string;
+          tier3_consent: Json | null;
           updated_at: string;
           zip: string | null;
         };
@@ -352,6 +353,7 @@ export type Database = {
           deleted_at?: string | null;
           id?: string;
           name: string;
+          tier3_consent?: Json | null;
           updated_at?: string;
           zip?: string | null;
         };
@@ -362,6 +364,7 @@ export type Database = {
           deleted_at?: string | null;
           id?: string;
           name?: string;
+          tier3_consent?: Json | null;
           updated_at?: string;
           zip?: string | null;
         };
@@ -834,6 +837,28 @@ export type Database = {
         };
         Relationships: [];
       };
+      push_tokens: {
+        Row: {
+          platform: Database["public"]["Enums"]["push_tokens_platform"];
+          token: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          platform: Database["public"]["Enums"]["push_tokens_platform"];
+          token: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          platform?: Database["public"]["Enums"]["push_tokens_platform"];
+          token?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       recipe_feedback: {
         Row: {
           created_at: string;
@@ -1132,6 +1157,217 @@ export type Database = {
         };
         Relationships: [];
       };
+      shopping_run_items: {
+        Row: {
+          alternatives: Json | null;
+          cart_qty: number;
+          created_at: string;
+          delta_result: string | null;
+          delta_sent: number | null;
+          display_name: string;
+          flags: NonNullable<Json>;
+          household_id: string;
+          id: string;
+          line_total_usd: number | null;
+          list_item_id: string | null;
+          position: number;
+          product_id: string | null;
+          product_name: string | null;
+          qty: number | null;
+          reason: string | null;
+          run_id: string;
+          section: string;
+          sent_at: string | null;
+          size: string | null;
+          status: Database["public"]["Enums"]["shopping_run_items_status"];
+          unit_price_usd: number | null;
+          upc: string | null;
+          updated_at: string;
+          user_decision: Database["public"]["Enums"]["shopping_run_items_user_decision"] | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          alternatives?: Json | null;
+          cart_qty?: number;
+          created_at?: string;
+          delta_result?: string | null;
+          delta_sent?: number | null;
+          display_name: string;
+          flags?: NonNullable<Json>;
+          household_id: string;
+          id?: string;
+          line_total_usd?: number | null;
+          list_item_id?: string | null;
+          position?: number;
+          product_id?: string | null;
+          product_name?: string | null;
+          qty?: number | null;
+          reason?: string | null;
+          run_id: string;
+          section?: string;
+          sent_at?: string | null;
+          size?: string | null;
+          status?: Database["public"]["Enums"]["shopping_run_items_status"];
+          unit_price_usd?: number | null;
+          upc?: string | null;
+          updated_at?: string;
+          user_decision?: Database["public"]["Enums"]["shopping_run_items_user_decision"] | null;
+        };
+        Update: {
+          alternatives?: Json | null;
+          cart_qty?: number;
+          created_at?: string;
+          delta_result?: string | null;
+          delta_sent?: number | null;
+          display_name?: string;
+          flags?: NonNullable<Json>;
+          household_id?: string;
+          id?: string;
+          line_total_usd?: number | null;
+          list_item_id?: string | null;
+          position?: number;
+          product_id?: string | null;
+          product_name?: string | null;
+          qty?: number | null;
+          reason?: string | null;
+          run_id?: string;
+          section?: string;
+          sent_at?: string | null;
+          size?: string | null;
+          status?: Database["public"]["Enums"]["shopping_run_items_status"];
+          unit_price_usd?: number | null;
+          upc?: string | null;
+          updated_at?: string;
+          user_decision?: Database["public"]["Enums"]["shopping_run_items_user_decision"] | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shopping_run_items_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shopping_run_items_list_item_id_fkey";
+            columns: ["list_item_id"];
+            isOneToOne: false;
+            referencedRelation: "grocery_list_items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shopping_run_items_run_id_fkey";
+            columns: ["run_id"];
+            isOneToOne: false;
+            referencedRelation: "shopping_runs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      shopping_runs: {
+        Row: {
+          approved_at: string | null;
+          approved_by: string | null;
+          cart_snapshot: Json | null;
+          connection_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          error: string | null;
+          finished_at: string | null;
+          heartbeat_at: string | null;
+          household_id: string;
+          id: string;
+          list_id: string;
+          policy: NonNullable<Json>;
+          progress: NonNullable<Json>;
+          retailer: Database["public"]["Enums"]["retailer"];
+          started_at: string | null;
+          status: Database["public"]["Enums"]["shopping_runs_status"];
+          status_changed_at: string;
+          store_id: string | null;
+          store_name: string | null;
+          subtotal_usd: number | null;
+          transcript: NonNullable<Json>;
+          trigger: Database["public"]["Enums"]["shopping_runs_trigger"];
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          cart_snapshot?: Json | null;
+          connection_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          error?: string | null;
+          finished_at?: string | null;
+          heartbeat_at?: string | null;
+          household_id: string;
+          id?: string;
+          list_id: string;
+          policy?: NonNullable<Json>;
+          progress?: NonNullable<Json>;
+          retailer: Database["public"]["Enums"]["retailer"];
+          started_at?: string | null;
+          status?: Database["public"]["Enums"]["shopping_runs_status"];
+          status_changed_at?: string;
+          store_id?: string | null;
+          store_name?: string | null;
+          subtotal_usd?: number | null;
+          transcript?: NonNullable<Json>;
+          trigger?: Database["public"]["Enums"]["shopping_runs_trigger"];
+          updated_at?: string;
+        };
+        Update: {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          cart_snapshot?: Json | null;
+          connection_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          error?: string | null;
+          finished_at?: string | null;
+          heartbeat_at?: string | null;
+          household_id?: string;
+          id?: string;
+          list_id?: string;
+          policy?: NonNullable<Json>;
+          progress?: NonNullable<Json>;
+          retailer?: Database["public"]["Enums"]["retailer"];
+          started_at?: string | null;
+          status?: Database["public"]["Enums"]["shopping_runs_status"];
+          status_changed_at?: string;
+          store_id?: string | null;
+          store_name?: string | null;
+          subtotal_usd?: number | null;
+          transcript?: NonNullable<Json>;
+          trigger?: Database["public"]["Enums"]["shopping_runs_trigger"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shopping_runs_connection_id_fkey";
+            columns: ["connection_id"];
+            isOneToOne: false;
+            referencedRelation: "retailer_connections";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shopping_runs_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shopping_runs_list_id_fkey";
+            columns: ["list_id"];
+            isOneToOne: false;
+            referencedRelation: "grocery_lists";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       waitlist: {
         Row: {
           created_at: string;
@@ -1162,9 +1398,27 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      cancel_shopping_run: {
+        Args: { run_id: string };
+        Returns: Database["public"]["Enums"]["shopping_runs_status"];
+      };
+      connect_browser_session: {
+        Args: { household_id: string; retailer: Database["public"]["Enums"]["retailer"] };
+        Returns: string;
+      };
+      connection_session_key: { Args: { connection_id: string }; Returns: string };
       create_household: { Args: { name: string }; Returns: string };
       create_invite: { Args: { household_id: string }; Returns: string };
       current_household_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
+      enqueue_shopping_run: {
+        Args: { connection_id: string; list_id: string; policy: Json; trigger: string };
+        Returns: string;
+      };
+      expire_run_screenshots: { Args: Record<PropertyKey, never>; Returns: number };
+      household_ai_spend_since: {
+        Args: { p_household_id: string; p_since: string };
+        Returns: number;
+      };
       is_household_peer: { Args: { other_user: string }; Returns: boolean };
       leave_household: { Args: { household_id: string }; Returns: undefined };
       list_household_members: {
@@ -1195,6 +1449,10 @@ export type Database = {
           p_raw_text: string;
         };
         Returns: string;
+      };
+      record_tier3_consent: {
+        Args: { copy_version: string; household_id: string; retailers: string[] };
+        Returns: Json;
       };
       redeem_invite: { Args: { token: string }; Returns: string };
       retailer_disconnect: {
@@ -1249,7 +1507,28 @@ export type Database = {
           used: number;
         }[];
       };
+      revoke_browser_connection: { Args: { connection_id: string }; Returns: undefined };
+      run_screenshot_readable: { Args: { object_name: string }; Returns: boolean };
+      run_screenshots_max_age: { Args: Record<PropertyKey, never>; Returns: string };
       section_order_is_valid: { Args: { names: string[] }; Returns: boolean };
+      shopping_run_default_policy: { Args: Record<PropertyKey, never>; Returns: Json };
+      shopping_run_dispatch: { Args: { run_id: string }; Returns: number };
+      shopping_run_policy_is_valid: { Args: { p: Json }; Returns: boolean };
+      shopping_run_transition_allowed: {
+        Args: {
+          p_from: Database["public"]["Enums"]["shopping_runs_status"];
+          p_to: Database["public"]["Enums"]["shopping_runs_status"];
+        };
+        Returns: boolean;
+      };
+      shopping_runs_clear_expired: {
+        Args: { p_after?: string; p_review_timeout?: string };
+        Returns: number;
+      };
+      tier3_consent_is_valid: { Args: { c: Json }; Returns: boolean };
+      tier3_consent_version: { Args: Record<PropertyKey, never>; Returns: string };
+      tier3_new_session_key: { Args: { p_connection_id: string }; Returns: string };
+      tier3_retailer_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
     };
     Enums: {
       grocery_list_items_excluded_reason: "pantry" | "manual";
@@ -1264,6 +1543,7 @@ export type Database = {
       meal_plan_entries_status: "planned" | "cooked" | "skipped";
       pantry_items_status: "have" | "low" | "out";
       product_matches_chosen_by: "agent" | "user";
+      push_tokens_platform: "ios" | "android" | "web";
       recipe_feedback_signal: "like" | "dislike" | "cooked" | "skipped" | "saved";
       recipes_source_type: "url" | "text" | "photo" | "video" | "manual" | "ai";
       recipes_visibility: "household" | "catalog";
@@ -1271,6 +1551,18 @@ export type Database = {
       retailer_connections_auth_type: "oauth" | "browser_session" | "none";
       retailer_connections_modality: "pickup" | "delivery";
       retailer_connections_status: "active" | "needs_reauth" | "revoked";
+      shopping_run_items_status: "proposed" | "matched" | "substituted" | "unmatched" | "removed";
+      shopping_run_items_user_decision: "accepted" | "swapped" | "removed";
+      shopping_runs_status:
+        | "queued"
+        | "running"
+        | "needs_review"
+        | "cart_ready"
+        | "checking_out"
+        | "checked_out"
+        | "failed"
+        | "cancelled";
+      shopping_runs_trigger: "manual" | "scheduled";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1398,6 +1690,7 @@ export const Constants = {
       meal_plan_entries_status: ["planned", "cooked", "skipped"],
       pantry_items_status: ["have", "low", "out"],
       product_matches_chosen_by: ["agent", "user"],
+      push_tokens_platform: ["ios", "android", "web"],
       recipe_feedback_signal: ["like", "dislike", "cooked", "skipped", "saved"],
       recipes_source_type: ["url", "text", "photo", "video", "manual", "ai"],
       recipes_visibility: ["household", "catalog"],
@@ -1405,6 +1698,19 @@ export const Constants = {
       retailer_connections_auth_type: ["oauth", "browser_session", "none"],
       retailer_connections_modality: ["pickup", "delivery"],
       retailer_connections_status: ["active", "needs_reauth", "revoked"],
+      shopping_run_items_status: ["proposed", "matched", "substituted", "unmatched", "removed"],
+      shopping_run_items_user_decision: ["accepted", "swapped", "removed"],
+      shopping_runs_status: [
+        "queued",
+        "running",
+        "needs_review",
+        "cart_ready",
+        "checking_out",
+        "checked_out",
+        "failed",
+        "cancelled",
+      ],
+      shopping_runs_trigger: ["manual", "scheduled"],
     },
   },
 } as const;

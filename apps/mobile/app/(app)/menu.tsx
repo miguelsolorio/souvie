@@ -7,6 +7,7 @@ import { LoadingScreen, Screen } from "../../src/components/Screen";
 import { CREATE_HOUSEHOLD_ROUTE } from "../../src/features/auth/routes";
 import { LIST_ROUTE, PANTRY_ROUTE } from "../../src/features/list/routes";
 import { PLAN_ROUTE } from "../../src/features/plan/routes";
+import { SHOPPING_ROUTE } from "../../src/features/shopping/routes";
 
 interface Health {
   ok: boolean;
@@ -75,6 +76,12 @@ export default function Menu() {
           label="Pantry"
           variant="secondary"
           onPress={() => router.push(PANTRY_ROUTE)}
+        />
+        <Button
+          testID="open-shopping"
+          label="Shopping runs"
+          variant="secondary"
+          onPress={() => router.push(SHOPPING_ROUTE)}
         />
         <Button
           testID="open-recipes"

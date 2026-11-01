@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fixture Pantry test page</title>
+    <!--
+      WS08 static test page for the Tier 3 browser host. It is not a store and imitates none:
+      fictional products, no prices from anywhere real, no retailer names or marks. The bridge
+      tests load it from this file (jsdom) and the Simulator demo loads it from the local static
+      server (`pnpm --filter @mp/mobile tier3:test-page`, then EXPO_PUBLIC_TIER3_TEST_PAGE_URL).
+
+      What it offers the host: a search box, a results grid of 10 tiles with prices and Add
+      buttons, a quantity stepper, a select, a node that appears late (for waitFor), a fake sign-in
+      form (for userRequired: login), and two buttons that add a verification iframe (captcha) and
+      a one-time-code field (mfa).
+
+      Query parameters: slow=<ms> delays the late node (default 1200); signin=1 opens the form.
+    -->
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: -apple-system, system-ui, sans-serif;
+        color: #1f2328;
+        background: #f6f7f8;
+      }
+      body {
+        margin: 0;
+        padding: 16px;
+      }
+      header,
+      section {
+        background: #ffffff;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0;
+      }
+      h2 {
+        font-size: 15px;
+        margin: 0 0 8px;
+      }
+      h3 {
+        font-size: 14px;
+        margin: 0 0 4px;
+      }
+      p {
+        margin: 4px 0;
+        font-size: 13px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .tile {
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      button {
+        font: inherit;
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid #8c959f;
+        background: #eaeef2;
+      }
+      input,
+      select {
+        font: inherit;
+        padding: 6px;
+        border: 1px solid #8c959f;
+        border-radius: 6px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .stepper {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        border: none;
+        margin: 0;
+        padding: 0;
+      }
+      .muted {
+        color: #57606a;
+      }
+      iframe {
+        width: 100%;
+        height: 60px;
+        border: 1px dashed #8c959f;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Fixture Pantry test page</h1>
+      <div class="row">
+        <p id="cart-count" role="status">Cart: 0 items</p>
+        <button type="button" id="show-signin">Sign in</button>
+      </div>
+    </header>
+
+    <section aria-label="Notice">
+      <p class="muted">A static page for testing the browser host. Not a store. Nothing here can be bought.</p>
+      <img
+        alt="Fixture Pantry logo"
+        width="32"
+        height="32"
+        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Crect width='32' height='32' rx='6' fill='%2357606a'/%3E%3C/svg%3E"
+      />
+    </section>
+
+    <section id="account" aria-label="Account" hidden>
+      <p id="signed-in-as">Signed in as Test Shopper (test.shopper@example.test)</p>
+      <p>Last order #A1234567 to 123 Fixture Lane, Testville</p>
+    </section>
+
+    <form id="signin" aria-label="Sign in" hidden>
+      <h2>Sign in to Fixture Pantry</h2>
+      <p class="row">
+        <label for="email">Email</label>
+        <input id="email" type="email" name="email" autocomplete="username" />
+      </p>
+      <p class="row">
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" autocomplete="current-password" />
+      </p>
+      <button type="submit">Continue</button>
+    </form>
+
+    <section aria-label="Search">
+      <search>
+        <form id="search-form" class="row">
+          <label for="search">Search products</label>
+          <input id="search" type="search" name="q" placeholder="Try oat milk" autocomplete="off" />
+          <button type="submit">Search</button>
+        </form>
+      </search>
+      <p class="row">
+        <label for="sort">Sort by</label>
+        <select id="sort" name="sort">
+          <option value="relevance">Relevance</option>
+          <option value="price-asc">Price, low to high</option>
+          <option value="price-desc">Price, high to low</option>
+        </select>
+      </p>
+      <div id="late-slot"></div>
+    </section>
+
+    <section aria-label="Results">
+      <h2>Results</h2>
+      <div class="grid" id="results">
+        <article class="tile">
+          <h3>Fixture Farms Rolled Oats</h3>
+          <p class="size">42 oz</p>
+          <p class="price">$4.99</p>
+          <p class="unit muted">$0.12/oz</p>
+          <button type="button" class="add">Add</button>
+        </article>
+        <article class="tile">
+          <h3>Fixture Farms Oat Milk</h3>
+          <p class="size">64 fl oz</p>
+          <p class="price">2 for $5.00</p>
+          <button type="button" class="add">Add</button>
+        </article>
+        <article class="tile">
+          <h3>Meadowline Peanut Butter</h3>
+          <p class="size">16 oz</p>
+          <p class="price">$0.31/oz</p>
+          <button type="button" class="add">Add</button>
+        </article>
+        <article class="tile">
+          <h3>Meadowline Brown Rice</h3>
+          <p class="size">2 lb</p>
+          <p class="price">Was $6.49 Now $4.99</p>
+          <button type="button" class="add">Add</button>
+        </article>
+        <article class="tile">
+          <h3>Fixture Farms Black Beans</h3>
+          <p class="size">15 oz</p>
+          <p class="price">99¢</p>
+          <button type="button" class="add">Add</button>
+        </article>
+        <article class="tile">
+          <h3>Bananas</h3>
+          <p class="size">About 0.4 lb each</p>
+          <p class="price">$0.59/lb</p>
+          <button type="button" class="add">Add</button>
+        </article>
+        <article class="tile">
+          <h3>Meadowline Large Eggs</h3>
+          <p class="size">12 ct</p>
+          <p class="price">$3.29</p>
+          <button type="button" class="add">Add</button>
+        </article>
+        <article class="tile">
+          <h3>Baby Spinach</h3>
+          <p class="size">5 oz</p>
+          <p class="price">$2.99</p>
+          <button type="button" class="add">Add</button>
+        </article>
+        <article class="tile">
+          <h3>Meadowline Sharp Cheddar</h3>
+          <p class="size">8 oz</p>
+          <p class="price">$3.49</p>
+          <button type="button" class="add">Add</button>
+        </article>
+        <article class="tile">
+          <h3>Fixture Farms Sandwich Bread</h3>
+          <p class="size">20 oz loaf</p>
+          <p class="price">$2.79</p>
+          <button type="button" class="add">Add</button>
+        </article>
+      </div>
+    </section>
+
+    <section aria-label="Your cart">
+      <h2>Your cart</h2>
+      <div class="row" id="cart-line">
+        <p>Fixture Farms Rolled Oats</p>
+        <fieldset class="stepper" aria-label="Quantity">
+          <button type="button" id="qty-minus" aria-label="Decrease quantity">-</button>
+          <span id="qty" aria-live="polite">1</span>
+          <button type="button" id="qty-plus" aria-label="Increase quantity">+</button>
+        </fieldset>
+      </div>
+    </section>
+
+    <section aria-label="Host checks">
+      <h2>Host checks</h2>
+      <p class="muted">These add the kinds of screens the agent must hand to the person.</p>
+      <div class="row">
+        <button type="button" id="add-check">Show a verification check</button>
+        <button type="button" id="add-code">Ask for a one-time code</button>
+      </div>
+      <div id="checks"></div>
+      <p><a href="#top">Back to top</a></p>
+    </section>
+
+    <script>
+      (() => {
+        var params = new URLSearchParams(location.search);
+        var slowMs = Number(params.get("slow") || "1200");
+        var cart = 0;
+        var qty = 1;
+        var lateTimer = null;
+
+        function setCart() {
+          document.getElementById("cart-count").textContent =
+            `Cart: ${cart}${cart === 1 ? " item" : " items"}`;
+        }
+        Array.prototype.forEach.call(document.querySelectorAll(".add"), (button) => {
+          button.addEventListener("click", () => {
+            cart += 1;
+            setCart();
+          });
+        });
+
+        document.getElementById("qty-minus").addEventListener("click", () => {
+          qty = Math.max(0, qty - 1);
+          document.getElementById("qty").textContent = String(qty);
+        });
+        document.getElementById("qty-plus").addEventListener("click", () => {
+          qty += 1;
+          document.getElementById("qty").textContent = String(qty);
+        });
+
+        // The late node: appears slowMs after the search box last changed.
+        var search = document.getElementById("search");
+        search.addEventListener("input", () => {
+          if (lateTimer) clearTimeout(lateTimer);
+          var slot = document.getElementById("late-slot");
+          slot.textContent = "";
+          lateTimer = setTimeout(() => {
+            var note = document.createElement("p");
+            note.id = "results-note";
+            note.setAttribute("role", "status");
+            note.textContent = `Showing results for "${search.value}"`;
+            slot.appendChild(note);
+          }, slowMs);
+        });
+        document.getElementById("search-form").addEventListener("submit", (event) => {
+          event.preventDefault();
+        });
+
+        // The fake sign-in. Sets a cookie and a storage entry like a real site would. The password
+        // is never kept: the form is cleared on submit.
+        var signin = document.getElementById("signin");
+        function showSignin() {
+          signin.hidden = false;
+        }
+        document.getElementById("show-signin").addEventListener("click", showSignin);
+        if (params.get("signin") === "1") showSignin();
+        signin.addEventListener("submit", (event) => {
+          event.preventDefault();
+          // biome-ignore lint/suspicious/noDocumentCookie: the fake sign-in sets a cookie the way a real site does, so session tests have one to save.
+          document.cookie = "fixture_session=signed-in; path=/";
+          try {
+            localStorage.setItem("fixture.account", "signed-in");
+            sessionStorage.setItem("fixture.visit", "1");
+          } catch (_e) {}
+          signin.reset();
+          signin.hidden = true;
+          document.getElementById("account").hidden = false;
+          document.getElementById("show-signin").textContent = "Account";
+        });
+
+        document.getElementById("add-check").addEventListener("click", () => {
+          var frame = document.createElement("iframe");
+          frame.title = "Verify you are human";
+          frame.setAttribute("srcdoc", "<p>Fixture verification check</p>");
+          document.getElementById("checks").appendChild(frame);
+        });
+        document.getElementById("add-code").addEventListener("click", () => {
+          var label = document.createElement("label");
+          label.textContent = "One-time code ";
+          var input = document.createElement("input");
+          input.setAttribute("autocomplete", "one-time-code");
+          input.setAttribute("inputmode", "numeric");
+          label.appendChild(input);
+          document.getElementById("checks").appendChild(label);
+        });
+      })();
+    </script>
+  </body>
+</html>

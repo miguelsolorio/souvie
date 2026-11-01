@@ -455,6 +455,23 @@ verify_jwt = true
 import_map = "./functions/list-build/deno.json"
 entrypoint = "./functions/list-build/index.ts"
 
+# The on-device Tier 3 agent's model calls (WS08). verify_jwt stays on: it answers only for a
+# signed-in member of the household in the body, and holds the Anthropic key server-side.
+[functions.llm-proxy]
+enabled = true
+verify_jwt = true
+import_map = "./functions/llm-proxy/deno.json"
+entrypoint = "./functions/llm-proxy/index.ts"
+
+# Shopping runs (WS09): the person's approval of a proposed cart. Applies the review, checks the
+# budget cap, and opens the push phase for the worker. verify_jwt stays on: it answers only for a
+# signed-in member of the run's household.
+[functions.run-approve]
+enabled = true
+verify_jwt = true
+import_map = "./functions/run-approve/deno.json"
+entrypoint = "./functions/run-approve/index.ts"
+
 [analytics]
 enabled = true
 port = 54327

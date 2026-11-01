@@ -27,6 +27,7 @@ import { CREATE_HOUSEHOLD_ROUTE } from "../auth/routes";
 import { weekRangeLabel } from "../plan/format";
 import { PlanNoticeBar } from "../plan/PlanNotice";
 import { planRoute } from "../plan/routes";
+import { ShopThisList } from "../shopping/ShopThisList";
 import { AddItemBar } from "./AddItemBar";
 import { ItemRow } from "./ItemRow";
 import { sectionsToShow, syncNote } from "./logic";
@@ -270,6 +271,8 @@ export function ListView({
                     You marked this list as shopped.
                   </Text>
                 ) : null}
+                {/* WS09: the shopper fills the store cart from this list, after review. */}
+                {!shopped && data.split.toBuy.length > 0 ? <ShopThisList listId={list.id} /> : null}
               </View>
 
               {data.split.toBuy.length === 0 ? (

@@ -45,12 +45,12 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] Dispatch WS04 and WS06 (sonnet) right away. Dispatched 2026-10-30.
 - [x] Draft the Tier 3 consent copy (names each retailer, the terms risk, the account exposure, "stops at pay") and put it in front of Miguel. Drafted 2026-10-31 in `docs/08-brand.md` §11; approved as drafted 2026-10-31.
 - [x] **Human checkpoint 4** gates WS08 only: consent copy approved; Tier 3 retailer list confirmed (WS08's `TIER3_RETAILERS` default is Safeway, Albertsons, Haggen, Costco; the Kroger pay adapter is a WS10 adapter, not a consent retailer). Then dispatch WS08 (opus). Approved 2026-10-31 (copy as drafted, four stores); WS08 dispatched (opus).
-- [ ] WS08 reviewer must run the Tier 3 checklist in `docs/04-integrations.md` and confirm no playwright or puppeteer dependency.
+- [x] WS08 reviewer must run the Tier 3 checklist in `docs/04-integrations.md` and confirm no playwright or puppeteer dependency. Done 2026-10-31.
 - [x] WS05 follow-up round (jsonb parameters): reviewed and merged as 77e8509 (PR #20); `list-build` redeployed (v3) and the real plan built on the hosted project. Miguel retries.
 - [x] WS04 follow-up round (picker entry points, from Miguel's test 2026-10-31): reviewed and merged as 90279f0 (PR #19).
 - [ ] WS02 follow-up round (parse wiring after import, validation on add, no duplicate recipes or ingredient lines; brief section plus three addenda at the end of WS02's file): dispatched 2026-10-31 after the picker round merged; review, merge, redeploy `recipe-import` and `parse-ingredients`, Miguel taps "Match ingredients" on his six recipes.
 - [ ] WS04 simple-mode round (one meal a day, household setting `plan_mode` default simple, asked in onboarding step 1; brief section at the end of WS04's file, requested by Miguel 2026-10-31): orchestrator lands `PlanMode`, `slotsForMode` and the `households.plan_mode` migration first, then dispatch after the picker round merges, review, merge.
-- [ ] WS08: review, merge, append to the wave 3 summary. Then `pnpm install` in the orchestrator worktree (native modules change the lockfile) and a `git pull` in the primary checkout.
+- [x] WS08: reviewed (one fix round, one narrow second round) and merged 2026-10-31 as 2f571c1 (PR #22); wave 3 summary appended; `pnpm install` run. Miguel: `git pull` in the primary checkout when convenient.
 - [x] **Human decision:** recipe catalog cold start. Miguel chose a starter catalog 2026-10-30; WS16 brief written and dispatched.
 - [x] WS16 (starter catalog, sonnet): reviewed and merged as 4fb32da (PR #13), 2026-10-30.
 - [ ] **Human:** Miguel skims `supabase/seed/catalog/README.md` before the catalog loads into the hosted project (with the hosted release).
@@ -69,14 +69,14 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] CCR6: `RunPolicy` in `packages/core` and `RetailerAdapter.checkout` typed to it (orchestrator). Merged 2026-10-31 as e0053e7 (PR #17).
 - [x] WS09 brief corrections written (2026-10-31): service-role decision, `push_tokens`, docs/03 numbers, as-built facts.
 - [x] Dispatch WS09 (opus). Dispatched 2026-10-31. Expect contract change requests here; apply them on `main` yourself.
-- [ ] Review with extra attention to policies-in-code, the write ledger, the allergen check, and the service-role authorization in `run-approve` and the worker (a caller must never act for a household they are not in).
-- [ ] Merge, summary. This is the Phase 2 moment: a scheduled run should fill a real QFC cart (criterion 13 needs Miguel's Kroger sign-in; it stays open until then).
+- [x] Review with extra attention to policies-in-code, the write ledger, the allergen check, and the service-role authorization in `run-approve` and the worker. Done 2026-10-31: one fix round, re-review merge.
+- [x] Merge, summary. Merged 2026-10-31 as 8ba30d8 (PR #21); wave 5 summary in `docs/status.md`. The real QFC cart (criterion 13) still needs Miguel's Kroger sign-in and a deployed worker.
 - [ ] Orchestrator contract change after WS09 merges: remove `instacart` from `RetailerId`, `INSTACART_CAPABILITIES`, the registry tests and the `retailer` enum (new migration that recreates the enum), with docs/02 and docs/04 updated. Deferred so no in-flight builder sees the enum move.
-- [ ] **Human (with the hosted release):** deploy `run-approve` and `llm-proxy`, set the worker secrets, and deploy the worker to Fly.io or Railway once the account exists.
+- [ ] **Human:** deploy the worker to Fly.io or Railway once the account exists, with `WORKER_DATABASE_URL`, `ANTHROPIC_API_KEY`, `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET` and `EXPO_PUSH_ACCESS_TOKEN` as its secrets, and set `extra.eas.projectId` in `app.json`. (`run-approve` is deployed; `llm-proxy` deploys with WS08's merge.)
 
 ## 7. Wave 6: everything that consumes the agent
 
-- [ ] **Human checkpoint 5** gates WS10 only: the WS08 host demo is accepted (agent drives a test page in the Simulator; consent and disconnect work). The other four may start without it.
+- [ ] **Human checkpoint 5** gates WS10 only: Miguel accepts the WS08 host demo (recording and screenshot sent 2026-10-31: the agent drives the test page in the real WebView on the iPhone 17 Pro Simulator; consent and disconnect are covered by tests against the real SQL, not yet by a signed-in device run). The other four may start without it.
 - [ ] Dispatch WS10 (opus), WS11, WS12, WS13, WS15 (sonnet) in one message. Five builders at once is the maximum. WS10 needs WS08 and WS09 merged; the other four need WS09 merged. Write each brief's orchestrator corrections first (as-built shapes from WS05, WS08 and WS09).
 - [ ] Review each as it finishes. WS10 reviewer runs the Tier 3 checklist and a manual Safeway run on a real account.
 - [ ] Merge all, wave 6 summary.

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "services/shopper-worker/Dockerfile",
+    "watchPatterns": [
+      "services/shopper-worker/**",
+      "packages/agent/**",
+      "packages/core/**",
+      "packages/llm/**",
+      "packages/retailers/**",
+      "pnpm-lock.yaml"
+    ]
+  },
+  "deploy": {
+    "numReplicas": 1,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10,
+    "drainingSeconds": 10
+  }
+}

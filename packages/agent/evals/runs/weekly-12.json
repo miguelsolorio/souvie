@@ -1,0 +1,524 @@
+{
+  "name": "weekly-12",
+  "description": "A week's twelve-line list at Mock QFC Duvall: two close calls and one free-text line for the model, a gluten-free line nothing carries, one swap and one quantity change at review.",
+  "model": "claude-sonnet-5-5",
+  "adapter": {
+    "seed": 1
+  },
+  "context": {
+    "runId": "replay-weekly-12",
+    "householdId": "replay-household",
+    "storeId": "MOCK0001",
+    "policy": {},
+    "allergies": [],
+    "preferences": {
+      "preferredBrands": [],
+      "avoidBrands": [],
+      "preferOrganic": false
+    },
+    "lines": [
+      {
+        "id": "L01",
+        "displayName": "Yellow onions",
+        "qty": 3,
+        "unit": "each",
+        "section": "produce",
+        "position": 1,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "name": "yellow onion",
+          "category": "produce",
+          "defaultUnit": "each",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 150
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "L02",
+        "displayName": "Garlic",
+        "qty": 1,
+        "unit": "head",
+        "section": "produce",
+        "position": 2,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "name": "garlic",
+          "category": "produce",
+          "defaultUnit": "clove",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 5
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "L03",
+        "displayName": "Boneless skinless chicken thighs",
+        "qty": 1.5,
+        "unit": "lb",
+        "section": "meat",
+        "position": 3,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "name": "chicken thigh",
+          "category": "meat",
+          "defaultUnit": "lb",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 115
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "L04",
+        "displayName": "Whole milk",
+        "qty": 1,
+        "unit": "gallon",
+        "section": "dairy",
+        "position": 4,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "name": "milk",
+          "category": "dairy",
+          "defaultUnit": "cup",
+          "densityGPerMl": 1.03,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "L05",
+        "displayName": "Large eggs",
+        "qty": 12,
+        "unit": "each",
+        "section": "eggs",
+        "position": 5,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "name": "egg",
+          "category": "eggs",
+          "defaultUnit": "each",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 50
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "L06",
+        "displayName": "Unsalted butter",
+        "qty": 8,
+        "unit": "oz",
+        "section": "dairy",
+        "position": 6,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "name": "unsalted butter",
+          "category": "dairy",
+          "defaultUnit": "tbsp",
+          "densityGPerMl": 0.96,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "L07",
+        "displayName": "Baby spinach",
+        "qty": 1,
+        "unit": "bag",
+        "section": "produce",
+        "position": 7,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "name": "spinach",
+          "category": "produce",
+          "defaultUnit": "cup",
+          "densityGPerMl": 0.12,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "L08",
+        "displayName": "Diced tomatoes",
+        "qty": 2,
+        "unit": "can",
+        "section": "canned",
+        "position": 8,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000008",
+          "name": "diced tomatoes",
+          "category": "canned",
+          "defaultUnit": "can",
+          "densityGPerMl": 1,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": ["2 (14.5 oz) cans diced tomatoes"]
+      },
+      {
+        "id": "L09",
+        "displayName": "Chicken broth",
+        "qty": 4,
+        "unit": "cup",
+        "section": "pantry",
+        "position": 9,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000009",
+          "name": "chicken broth",
+          "category": "pantry",
+          "defaultUnit": "cup",
+          "densityGPerMl": 1,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "L10",
+        "displayName": "Penne (gluten-free)",
+        "qty": 16,
+        "unit": "oz",
+        "section": "pantry",
+        "position": 10,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000010",
+          "name": "penne",
+          "category": "pantry",
+          "defaultUnit": "oz",
+          "densityGPerMl": 0.45,
+          "typicalUnitWeightG": null
+        },
+        "qualifiers": ["gluten-free"],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "L11",
+        "displayName": "Salmon fillets",
+        "qty": 1.5,
+        "unit": "lb",
+        "section": "seafood",
+        "position": 11,
+        "ingredient": {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "name": "salmon fillet",
+          "category": "seafood",
+          "defaultUnit": "lb",
+          "densityGPerMl": null,
+          "typicalUnitWeightG": 170
+        },
+        "qualifiers": [],
+        "needsAttention": false,
+        "rawTexts": []
+      },
+      {
+        "id": "L12",
+        "displayName": "vanilla ice cream for dessert",
+        "qty": 1,
+        "unit": null,
+        "section": "frozen",
+        "position": 12,
+        "ingredient": null,
+        "qualifiers": [],
+        "needsAttention": true,
+        "rawTexts": []
+      }
+    ],
+    "choices": []
+  },
+  "turns": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_015RiRNjySSDjmLLXFjuYYh9",
+          "name": "choose_product",
+          "input": {
+            "listItemId": "L09",
+            "candidateIndex": 0,
+            "quantity": 1,
+            "reason": "Plain chicken broth, 32 fl oz covers 4 cups, best value."
+          },
+          "caller": {
+            "type": "direct"
+          }
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_0131a8QW4C76k98EvZgANxQY",
+          "name": "choose_product",
+          "input": {
+            "listItemId": "L11",
+            "candidateIndex": 0,
+            "quantity": 2,
+            "reason": "Salmon fillet, best value, 2 lb covers 1.5 lb."
+          },
+          "caller": {
+            "type": "direct"
+          }
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_01EGgwZQGT2PD71HeuUdV6Rc",
+          "name": "choose_product",
+          "input": {
+            "listItemId": "L12",
+            "candidateIndex": 0,
+            "quantity": 1,
+            "reason": "Vanilla ice cream matches the line."
+          },
+          "caller": {
+            "type": "direct"
+          }
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_01GLyVw1eC7NEr2MizsDFqnd",
+          "name": "request_review",
+          "input": {},
+          "caller": {
+            "type": "direct"
+          }
+        }
+      ],
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 4,
+        "output_tokens": 450,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 2004
+      }
+    }
+  ],
+  "review": {
+    "decisions": [
+      {
+        "listItemId": "L04",
+        "action": "swap",
+        "alternativeIndex": 0
+      },
+      {
+        "listItemId": "L03",
+        "action": "quantity",
+        "quantity": 1
+      }
+    ]
+  },
+  "expected": {
+    "planned": [
+      {
+        "listItemId": "L01",
+        "status": "matched",
+        "productId": "0099010000004",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "L02",
+        "status": "matched",
+        "productId": "0099010000006",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "L03",
+        "status": "matched",
+        "productId": "0099030000002",
+        "qty": 2,
+        "flags": []
+      },
+      {
+        "listItemId": "L04",
+        "status": "matched",
+        "productId": "0099020000001",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "L05",
+        "status": "matched",
+        "productId": "0099020000012",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "L06",
+        "status": "matched",
+        "productId": "0099020000010",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "L07",
+        "status": "matched",
+        "productId": "0099010000018",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "L08",
+        "status": "matched",
+        "productId": "0099040000023",
+        "qty": 2,
+        "flags": []
+      },
+      {
+        "listItemId": "L09",
+        "status": "matched",
+        "productId": "0099040000026",
+        "qty": 1,
+        "flags": []
+      },
+      {
+        "listItemId": "L10",
+        "status": "unmatched",
+        "productId": null,
+        "qty": null,
+        "flags": ["qualifier"]
+      },
+      {
+        "listItemId": "L11",
+        "status": "matched",
+        "productId": "0099030000028",
+        "qty": 2,
+        "flags": []
+      },
+      {
+        "listItemId": "L12",
+        "status": "matched",
+        "productId": "0099050000033",
+        "qty": 1,
+        "flags": ["needs_attention"]
+      }
+    ],
+    "toolCalls": 25,
+    "finalStatus": "cart_ready",
+    "ledger": [
+      {
+        "listItemId": "L01",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "L02",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "L03",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "L04",
+        "cartQty": 2,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "L05",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "L06",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "L07",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "L08",
+        "cartQty": 2,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "L09",
+        "cartQty": 1,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "L10",
+        "cartQty": 0,
+        "deltaResult": null
+      },
+      {
+        "listItemId": "L11",
+        "cartQty": 2,
+        "deltaResult": "204"
+      },
+      {
+        "listItemId": "L12",
+        "cartQty": 1,
+        "deltaResult": "204"
+      }
+    ],
+    "cart": [
+      {
+        "productId": "0099010000004",
+        "quantity": 1
+      },
+      {
+        "productId": "0099010000006",
+        "quantity": 1
+      },
+      {
+        "productId": "0099010000018",
+        "quantity": 1
+      },
+      {
+        "productId": "0099020000004",
+        "quantity": 2
+      },
+      {
+        "productId": "0099020000010",
+        "quantity": 1
+      },
+      {
+        "productId": "0099020000012",
+        "quantity": 1
+      },
+      {
+        "productId": "0099030000002",
+        "quantity": 1
+      },
+      {
+        "productId": "0099030000028",
+        "quantity": 2
+      },
+      {
+        "productId": "0099040000023",
+        "quantity": 2
+      },
+      {
+        "productId": "0099040000026",
+        "quantity": 1
+      },
+      {
+        "productId": "0099050000033",
+        "quantity": 1
+      }
+    ]
+  },
+  "recorded": {
+    "at": "2026-10-31T16:48:44.610Z",
+    "note": "Recorded live against MockRetailer seed 1: 1 model turns, $0.0095."
+  }
+}

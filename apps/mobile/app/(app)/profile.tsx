@@ -15,6 +15,7 @@ import { ErrorText, LoadingScreen, Screen, Section } from "../../src/components/
 import { TextField } from "../../src/components/TextField";
 import { useSignOut } from "../../src/features/auth/useSignOut";
 import { chooseAndUploadAvatar } from "../../src/features/profile/pickAvatar";
+import { PushNotice } from "../../src/features/shopping/PushNotice";
 
 export default function ProfileScreen() {
   const client = useSupabase();
@@ -114,6 +115,9 @@ export default function ProfileScreen() {
           onPress={() => signOut.mutate()}
         />
       </Section>
+
+      {/* WS13: on the web and in the desktop app, where no push reaches, say so. Nothing on a phone. */}
+      <PushNotice />
 
       <ErrorText>{error}</ErrorText>
     </Screen>

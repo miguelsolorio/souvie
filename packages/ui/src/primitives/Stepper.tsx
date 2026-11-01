@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import {
   canStep,
   formatStepValue,
@@ -46,20 +46,31 @@ export function Stepper({
   const canUp = !disabled && canStep(value, 1, bounds);
   const change = (direction: 1 | -1) => onChange(stepValue(value, direction, bounds));
 
+  // On a phone the whole control is one "adjustable" element for a screen reader: swipe up and
+  // down to change it. A browser has no such role. react-native-web would turn it into an ARIA
+  // slider, which needs a value attribute it does not write and may not contain buttons, so on
+  // the web it is a labelled group around two ordinary buttons and a live value (WS13).
+  const assistive =
+    Platform.OS === "web"
+      ? ({ role: "group" } as const)
+      : ({
+          accessible: true,
+          accessibilityRole: "adjustable",
+          accessibilityValue: {
+            min,
+            max,
+            now: value,
+            text: stepperSpeech(value, unit, unitPlural),
+          },
+          accessibilityActions: [{ name: "increment" }, { name: "decrement" }],
+          onAccessibilityAction: (event: { nativeEvent: { actionName: string } }) => {
+            if (event.nativeEvent.actionName === "increment" && canUp) change(1);
+            if (event.nativeEvent.actionName === "decrement" && canDown) change(-1);
+          },
+        } as const);
+
   return (
-    <View
-      testID={testID}
-      accessible
-      accessibilityRole="adjustable"
-      accessibilityLabel={label}
-      accessibilityValue={{ min, max, now: value, text: stepperSpeech(value, unit, unitPlural) }}
-      accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
-      onAccessibilityAction={(event) => {
-        if (event.nativeEvent.actionName === "increment" && canUp) change(1);
-        if (event.nativeEvent.actionName === "decrement" && canDown) change(-1);
-      }}
-      style={styles.row}
-    >
+    <View testID={testID} accessibilityLabel={label} {...assistive} style={styles.row}>
       <StepButton
         glyph="−"
         label={`Decrease ${label.toLowerCase()}`}

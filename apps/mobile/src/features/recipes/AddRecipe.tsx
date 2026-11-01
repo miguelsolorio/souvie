@@ -37,6 +37,7 @@ import { MultilineField } from "./MultilineField";
 import { pickRecipePhoto } from "./pickRecipePhoto";
 import { RecipeForm } from "./RecipeForm";
 import { RecipeImage } from "./RecipeImage";
+import { LINK_TAB_HINT, VIDEO_LINK_ADVICE } from "./shareCapability";
 import {
   peekSharedInput,
   type SharedInput,
@@ -550,10 +551,14 @@ export function LinkTab({
         error={problem}
         testID="import-url-input"
       />
+      {LINK_TAB_HINT ? (
+        <Text testID="link-tab-hint" className="text-sm text-neutral-600">
+          {LINK_TAB_HINT}
+        </Text>
+      ) : null}
       {isVideo ? (
         <Text accessibilityRole="alert" className="text-sm text-amber-800">
-          We do not download videos. Share the post into this app to import its caption, or paste
-          the recipe text.
+          {VIDEO_LINK_ADVICE}
         </Text>
       ) : null}
       <Button

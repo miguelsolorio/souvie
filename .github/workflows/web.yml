@@ -1,0 +1,188 @@
+name: Web app
+
+# The Expo web export (apps/mobile, web.output "static"): built and tested in a browser on every
+# pull request, deployed to Cloudflare Pages from main. WS13.
+#
+# One-time setup for the deploy (Miguel). The deploy and preview jobs stay skipped until step 1 is
+# done, so main stays green. Details in docs/01-architecture.md, "Web hosting and the desktop shell".
+#   1. Create the Pages project:  npx wrangler pages project create <name> --production-branch main
+#      Then set the repository variable CF_PAGES_PROJECT_WEB to <name>.
+#   2. Secrets: CLOUDFLARE_API_TOKEN (Pages edit) and CLOUDFLARE_ACCOUNT_ID, the same two the
+#      marketing site uses.
+#   3. Variables, public values that ship in the bundle by design: EXPO_PUBLIC_SUPABASE_URL,
+#      EXPO_PUBLIC_SUPABASE_ANON_KEY, and optionally EXPO_PUBLIC_POSTHOG_KEY,
+#      EXPO_PUBLIC_SUGGEST_ENABLED and EXPO_PUBLIC_WEB_ORIGIN (the https address of the site, for
+#      invite links and expo-router's `origin`).
+#   4. In Supabase, Authentication, URL Configuration, add <site origin>/callback to the redirect
+#      URLs (and the preview origin while testing sign-in there). souvie://callback is already there.
+
+on:
+  pull_request:
+  push:
+    branches: [main, "ws/**"]
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  web-export:
+    name: Export and browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # The browser tests answer the app's Supabase calls themselves
+      # (e2e-web/support/fakeSupabase.ts), so this build points at a loopback address that nothing
+      # listens on and a made-up key. It never reaches a real project, and the output is a test
+      # build, not something to deploy. The deploy jobs below build again with the real values.
+      EXPO_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: fake-anon-key-for-browser-tests
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Criterion 1: the export is plain files. No server bundle, so it fits Pages and Tauri.
+      - name: Export the web app
+        run: pnpm --filter @mp/mobile export:web
+
+      - name: Check the export is static
+        run: |
+          test -f apps/mobile/dist/index.html
+          test ! -e apps/mobile/dist/server
+          test ! -e apps/mobile/dist/404.html
+          du -sh apps/mobile/dist
+
+      - name: Install Chromium for Playwright
+        run: pnpm --filter @mp/e2e-web exec playwright install --with-deps chromium
+
+      # Criteria 2 to 6 and 9: home, planner, list, run, sign-in, photo import, axe. Playwright
+      # serves apps/mobile/dist the way Pages does (single page fallback, no 404.html).
+      - name: Browser tests
+        run: pnpm --filter @mp/e2e-web e2e
+
+      - name: Upload the export
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-dist-test-build
+          path: apps/mobile/dist
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Upload the browser test report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: e2e-web/playwright-report
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # A preview of the pull request at a per-branch address, so sign-in can be tried on a real
+  # origin (criterion 5, second half). Skipped until the Pages project exists, and for forks.
+  preview-web:
+    name: Preview on Cloudflare Pages
+    needs: web-export
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && vars.CF_PAGES_PROJECT_WEB != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      EXPO_PUBLIC_POSTHOG_KEY: ${{ vars.EXPO_PUBLIC_POSTHOG_KEY }}
+      EXPO_PUBLIC_SUGGEST_ENABLED: ${{ vars.EXPO_PUBLIC_SUGGEST_ENABLED }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Require the real project values
+        run: |
+          test -n "$EXPO_PUBLIC_SUPABASE_URL" || { echo "Set the EXPO_PUBLIC_SUPABASE_URL variable."; exit 1; }
+          test -n "$EXPO_PUBLIC_SUPABASE_ANON_KEY" || { echo "Set the EXPO_PUBLIC_SUPABASE_ANON_KEY variable."; exit 1; }
+
+      - name: Export the web app
+        run: pnpm --filter @mp/mobile export:web
+
+      - name: Deploy the preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_PROJECT: ${{ vars.CF_PAGES_PROJECT_WEB }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          pnpm dlx wrangler@4.156.0 pages deploy apps/mobile/dist \
+            --project-name "$CF_PROJECT" --branch "$BRANCH" \
+            --commit-message "web preview ${GITHUB_SHA::7}" | tee deploy.log
+          url="$(grep -Eo 'https://[A-Za-z0-9.-]+\.pages\.dev' deploy.log | tail -1 || true)"
+          echo "Preview: ${url:-see the Cloudflare dashboard}" >> "$GITHUB_STEP_SUMMARY"
+
+  # Criterion 8. Only on main, and only once the Pages project exists.
+  deploy-web:
+    name: Deploy to Cloudflare Pages
+    needs: web-export
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.CF_PAGES_PROJECT_WEB != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      EXPO_PUBLIC_POSTHOG_KEY: ${{ vars.EXPO_PUBLIC_POSTHOG_KEY }}
+      EXPO_PUBLIC_SUGGEST_ENABLED: ${{ vars.EXPO_PUBLIC_SUGGEST_ENABLED }}
+      # Invite links, and expo-router's origin (apps/mobile/app.config.ts, https only).
+      EXPO_PUBLIC_WEB_ORIGIN: ${{ vars.EXPO_PUBLIC_WEB_ORIGIN }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Require the real project values
+        run: |
+          test -n "$EXPO_PUBLIC_SUPABASE_URL" || { echo "Set the EXPO_PUBLIC_SUPABASE_URL variable."; exit 1; }
+          test -n "$EXPO_PUBLIC_SUPABASE_ANON_KEY" || { echo "Set the EXPO_PUBLIC_SUPABASE_ANON_KEY variable."; exit 1; }
+
+      - name: Export the web app
+        run: pnpm --filter @mp/mobile export:web
+
+      - name: Deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_PROJECT: ${{ vars.CF_PAGES_PROJECT_WEB }}
+        run: |
+          pnpm dlx wrangler@4.156.0 pages deploy apps/mobile/dist \
+            --project-name "$CF_PROJECT" --branch main \
+            --commit-message "web ${GITHUB_SHA::7}" | tee deploy.log
+          url="$(grep -Eo 'https://[A-Za-z0-9.-]+\.pages\.dev' deploy.log | tail -1 || true)"
+          echo "Deployed: ${url:-see the Cloudflare dashboard}" >> "$GITHUB_STEP_SUMMARY"

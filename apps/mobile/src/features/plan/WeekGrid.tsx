@@ -2,17 +2,17 @@ import type { EntriesByDay, PlanMode } from "@mp/core";
 import { type MealSlot, slotsForMode, weekDates } from "@mp/core";
 import type { PlanEntry } from "@mp/db";
 import { useRef } from "react";
-import { Pressable, Text, useWindowDimensions, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import { useIsDesktop } from "../../lib/useBreakpoint";
+import { WEB_SPACE } from "../../lib/webSpace";
 import { longDate, SLOT_LABELS, shortDayName, shortMonthDay } from "./format";
+import { GridDesktopInput } from "./GridDesktopInput";
 import { moreMealsOf } from "./mode";
 import { EntryChip, MoreMeals, SlotCell } from "./SlotCell";
 
-/** At this width and up the week is seven columns; below it, a list of days. */
-export const WIDE_GRID_MIN_WIDTH = 900;
-
+/** At the desktop breakpoint (1024 and up) the week is seven columns; below it, a list of days. */
 export function useIsWideGrid(): boolean {
-  const { width } = useWindowDimensions();
-  return width >= WIDE_GRID_MIN_WIDTH;
+  return useIsDesktop();
 }
 
 /**
@@ -59,6 +59,8 @@ export function WeekGrid({
       // One row per slot, seven cells across, so breakfast, lunch, dinner and snack line up from
       // day to day and a tall cell stretches its neighbors.
       <View testID="week-grid" accessibilityLabel="Week plan, seven columns" className="gap-2">
+        {/* WS13: drag a meal to another slot, and arrow keys between days (web only). */}
+        <GridDesktopInput byDay={byDay} />
         <View className="flex-row gap-2">
           {days.map((date) => (
             <View key={date} testID={`day-${date}`} className="min-w-0 flex-1">
@@ -181,7 +183,11 @@ function DayHeader({
     <Pressable
       testID={`open-day-${date}`}
       accessibilityRole="button"
-      accessibilityLabel={`${longDate(date)}${isToday ? ", today" : ""}. Open the day`}
+      // The label starts with what the button shows (WCAG 2.5.3): "Mon Nov 2" in a column header,
+      // the long date on a day card.
+      accessibilityLabel={`${
+        centered ? `${shortDayName(date)} ${shortMonthDay(date)}` : longDate(date)
+      }${isToday ? ", today" : ""}. Open the day`}
       onPress={() => onOpenDay(date)}
       className={`min-h-11 justify-center rounded-lg px-2 ${
         centered ? (isToday ? "items-center bg-brand" : "items-center bg-neutral-100") : ""
@@ -192,6 +198,7 @@ function DayHeader({
           <Text className={`text-xs font-semibold ${isToday ? "text-white" : "text-neutral-600"}`}>
             {shortDayName(date)}
           </Text>
+          {WEB_SPACE}
           <Text className={`text-sm font-bold ${isToday ? "text-white" : "text-neutral-900"}`}>
             {shortMonthDay(date)}
           </Text>
@@ -199,6 +206,7 @@ function DayHeader({
       ) : (
         <View className="flex-row items-center justify-between">
           <Text className="text-base font-semibold text-neutral-900">{longDate(date)}</Text>
+          {isToday ? WEB_SPACE : null}
           {isToday ? (
             <Text className="rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-white">
               Today

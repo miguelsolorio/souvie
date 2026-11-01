@@ -46,6 +46,8 @@ export function SegmentedControl<T extends string>({
             accessibilityRole="tab"
             accessibilityLabel={option.accessibilityLabel ?? option.label}
             accessibilityState={{ selected }}
+            // react-native-web writes aria-* props and ignores accessibilityState (WS13).
+            aria-selected={selected}
             onPress={() => {
               if (!selected) onChange(option.value);
             }}

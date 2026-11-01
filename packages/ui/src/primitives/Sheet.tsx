@@ -13,6 +13,59 @@ import {
 import { MIN_TARGET, sheetLayout } from "./logic";
 import { colors, radius, shadow, textStyle } from "./theme";
 
+/**
+ * On the web, react-native-web wraps every Modal in its own `role="dialog" aria-modal` element, so
+ * a Sheet whose panel is also a dialog is a dialog inside a dialog, and the outer one has no name
+ * (axe: aria-dialog-name). Focus starts in the wrapper (on the backdrop's Close button), so the
+ * wrapper is the dialog that counts. The panel therefore carries no dialog role on the web, and
+ * this gives the wrapper the Sheet's title as its name.
+ *
+ * react-native-web gives the wrapper its role a moment after the panel mounts, so this watches for
+ * the attribute and names the wrapper when it lands. It is a callback ref, called again whenever
+ * the title changes; the cleanup stops the watching (WS13).
+ */
+function nameModalWrapper(panel: unknown, title: string): (() => void) | undefined {
+  if (Platform.OS !== "web" || !panel) return undefined;
+  // This package has no DOM types, so name the few members used.
+  interface DomElement {
+    parentElement?: DomElement | null;
+    closest(selector: string): DomElement | null;
+    setAttribute(name: string, value: string): void;
+    ownerDocument: {
+      body: unknown;
+      defaultView?: {
+        MutationObserver: new (
+          callback: () => void,
+        ) => {
+          observe(target: unknown, options: object): void;
+          disconnect(): void;
+        };
+      } | null;
+    };
+  }
+  const element = panel as DomElement;
+
+  const name = (): boolean => {
+    const wrapper = element.parentElement?.closest('[role="dialog"]');
+    if (!wrapper) return false;
+    wrapper.setAttribute("aria-label", title);
+    return true;
+  };
+  if (name()) return undefined;
+
+  const Observer = element.ownerDocument.defaultView?.MutationObserver;
+  if (!Observer) return undefined;
+  const observer = new Observer(() => {
+    if (name()) observer.disconnect();
+  });
+  observer.observe(element.ownerDocument.body, {
+    attributes: true,
+    subtree: true,
+    attributeFilter: ["role"],
+  });
+  return () => observer.disconnect();
+}
+
 export interface SheetProps {
   visible: boolean;
   /** Called by the close button, a tap on the backdrop, Escape on the web, and Back on Android. */
@@ -56,10 +109,13 @@ export function Sheet({ visible, onClose, title, children, bottomInset = 0, test
             testID={testID ? `${testID}-backdrop` : undefined}
           />
           <View
+            ref={(node) => nameModalWrapper(node, title)}
             testID={testID}
-            role="dialog"
-            aria-modal
-            accessibilityLabel={title}
+            // On the web the Modal's wrapper is the dialog (see nameModalWrapper), so the panel
+            // is not a second one. On a phone the panel is the dialog, as before.
+            {...(Platform.OS === "web"
+              ? {}
+              : { role: "dialog" as const, "aria-modal": true, accessibilityLabel: title })}
             accessibilityViewIsModal
             style={[styles.panel, isDialog ? styles.panelDialog : styles.panelSheet]}
           >
@@ -70,7 +126,8 @@ export function Sheet({ visible, onClose, title, children, bottomInset = 0, test
               </Text>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Close ${title}`}
+                // The name starts with the button's visible word, so voice control ("click Done") finds it.
+                accessibilityLabel={`Done, close ${title}`}
                 onPress={onClose}
                 hitSlop={8}
                 style={({ pressed }) => [styles.close, pressed && styles.closePressed]}

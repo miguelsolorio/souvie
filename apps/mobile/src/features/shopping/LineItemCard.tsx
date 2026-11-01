@@ -5,7 +5,7 @@ import { Pressable, Text, View } from "react-native";
 import type { LineEdit, RunItem } from "./logic";
 
 /** The flags a line can carry, in a few words for the chip. */
-const FLAG_LABEL: Record<string, string> = {
+export const FLAG_LABEL: Record<string, string> = {
   allergen: "Allergy",
   allergen_may_contain: "Check the label",
   allergen_data_missing: "Check the label",

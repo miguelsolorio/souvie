@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "../../components/Button";
 import { LoadingScreen } from "../../components/Screen";
 import { confirmAction } from "../../lib/confirm";
+import { useIsDesktop } from "../../lib/useBreakpoint";
 import {
   inCartCount,
   isActive,
@@ -38,6 +39,8 @@ export function RunDetail({ runId, actions }: { runId: string; actions?: ReactNo
   const cancel = useCancelRun(runId);
   const [draft, setDraft] = useState<ReviewDraft>({});
   const [showTranscript, setShowTranscript] = useState(false);
+  // WS13: at the desktop breakpoint the column widens to hold the cart table (ProposedCart).
+  const desktop = useIsDesktop();
 
   const lines = items.data ?? [];
   const review = useMemo(() => preview(lines, draft), [lines, draft]);
@@ -70,7 +73,9 @@ export function RunDetail({ runId, actions }: { runId: string; actions?: ReactNo
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
-      <ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-4 py-4">
+      <ScrollView
+        contentContainerClassName={`mx-auto w-full gap-5 px-4 py-4 ${desktop ? "max-w-6xl" : "max-w-2xl"}`}
+      >
         <View testID="run-status" className="gap-2 rounded-xl bg-neutral-50 p-4">
           <View className="flex-row items-center gap-2">
             {working ? <ActivityIndicator color="#2F6B4F" /> : null}

@@ -6,7 +6,9 @@ import { Button } from "../../src/components/Button";
 import { LoadingScreen, Screen } from "../../src/components/Screen";
 import { CREATE_HOUSEHOLD_ROUTE } from "../../src/features/auth/routes";
 import { LIST_ROUTE, PANTRY_ROUTE } from "../../src/features/list/routes";
+import { NOTIFICATIONS_ROUTE } from "../../src/features/notifications/routes";
 import { PLAN_ROUTE } from "../../src/features/plan/routes";
+import { SCHEDULES_ROUTE } from "../../src/features/schedules/routes";
 import { SHOPPING_ROUTE } from "../../src/features/shopping/routes";
 
 interface Health {
@@ -82,6 +84,18 @@ export default function Menu() {
           label="Shopping runs"
           variant="secondary"
           onPress={() => router.push(SHOPPING_ROUTE)}
+        />
+        <Button
+          testID="open-schedules"
+          label="Shopping schedules"
+          variant="secondary"
+          onPress={() => router.push(SCHEDULES_ROUTE)}
+        />
+        <Button
+          testID="open-notifications"
+          label="Notifications"
+          variant="secondary"
+          onPress={() => router.push(NOTIFICATIONS_ROUTE)}
         />
         <Button
           testID="open-recipes"

@@ -34,6 +34,10 @@ export default function AppLayout() {
           {/* WS09: shopping runs. */}
           <Stack.Screen name="shopping/index" options={{ title: "Shopping runs" }} />
           <Stack.Screen name="shopping/[id]" options={{ title: "Shopping run" }} />
+          {/* WS11: weekly shopping schedules, and which pushes you get. */}
+          <Stack.Screen name="schedules/index" options={{ title: "Shopping schedules" }} />
+          <Stack.Screen name="schedules/[id]" options={{ title: "Schedule" }} />
+          <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
           <Stack.Screen name="menu" options={{ title: "Menu" }} />
           <Stack.Screen name="household/create" options={{ title: "Create household" }} />
           <Stack.Screen name="household/settings" options={{ title: "Household" }} />

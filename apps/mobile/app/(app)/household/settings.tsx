@@ -18,9 +18,11 @@ import { TextField } from "../../../src/components/TextField";
 import { CREATE_HOUSEHOLD_ROUTE, HOME_ROUTE } from "../../../src/features/auth/routes";
 import { InviteSection } from "../../../src/features/household/InviteSection";
 import { MemberRow } from "../../../src/features/household/MemberRow";
+import { NOTIFICATIONS_ROUTE } from "../../../src/features/notifications/routes";
 import { RecheckNoticeLine } from "../../../src/features/onboarding/components";
 import { KrogerSettingsSection } from "../../../src/features/onboarding/KrogerSettingsSection";
 import { EDIT_START_HREF } from "../../../src/features/onboarding/onboardingState";
+import { SCHEDULES_ROUTE } from "../../../src/features/schedules/routes";
 import { Tier3SettingsSection } from "../../../src/features/tier3/Tier3SettingsSection";
 import { confirmAction } from "../../../src/lib/confirm";
 
@@ -177,6 +179,24 @@ export default function HouseholdSettingsScreen() {
 
       <Section title="Safeway, Albertsons, Haggen and Costco">
         <Tier3SettingsSection householdId={current.id} />
+      </Section>
+
+      <Section title="Shopping schedules and notifications">
+        <Text className="text-sm text-neutral-600">
+          Have the shopper fill your cart on its own each week, and choose which pushes you get.
+        </Text>
+        <Button
+          testID="open-schedules"
+          label="Shopping schedules"
+          variant="secondary"
+          onPress={() => router.push(SCHEDULES_ROUTE)}
+        />
+        <Button
+          testID="open-notifications"
+          label="Notifications and quiet hours"
+          variant="secondary"
+          onPress={() => router.push(NOTIFICATIONS_ROUTE)}
+        />
       </Section>
 
       <ErrorText>{error}</ErrorText>

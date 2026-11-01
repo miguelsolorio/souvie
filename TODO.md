@@ -76,6 +76,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 
 ## 7. Wave 6: everything that consumes the agent
 
+- [ ] WS08 demo round on `ws/08b-demo` (Sonnet, dispatched 2026-11-01): a watchable demo recording under 60 s for checkpoint 5; review, merge.
 - [ ] **Human checkpoint 5** gates WS10 only: Miguel accepts the WS08 host demo (recording and screenshot sent 2026-10-31: the agent drives the test page in the real WebView on the iPhone 17 Pro Simulator; consent and disconnect are covered by tests against the real SQL, not yet by a signed-in device run). The other four may start without it.
 - [x] Brief corrections written for all five (2026-10-31). WS11, WS12, WS13, WS15 (sonnet) dispatched 2026-10-31; WS10 (opus) dispatches when checkpoint 5 clears.
 - [x] WS12 merged 3b47cae (2026-11-01); migration on hosted, `export-data` redeployed. WS11 in its fix round (PR #29); WS13 (PR #31) and WS15 (PR #30) in review.

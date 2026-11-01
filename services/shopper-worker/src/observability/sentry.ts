@@ -6,9 +6,12 @@
 // `household_id` tag and a `run_id` tag when the failure belongs to a run, and the stack. Nothing
 // about a person: `scrubEvent` runs in beforeSend and beforeSendTransaction and removes the user,
 // the request body, headers and cookies, query strings, and every email, token, key and URL with
-// credentials, from every string (scrub.ts). The worker never sends a prompt, a model answer, a
-// recipe or a list: callers pass ids and counts as `extra`.
-import { scrubEvent, scrubValue } from "./scrub.ts";
+// credentials, from every string (scrub.ts). Spans are scrubbed too: the SDK runs with the static
+// trace lifecycle (the transaction carries its spans, and beforeSendTransaction runs) and
+// `beforeSendSpan`, and `scrubSpanData` removes the query string of an outbound request, where a
+// search term would ride. The worker never sends a prompt, a model answer, a recipe or a list:
+// callers pass ids and counts as `extra`.
+import { scrubBreadcrumb, scrubEvent, scrubSpan, scrubValue } from "./scrub.ts";
 
 export interface EventContext {
   householdId?: string | null | undefined;
@@ -65,6 +68,11 @@ export interface SentryLike {
     }) => T,
   ): T;
   flush(timeoutMs?: number): Promise<boolean>;
+  /**
+   * Marks a beforeSendSpan callback as taking the static span format. The real SDK has it, and
+   * with `traceLifecycle: 'static'` a callback that is not wrapped is never called.
+   */
+  withStaticSpan?<T>(callback: (span: T) => T): unknown;
 }
 
 export interface SentryEnv {
@@ -90,6 +98,37 @@ export function tagsOf(context: EventContext | undefined, extraTags: Record<stri
   if (context?.householdId) tags.household_id = context.householdId;
   if (context?.runId) tags.run_id = context.runId;
   return tags;
+}
+
+/**
+ * The options `init` receives. Exported so a test can start the real SDK with the same ones and a
+ * transport of its own.
+ *
+ * `traceLifecycle: 'static'` is not a detail. @sentry/node 11 defaults to 'stream', which sends
+ * each span on its own and ignores beforeSendTransaction, so `scrubEvent` would never see a span.
+ */
+export function sentryInitOptions(
+  env: SentryEnv,
+  sdk: Pick<SentryLike, "withStaticSpan"> = {},
+): Record<string, unknown> {
+  const dsn = env.SENTRY_DSN?.trim();
+  const release = releaseOf(env);
+  const scrubChildSpan = (span: Record<string, unknown>) => scrubSpan(span);
+  return {
+    dsn,
+    ...(release ? { release } : {}),
+    environment: env.SENTRY_ENVIRONMENT?.trim() || env.NODE_ENV || "development",
+    // No IP, no cookies, no request bodies: this is a worker with no end users.
+    sendDefaultPii: false,
+    // Volume is one transaction per run phase, so every one is kept.
+    tracesSampleRate: 1,
+    traceLifecycle: "static",
+    maxBreadcrumbs: 30,
+    beforeSend: (event: Record<string, unknown>) => scrubEvent(event),
+    beforeSendTransaction: (event: Record<string, unknown>) => scrubEvent(event),
+    beforeSendSpan: sdk.withStaticSpan ? sdk.withStaticSpan(scrubChildSpan) : scrubChildSpan,
+    beforeBreadcrumb: (breadcrumb: Record<string, unknown>) => scrubBreadcrumb(breadcrumb),
+  };
 }
 
 /** A reporter over an initialized SDK. `init` is the caller's job; see `createSentryReporter`. */
@@ -174,21 +213,7 @@ export async function createSentryReporter(
   if (!dsn) return noopReporter;
   try {
     const sdk = options.sdk ?? ((await import("@sentry/node")) as unknown as SentryLike);
-    const release = releaseOf(env);
-    sdk.init({
-      dsn,
-      ...(release ? { release } : {}),
-      environment: env.SENTRY_ENVIRONMENT?.trim() || env.NODE_ENV || "development",
-      // No IP, no cookies, no request bodies: this is a worker with no end users.
-      sendDefaultPii: false,
-      // Volume is one transaction per run phase, so every one is kept.
-      tracesSampleRate: 1,
-      maxBreadcrumbs: 30,
-      beforeSend: (event: Record<string, unknown>) => scrubEvent(event),
-      beforeSendTransaction: (event: Record<string, unknown>) => scrubEvent(event),
-      beforeBreadcrumb: (breadcrumb: Record<string, unknown>) =>
-        scrubValue(breadcrumb) as Record<string, unknown>,
-    });
+    sdk.init(sentryInitOptions({ ...env, SENTRY_DSN: dsn }, sdk));
     return reporterOver(sdk);
   } catch (error) {
     options.onWarning?.(

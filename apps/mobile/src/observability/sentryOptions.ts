@@ -7,7 +7,7 @@
 // token and key from every string (scrub.ts). No screenshot and no view hierarchy is attached,
 // because a screen shows a household's recipes and lists. Performance monitoring and session
 // replay are out of scope for v1, so the sample rates are zero.
-import { scrubEvent, scrubValue } from "./scrub";
+import { scrubBreadcrumb, scrubEvent } from "./scrub";
 
 export interface SentryEnv {
   dsn?: string | undefined;
@@ -34,7 +34,6 @@ export function sentryInitOptions(env: SentryEnv): Record<string, unknown> | nul
     enableUserInteractionTracing: false,
     maxBreadcrumbs: 30,
     beforeSend: (event: Record<string, unknown>) => scrubEvent(event),
-    beforeBreadcrumb: (breadcrumb: Record<string, unknown>) =>
-      scrubValue(breadcrumb) as Record<string, unknown>,
+    beforeBreadcrumb: (breadcrumb: Record<string, unknown>) => scrubBreadcrumb(breadcrumb),
   };
 }

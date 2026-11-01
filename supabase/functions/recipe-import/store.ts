@@ -49,6 +49,35 @@ export interface DownloadedImage {
   contentType: string;
 }
 
+/** What makes two recipes "the same" to a household (packages/recipe-import/src/dedupe.ts). */
+export interface DuplicateCheck {
+  /** `normalizeSourceUrl(link)`. When set, only the link is compared. */
+  sourceUrlNormalized?: string | undefined;
+  /** Used when there is no link. `pattern` is an ilike prefilter, `isSame` the exact test. */
+  title?: { pattern: string; isSame: (candidate: string) => boolean } | undefined;
+}
+
+export interface ExistingRecipe {
+  recipeId: string;
+  /** How it was recognised. A same-link match cannot be overridden: the database allows one live recipe per link. */
+  matchedBy: "url" | "title";
+}
+
+/**
+ * The database refused the recipe because the household already has a live one with the same
+ * link (the unique index recipes_household_source_url_normalized_uq). Two imports raced past the
+ * lookup; the handler answers as if the lookup had found it.
+ */
+export class DuplicateSaveError extends Error {
+  constructor() {
+    super("a recipe with this link already exists in the household");
+    this.name = "DuplicateSaveError";
+  }
+}
+
+const UNIQUE_VIOLATION = "23505";
+const SOURCE_URL_INDEX = "recipes_household_source_url_normalized_uq";
+
 export interface ImportStore {
   resolveHousehold(
     authHeader: string,
@@ -59,7 +88,19 @@ export interface ImportStore {
   recentJobCount(householdId: string, sinceIso: string): Promise<number>;
   createJob(job: NewJob): Promise<string>;
   finishJob(jobId: string, householdId: string, update: JobUpdate): Promise<void>;
-  /** Inserts the recipe and its ingredient lines as the caller. Returns the recipe id. */
+  /**
+   * A live recipe of the household that matches `check`, read as the caller, or null. Throws on a
+   * database error; the handler decides whether to carry on without the answer.
+   */
+  findDuplicate(
+    authHeader: string,
+    householdId: string,
+    check: DuplicateCheck,
+  ): Promise<ExistingRecipe | null>;
+  /**
+   * Inserts the recipe and its ingredient lines as the caller. Returns the recipe id. Throws
+   * `DuplicateSaveError` when the household already has a live recipe with the same link.
+   */
   saveRecipe(authHeader: string, input: SaveRecipeInput): Promise<string>;
   /** Reads an object from the recipe-images bucket as the caller. Null when it cannot be read. */
   downloadImage(authHeader: string, path: string): Promise<DownloadedImage | null>;
@@ -132,6 +173,40 @@ export class SupabaseImportStore implements ImportStore {
     if (error) throw new Error(`import_jobs update failed: ${error.message}`);
   }
 
+  async findDuplicate(
+    authHeader: string,
+    householdId: string,
+    check: DuplicateCheck,
+  ): Promise<ExistingRecipe | null> {
+    const db = this.userClient(authHeader);
+    if (check.sourceUrlNormalized) {
+      const { data, error } = await db
+        .from("recipes")
+        .select("id")
+        .eq("household_id", householdId)
+        .is("deleted_at", null)
+        .eq("source_url_normalized", check.sourceUrlNormalized)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw new Error(`recipes duplicate lookup failed: ${error.message}`);
+      return data ? { recipeId: (data as { id: string }).id, matchedBy: "url" } : null;
+    }
+    if (check.title) {
+      const { data, error } = await db
+        .from("recipes")
+        .select("id, title")
+        .eq("household_id", householdId)
+        .is("deleted_at", null)
+        .ilike("title", check.title.pattern)
+        .limit(25);
+      if (error) throw new Error(`recipes duplicate lookup failed: ${error.message}`);
+      const rows = (data ?? []) as Array<{ id: string; title: string }>;
+      const match = rows.find((row) => check.title?.isSame(row.title));
+      return match ? { recipeId: match.id, matchedBy: "title" } : null;
+    }
+    return null;
+  }
+
   async saveRecipe(authHeader: string, input: SaveRecipeInput): Promise<string> {
     const db = this.userClient(authHeader);
     const { recipe } = input;
@@ -155,6 +230,9 @@ export class SupabaseImportStore implements ImportStore {
       })
       .select("id")
       .single();
+    if (error?.code === UNIQUE_VIOLATION && error.message.includes(SOURCE_URL_INDEX)) {
+      throw new DuplicateSaveError();
+    }
     if (error || !data) throw new Error(`recipes insert failed: ${error?.message ?? "no row"}`);
     const recipeId = (data as { id: string }).id;
 

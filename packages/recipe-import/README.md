@@ -35,6 +35,15 @@ if (result.ok) {
 - **Repeated lines.** The library collects ingredients in a `Set`, so "1/2 teaspoon salt" listed for the batter and again for the filling comes back once. The page's own `recipeIngredient` list is used to put repeats back, because a shopping list should count them.
 - **Bot checks.** A page that is a Cloudflare or Incapsula interstitial, or a 401, 403, 429, or 451, is `blocked`, and the model is not called on it.
 
+### Telling whether the household already has a recipe
+
+`src/dedupe.ts` is pure and has no imports, so the app reaches it through `@mp/recipe-import/dedupe` without the scrapers or the Anthropic SDK.
+
+- `normalizeSourceUrl(link)`: trim, drop the fragment, lowercase the scheme and host, drop tracking parameters (`utm_*`, `fbclid`, `gclid`, `dclid`, `msclkid`, `mc_cid`, `mc_eid`, `igshid`, `igsh`, `ref_src`, `_ga`, `oly_*`: the list `cleanSourceUrl` strips) and empty ones, strip trailing slashes from the path. The path keeps its case and the rest of the query its order. The SQL twin is `public.normalize_source_url`, which fills `recipes.source_url_normalized`; `dedupe.fixtures.ts` is one list of links both are tested against.
+- `normalizeTitle(title)` and `titleSearchPattern(title)`: case and spacing folded, and an `ilike` prefilter to find candidates. Used only when a recipe has no link.
+
+Ingredient lines are not de-duplicated. A recipe may list the same line twice and the grocery list counts both ("Repeated lines" above), so the importers' lines are stored as they come. The "duplicate" ingredient lines that showed on the recipe screen were the rows the parser adds for a line such as "salt and pepper to taste"; the screens show those once (`collapseSplitLines` in the app).
+
 ### Rules the code enforces
 
 - **No video platforms (R11).** `importFromUrl` refuses Instagram, TikTok, YouTube, Facebook, and Vimeo links before any request, including on a redirect hop. `importFromCaption` takes text and never fetches. Tests assert zero `fetch` calls (`src/url.test.ts`, `evals/import.eval.ts`).

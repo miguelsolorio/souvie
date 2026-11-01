@@ -1,8 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
-import { SupabaseImportStore } from "./store.ts";
+import { DuplicateSaveError, SupabaseImportStore } from "./store.ts";
 
-type Result = { data?: unknown; error?: { message: string } | null; count?: number | null };
+type Result = {
+  data?: unknown;
+  error?: { message: string; code?: string } | null;
+  count?: number | null;
+};
 type Call = { table: string; op: string; args: unknown[] };
 
 /**
@@ -80,7 +84,13 @@ class Chain implements PromiseLike<Result> {
   limit(...args: unknown[]) {
     return this.record("limit", args);
   }
+  ilike(...args: unknown[]) {
+    return this.record("ilike", args);
+  }
   single() {
+    return this.then((r) => r);
+  }
+  maybeSingle() {
     return this.then((r) => r);
   }
   // biome-ignore lint/suspicious/noThenProperty: the real PostgREST builder is awaitable, and so is this.
@@ -305,6 +315,114 @@ describe("saveRecipe", () => {
     await expect(
       s.saveRecipe("Bearer jwt", { householdId: HOUSEHOLD, recipe: RECIPE, sourceType: "url" }),
     ).rejects.toThrow(/denied/);
+  });
+
+  it("tells the unique index on a recipe's link from any other failure", async () => {
+    const { s, service, user } = store();
+    user.queue("recipes", "insert", {
+      data: null,
+      error: {
+        code: "23505",
+        message:
+          'duplicate key value violates unique constraint "recipes_household_source_url_normalized_uq"',
+      },
+    });
+    await expect(
+      s.saveRecipe("Bearer jwt", { householdId: HOUSEHOLD, recipe: RECIPE, sourceType: "url" }),
+    ).rejects.toBeInstanceOf(DuplicateSaveError);
+    // No lines were written and there is nothing to clean up.
+    expect(user.calls.some((c) => c.table === "recipe_ingredients")).toBe(false);
+    expect(service.calls).toHaveLength(0);
+
+    // Some other unique violation is an ordinary failure.
+    user.queue("recipes", "insert", {
+      data: null,
+      error: {
+        code: "23505",
+        message: 'duplicate key value violates unique constraint "recipes_pkey"',
+      },
+    });
+    const other = await s
+      .saveRecipe("Bearer jwt", { householdId: HOUSEHOLD, recipe: RECIPE, sourceType: "url" })
+      .catch((e) => e);
+    expect(other).toBeInstanceOf(Error);
+    expect(other).not.toBeInstanceOf(DuplicateSaveError);
+  });
+});
+
+describe("findDuplicate", () => {
+  it("looks a link up by its normalized form among the household's live recipes, as the caller", async () => {
+    const { s, service, user, seen } = store();
+    user.queue("recipes", "select", { data: { id: "recipe-9" }, error: null });
+    const found = await s.findDuplicate("Bearer jwt", HOUSEHOLD, {
+      sourceUrlNormalized: "https://example.test/r",
+    });
+    expect(found).toEqual({ recipeId: "recipe-9", matchedBy: "url" });
+    expect(seen).toEqual(["Bearer jwt"]);
+    expect(service.calls).toHaveLength(0);
+    expect(user.calls).toEqual(
+      expect.arrayContaining([
+        { table: "recipes", op: "eq", args: ["household_id", HOUSEHOLD] },
+        { table: "recipes", op: "is", args: ["deleted_at", null] },
+        { table: "recipes", op: "eq", args: ["source_url_normalized", "https://example.test/r"] },
+      ]),
+    );
+  });
+
+  it("returns null when the household has no such link", async () => {
+    const { s, user } = store();
+    user.queue("recipes", "select", { data: null, error: null });
+    expect(
+      await s.findDuplicate("Bearer jwt", HOUSEHOLD, {
+        sourceUrlNormalized: "https://example.test/r",
+      }),
+    ).toBeNull();
+  });
+
+  it("compares titles exactly among the rows its ilike prefilter returns", async () => {
+    const { s, user } = store();
+    user.queue("recipes", "select", {
+      data: [
+        { id: "recipe-1", title: "Lemon roast chicken" },
+        { id: "recipe-2", title: "LEMON   chicken" },
+      ],
+      error: null,
+    });
+    const found = await s.findDuplicate("Bearer jwt", HOUSEHOLD, {
+      title: {
+        pattern: "%lemon%chicken%",
+        isSame: (c) => c.replace(/\s+/g, " ").toLowerCase() === "lemon chicken",
+      },
+    });
+    expect(found).toEqual({ recipeId: "recipe-2", matchedBy: "title" });
+    expect(user.calls).toContainEqual({
+      table: "recipes",
+      op: "ilike",
+      args: ["title", "%lemon%chicken%"],
+    });
+    expect(user.calls).toContainEqual({ table: "recipes", op: "is", args: ["deleted_at", null] });
+  });
+
+  it("finds nothing when no row's title is the same, and with nothing to compare", async () => {
+    const { s, user } = store();
+    user.queue("recipes", "select", {
+      data: [{ id: "recipe-1", title: "Lemon roast chicken" }],
+      error: null,
+    });
+    expect(
+      await s.findDuplicate("Bearer jwt", HOUSEHOLD, {
+        title: { pattern: "%lemon%chicken%", isSame: () => false },
+      }),
+    ).toBeNull();
+    expect(await s.findDuplicate("Bearer jwt", HOUSEHOLD, {})).toBeNull();
+  });
+
+  it("throws on a database error so the handler can decide to carry on", async () => {
+    const { s, user } = store();
+    user.queue("recipes", "select", { data: null, error: { message: "boom" } });
+    await expect(
+      s.findDuplicate("Bearer jwt", HOUSEHOLD, { sourceUrlNormalized: "https://example.test/r" }),
+    ).rejects.toThrow(/boom/);
   });
 });
 

@@ -1,6 +1,6 @@
 # parse-ingredients
 
-Turns free-text ingredient lines into structured rows with `@mp/ingredient-parser`. Called by the recipe import (WS02) and the app after a user edits an ingredient list.
+Turns free-text ingredient lines into structured rows with `@mp/ingredient-parser`. Called by the app (`packages/db`) with `{ recipeId }` after a recipe is imported, created or edited, and by the "Match ingredients" button.
 
 Requires a signed-in user: send the user's JWT as `Authorization: Bearer <jwt>` (`verify_jwt` stays on).
 

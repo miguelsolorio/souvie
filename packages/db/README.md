@@ -69,6 +69,33 @@ How a list write behaves, and why:
 - The list, its items and the pantry are persisted to device storage (`meta.persist`), with the household in every key. Nothing here touches retailer data.
 - A remote item change is applied to the cache from the Realtime payload (no refetch). A payload that does not parse, or a burst, becomes one debounced invalidation of `['grocery-list', householdId]`.
 
+## Recipes (WS02)
+
+| File | What it holds |
+|---|---|
+| `src/hooks/useRecipes.ts` | `useRecipes(householdId, { includeCatalog? })`: the list, newest first |
+| `src/hooks/useRecipe.ts` | `useRecipe(id)`, `useCreateRecipe()`, `useUpdateRecipe(id)`, `useDeleteRecipe()` (soft delete), the draft checks, `findDuplicateRecipe`, and the ingredient matching below |
+| `src/hooks/useImportRecipe.ts` | `useImportRecipe()` calls the `recipe-import` Edge Function; `ImportError`, `importErrorMessage`, `uploadRecipeImage` |
+
+### Matching ingredient lines
+
+A recipe is written with `raw_text` only. `parse-ingredients` fills `ingredient_id`, `qty`, `unit`, `prep_note`, `optional` and `parse_confidence`, and the planner and the grocery list read those columns, so every write is followed by that call:
+
+| Write | Then |
+|---|---|
+| `useImportRecipe` saved a recipe (link, pasted text) | `parse-ingredients` with `{ recipeId }`, awaited |
+| `useCreateRecipe` (a typed recipe, a confirmed photo or caption draft) | the same |
+| `useUpdateRecipe`, when the edit added a line or changed a line's text | the same. The edit clears the parsed fields of a changed line first, which is what makes the function read it again |
+| the "Match ingredients" button on the recipe screen (`useMatchIngredients`) | the same, for a household recipe with a line whose `parse_confidence` is null (`needsIngredientMatch`) |
+
+Why from the app and not from `recipe-import`: typed recipes, confirmed drafts and edits never pass through that function, so the app has to make the call for them anyway; one caller means one path to test. The call carries the signed-in person's own token (`headers.Authorization`), so row level security decides which rows the function may write, and it is idempotent: the function skips lines that already have a `parse_confidence`, so a repeat does nothing.
+
+Matching never blocks or fails a save. `parseAfterWrite` waits for it up to `PARSE_BUDGET_MS` (25 s) so the recipe opens matched; if it takes longer, the recipe opens as it is, the call carries on, and the screens refresh when it ends. A failure comes back as a value, the recipe stays saved, and the recipe screen offers "Match ingredients" whenever a line is unread. A starter (catalog) recipe is never sent: it arrives matched and the database would refuse the writes (`matchRecipeIngredients`).
+
+### Adding a recipe twice
+
+`recipes.source_url_normalized` (filled by a trigger) and a partial unique index keep one live recipe per link in a household. `findDuplicateRecipe` is the lookup the app makes before it saves a typed or confirmed recipe: by normalized link when it has one, else by title with case and spacing folded. The keys come from `@mp/recipe-import/dedupe`, the same functions the `recipe-import` function uses; this package takes them as arguments and does not depend on the importers. `createRecipe` throws `RecipeError("duplicate")` with the existing recipe's id and `matchedBy`. `allowDuplicate` lets a same-title recipe through and never a same-link one.
+
 ## Types
 
 `src/types.generated.ts` is generated, not edited. The committed file is the output of `supabase gen types typescript` from the CI stack, formatted by Biome. CI regenerates it on every run and fails if it differs from the committed file, and uploads the fresh copy as the `types.generated.ts` artifact. A migration that changes a table or function therefore needs the regenerated file in the same branch.

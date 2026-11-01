@@ -13,6 +13,7 @@ import {
   type RecipeWithIngredients,
 } from "@mp/core";
 import { checkDraft, type DraftIngredient, type RecipeDraft } from "@mp/db";
+import { collapseSplitLines } from "./format";
 
 /** An existing ingredient line, so an edit can keep the parsed fields of lines left untouched. */
 export interface ExistingLine {
@@ -243,7 +244,7 @@ export function draftFromRecipe(recipe: RecipeWithIngredients): RecipeDraft {
     tags: recipe.tags,
     cuisine: recipe.cuisine ?? undefined,
     nutrition: recipe.nutrition ?? undefined,
-    ingredients: recipe.ingredients.map((line) => ({
+    ingredients: collapseSplitLines(recipe.ingredients).map((line) => ({
       id: line.id,
       rawText: line.raw_text,
       ...(line.group_name ? { groupName: line.group_name } : {}),
@@ -253,7 +254,7 @@ export function draftFromRecipe(recipe: RecipeWithIngredients): RecipeDraft {
 }
 
 export function existingLines(recipe: RecipeWithIngredients): ExistingLine[] {
-  return recipe.ingredients.map((line) => ({
+  return collapseSplitLines(recipe.ingredients).map((line) => ({
     id: line.id,
     rawText: line.raw_text,
     groupName: line.group_name ?? undefined,
@@ -273,16 +274,29 @@ export interface FormErrors {
   form?: string;
 }
 
-export function formErrors(form: FormState): FormErrors {
+export interface FormErrorOptions {
+  /**
+   * Servings must be a whole number. The Write tab asks for it; the edit screen and the review of
+   * an imported draft do not, because an imported recipe can carry "1 1/2" or "4.5".
+   */
+  wholeServings?: boolean;
+}
+
+export function formErrors(form: FormState, options: FormErrorOptions = {}): FormErrors {
   const errors: FormErrors = {};
   if (!form.title.trim()) errors.title = "Give the recipe a title.";
   if (textToIngredients(form.ingredients).length === 0) {
     errors.ingredients = "Add at least one ingredient, one per line.";
   }
   const servings = form.servings.trim();
-  if (servings && (parseAmount(servings) === undefined || (parseAmount(servings) ?? 0) <= 0)) {
-    errors.servings = "Use a number such as 4 or 1 1/2.";
-  } else if ((parseAmount(servings) ?? 0) > RECIPE_LIMITS.servingsMax) {
+  const amount = parseAmount(servings);
+  if (servings && options.wholeServings && !/^\d+$/.test(servings)) {
+    errors.servings = "Use a whole number such as 4.";
+  } else if (servings && (amount === undefined || amount <= 0)) {
+    errors.servings = options.wholeServings
+      ? "Use a whole number such as 4."
+      : "Use a number such as 4 or 1 1/2.";
+  } else if ((amount ?? 0) > RECIPE_LIMITS.servingsMax) {
     errors.servings = "That is too many servings.";
   }
   for (const key of ["prepMin", "cookMin"] as const) {

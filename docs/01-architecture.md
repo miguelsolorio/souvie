@@ -130,7 +130,6 @@ meal-planner/
 | `retailer-oauth` | WS07 | Kroger OAuth callback; tokens into Vault |
 | `llm-proxy` | WS08 | Server-side model calls for the on-device agent (Tier 3 Mode A), with cost caps and `ai_runs` logging |
 | `run-approve` | WS09 | Record review decisions and resume a run |
-| `send-push` | WS11 | Fan out one notification to a household's devices, honoring quiet hours |
 | `export-data` | WS01, extended by WS12 | Export everything a user owns |
 
 ## Deep links and storage buckets
@@ -252,7 +251,7 @@ Client calls `suggest` with the household id and week. The function retrieves ca
 Client calls `list-build` for a plan. `packages/core/list` aggregates `recipe_ingredients` across entries scaled by servings, normalizes units, removes pantry items, rounds to purchasable quantities, groups by aisle, and writes `grocery_lists` and `grocery_list_items`.
 
 ### Shopping run
-Client or Cron inserts a `shopping_runs` row with status `queued` and enqueues a pgmq message. The worker claims the message, loads the list and the retailer connection, and runs the agent: build the proposed cart from catalog searches, write `shopping_run_items`, set status `needs_review` or `cart_ready`, push a notification. After the user approves, the worker pushes cart adds through the adapter (ledger-driven, idempotent), sets `cart_ready`, and deep-links the user to the retailer checkout. In Tier 3 the adapter continues through slot selection and checkout under policy.
+A client taps Shop this list, or the pg_cron job `enqueue-due-scheduled-runs` (every five minutes, WS11) finds a `scheduled_runs` row whose `next_run_at` has passed and calls `enqueue_due_scheduled_runs()`. Either path goes through `enqueue_shopping_run`, which inserts a `shopping_runs` row with status `queued` and enqueues a pgmq message; a scheduled run carries `trigger = 'scheduled'` with `auto_checkout` forced off, and a schedule that cannot start (no list for the week, an inactive or Tier 3 connection, a run in progress, the daily limit, more than six hours late) is skipped with a `schedule_skipped` notification instead of a failed run. The worker claims the message, loads the list and the retailer connection, and runs the agent: build the proposed cart from catalog searches, write `shopping_run_items`, set status `needs_review` or `cart_ready`, and notify the household: every push goes through each member's `notification_preferences` and the household's quiet hours (a held push waits in `notification_outbox`, which the worker drains; a held review is marked urgent). There is no `send-push` function. After the user approves, the worker pushes cart adds through the adapter (ledger-driven, idempotent), sets `cart_ready`, and deep-links the user to the retailer checkout. In Tier 3 the adapter continues through slot selection and checkout under policy.
 
 ### Realtime and offline
 Shared lists and run progress use Supabase Realtime on `grocery_list_items` and `shopping_runs`. The grocery list screen persists the TanStack Query cache to device storage, applies check-offs optimistically, and reconciles on reconnect. Check-off is last-write-wins per item, which is acceptable because two people rarely check the same item within seconds.

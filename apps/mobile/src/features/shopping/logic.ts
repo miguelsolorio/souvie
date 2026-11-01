@@ -191,7 +191,9 @@ export function progressText(
         ? `Finding products: ${Math.min(done, total)} of ${total} items.`
         : "Finding products.";
     case "needs_review":
-      return "Check the cart, change anything you like, then approve. Nothing is in your store cart yet.";
+      return options.itemsInCart
+        ? "Check the cart, change anything you like, then approve. Some items are already in your store cart."
+        : "Check the cart, change anything you like, then approve. Nothing is in your store cart yet.";
     case "cart_ready":
       return "Your store cart is filled. Pick a time and pay in the store's app.";
     case "checking_out":
@@ -201,8 +203,19 @@ export function progressText(
     case "failed":
       return failureText(run.error, options.itemsInCart);
     case "cancelled":
-      return "This run was cancelled.";
+      return cancelledText(options.itemsInCart);
   }
+}
+
+/**
+ * A cancelled run, in words. A run that pushed part of its cart and then timed out in review (or
+ * was cancelled) leaves those items in the store cart, and a new run starts from an empty ledger
+ * and would add them again, so say so, as for a failed run.
+ */
+export function cancelledText(itemsInCart = false): string {
+  return itemsInCart
+    ? "This run was cancelled. Some items may already be in your store cart, so check it first."
+    : "This run was cancelled.";
 }
 
 /**

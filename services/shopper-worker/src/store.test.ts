@@ -230,7 +230,9 @@ describe("push notifications", () => {
     expect(
       pushText({ type: "cart_ready", runId: "r", storeName: "QFC Duvall", subtotalUsd: 142.17 })
         .body,
-    ).toBe("Cart ready at QFC Duvall, $142.17. Review and pay.");
+    ).toBe(
+      "Your cart at QFC Duvall is ready ($142.17). Tap to review, then pick a pickup time and pay in the store's app.",
+    );
     expect(pushText({ type: "needs_review", runId: "r", count: 3 }).body).toBe(
       "3 items need your call",
     );

@@ -4,8 +4,9 @@
 //   plan      not approved yet: load the list, plan with @mp/agent, write the proposal, move to
 //             needs_review, notify ("3 items need your call")
 //   push      approved: push the cart through the ledger, move to cart_ready with the hand-off
-//             link, notify ("Cart ready at QFC Duvall, $142.17. Review and pay."); quota or the
-//             budget send it back to needs_review
+//             link, notify ("Your cart at QFC Duvall is ready ($142.17). Tap to review, then pick a
+//             pickup time and pay in the store's app."); quota or the budget send it back to
+//             needs_review
 //
 // A shutdown hands the run back (queued) and the message becomes visible at once. A failed
 // attempt is retried twice; the third failure dead-letters the message and fails the run with the

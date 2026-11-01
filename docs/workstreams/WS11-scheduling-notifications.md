@@ -145,3 +145,16 @@ WS11-specific:
 6. **Tests from the WS09 review, yours now:** a hook test for `useSignOut` deleting this device's token (plus the sign-out-before-registration and forced sign-out paths); pin the review-timeout lower bound in pgTAP (fresh run 47 hours back, stale 49); a hook test for `useRunRealtime`'s key overlay; extend the in-cart warning to `cancelled` runs with `cart_qty > 0`.
 7. **Docs.** docs/03 §8 (not §4.8); docs/04 "Tier 3" (not §5.5); docs/01 "Why a separate worker" and the "Shopping run" key flow.
 
+
+## Follow-ups recorded after review (2026-11-01, merged 248bc01)
+
+Non-blocking items from the two review rounds, for a later round or for the workstreams named:
+1. pgTAP assertion 258 ("the household keeps its schedule") is vacuous for the schedule it creates: a schedule on the deleted person's own connection is removed by the connection cascade, so the subselect is null and `is(null, null)` passes. Assert the row count, run the `created_by` check on a schedule that uses another member's connection, and state the own-connection case explicitly.
+2. A failed hold write in `Notifier.notifyRun` drops the push with a warning and no retry (matches WS09's old token-read path). Retry or park the row before giving up.
+3. Two reviews held in one night both go out at quiet-hours end; the first is stale in meaning.
+4. Cold-start forced sign-out: if the process was killed before it saw signed-in turn into signed-out, `registered` is empty (`pushToken.ts:20`) and the token row stays until someone signs in on that phone.
+5. `skip locked` on the scheduler claim and the outbox claim cannot be exercised on PGlite or by the one-worker CI smoke; the worker README records it. A two-connection CI step would pin it.
+6. Contract change request accepted in principle: `households.weekly_nudge jsonb {weekday 1..7, time "HH:MM"}` with a CHECK and an owner update grant, read by `enqueue_weekly_nudges` with the Thursday 17:00 fallback. Lands as an orchestrator migration (CCR10) when WS06's onboarding asks for it.
+7. For WS15's runbook: the sweeper's at-least-once window, an alert on unsent outbox rows, and the cron jobs `enqueue-due-scheduled-runs`, `notification-generators` and `notification-outbox-prune`.
+8. WS06 onboarding calls `createDefaultSchedule` when the person accepts Saturday 9:00; WS12 swaps the body of `history_time_zone()` for `households.timezone`, now on main.
+9. The worker is not deployed anywhere, so on the hosted project the scheduler can enqueue runs and generators can write outbox rows that nothing drains until the worker runs.

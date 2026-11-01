@@ -16,6 +16,7 @@ import {
   parseLinesGrouped,
 } from "../../../packages/ingredient-parser/src/index.ts";
 import { createDailyCapGuard, logAiRun } from "../../../packages/llm/src/index.ts";
+import { reportError } from "../_shared/sentry.ts";
 import { createClient } from "./client.ts";
 import { withCostGuard } from "./cost-guard.ts";
 import {
@@ -292,6 +293,7 @@ export async function handleParseIngredients(req: Request, runtime: Runtime): Pr
     });
   } catch (err) {
     console.error("parse-ingredients failed", err);
+    reportError(err, { function: "parse-ingredients" });
     return json({ ok: false, error: "internal_error" }, 500);
   }
 }

@@ -19,6 +19,7 @@ import { testWorker } from "../testing/worker.ts";
 import type { EventName, EventProps } from "./events.ts";
 import {
   AGENT_DISABLED_ERROR,
+  HOUSEHOLD_FIXABLE,
   instrumentLogger,
   instrumentRuns,
   LOG_EVENT_THROTTLE_MS,
@@ -59,11 +60,17 @@ function fakeReporter() {
     async traceRun(name, context, work) {
       const entry = { name, context, failed: null as string | null };
       traces.push(entry);
-      return work({
-        fail: (reason) => {
-          entry.failed = reason;
-        },
-      });
+      try {
+        return await work({
+          fail: (reason) => {
+            entry.failed = reason;
+          },
+        });
+      } catch (error) {
+        // What the real reporter does with a message that throws (sentry.ts reporterOver).
+        entry.failed = "internal_error";
+        throw error;
+      }
     },
     async flush() {},
   };
@@ -163,7 +170,7 @@ describe("product events from a run", () => {
 });
 
 describe("a failed run", () => {
-  it("is a run_failed event with the household tag, and marks the transaction failed", async () => {
+  it("a store sign-in that expired is a run_failed event but not a worker error: the transaction stays ok", async () => {
     await closeRuns();
     const mock = new MockRetailer({ seed: 1 });
     mock.setFailure("searchProducts", "auth");
@@ -183,12 +190,35 @@ describe("a failed run", () => {
     expect(w.events[0]?.context?.extra).toMatchObject({
       error: expect.stringMatching(/needs_reauth/),
     });
-    expect(w.traces[0]?.failed).toBe("needs_reauth");
+    // The household has to sign in again: that is not the worker's error rate.
+    expect(w.traces[0]?.failed).toBeNull();
     // A failed run is not a started-then-ready run.
     expect(w.captured.map((c) => c.event)).toEqual(["run_started"]);
     await t.exec(
       `update public.retailer_connections set status = 'active' where status = 'needs_reauth'`,
     );
+  });
+
+  it("an outage the worker could not handle marks the transaction failed", async () => {
+    await closeRuns();
+    const mock = new MockRetailer({ seed: 1 });
+    mock.setFailure("searchProducts", "network");
+    const w = wired({ mock });
+    const runId = await enqueue(t);
+    // The attempt throws (the queue retries it); the transaction is a failure and the run is
+    // handed back, not yet failed.
+    await expect(w.worker.next()).rejects.toThrow();
+    expect(w.traces[0]?.failed).toBe("internal_error");
+    expect((await runRow(t, runId)).status).toBe("running");
+  });
+
+  it("names the failure codes a household can fix, and no others", () => {
+    expect(HOUSEHOLD_FIXABLE.test("needs_reauth")).toBe(true);
+    expect(HOUSEHOLD_FIXABLE.test("connection_revoked")).toBe(true);
+    expect(HOUSEHOLD_FIXABLE.test("agent_disabled")).toBe(true);
+    expect(HOUSEHOLD_FIXABLE.test("adapter_unavailable")).toBe(false);
+    expect(HOUSEHOLD_FIXABLE.test("failed after 3 attempts")).toBe(false);
+    expect(HOUSEHOLD_FIXABLE.test("stalled")).toBe(false);
   });
 });
 

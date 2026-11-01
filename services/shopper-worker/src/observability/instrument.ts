@@ -124,6 +124,10 @@ export function reportTransitions(
   }
 }
 
+/** Failure codes (the text before the first colon of shopping_runs.error) the household can fix. */
+export const HOUSEHOLD_FIXABLE =
+  /^(needs_reauth|connection_missing|connection_revoked|connection_needs_reauth|connection_unusable|agent_disabled)$/;
+
 export const AGENT_DISABLED_ERROR =
   "agent_disabled: shopping is switched off right now. Try again later.";
 
@@ -170,7 +174,10 @@ export function instrumentRuns(options: InstrumentRunsOptions): Instrumented {
           const after = runId ? await readRunSnapshot(store, runId) : null;
           reportTransitions(before, after, { analytics, reporter });
           if (after?.status === "failed" && before?.status !== "failed") {
-            span.fail(after.error?.split(":")[0] ?? "failed");
+            // A run the household has to fix (a store sign-in that expired) is not a worker error:
+            // it still gets its run_failed event, but the transaction stays out of the error rate.
+            const code = after.error?.split(":")[0] ?? "failed";
+            if (!HOUSEHOLD_FIXABLE.test(code)) span.fail(code);
           }
           return outcome;
         },

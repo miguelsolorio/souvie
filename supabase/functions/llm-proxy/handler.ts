@@ -23,6 +23,7 @@ import {
   estimateCostUsd,
   type TokenUsage,
 } from "../../../packages/llm/src/log.ts";
+import { reportError } from "../_shared/sentry.ts";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -349,8 +350,9 @@ export async function handleLlmProxy(req: Request, runtime: Runtime): Promise<Re
         message: "You are not a member of this household.",
       });
     }
-  } catch {
+  } catch (err) {
     console.error("llm-proxy: membership check failed");
+    reportError(err, { function: "llm-proxy", householdId: request.householdId });
     return fail({ status: 500, error: "internal_error", message: "Try again." });
   }
 

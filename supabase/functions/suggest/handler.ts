@@ -26,6 +26,7 @@ import {
   type MessagesClient,
   SUGGEST_COMPOSE_V1,
 } from "../../../packages/llm/src/index.ts";
+import { reportError } from "../_shared/sentry.ts";
 import {
   type Candidate,
   fetchCandidates,
@@ -169,6 +170,7 @@ export async function handleSuggest(req: Request, runtime: Runtime): Promise<Res
     return await runSuggest(request, user.userId, runtime, store);
   } catch (err) {
     console.error("suggest failed", err instanceof FilterError ? err.message : err);
+    reportError(err, { function: "suggest", householdId: request.householdId });
     return fail("internal_error", 500);
   }
 }

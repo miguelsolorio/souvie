@@ -1,14 +1,16 @@
 // Acceptance criterion 1 (the worker half): an event carries no email, token or cookie. The same
-// cases run against the app's copy of the scrubber (apps/mobile/src/observability/scrub.ts), so
-// the two cannot drift apart.
+// cases run against the app's and the Edge Functions' copies of the scrubber
+// (apps/mobile/src/observability/scrub.ts, supabase/functions/_shared/scrub.ts), so the three
+// cannot drift apart.
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import * as appScrub from "../../../../apps/mobile/src/observability/scrub.ts";
+import * as functionsScrub from "../../../../supabase/functions/_shared/scrub.ts";
 import { FILTERED, scrubEvent, scrubString, scrubValue } from "./scrub.ts";
 
-describe("the two copies", () => {
+describe("the three copies", () => {
   it("hold the same code, whatever their header comments say", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const body = (path: string) =>
@@ -16,15 +18,16 @@ describe("the two copies", () => {
         .split("\n")
         .filter((line) => !line.startsWith("//"))
         .join("\n");
-    expect(body(join(here, "../../../../apps/mobile/src/observability/scrub.ts"))).toBe(
-      body(join(here, "scrub.ts")),
-    );
+    const worker = body(join(here, "scrub.ts"));
+    expect(body(join(here, "../../../../apps/mobile/src/observability/scrub.ts"))).toBe(worker);
+    expect(body(join(here, "../../../../supabase/functions/_shared/scrub.ts"))).toBe(worker);
   });
 });
 
 const IMPLEMENTATIONS = [
   ["worker", { scrubString, scrubValue, scrubEvent, FILTERED }],
   ["app", appScrub],
+  ["functions", functionsScrub],
 ] as const;
 
 describe.each(IMPLEMENTATIONS)("the %s scrubber", (_name, s) => {

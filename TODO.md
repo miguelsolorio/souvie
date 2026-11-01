@@ -89,7 +89,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 ## 8. Done
 
 - [ ] All sixteen rows in `docs/status.md` read `merged`.
-- [ ] `pnpm typecheck && pnpm lint && pnpm test && pnpm eval` and `supabase test db` pass on `main`.
+- [x] `pnpm typecheck && pnpm lint && pnpm test && pnpm eval` and `supabase test db` pass on `main` (CI run 41302682588 on e230cbf and the Evals workflow, 2026-11-01, before WS10; recheck after it merges).
 - [ ] The household runs the loop end to end: onboard → plan → list → QFC cart filled by a scheduled run → notification → pay in the QFC app. And at Safeway: the agent fills the cart in the app and stops at pay.
 - [ ] Docs updated to match what was built. Public-beta decision and name recorded, or recorded as deferred.
 

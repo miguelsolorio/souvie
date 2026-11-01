@@ -77,8 +77,14 @@ export LC_ALL="${LC_ALL:-en_US.UTF-8}"
 # Everything this script changes is undone here: package.json (prebuild rewrites it), the
 # Simulator's bundler setting, the app, the recorder, the servers and the log directory. The traps
 # are set before anything is changed, and each change sets its flag before it is made.
+#
+# Once cleanup starts it ignores HUP, INT and TERM, so a second signal cannot cut it short. Before
+# it starts, a signal sent to the script alone takes effect when the foreground command it is
+# waiting for (prebuild, pod install, xcodebuild) returns. A terminal Ctrl-C reaches the whole
+# process group, ends that command too, and takes effect at once.
 PIDS=()
 REC_PID=""
+REC_STOP_SENT=0
 PACKAGE_JSON_BACKUP=""
 BUNDLER_SETTING_CHANGED=0
 PREVIOUS_JS_LOCATION=""
@@ -92,12 +98,19 @@ kill_tree() {
 }
 
 # stop_recorder: ask the recorder to close the file (INT), give it ten seconds, then kill it.
-# Returns 1 when it had to be killed, because the video is then not finished.
+# Returns 1 when it had to be killed, because the video is then not finished. REC_PID stays set
+# until the recorder is gone, so a stop that a signal cut short is finished by cleanup, which does
+# not ask twice (a second INT could break the file the recorder is closing).
 stop_recorder() {
   local pid="$REC_PID" ticks=0 result=0
   [ -n "$pid" ] || return 0
-  REC_PID=""
-  kill -INT "$pid" 2>/dev/null || return 0
+  if [ "$REC_STOP_SENT" != 1 ]; then
+    REC_STOP_SENT=1
+    kill -INT "$pid" 2>/dev/null || {
+      REC_PID=""
+      return 0
+    }
+  fi
   while kill -0 "$pid" 2>/dev/null; do
     ticks=$((ticks + 1))
     if [ "$ticks" -ge 50 ]; then
@@ -108,6 +121,7 @@ stop_recorder() {
     sleep 0.2
   done
   wait "$pid" 2>/dev/null
+  REC_PID=""
   return "$result"
 }
 
@@ -122,8 +136,11 @@ restore_package_json() {
 cleanup() {
   local status=$?
   set +e
-  stop_recorder
+  # Nothing below may be cut short, so a further signal is ignored. The repo comes first: the
+  # recorder can take up to ten seconds to stop.
+  trap '' HUP INT TERM
   restore_package_json
+  stop_recorder
   if [ -n "$SIM_UDID" ]; then
     xcrun simctl terminate "$SIM_UDID" "$BUNDLE_ID" >/dev/null 2>&1
     if [ "$BUNDLER_SETTING_CHANGED" = 1 ]; then
@@ -209,7 +226,8 @@ cd "$MOBILE_DIR"
 if [ ! -d ios/Souvie.xcworkspace ]; then
   log "generating the native project (expo prebuild, then pod install)"
   # prebuild rewrites the ios and android scripts in package.json. The backup is registered before
-  # prebuild starts, so cleanup restores the file on any exit, an interrupt included.
+  # prebuild starts, so cleanup restores the file whenever the script exits, however it exits. A
+  # signal ends the script once prebuild returns (see the note on cleanup for when that is).
   PACKAGE_JSON_BACKUP="$WORK/package.json.bak"
   cp package.json "$PACKAGE_JSON_BACKUP"
   prebuild_status=0

@@ -1,30 +1,43 @@
-import { HouseholdNameInput } from "@mp/core";
-import { createHousehold, identityErrorMessage, redeemInvite, useSupabase } from "@mp/db";
+import type { PlanMode } from "@mp/core";
+import { createHousehold, redeemInvite, useSetPlanMode, useSupabase } from "@mp/db";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { Button } from "../../src/components/Button";
 import { ErrorText, LoadingScreen } from "../../src/components/Screen";
 import { TextField } from "../../src/components/TextField";
-import { parseInviteInput } from "../../src/features/auth/links";
 import { useSignOut } from "../../src/features/auth/useSignOut";
 import { OnboardingFrame, OptionRow } from "../../src/features/onboarding/components";
+import {
+  asksPlanMode,
+  shownPlanMode,
+  submitHouseholdStep,
+} from "../../src/features/onboarding/householdStep";
+import { PlanModeChoice } from "../../src/features/onboarding/PlanModeChoice";
 import { useOnboarding } from "../../src/features/onboarding/useOnboarding";
 import { useStepNav } from "../../src/features/onboarding/useStepNav";
 
 type Mode = "create" | "join";
 
-/** Screen 1: create a household or join one with an invite. A person already in one just continues. */
+/**
+ * Screen 1: create a household or join one with an invite. A person already in one just continues.
+ * The owner of a household (a person who creates one, or comes back to one they own) is also asked
+ * how much they want to plan, Just dinners by default. A member is not asked, because only an
+ * owner can change it.
+ */
 export default function HouseholdStep() {
   const client = useSupabase();
   const queryClient = useQueryClient();
   const { household, saveStep, saving } = useOnboarding();
   const { goNext } = useStepNav(1);
   const signOut = useSignOut();
+  const setPlanMode = useSetPlanMode();
 
   const [mode, setMode] = useState<Mode>("create");
   const [name, setName] = useState("");
   const [invite, setInvite] = useState("");
+  // null until the person touches the question, so it follows the household's saved mode.
+  const [planPick, setPlanPick] = useState<PlanMode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
 
@@ -35,42 +48,28 @@ export default function HouseholdStep() {
     await queryClient.invalidateQueries({ queryKey: ["household-members"] });
   }
 
-  async function finish() {
-    await saveStep({ step: 1 });
-    goNext();
-  }
-
   async function submit() {
     setError(null);
-    if (household.data) {
-      try {
-        await finish();
-      } catch {
-        setError("We could not save that. Try again.");
-      }
-      return;
-    }
     setWorking(true);
     try {
-      if (mode === "create") {
-        const parsed = HouseholdNameInput.safeParse({ name });
-        if (!parsed.success) {
-          setError("Give your household a name of 2 to 40 characters.");
-          return;
-        }
-        await createHousehold(client, parsed.data.name);
-      } else {
-        const token = parseInviteInput(invite);
-        if (!token) {
-          setError("That does not look like an invite link or code.");
-          return;
-        }
-        await redeemInvite(client, token);
-      }
-      await refreshHousehold();
-      await finish();
-    } catch (cause) {
-      setError(identityErrorMessage(cause));
+      const result = await submitHouseholdStep(
+        {
+          existing: household.data ?? null,
+          action: mode === "create" ? { kind: "create", name } : { kind: "join", invite },
+          planMode: shownPlanMode(planPick, household.data ?? null),
+        },
+        {
+          createHousehold: (householdName) => createHousehold(client, householdName),
+          redeemInvite: (token) => redeemInvite(client, token),
+          refreshHousehold,
+          setPlanMode: setPlanMode.mutateAsync,
+          finish: async () => {
+            await saveStep({ step: 1 });
+            goNext();
+          },
+        },
+      );
+      if (!result.ok) setError(result.error);
     } finally {
       setWorking(false);
     }
@@ -82,6 +81,13 @@ export default function HouseholdStep() {
     : mode === "create"
       ? name.trim().length > 0
       : invite.trim().length > 0;
+  const planQuestion = asksPlanMode(existing ?? null, mode) ? (
+    <PlanModeChoice
+      value={shownPlanMode(planPick, existing ?? null)}
+      onChange={setPlanPick}
+      recommend
+    />
+  ) : null;
 
   return (
     <OnboardingFrame
@@ -111,13 +117,19 @@ export default function HouseholdStep() {
       }
     >
       {existing ? (
-        <View className="gap-1 rounded-xl border border-neutral-200 p-4">
-          <Text testID="household-existing-name" className="text-xl font-semibold text-neutral-900">
-            {existing.name}
-          </Text>
-          <Text className="text-sm text-neutral-600">
-            {existing.role === "owner" ? "You are the owner." : "You are a member."}
-          </Text>
+        <View className="gap-6">
+          <View className="gap-1 rounded-xl border border-neutral-200 p-4">
+            <Text
+              testID="household-existing-name"
+              className="text-xl font-semibold text-neutral-900"
+            >
+              {existing.name}
+            </Text>
+            <Text className="text-sm text-neutral-600">
+              {existing.role === "owner" ? "You are the owner." : "You are a member."}
+            </Text>
+          </View>
+          {planQuestion}
         </View>
       ) : (
         <View className="gap-4">
@@ -158,6 +170,7 @@ export default function HouseholdStep() {
               testID="invite-input"
             />
           )}
+          {planQuestion}
         </View>
       )}
     </OnboardingFrame>

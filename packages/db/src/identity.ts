@@ -1,6 +1,11 @@
 // Typed calls for the identity RPCs and tables (WS01). Screens use these through TanStack Query
 // mutations. Errors from the database are mapped to IdentityError so the UI never parses text.
-import { CreateHouseholdInput, type HouseholdRosterEntry, ProfileUpdateInput } from "@mp/core";
+import {
+  CreateHouseholdInput,
+  type HouseholdRosterEntry,
+  PlanMode,
+  ProfileUpdateInput,
+} from "@mp/core";
 import type { MpClient } from "./client";
 
 /** The error codes the identity functions raise (supabase/migrations/*_identity_functions.sql). */
@@ -105,6 +110,25 @@ export async function renameHousehold(
   const { data, error } = await client
     .from("households")
     .update({ name: input.name })
+    .eq("id", householdId)
+    .select("id");
+  if (error) throw toIdentityError(error);
+  if (!data || data.length === 0) throw new IdentityError("not_owner");
+}
+
+/**
+ * Owner only: how much the household plans. Row Level Security rejects anyone else, which shows up
+ * as zero rows updated. Switching never touches the plan: entries in slots the new mode hides stay.
+ */
+export async function setPlanMode(
+  client: MpClient,
+  householdId: string,
+  mode: PlanMode,
+): Promise<void> {
+  const plan_mode = PlanMode.parse(mode);
+  const { data, error } = await client
+    .from("households")
+    .update({ plan_mode })
     .eq("id", householdId)
     .select("id");
   if (error) throw toIdentityError(error);

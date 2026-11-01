@@ -18,6 +18,7 @@ import { TextField } from "../../../src/components/TextField";
 import { CREATE_HOUSEHOLD_ROUTE, HOME_ROUTE } from "../../../src/features/auth/routes";
 import { InviteSection } from "../../../src/features/household/InviteSection";
 import { MemberRow } from "../../../src/features/household/MemberRow";
+import { PlanModeSection } from "../../../src/features/household/PlanModeSection";
 import { RecheckNoticeLine } from "../../../src/features/onboarding/components";
 import { KrogerSettingsSection } from "../../../src/features/onboarding/KrogerSettingsSection";
 import { EDIT_START_HREF } from "../../../src/features/onboarding/onboardingState";
@@ -135,6 +136,8 @@ export default function HouseholdSettingsScreen() {
           />
         ) : null}
       </Section>
+
+      <PlanModeSection householdId={current.id} mode={current.plan_mode} isOwner={isOwner} />
 
       <Section title="Food preferences">
         <Text className="text-sm text-neutral-600">

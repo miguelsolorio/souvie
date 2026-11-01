@@ -1,12 +1,29 @@
-import type { Household, HouseholdRole } from "@mp/core";
+import { type Household, type HouseholdRole, PlanMode } from "@mp/core";
 import { useQuery } from "@tanstack/react-query";
 import type { MpClient } from "../client";
 import { useSupabase } from "../context";
 import { toIdentityError } from "../identity";
 import { useSession } from "./useSession";
 
-/** The household the app is acting in, with the caller's role in it. */
-export type ActiveHousehold = Household & { role: HouseholdRole };
+/**
+ * The household the app is acting in, with the caller's role in it and how much it plans.
+ * `plan_mode` is a column on the household row (migration 20261031120000); `Household` in
+ * @mp/core does not list it yet, so it is added here.
+ */
+export type ActiveHousehold = Household & { role: HouseholdRole; plan_mode: PlanMode };
+
+/** How much a household plans when the row does not say: one dinner a day, the column's default. */
+export const DEFAULT_PLAN_MODE: PlanMode = "simple";
+
+/**
+ * A household row's `plan_mode` as a PlanMode. A copy saved on the device before the column
+ * existed has none, and a value this build does not know (a mode added later) is not guessed at:
+ * both count as the default, so the planner always has slots to draw.
+ */
+export function planModeOf(value: unknown): PlanMode {
+  const parsed = PlanMode.safeParse(value);
+  return parsed.success ? parsed.data : DEFAULT_PLAN_MODE;
+}
 
 export const householdQueryKey = (userId: string | undefined) =>
   ["household", "active", userId] as const;
@@ -32,8 +49,12 @@ export async function fetchActiveHousehold(
     .limit(1);
   if (error) throw toIdentityError(error);
 
-  const row = data?.[0] as { role: HouseholdRole; households: Household } | undefined;
-  return row ? { ...row.households, role: row.role } : null;
+  const row = data?.[0] as
+    | { role: HouseholdRole; households: Household & { plan_mode?: unknown } }
+    | undefined;
+  return row
+    ? { ...row.households, plan_mode: planModeOf(row.households.plan_mode), role: row.role }
+    : null;
 }
 
 export function useHousehold() {
@@ -49,4 +70,14 @@ export function useHousehold() {
       return fetchActiveHousehold(client, userId);
     },
   });
+}
+
+/**
+ * How much the active household plans. Just dinners until the household has loaded, and for a
+ * copy saved on the device before the setting existed. Screens that draw the planner wait for the
+ * household before they draw, so this default never shows a wrong grid.
+ */
+export function usePlanMode(): PlanMode {
+  const household = useHousehold();
+  return household.data?.plan_mode ?? DEFAULT_PLAN_MODE;
 }

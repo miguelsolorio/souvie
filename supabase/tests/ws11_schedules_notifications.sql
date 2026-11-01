@@ -34,7 +34,7 @@
 
 begin;
 
-select plan(219);
+select plan(258);
 
 -- ---------------------------------------------------------------------------------------
 -- Fixtures (as the postgres role, which bypasses RLS)
@@ -147,6 +147,16 @@ select ok(not has_function_privilege('authenticated', 'public.enqueue_due_schedu
 select ok(has_function_privilege('service_role', 'public.enqueue_due_scheduled_runs(timestamptz)', 'EXECUTE'), 'the service role runs the scheduler');
 select ok(not has_function_privilege('authenticated', 'public.notification_outbox_add(uuid, public.notification_type, jsonb, timestamptz, text)', 'EXECUTE'), 'a signed-in client cannot write the outbox through the helper');
 select ok(not has_function_privilege('authenticated', 'public.enqueue_notification_generators()', 'EXECUTE'), 'a signed-in client cannot run the generators');
+select ok(not has_function_privilege('anon', 'public.enqueue_notification_generators()', 'EXECUTE'), 'anon cannot run the generators');
+select ok(not has_function_privilege('anon', 'public.enqueue_weekly_nudges(integer, time, timestamptz)', 'EXECUTE'), 'anon cannot write weekly nudges');
+select ok(not has_function_privilege('authenticated', 'public.enqueue_weekly_nudges(integer, time, timestamptz)', 'EXECUTE'), 'a signed-in client cannot write weekly nudges');
+select ok(not has_function_privilege('anon', 'public.enqueue_pickup_reminders(interval, timestamptz)', 'EXECUTE'), 'anon cannot write pickup reminders');
+select ok(not has_function_privilege('authenticated', 'public.enqueue_pickup_reminders(interval, timestamptz)', 'EXECUTE'), 'a signed-in client cannot write pickup reminders');
+select ok(not has_function_privilege('anon', 'public.notification_outbox_prune(interval)', 'EXECUTE'), 'anon cannot prune the outbox');
+select ok(not has_function_privilege('authenticated', 'public.notification_outbox_prune(interval)', 'EXECUTE'), 'a signed-in client cannot prune the outbox');
+select ok(has_function_privilege('service_role', 'public.enqueue_weekly_nudges(integer, time, timestamptz)', 'EXECUTE'), 'the service role writes weekly nudges');
+select ok(has_function_privilege('service_role', 'public.enqueue_pickup_reminders(interval, timestamptz)', 'EXECUTE'), 'the service role writes pickup reminders');
+select ok(has_function_privilege('service_role', 'public.notification_outbox_prune(interval)', 'EXECUTE'), 'the service role prunes the outbox');
 select ok(not has_function_privilege('anon', 'public.register_push_token(text, public.push_tokens_platform)', 'EXECUTE'), 'anon cannot register a device');
 select ok(not has_function_privilege('anon', 'public.set_notification_preference(public.notification_type, boolean)', 'EXECUTE'), 'anon cannot set a preference');
 select ok(has_function_privilege('anon', 'public.forget_push_token(text)', 'EXECUTE'), 'anon can forget a device by its token');
@@ -320,8 +330,10 @@ delete from public.scheduled_runs where household_id = '0a000000-0000-4000-8000-
 -- ---------------------------------------------------------------------------------------
 
 insert into __t_ids (name, id) values ('sB', gen_random_uuid()), ('sC', gen_random_uuid());
+-- B's schedule still says auto_checkout with a cap when the scheduler reads it (s1's policy was
+-- replaced above, so it cannot prove this). The scheduler must switch both off.
 insert into public.scheduled_runs (id, household_id, cron, tz, connection_id, policy) values
-  (public.__t_id('sB'), '0b000000-0000-4000-8000-00000000000b', '0 9 * * 6', 'America/Los_Angeles', '7b000000-0000-4000-8000-0000000000b1', '{"substitution": "any"}'),
+  (public.__t_id('sB'), '0b000000-0000-4000-8000-00000000000b', '0 9 * * 6', 'America/Los_Angeles', '7b000000-0000-4000-8000-0000000000b1', '{"substitution": "any", "auto_checkout": true, "auto_checkout_cap_usd": 120}'),
   (public.__t_id('sC'), '0c000000-0000-4000-8000-00000000000c', '0 9 * * 6', 'America/Los_Angeles', '7c000000-0000-4000-8000-0000000000c1', '{}');
 update public.scheduled_runs set cron = '0 9 * * 6', next_run_at = '2026-11-07 17:00+00', last_enqueued_for = null where id in (public.__t_id('s1'), public.__t_id('sB'), public.__t_id('sC'));
 
@@ -351,8 +363,11 @@ select is((select r.status::text || '/' || r.retailer::text || '/' || coalesce(r
 select is((select r.policy ->> 'budget_cap_usd' from public.shopping_runs r where r.household_id = '0a000000-0000-4000-8000-00000000000a' and r.trigger = 'scheduled'), '175', 'the run carries the schedule''s budget cap');
 select is((select r.policy ->> 'substitution' from public.shopping_runs r where r.household_id = '0a000000-0000-4000-8000-00000000000a' and r.trigger = 'scheduled'), 'same_brand', 'and every key it did not set takes the default (editing the policy replaced the old one)');
 select is((select r.policy ->> 'substitution' from public.shopping_runs r where r.household_id = '0b000000-0000-4000-8000-00000000000b' and r.trigger = 'scheduled'), 'any', 'B''s run carries B''s substitution level');
-select is((select r.policy ->> 'auto_checkout' from public.shopping_runs r where r.household_id = '0a000000-0000-4000-8000-00000000000a' and r.trigger = 'scheduled'), 'false', 'a scheduled run never checks out by itself, whatever the schedule says');
+select is((select r.policy ->> 'auto_checkout' from public.shopping_runs r where r.household_id = '0a000000-0000-4000-8000-00000000000a' and r.trigger = 'scheduled'), 'false', 'A''s scheduled run does not check out by itself');
 select is((select r.policy ->> 'auto_checkout_cap_usd' from public.shopping_runs r where r.household_id = '0a000000-0000-4000-8000-00000000000a' and r.trigger = 'scheduled'), null, 'and has no auto-checkout cap');
+select is((select s.policy ->> 'auto_checkout' from public.scheduled_runs s where s.id = public.__t_id('sB')), 'true', 'B''s schedule still says auto_checkout true, with a cap, after the call (the scheduler left it alone)');
+select is((select r.policy ->> 'auto_checkout' from public.shopping_runs r where r.household_id = '0b000000-0000-4000-8000-00000000000b' and r.trigger = 'scheduled'), 'false', 'yet B''s scheduled run never checks out by itself: the scheduler switches it off');
+select is((select r.policy ->> 'auto_checkout_cap_usd' from public.shopping_runs r where r.household_id = '0b000000-0000-4000-8000-00000000000b' and r.trigger = 'scheduled'), null, 'and drops the auto-checkout cap with it');
 select is((select count(*)::int from pgmq.q_shopping_run m where m.message ->> 'run_id' in (select r.id::text from public.shopping_runs r where r.household_id = '0a000000-0000-4000-8000-00000000000a' and r.trigger = 'scheduled')), 1, 'exactly one message is on the shopping_run queue for it');
 select is((select m.message - 'run_id' from pgmq.q_shopping_run m where m.message ->> 'run_id' in (select r.id::text from public.shopping_runs r where r.household_id = '0a000000-0000-4000-8000-00000000000a' and r.trigger = 'scheduled')), '{}'::jsonb, 'the message is {"run_id"} and nothing else');
 select is((select next_run_at from public.scheduled_runs where id = public.__t_id('s1')), '2026-11-14 17:00+00'::timestamptz, 'next_run_at moved to next Saturday, 9:00 in PST (17:00 UTC)');
@@ -378,15 +393,23 @@ select is((select count(*)::int from public.shopping_runs where trigger = 'sched
 select is((select count(*)::int from pgmq.q_shopping_run m where m.message ->> 'run_id' in (select r.id::text from public.shopping_runs r where r.trigger = 'scheduled' and r.household_id in ('0a000000-0000-4000-8000-00000000000a', '0b000000-0000-4000-8000-00000000000b'))), 2, 'and so is the queue');
 select is((select count(*)::int from public.notification_outbox where type = 'schedule_skipped'), 1, 'and so is the outbox');
 
--- A replay of a handled value: next_run_at put back to last_enqueued_for.
-update public.scheduled_runs set next_run_at = last_enqueued_for where id = public.__t_id('s1');
+-- A replay of a handled value: next_run_at put back to last_enqueued_for. B's run is cancelled
+-- first, so enqueue_shopping_run would accept a new run of the list (nothing in progress, nothing
+-- shopped, nowhere near the daily limit): only the last_enqueued_for guard stands in the way.
+update public.shopping_runs set status = 'cancelled' where household_id = '0b000000-0000-4000-8000-00000000000b' and trigger = 'scheduled' and status = 'queued';
+select is((select count(*)::int from public.shopping_runs where household_id = '0b000000-0000-4000-8000-00000000000b' and status in ('queued', 'running', 'needs_review', 'checking_out', 'cart_ready', 'checked_out')), 0, 'B has no run in progress and none shopped, so a replayed schedule would be free to start one');
+update public.scheduled_runs set next_run_at = last_enqueued_for where id = public.__t_id('sB');
+select is((select next_run_at = last_enqueued_for from public.scheduled_runs where id = public.__t_id('sB')), true, 'B''s schedule is due again at the time it already handled');
 set local request.jwt.claims = '{"role": "service_role"}';
 set local role service_role;
 insert into __t_counts (name, n) values ('replay', public.enqueue_due_scheduled_runs('2026-11-07 17:03+00'));
 reset role;
 select is((select n from __t_counts where name = 'replay'), 0, 'a schedule whose next_run_at was already handled is refused (the idempotency guard)');
-select is((select count(*)::int from public.shopping_runs where trigger = 'scheduled' and household_id = '0a000000-0000-4000-8000-00000000000a'), 1, 'so there is still one run');
-update public.scheduled_runs set next_run_at = '2026-11-14 17:00+00' where id = public.__t_id('s1');
+select is((select count(*)::int from public.shopping_runs where trigger = 'scheduled' and household_id = '0b000000-0000-4000-8000-00000000000b'), 1, 'so no new run was made for B');
+select is((select count(*)::int from pgmq.q_shopping_run m where m.message ->> 'run_id' in (select r.id::text from public.shopping_runs r where r.trigger = 'scheduled' and r.household_id = '0b000000-0000-4000-8000-00000000000b')), 1, 'and no new message is on the queue');
+select is((select count(*)::int from public.notification_outbox where payload ->> 'scheduleId' = public.__t_id('sB')::text), 0, 'and the household is told nothing');
+select is((select next_run_at = last_enqueued_for from public.scheduled_runs where id = public.__t_id('sB')), true, 'the replayed schedule is left as it was');
+update public.scheduled_runs set next_run_at = '2026-11-14 17:00+00' where id = public.__t_id('sB');
 
 -- Each reason a schedule is skipped. One schedule per case, all of household A, run one at a time.
 insert into __t_ids (name, id) values ('sTier3', gen_random_uuid()), ('sReauth', gen_random_uuid()), ('sBusy', gen_random_uuid()), ('sMissed', gen_random_uuid()), ('sShopped', gen_random_uuid());
@@ -464,6 +487,33 @@ reset role;
 select is((select n from __t_counts where name = 'limit'), 1, 'the call counts the one run it enqueued');
 select is((select count(*)::int from public.notification_outbox where payload ->> 'scheduleId' = public.__t_id('sB')::text and payload ->> 'reason' = 'daily_run_limit'), 1, 'B is told it hit the daily run limit');
 select is((select count(*)::int from public.shopping_runs where household_id = '0c000000-0000-4000-8000-00000000000c' and trigger = 'scheduled'), 1, 'and C''s schedule ran in the same call');
+
+-- The 6 hour rule, pinned from both sides (like the 47 and 49 hour review timeout below). A
+-- schedule found 5 hours 59 minutes late runs; one found 6 hours 1 minute late is skipped as
+-- missed. Saturday 2026-11-14 shops for the week of 2026-11-16, which C has a list for.
+insert into public.meal_plans (id, household_id, week_start) values
+  ('cc000000-0000-4000-8000-0000000000c3', '0c000000-0000-4000-8000-00000000000c', '2026-11-16');
+insert into public.grocery_lists (id, household_id, plan_id, name, status, built_at) values
+  ('9c000000-0000-4000-8000-0000000000c3', '0c000000-0000-4000-8000-00000000000c', 'cc000000-0000-4000-8000-0000000000c3', 'C week of Nov 16', 'active', '2026-11-13 18:00+00');
+insert into __t_ids (name, id) values ('sLate59', gen_random_uuid()), ('sLate61', gen_random_uuid());
+insert into public.scheduled_runs (id, household_id, cron, tz, connection_id) values
+  (public.__t_id('sLate59'), '0c000000-0000-4000-8000-00000000000c', '0 9 * * 6', 'America/Los_Angeles', '7c000000-0000-4000-8000-0000000000c1'),
+  (public.__t_id('sLate61'), '0c000000-0000-4000-8000-00000000000c', '0 9 * * 6', 'America/Los_Angeles', '7c000000-0000-4000-8000-0000000000c1');
+-- Nothing else is due at the call's time: park the one earlier fixture left a week overdue.
+update public.scheduled_runs set next_run_at = '2027-01-01 00:00+00' where id = public.__t_id('sLater');
+update public.scheduled_runs set next_run_at = timestamptz '2026-11-14 16:30+00' - interval '5 hours 59 minutes' where id = public.__t_id('sLate59');
+update public.scheduled_runs set next_run_at = timestamptz '2026-11-14 16:30+00' - interval '6 hours 1 minute' where id = public.__t_id('sLate61');
+select is((select count(*)::int from public.scheduled_runs where enabled and next_run_at <= '2026-11-14 16:30+00' and last_enqueued_for is distinct from next_run_at), 2, 'exactly the two late schedules are due at the call''s time');
+set local request.jwt.claims = '{"role": "service_role"}';
+set local role service_role;
+insert into __t_counts (name, n) values ('late', public.enqueue_due_scheduled_runs('2026-11-14 16:30+00'));
+reset role;
+select is((select n from __t_counts where name = 'late'), 1, 'one of the two started a run');
+select is((select count(*)::int from public.shopping_runs where household_id = '0c000000-0000-4000-8000-00000000000c' and trigger = 'scheduled' and list_id = '9c000000-0000-4000-8000-0000000000c3'), 1, 'the one found 5 hours 59 minutes late ran');
+select is((select next_run_at from public.scheduled_runs where id = public.__t_id('sLate59')), '2026-11-14 17:00+00'::timestamptz, 'and moved on to the next firing after the call (9:00 that Saturday is 17:00 UTC)');
+select is((select count(*)::int from public.notification_outbox where payload ->> 'scheduleId' = public.__t_id('sLate59')::text), 0, 'saying nothing');
+select is((select payload ->> 'reason' from public.notification_outbox where payload ->> 'scheduleId' = public.__t_id('sLate61')::text), 'missed', 'the one found 6 hours 1 minute late was skipped as missed');
+select is((select next_run_at from public.scheduled_runs where id = public.__t_id('sLate61')), '2026-11-14 17:00+00'::timestamptz, 'and moved on too');
 
 -- ---------------------------------------------------------------------------------------
 -- notification_preferences
@@ -561,9 +611,9 @@ select is((select n from __t_counts where name = 'nudge_again'), 0, 'and once pe
 
 -- A failed run is written once; a cancelled one is not.
 update public.shopping_runs set status = 'failed', error = 'connection_failed' where household_id = '0c000000-0000-4000-8000-00000000000c' and trigger = 'scheduled';
-select is((select count(*)::int from public.notification_outbox where type = 'run_failed' and household_id = '0c000000-0000-4000-8000-00000000000c'), 1, 'a run that fails writes a run_failed notice');
-select is((select payload ->> 'scheduled' from public.notification_outbox where type = 'run_failed' and household_id = '0c000000-0000-4000-8000-00000000000c'), 'true', 'saying it was a scheduled run');
-select is((select payload ?& array['type', 'runId', 'scheduled'] and not (payload ? 'error') from public.notification_outbox where type = 'run_failed' and household_id = '0c000000-0000-4000-8000-00000000000c'), true, 'and carrying ids only, never the error text');
+select is((select count(*)::int from public.notification_outbox where type = 'run_failed' and household_id = '0c000000-0000-4000-8000-00000000000c'), 2, 'each run that fails writes one run_failed notice (C had two scheduled runs)');
+select is((select bool_and(payload ->> 'scheduled' = 'true') from public.notification_outbox where type = 'run_failed' and household_id = '0c000000-0000-4000-8000-00000000000c'), true, 'saying it was a scheduled run');
+select is((select bool_and(payload ?& array['type', 'runId', 'scheduled'] and not (payload ? 'error')) from public.notification_outbox where type = 'run_failed' and household_id = '0c000000-0000-4000-8000-00000000000c'), true, 'and carrying ids only, never the error text');
 select is((select count(*)::int from public.notification_outbox where type = 'run_failed' and household_id = '0b000000-0000-4000-8000-00000000000b'), 0, 'B''s cancelled runs write none');
 
 -- A slow import writes one notice; a quick one writes none.
@@ -583,7 +633,7 @@ select lives_ok($$ select public.enqueue_notification_generators() $$, 'and so d
 reset role;
 select is(public.notification_outbox_prune(interval '14 days'), 0, 'nothing in the outbox is old enough to prune');
 update public.notification_outbox set sent_at = now() - interval '15 days' where type = 'run_failed';
-select is(public.notification_outbox_prune(interval '14 days'), 1, 'a row sent over 14 days ago is pruned');
+select is(public.notification_outbox_prune(interval '14 days'), 2, 'the rows sent over 14 days ago are pruned');
 
 -- ---------------------------------------------------------------------------------------
 -- WS09 follow-up: the lower bound of the review timeout. A review left 47 hours is kept; one left
@@ -601,6 +651,59 @@ select is((select status::text from public.shopping_runs where id = public.__t_i
 select is((select status::text || '/' || coalesce(error, '') from public.shopping_runs where id = public.__t_id('review49')), 'cancelled/review timed out', 'a review idle for 49 hours is cancelled');
 select lives_ok($$ select public.shopping_runs_clear_expired(interval '24 hours', interval '46 hours') $$, 'with a 46 hour timeout');
 select is((select status::text from public.shopping_runs where id = public.__t_id('review47')), 'cancelled', 'the 47 hour review is cancelled too, so the bound is the argument, not now()');
+
+-- ---------------------------------------------------------------------------------------
+-- Deleting a household, and deleting a person (docs/05: delete my account). The schedule's audit
+-- trigger must not write a row for a household that is going away: its foreign key would fail and
+-- the delete with it.
+-- ---------------------------------------------------------------------------------------
+
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('f6666666-6666-4666-8666-666666666666', 'frank@example.test', '{}');
+insert into public.households (id, name, created_by) values
+  ('0f000000-0000-4000-8000-00000000000f', 'Frank House', 'f6666666-6666-4666-8666-666666666666');
+insert into public.household_members (household_id, user_id, role) values
+  ('0f000000-0000-4000-8000-00000000000f', 'f6666666-6666-4666-8666-666666666666', 'owner');
+insert into public.retailer_connections (id, household_id, user_id, retailer, auth_type, store_id, store_name, modality, status) values
+  ('7f000000-0000-4000-8000-0000000000f1', '0f000000-0000-4000-8000-00000000000f', 'f6666666-6666-4666-8666-666666666666', 'kroger', 'none', 'MOCK0005', 'Mock QFC Frank', 'pickup', 'active');
+insert into public.scheduled_runs (id, household_id, cron, tz, connection_id, policy) values
+  ('5f000000-0000-4000-8000-0000000000f1', '0f000000-0000-4000-8000-00000000000f', '0 9 * * 6', 'America/Los_Angeles', '7f000000-0000-4000-8000-0000000000f1', '{"budget_cap_usd": 100}'),
+  ('5f000000-0000-4000-8000-0000000000f2', '0f000000-0000-4000-8000-00000000000f', '0 18 * * 5', 'America/Los_Angeles', '7f000000-0000-4000-8000-0000000000f1', '{}');
+update public.scheduled_runs set policy = '{"budget_cap_usd": 90}' where id = '5f000000-0000-4000-8000-0000000000f1';
+select public.notification_outbox_add('0f000000-0000-4000-8000-00000000000f', 'weekly_nudge', '{"type": "weekly_nudge", "weekStart": "2026-11-09"}', now(), 'ws11-frank-nudge');
+insert into public.notification_preferences (user_id, type, enabled) values
+  ('f6666666-6666-4666-8666-666666666666', 'weekly_nudge', false);
+insert into public.push_tokens (user_id, token, platform) values
+  ('f6666666-6666-4666-8666-666666666666', 'ExponentPushToken[ws11-frank]', 'ios');
+
+select is((select count(*)::int from public.scheduled_runs where household_id = '0f000000-0000-4000-8000-00000000000f'), 2, 'a household with two schedules, a nudge waiting and an audit trail');
+select ok((select count(*) >= 3 from public.audit_events where household_id = '0f000000-0000-4000-8000-00000000000f' and kind = 'policy_changed'), 'whose schedule changes were logged');
+
+select lives_ok($$ delete from public.households where id = '0f000000-0000-4000-8000-00000000000f' $$, 'a household that has schedules can be deleted');
+select is((select count(*)::int from public.households where id = '0f000000-0000-4000-8000-00000000000f'), 0, 'the household is gone');
+select is((select count(*)::int from public.scheduled_runs where household_id = '0f000000-0000-4000-8000-00000000000f'), 0, 'and its schedules went with it');
+select is((select count(*)::int from public.notification_outbox where household_id = '0f000000-0000-4000-8000-00000000000f'), 0, 'and its waiting notifications');
+select is((select count(*)::int from public.audit_events where household_id = '0f000000-0000-4000-8000-00000000000f'), 0, 'and its audit trail, with no new rows written on the way out');
+select is((select count(*)::int from public.notification_preferences where user_id = 'f6666666-6666-4666-8666-666666666666'), 1, 'a person''s notification switches belong to the person, so they stay');
+select is((select count(*)::int from public.push_tokens where user_id = 'f6666666-6666-4666-8666-666666666666'), 1, 'and so does their device');
+
+-- A second household for the account deletion, so the person's own rows are the ones that go.
+insert into public.households (id, name, created_by) values
+  ('0e000000-0000-4000-8000-00000000000e', 'Frank Second House', 'f6666666-6666-4666-8666-666666666666');
+insert into public.household_members (household_id, user_id, role) values
+  ('0e000000-0000-4000-8000-00000000000e', 'f6666666-6666-4666-8666-666666666666', 'owner');
+insert into public.retailer_connections (id, household_id, user_id, retailer, auth_type, store_id, store_name, modality, status) values
+  ('7e000000-0000-4000-8000-0000000000e1', '0e000000-0000-4000-8000-00000000000e', 'f6666666-6666-4666-8666-666666666666', 'kroger', 'none', 'MOCK0006', 'Mock QFC Frank 2', 'pickup', 'active');
+set local request.jwt.claims = '{"sub": "f6666666-6666-4666-8666-666666666666", "role": "authenticated"}';
+set local role authenticated;
+select lives_ok($$ insert into public.scheduled_runs (id, household_id, cron, tz, connection_id) values ('5e000000-0000-4000-8000-0000000000e1', '0e000000-0000-4000-8000-00000000000e', '0 9 * * 6', 'America/Los_Angeles', '7e000000-0000-4000-8000-0000000000e1') $$, 'frank, the owner, makes a schedule in his second household');
+reset role;
+-- Deleting an account is done by an admin, not by the person: no signed-in user behind the call.
+set local request.jwt.claims = '{"role": "service_role"}';
+select lives_ok($$ delete from auth.users where id = 'f6666666-6666-4666-8666-666666666666' $$, 'a person who owns schedules can delete their account');
+select is((select count(*)::int from public.notification_preferences where user_id = 'f6666666-6666-4666-8666-666666666666'), 0, 'their notification switches go with it');
+select is((select count(*)::int from public.push_tokens where user_id = 'f6666666-6666-4666-8666-666666666666'), 0, 'and their devices');
+select is((select created_by from public.scheduled_runs where id = '5e000000-0000-4000-8000-0000000000e1'), null, 'the household keeps its schedule, which no longer names who made it');
 
 select * from finish();
 rollback;

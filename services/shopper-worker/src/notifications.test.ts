@@ -1,7 +1,7 @@
 // The WS11 push rules on the real migrations (PGlite): preferences, quiet hours, the outbox drain,
 // and the copy. Time is always passed in.
 import type { NotificationPayload } from "@mp/core";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   NotificationStore,
   Notifier,
@@ -514,5 +514,117 @@ describe("OutboxDrain", () => {
       runId: RUN_ID,
       scheduled: false,
     });
+  });
+});
+
+describe("stopping the drain (SIGTERM)", () => {
+  const noon = new Date("2026-11-07T20:00:00Z");
+
+  async function addNudge(deliverAfter: string, dedupeKey: string) {
+    const [row] = await t.query<{ id: string }>(
+      `select public.notification_outbox_add($1::uuid, 'weekly_nudge', $2::text::jsonb, $3::timestamptz, $4) as id`,
+      [
+        HOME,
+        JSON.stringify({ type: "weekly_nudge", weekStart: "2026-11-09" }),
+        deliverAfter,
+        dedupeKey,
+      ],
+    );
+    return row?.id as string;
+  }
+
+  async function rowOf(id: string) {
+    const [row] = await t.query<{
+      sent_at: Date | null;
+      attempts: number;
+      deliver_after: Date;
+    }>("select sent_at, attempts, deliver_after from public.notification_outbox where id = $1", [
+      id,
+    ]);
+    return row as NonNullable<typeof row>;
+  }
+
+  /** A sender whose calls wait on a gate the test opens. */
+  function gatedSender() {
+    const calls: string[][] = [];
+    let open: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    const send: Send = async (tokens) => {
+      calls.push([...tokens]);
+      await gate;
+      return { sent: tokens.length, invalid: [], errors: [] };
+    };
+    return { calls, send, open };
+  }
+
+  it("waits for the send in flight, marks it sent, and hands the rest of the batch back unsent", async () => {
+    const first = await addNudge("2026-11-07T19:00:00Z", "stop-1");
+    const second = await addNudge("2026-11-07T19:01:00Z", "stop-2");
+    const sender = gatedSender();
+    const { drain } = setup(sender.send, noon);
+
+    const pass = drain.tick();
+    await vi.waitFor(() => expect(sender.calls).toHaveLength(1));
+    let stopped = false;
+    const stopping = drain.stop(5_000).then(() => {
+      stopped = true;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    // The push is on its way to Expo: stop does not return, and the worker has not closed its connection.
+    expect(stopped).toBe(false);
+
+    sender.open();
+    await stopping;
+    await pass;
+    expect(stopped).toBe(true);
+
+    const sent = await rowOf(first);
+    expect(sent.sent_at).not.toBeNull();
+    // The second row was claimed but never sent: it is back, not waiting out a 5 minute lease.
+    const held = await rowOf(second);
+    expect(held.sent_at).toBeNull();
+    expect(held.attempts).toBe(0);
+    expect(new Date(held.deliver_after).getTime()).toBeLessThanOrEqual(noon.getTime());
+    expect(sender.calls).toHaveLength(1);
+
+    // The next worker sends it once.
+    const next = setup(makeSender().send, noon);
+    expect(await next.drain.drainOnce()).toMatchObject({ claimed: 1, sent: 1 });
+    expect((await rowOf(second)).sent_at).not.toBeNull();
+  });
+
+  it("gives up waiting after the timeout, so a hung Expo call cannot hold the worker", async () => {
+    await addNudge("2026-11-07T19:00:00Z", "hang-1");
+    const send: Send = () => new Promise(() => {});
+    const { drain } = setup(send, noon);
+    void drain.tick();
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    const started = Date.now();
+    await drain.stop(50);
+    expect(Date.now() - started).toBeLessThan(1_000);
+  });
+
+  it("starts no pass after stop", async () => {
+    await addNudge("2026-11-07T19:00:00Z", "after-stop");
+    const sender = makeSender();
+    const { drain } = setup(sender.send, noon);
+    await drain.stop();
+    await drain.tick();
+    drain.start();
+    expect(sender.calls).toHaveLength(0);
+    const [{ n } = { n: -1 }] = await t.query<{ n: number }>(
+      "select count(*)::int as n from public.notification_outbox where sent_at is null",
+    );
+    expect(n).toBe(1);
+  });
+
+  it("returns at once when no pass is running", async () => {
+    const { drain } = setup(makeSender().send, noon);
+    drain.start();
+    const started = Date.now();
+    await drain.stop();
+    expect(Date.now() - started).toBeLessThan(500);
   });
 });

@@ -328,6 +328,12 @@ declare
   r public.scheduled_runs;
 begin
   if tg_op = 'DELETE' then
+    -- Deleting a household cascades to its schedules. The household row is already gone by then,
+    -- and so is its audit trail, so there is nothing to record (and an insert would fail the
+    -- audit_events foreign key and abort the deletion). Same rule as retailer_revoke_on_member_removed.
+    if not exists (select 1 from public.households h where h.id = old.household_id) then
+      return null;
+    end if;
     r := old;
   else
     r := new;
@@ -724,6 +730,9 @@ begin
     end if;
 
     v_next := public.scheduled_run_next(s.cron, s.tz, greatest(s.next_run_at, p_now));
+    -- The guard in the WHERE repeats the one in the loop's query. The row is locked for the whole
+    -- loop, so it cannot be false here and no test can tell it from its absence; it stays as the
+    -- brief's belt and braces. The test that pins the idempotency is the loop's own guard.
     update public.scheduled_runs sr
     set last_enqueued_for = s.next_run_at, next_run_at = v_next
     where sr.id = s.id and sr.last_enqueued_for is distinct from sr.next_run_at;

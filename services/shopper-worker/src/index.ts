@@ -187,7 +187,8 @@ async function main(): Promise<void> {
     await handBack(abandoned, { store: runStore, queue: queueClient, log });
   } finally {
     heartbeat.stop();
-    outbox.stop();
+    // Let a push in flight finish and be marked sent, so it is not sent again after its lease.
+    await outbox.stop();
     await sql.end({ timeout: 2 });
     log.info("stopped");
   }

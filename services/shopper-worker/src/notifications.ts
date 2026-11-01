@@ -245,6 +245,22 @@ export class NotificationStore {
     );
   }
 
+  /**
+   * Hands claimed rows back unsent (the worker is stopping): visible again at once, and the attempt
+   * the claim counted is given back.
+   */
+  async release(ids: readonly string[]): Promise<void> {
+    if (ids.length === 0) return;
+    await this.#inServiceRole((tx) =>
+      tx.query(
+        `update public.notification_outbox o
+            set deliver_after = now(), attempts = greatest(o.attempts - 1, 0)
+          where o.id = any($1::uuid[]) and o.sent_at is null`,
+        [ids],
+      ),
+    );
+  }
+
   async markFailed(id: string, error: string): Promise<void> {
     await this.#inServiceRole((tx) =>
       tx.query(`update public.notification_outbox o set last_error = $2 where o.id = $1::uuid`, [
@@ -343,21 +359,28 @@ export interface DrainResult {
   failed: number;
   skipped: number;
   deferred: number;
+  /** Claimed rows handed back unsent because the worker was stopping. */
+  released: number;
 }
 
 export interface OutboxDrainOptions {
-  store: Pick<NotificationStore, "claimDue" | "markSent" | "markFailed" | "runStatus">;
+  store: Pick<NotificationStore, "claimDue" | "markSent" | "markFailed" | "release" | "runStatus">;
   notifier: Pick<Notifier, "deliver">;
   log: Logger;
   intervalSeconds: number;
   now?: () => Date;
 }
 
+/** Longest `stop()` waits for a send in flight. Inside the 10 seconds a stopping worker has. */
+export const OUTBOX_STOP_TIMEOUT_MS = 3_000;
+
 /** Sends what is due in notification_outbox, every `intervalSeconds`. */
 export class OutboxDrain {
   readonly #o: OutboxDrainOptions;
   #timer: ReturnType<typeof setInterval> | undefined;
   #running = false;
+  #stopped = false;
+  #current: Promise<void> | undefined;
 
   constructor(options: OutboxDrainOptions) {
     this.#o = options;
@@ -365,7 +388,14 @@ export class OutboxDrain {
 
   /** One pass. Never throws: a broken row must not stop the rest, or the worker. */
   async drainOnce(): Promise<DrainResult> {
-    const out: DrainResult = { claimed: 0, sent: 0, failed: 0, skipped: 0, deferred: 0 };
+    const out: DrainResult = {
+      claimed: 0,
+      sent: 0,
+      failed: 0,
+      skipped: 0,
+      deferred: 0,
+      released: 0,
+    };
     const now = (this.#o.now ?? (() => new Date()))();
     let batch: Awaited<ReturnType<NotificationStore["claimDue"]>>;
     try {
@@ -376,7 +406,13 @@ export class OutboxDrain {
     }
     out.deferred = batch.deferred;
     out.claimed = batch.claimed.length;
+    const unsent: string[] = [];
     for (const row of batch.claimed) {
+      // Stopping: finish the send in flight, start no other.
+      if (this.#stopped) {
+        unsent.push(row.id);
+        continue;
+      }
       try {
         if (!(await this.#isCurrent(row.payload))) {
           await this.#o.store.markSent(row.id, "stale: the run moved on");
@@ -404,6 +440,15 @@ export class OutboxDrain {
         }
       }
     }
+    if (unsent.length > 0) {
+      try {
+        await this.#o.store.release(unsent);
+        out.released = unsent.length;
+      } catch (error) {
+        // They stay leased and go out after the lease.
+        this.#o.log.warn("outbox rows could not be released", { error: errorMessage(error) });
+      }
+    }
     return out;
   }
 
@@ -415,25 +460,46 @@ export class OutboxDrain {
   }
 
   async tick(): Promise<void> {
-    if (this.#running) return;
+    if (this.#running || this.#stopped) return;
     this.#running = true;
-    try {
-      const result = await this.drainOnce();
-      if (result.claimed > 0 || result.deferred > 0)
-        this.#o.log.info("outbox drained", { ...result });
-    } finally {
-      this.#running = false;
-    }
+    const pass = (async () => {
+      try {
+        const result = await this.drainOnce();
+        if (result.claimed > 0 || result.deferred > 0)
+          this.#o.log.info("outbox drained", { ...result });
+      } finally {
+        this.#running = false;
+      }
+    })();
+    this.#current = pass;
+    await pass;
   }
 
   start(): void {
-    if (this.#timer) return;
+    if (this.#timer || this.#stopped) return;
     this.#timer = setInterval(() => void this.tick(), this.#o.intervalSeconds * 1000);
     this.#timer.unref?.();
   }
 
-  stop(): void {
+  /**
+   * Stops the timer and starts no further pass. Waits, up to `timeoutMs`, for the pass in flight,
+   * so a send that reaches Expo is also marked sent before the connection closes: a worker that
+   * exited mid-send left the row to be sent again after its lease. Rows the pass had claimed but not
+   * sent are handed back at once.
+   */
+  async stop(timeoutMs = OUTBOX_STOP_TIMEOUT_MS): Promise<void> {
+    this.#stopped = true;
     if (this.#timer) clearInterval(this.#timer);
     this.#timer = undefined;
+    const pass = this.#current;
+    if (!pass) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([
+      pass.catch(() => undefined),
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, timeoutMs);
+      }),
+    ]);
+    if (timer) clearTimeout(timer);
   }
 }

@@ -11,6 +11,8 @@
 export const packageName = "@mp/retailers";
 
 export { BANNER_CHAIN_NAMES, bannerForChain } from "./banners.ts";
+// WS08: BrowserHost, snapshots, the bridge protocol, page skills, and the Tier 3 gate.
+export * from "./browser/index.ts";
 export {
   automates,
   CAPABILITY_NAMES,
@@ -38,6 +40,7 @@ export {
   toCartItemDelta,
 } from "./refs.ts";
 export {
+  type AdapterGate,
   type AdapterListing,
   AdapterRegistry,
   defaultRegistry,

@@ -22,4 +22,15 @@ if (fs.existsSync(rootEnv)) {
 // Expo detects the pnpm workspace and sets watchFolders and node_modules paths itself.
 const config = getDefaultConfig(__dirname);
 
+// WS08: the (dev) snapshot tool opens any URL in the Tier 3 host. It never ships: a production
+// bundle (expo export, release builds) does not see the file, so expo-router has no such route.
+if (process.env.NODE_ENV === "production") {
+  const devOnly = /[/\\]app[/\\]\(dev\)[/\\]snapshot\.tsx$/;
+  const existing = config.resolver.blockList;
+  config.resolver.blockList = [
+    ...(Array.isArray(existing) ? existing : existing ? [existing] : []),
+    devOnly,
+  ];
+}
+
 module.exports = withNativeWind(config, { input: "./global.css" });

@@ -20,6 +20,7 @@ export type Database = {
           ok: boolean;
           output_tokens: number;
           prompt_version: string | null;
+          run_id: string | null;
         };
         ComputedFields: never;
         Insert: {
@@ -36,6 +37,7 @@ export type Database = {
           ok: boolean;
           output_tokens?: number;
           prompt_version?: string | null;
+          run_id?: string | null;
         };
         Update: {
           cache_read_tokens?: number;
@@ -51,6 +53,7 @@ export type Database = {
           ok?: boolean;
           output_tokens?: number;
           prompt_version?: string | null;
+          run_id?: string | null;
         };
         Relationships: [
           {
@@ -58,6 +61,13 @@ export type Database = {
             columns: ["household_id"];
             isOneToOne: false;
             referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ai_runs_run_id_fkey";
+            columns: ["run_id"];
+            isOneToOne: false;
+            referencedRelation: "shopping_runs";
             referencedColumns: ["id"];
           },
         ];
@@ -341,6 +351,7 @@ export type Database = {
           deleted_at: string | null;
           id: string;
           name: string;
+          plan_mode: Database["public"]["Enums"]["households_plan_mode"];
           tier3_consent: Json | null;
           updated_at: string;
           zip: string | null;
@@ -353,6 +364,7 @@ export type Database = {
           deleted_at?: string | null;
           id?: string;
           name: string;
+          plan_mode?: Database["public"]["Enums"]["households_plan_mode"];
           tier3_consent?: Json | null;
           updated_at?: string;
           zip?: string | null;
@@ -364,6 +376,7 @@ export type Database = {
           deleted_at?: string | null;
           id?: string;
           name?: string;
+          plan_mode?: Database["public"]["Enums"]["households_plan_mode"];
           tier3_consent?: Json | null;
           updated_at?: string;
           zip?: string | null;
@@ -1534,6 +1547,7 @@ export type Database = {
       grocery_list_items_excluded_reason: "pantry" | "manual";
       grocery_lists_status: "draft" | "active" | "shopped";
       household_members_role: "owner" | "member";
+      households_plan_mode: "simple" | "full";
       import_jobs_kind: "url" | "text" | "photo" | "caption";
       import_jobs_status: "queued" | "running" | "done" | "failed";
       ingredient_alias_proposals_status: "pending" | "accepted" | "rejected";
@@ -1681,6 +1695,7 @@ export const Constants = {
       grocery_list_items_excluded_reason: ["pantry", "manual"],
       grocery_lists_status: ["draft", "active", "shopped"],
       household_members_role: ["owner", "member"],
+      households_plan_mode: ["simple", "full"],
       import_jobs_kind: ["url", "text", "photo", "caption"],
       import_jobs_status: ["queued", "running", "done", "failed"],
       ingredient_alias_proposals_status: ["pending", "accepted", "rejected"],

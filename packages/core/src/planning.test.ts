@@ -18,9 +18,12 @@ import {
   MealSlot,
   mondayIndex,
   nextPosition,
+  PLAN_MODES,
+  PlanMode,
   RecipeFeedback,
   shiftWeek,
   signalForStatus,
+  slotsForMode,
   sortEntries,
   weekDates,
   weekStartFor,
@@ -535,5 +538,18 @@ describe("@mp/core exports the planning contracts", () => {
     ]) {
       expect(mod).toHaveProperty(name);
     }
+  });
+});
+
+describe("plan modes (CCR7)", () => {
+  it("defaults to simple and knows both modes", () => {
+    expect(PLAN_MODES).toEqual(["simple", "full"]);
+    expect(PlanMode.safeParse("simple").success).toBe(true);
+    expect(PlanMode.safeParse("dinner-only").success).toBe(false);
+  });
+
+  it("shows one dinner a day in simple mode and every slot in full mode", () => {
+    expect(slotsForMode("simple")).toEqual(["dinner"]);
+    expect(slotsForMode("full")).toEqual(["breakfast", "lunch", "dinner", "snack"]);
   });
 });

@@ -45,6 +45,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | id | uuid pk | |
 | name | text | |
 | zip | text | For store lookup |
+| plan_mode | enum households_plan_mode: simple, full; default simple | Simple shows one dinner a day in the planner; entries in other slots stay and still feed the list; owner-editable through the existing update policy. CCR7, 2026-10-31 |
 | default_connection_id | uuid → retailer_connections | Nullable |
 | created_by | uuid → auth.users | |
 | quiet_hours | jsonb | {start, end} in the household's zone; WS11 |
@@ -461,6 +462,7 @@ Realtime: `shopping_runs` is in the `supabase_realtime` publication; `shopping_r
 | kind | text (parse_ingredients, extract_recipe, suggest, agent_step, embed, …) |
 | model | text |
 | prompt_version | text |
+| run_id | uuid → shopping_runs | Nullable; set by the agent's calls so a per-run cap can sum them. Added 2026-10-31 for WS08's llm-proxy |
 | input_tokens, output_tokens, cache_read_tokens | int |
 | cost_usd | numeric |
 | latency_ms | int |

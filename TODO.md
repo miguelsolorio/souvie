@@ -49,7 +49,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] WS05 follow-up round (jsonb parameters): reviewed and merged as 77e8509 (PR #20); `list-build` redeployed (v3) and the real plan built on the hosted project. Miguel retries.
 - [x] WS04 follow-up round (picker entry points, from Miguel's test 2026-10-31): reviewed and merged as 90279f0 (PR #19).
 - [x] WS02 follow-up round (parse wiring, validation, duplicates): reviewed (one narrow fix round) and merged 2026-10-31 as c4e799f (PR #24); migration applied and `recipe-import` and `parse-ingredients` redeployed. **Miguel:** open each existing recipe and tap "Match ingredients" once.
-- [ ] WS04 simple-mode round (one meal a day, household setting `plan_mode` default simple, asked in onboarding step 1; brief section at the end of WS04's file, requested by Miguel 2026-10-31): orchestrator lands `PlanMode`, `slotsForMode` and the `households.plan_mode` migration first, then dispatch after the picker round merges, review, merge.
+- [ ] WS04 simple-mode round (one meal a day, `plan_mode` default simple, asked in onboarding step 1): CCR7 merged as 24e84bd (PR #25) and applied to hosted; builder dispatched 2026-10-31 on `ws/04c-simple-mode`; review, merge.
 - [x] WS08: reviewed (one fix round, one narrow second round) and merged 2026-10-31 as 2f571c1 (PR #22); wave 3 summary appended; `pnpm install` run. Miguel: `git pull` in the primary checkout when convenient.
 - [x] **Human decision:** recipe catalog cold start. Miguel chose a starter catalog 2026-10-30; WS16 brief written and dispatched.
 - [x] WS16 (starter catalog, sonnet): reviewed and merged as 4fb32da (PR #13), 2026-10-30.

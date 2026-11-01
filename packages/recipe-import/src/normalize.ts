@@ -6,6 +6,7 @@
 
 import { NormalizedRecipe, RECIPE_LIMITS } from "@mp/core";
 import type { RecipeExtractOutput } from "@mp/llm";
+import { TRACKING_PARAM } from "./dedupe.ts";
 
 /** The slice of recipe-scrapers' `RecipeObject` this package reads. */
 export interface ScrapedRecipe {
@@ -23,9 +24,6 @@ export interface ScrapedRecipe {
   category?: readonly string[] | null;
   cuisine?: readonly string[] | null;
 }
-
-const TRACKING_PARAM =
-  /^(utm_[a-z_]+|fbclid|gclid|dclid|msclkid|mc_cid|mc_eid|igshid|igsh|ref_src|_ga|oly_[a-z_]+)$/i;
 
 /** The address to store as the recipe's source: no fragment, no tracking parameters. */
 export function cleanSourceUrl(raw: string): string {

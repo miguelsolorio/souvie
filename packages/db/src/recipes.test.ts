@@ -577,7 +577,9 @@ describe("importRecipe", () => {
     );
     expect(error).toBeInstanceOf(ImportError);
     expect(error).toMatchObject({ code: "blocked", jobId });
-    expect(importErrorMessage(error)).toMatch(/would not let us read/);
+    // The function's own message is the one shown (recipeMatch.test.ts covers the fallback to the
+    // table's text when it sends none).
+    expect(importErrorMessage(error)).toBe("No.");
   });
 
   it("reads the body of an HTTP error response", async () => {

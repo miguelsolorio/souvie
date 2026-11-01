@@ -21,6 +21,7 @@ export function RecipeForm({
   onSubmit,
   onCancel,
   cancelLabel = "Cancel",
+  requireWholeServings = false,
 }: {
   initial: FormState;
   existing?: readonly ExistingLine[];
@@ -31,17 +32,20 @@ export function RecipeForm({
   onSubmit: (draft: RecipeDraft) => void;
   onCancel?: () => void;
   cancelLabel?: string;
+  /** The Write tab: servings, when given, must be a positive whole number. */
+  requireWholeServings?: boolean;
 }) {
   const [form, setForm] = useState<FormState>(initial);
   const [attempted, setAttempted] = useState(false);
-  const errors = attempted ? formErrors(form) : {};
+  const rules = { wholeServings: requireWholeServings };
+  const errors = attempted ? formErrors(form, rules) : {};
 
   const set = (key: keyof FormState) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   function submit() {
     setAttempted(true);
-    if (hasErrors(formErrors(form))) return;
+    if (hasErrors(formErrors(form, rules))) return;
     onSubmit(draftFromForm(form, existing));
   }
 

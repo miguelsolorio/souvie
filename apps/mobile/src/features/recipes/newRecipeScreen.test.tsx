@@ -47,15 +47,19 @@ beforeEach(() => {
 
 describe("the add-recipe route", () => {
   it("passes the picker's date, slot and swap target on as the return target", () => {
-    h.params = paramsOf(
-      newRecipeFromPickerRoute({ date: "2026-11-03", slot: "lunch", entry: "e1" }),
-    );
+    const entry = "9a2b7c1e-0000-4000-8000-000000000001";
+    h.params = paramsOf(newRecipeFromPickerRoute({ date: "2026-11-03", slot: "lunch", entry }));
     const screen = renderScreen(<NewRecipeScreen />);
     expect(screen.props("add-recipe").returnTo).toEqual({
       date: "2026-11-03",
       slot: "lunch",
-      entry: "e1",
+      entry,
     });
+  });
+
+  it("has no return target when the swap target is not an entry id", () => {
+    h.params = { returnTo: "pick", date: "2026-11-03", slot: "lunch", entry: "e1" };
+    expect(renderScreen(<NewRecipeScreen />).props("add-recipe").returnTo).toBeNull();
   });
 
   it("has no return target when opened from the Recipes tab", () => {

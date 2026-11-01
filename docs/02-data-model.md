@@ -116,6 +116,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | image_url | text | Storage path or external URL |
 | source_type | enum recipes_source_type: url, text, photo, video, manual, ai | |
 | source_url | text | Always set for url and video imports; shown as attribution |
+| source_url_normalized | text | As built (WS02 follow-up, 2026-10-31). `source_url` with its host lowercased and no fragment, tracking parameters or trailing slash. Set by trigger; no client can write it |
 | servings | numeric | |
 | prep_min, cook_min | int | |
 | instructions | jsonb | Array of {step, text, group?} |
@@ -124,6 +125,8 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | cuisine | text | |
 | embedding | vector(1024) | HNSW index; built from title + tags + ingredient names |
 | visibility | enum recipes_visibility: household, catalog | Catalog holds only our own or licensed recipes. In v1 that is the starter catalog (WS16): at least 60 original recipes drafted for the app, `source_type = ai`, loaded by `supabase/seed/20_catalog.sql`. Every signed-in member reads catalog rows and their ingredient lines (policies added 2026-10-30 by the orchestrator); only the seed writes them |
+
+As built (WS02 follow-up, 2026-10-31): a household holds one live recipe per link. The `recipes_set_source_url_normalized` trigger (before insert, or update of `source_url`) fills `source_url_normalized` with `normalize_source_url(source_url)`. The unique index `recipes_household_source_url_normalized_uq` on `(household_id, source_url_normalized)` covers rows where `deleted_at is null`, `household_id is not null` and the column is not null, so a soft-deleted recipe frees its link and catalog rows and recipes without a link are not covered. The column is in no client insert or update grant. The migration left alone any extra live copy of a link that already existed: the oldest copy took the key and the others stay unkeyed until deleted. `normalize_source_url` and `normalizeSourceUrl` in `packages/recipe-import/src/dedupe.ts` follow the same rules and are tested against one list of links. `recipe-import` and the app look for an existing recipe before they create one (`supabase/functions/recipe-import/README.md` §Duplicates).
 
 **recipe_ingredients**
 | column | type | notes |

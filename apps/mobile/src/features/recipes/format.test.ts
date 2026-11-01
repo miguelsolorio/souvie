@@ -1,6 +1,7 @@
 import type { RecipeSummary } from "@mp/db";
 import { describe, expect, it } from "vitest";
 import {
+  collapseSplitLines,
   filterRecipes,
   formatMinutes,
   formatServings,
@@ -107,5 +108,43 @@ describe("groupIngredientLines", () => {
       { n: 1, text: "a" },
       { n: 2, text: "b" },
     ]);
+  });
+});
+
+describe("collapseSplitLines", () => {
+  const row = (
+    id: string,
+    position: number,
+    raw_text: string,
+    group_name: string | null = null,
+  ) => ({
+    id,
+    position,
+    raw_text,
+    group_name,
+  });
+
+  it("shows a line the parser split into several rows once, keeping the first row", () => {
+    const rows = [
+      row("a", 0, "salt and pepper to taste"),
+      row("b", 0, "salt and pepper to taste"),
+      row("c", 1, "1 lemon"),
+    ];
+    expect(collapseSplitLines(rows).map((r) => r.id)).toEqual(["a", "c"]);
+  });
+
+  it("keeps the same text written twice, at two positions or under two headings", () => {
+    const rows = [
+      row("a", 0, "1/2 tsp salt", "For the batter"),
+      row("b", 3, "1/2 tsp salt", "For the filling"),
+      row("c", 4, "1/2 tsp salt", "For the filling"),
+    ];
+    expect(collapseSplitLines(rows).map((r) => r.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("leaves a list without splits as it was", () => {
+    const rows = [row("a", 0, "1 egg"), row("b", 1, "2 cups flour")];
+    expect(collapseSplitLines(rows)).toEqual(rows);
+    expect(collapseSplitLines([])).toEqual([]);
   });
 });

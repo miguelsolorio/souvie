@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { ImportRecipeResponse } from "../../../packages/core/src/index.ts";
 import { LlmError } from "../../../packages/llm/src/index.ts";
 import type { ModelExtract } from "../../../packages/recipe-import/src/index.ts";
 import {
@@ -8,13 +9,16 @@ import {
   MAX_IMAGE_BYTES,
   type Runtime,
 } from "./handler.ts";
-import type {
-  DownloadedImage,
-  HouseholdLookup,
-  ImportStore,
-  JobUpdate,
-  NewJob,
-  SaveRecipeInput,
+import {
+  type DownloadedImage,
+  type DuplicateCheck,
+  DuplicateSaveError,
+  type ExistingRecipe,
+  type HouseholdLookup,
+  type ImportStore,
+  type JobUpdate,
+  type NewJob,
+  type SaveRecipeInput,
 } from "./store.ts";
 
 // supabase-js is only needed by the real runtime; the tests inject their own.
@@ -61,7 +65,31 @@ class FakeStore implements ImportStore {
   saved: SaveRecipeInput[] = [];
   resolveCalls: Array<{ requested: string | undefined }> = [];
   downloaded: string[] = [];
+  /** Live recipes the household already has: by normalized link, or by title. */
+  existing: Array<{ recipeId: string; sourceUrlNormalized?: string; title?: string }> = [];
+  lookups: DuplicateCheck[] = [];
+  failLookup = false;
+  /** A recipe another request saved between the lookup and the insert. */
+  raceWith: { recipeId: string; sourceUrlNormalized: string } | null = null;
 
+  async findDuplicate(
+    _auth: string,
+    _household: string,
+    check: DuplicateCheck,
+  ): Promise<ExistingRecipe | null> {
+    this.lookups.push(check);
+    if (this.failLookup) throw new Error("lookup down");
+    if (check.sourceUrlNormalized) {
+      const hit = this.existing.find((e) => e.sourceUrlNormalized === check.sourceUrlNormalized);
+      return hit ? { recipeId: hit.recipeId, matchedBy: "url" } : null;
+    }
+    const title = check.title;
+    if (title) {
+      const hit = this.existing.find((e) => e.title !== undefined && title.isSame(e.title));
+      return hit ? { recipeId: hit.recipeId, matchedBy: "title" } : null;
+    }
+    return null;
+  }
   async resolveHousehold(_auth: string, _user: string, requested: string | undefined) {
     this.resolveCalls.push({ requested });
     return this.household;
@@ -80,6 +108,10 @@ class FakeStore implements ImportStore {
   }
   async saveRecipe(_auth: string, input: SaveRecipeInput) {
     if (this.failSave) throw new Error("db down");
+    if (this.raceWith) {
+      this.existing.push(this.raceWith);
+      throw new DuplicateSaveError();
+    }
     this.saved.push(input);
     return "5ec1be00-0000-4000-8000-000000000001";
   }
@@ -534,6 +566,255 @@ describe("isHouseholdImagePath", () => {
     expect(isHouseholdImagePath(`${HOUSEHOLD}/../x.jpg`, HOUSEHOLD)).toBe(false);
     expect(isHouseholdImagePath(`${HOUSEHOLD}/a b.jpg`, HOUSEHOLD)).toBe(false);
     expect(isHouseholdImagePath(`${HOUSEHOLD}\\a.jpg`, HOUSEHOLD)).toBe(false);
+  });
+});
+
+const EXISTING_ID = "5ec1be00-0000-4000-8000-0000000000ee";
+const LEMON_KEY = "https://example.test/lemon-chicken";
+
+describe("a recipe the household already has", () => {
+  it("answers duplicate for the same link before fetching, reading, or logging anything", async () => {
+    const fetchMock = vi.fn();
+    const { rt, store, modelCalls } = runtime({ fetch: fetchMock as never });
+    store.existing = [{ recipeId: EXISTING_ID, sourceUrlNormalized: LEMON_KEY }];
+
+    const { status, body } = await call(rt, {
+      kind: "url",
+      input: "HTTPS://Example.test/lemon-chicken/?utm_source=newsletter#reviews",
+    });
+
+    expect(status).toBe(200);
+    expect(body).toEqual({
+      ok: false,
+      error: "duplicate",
+      message: "You already have this recipe.",
+      recipeId: EXISTING_ID,
+      matchedBy: "url",
+    });
+    // And it is the answer @mp/core's contract describes (CCR8), not a shape of the function's own.
+    expect(ImportRecipeResponse.safeParse(body)).toMatchObject({ success: true });
+    expect(store.lookups).toEqual([{ sourceUrlNormalized: LEMON_KEY }]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(modelCalls).toHaveLength(0);
+    // Nothing was attempted, so there is no job and nothing counts against the hourly limit.
+    expect(store.jobs).toHaveLength(0);
+    expect(store.saved).toHaveLength(0);
+  });
+
+  it("does not let allowDuplicate through for a link the household already has", async () => {
+    const { rt, store } = runtime();
+    store.existing = [{ recipeId: EXISTING_ID, sourceUrlNormalized: LEMON_KEY }];
+    const { body } = await call(rt, {
+      kind: "url",
+      input: "https://example.test/lemon-chicken",
+      allowDuplicate: true,
+    });
+    expect(body).toMatchObject({ ok: false, error: "duplicate", recipeId: EXISTING_ID });
+    expect(store.saved).toHaveLength(0);
+  });
+
+  it("imports a different link as usual, and a deleted recipe's link is free again", async () => {
+    // The store only returns live recipes, so a soft-deleted one is simply not in `existing`.
+    const { rt, store } = runtime();
+    store.existing = [{ recipeId: EXISTING_ID, sourceUrlNormalized: "https://example.test/other" }];
+    const { body } = await call(rt, { kind: "url", input: "https://example.test/lemon-chicken" });
+    expect(body).toMatchObject({ ok: true, recipeId: expect.any(String) });
+    expect(store.saved).toHaveLength(1);
+  });
+
+  it("checks again under the address the page ended up at, and closes the job", async () => {
+    // A short link that redirects: the stored source_url is the final address, so that is the
+    // one the database would refuse.
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) =>
+      String(input).includes("short")
+        ? new Response(null, {
+            status: 301,
+            headers: { location: "https://example.test/lemon-chicken" },
+          })
+        : new Response(RECIPE_HTML, { headers: { "content-type": "text/html" } }),
+    );
+    const { rt, store } = runtime({ fetch: fetchMock as never });
+    store.existing = [{ recipeId: EXISTING_ID, sourceUrlNormalized: LEMON_KEY }];
+
+    const { body } = await call(rt, { kind: "url", input: "https://example.test/short" });
+
+    expect(body).toMatchObject({
+      ok: false,
+      error: "duplicate",
+      recipeId: EXISTING_ID,
+      matchedBy: "url",
+      jobId: "job-1",
+    });
+    expect(store.lookups.map((l) => l.sourceUrlNormalized)).toEqual([
+      "https://example.test/short",
+      LEMON_KEY,
+    ]);
+    expect(store.saved).toHaveLength(0);
+    expect(store.jobs[0]?.update).toMatchObject({ status: "failed" });
+    expect(store.jobs[0]?.update?.error).toMatch(/^duplicate/);
+  });
+
+  it("recognises pasted text by its title, with case and spacing folded", async () => {
+    const { rt, store } = runtime();
+    store.existing = [{ recipeId: EXISTING_ID, title: "  PANCAKES " }];
+    const { body } = await call(rt, {
+      kind: "text",
+      input: "Pancakes\n2 cups flour\n1 cup milk\nWhisk. Fry.",
+    });
+    expect(body).toMatchObject({
+      ok: false,
+      error: "duplicate",
+      recipeId: EXISTING_ID,
+      matchedBy: "title",
+      jobId: "job-1",
+    });
+    expect(store.saved).toHaveLength(0);
+    expect(store.jobs[0]?.update).toMatchObject({ status: "failed" });
+  });
+
+  it("saves it anyway when the person says so, because a title is not a link", async () => {
+    const { rt, store } = runtime();
+    store.existing = [{ recipeId: EXISTING_ID, title: "Pancakes" }];
+    const { body } = await call(rt, {
+      kind: "text",
+      input: "Pancakes\n2 cups flour\n1 cup milk\nWhisk. Fry.",
+      allowDuplicate: true,
+    });
+    expect(body).toMatchObject({ ok: true, recipeId: expect.any(String) });
+    expect(store.saved).toHaveLength(1);
+    // With allowDuplicate the title is not even looked up.
+    expect(store.lookups).toHaveLength(0);
+  });
+
+  it("does not take a different title for the same recipe", async () => {
+    const { rt, store } = runtime();
+    store.existing = [{ recipeId: EXISTING_ID, title: "Pancakes with Berries" }];
+    const { body } = await call(rt, {
+      kind: "text",
+      input: "Pancakes\n2 cups flour\n1 cup milk\nWhisk. Fry.",
+    });
+    expect(body).toMatchObject({ ok: true });
+  });
+
+  it("looks at the link, not the title, once a recipe has a link", async () => {
+    const { rt, store } = runtime();
+    // Same title, different link: two blogs can both publish "Lemon Chicken".
+    store.existing = [{ recipeId: EXISTING_ID, title: "Lemon Chicken" }];
+    const { body } = await call(rt, { kind: "url", input: "https://example.test/lemon-chicken" });
+    expect(body).toMatchObject({ ok: true });
+    expect(store.lookups.every((l) => l.title === undefined)).toBe(true);
+  });
+
+  it("checks a caption's post link first, even for a draft", async () => {
+    const { rt, store, modelCalls } = runtime();
+    store.existing = [
+      { recipeId: EXISTING_ID, sourceUrlNormalized: "https://www.instagram.com/reel/abc" },
+    ];
+    const { body } = await call(rt, {
+      kind: "caption",
+      input: "Pancakes\n2 cups flour\n1 cup milk\n1 egg",
+      sourceUrl: "https://www.instagram.com/reel/abc/?igsh=SECRET#x",
+      save: false,
+    });
+    expect(body).toMatchObject({ ok: false, error: "duplicate", matchedBy: "url" });
+    expect(modelCalls).toHaveLength(0);
+    expect(store.jobs).toHaveLength(0);
+  });
+
+  it("leaves a draft's title alone: the app checks it when the draft is saved", async () => {
+    const { rt, store } = runtime();
+    store.existing = [{ recipeId: EXISTING_ID, title: "Pancakes" }];
+    const { body } = await call(rt, {
+      kind: "image",
+      input: { path: `${HOUSEHOLD}/card.jpg` },
+      save: false,
+    });
+    expect(body).toMatchObject({ ok: true, draft: { title: "Pancakes" } });
+    expect(store.lookups).toHaveLength(0);
+  });
+
+  it("answers duplicate when two saves of one link race and the database refuses the second", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { rt, store } = runtime();
+    store.raceWith = { recipeId: EXISTING_ID, sourceUrlNormalized: LEMON_KEY };
+    const { status, body } = await call(rt, {
+      kind: "url",
+      input: "https://example.test/lemon-chicken",
+    });
+    expect(status).toBe(200);
+    expect(body).toMatchObject({
+      ok: false,
+      error: "duplicate",
+      recipeId: EXISTING_ID,
+      matchedBy: "url",
+      jobId: "job-1",
+    });
+    expect(store.jobs[0]?.update).toMatchObject({ status: "failed" });
+  });
+
+  it("reports save_failed when the index refused the link but no recipe can be found", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { rt, store } = runtime();
+    store.saveRecipe = async () => {
+      throw new DuplicateSaveError();
+    };
+    const { status, body } = await call(rt, {
+      kind: "url",
+      input: "https://example.test/lemon-chicken",
+    });
+    expect(status).toBe(500);
+    expect(body).toMatchObject({ ok: false, error: "save_failed" });
+  });
+
+  it("carries on when the lookup itself fails, since the index still guards the link", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { rt, store } = runtime();
+    store.failLookup = true;
+    const { body } = await call(rt, { kind: "url", input: "https://example.test/lemon-chicken" });
+    expect(body).toMatchObject({ ok: true, recipeId: expect.any(String) });
+    expect(store.saved).toHaveLength(1);
+  });
+
+  it("has a message written for the person using the app", async () => {
+    const { rt, store } = runtime();
+    store.existing = [{ recipeId: EXISTING_ID, sourceUrlNormalized: LEMON_KEY }];
+    const { body } = await call(rt, { kind: "url", input: LEMON_KEY });
+    expect(body.message).toBe("You already have this recipe.");
+    expect(String(body.message)).not.toContain(String.fromCharCode(0x2014));
+  });
+});
+
+describe("repeated ingredient lines", () => {
+  // A recipe may list the same line twice (the batter and the filling both take salt) and the
+  // grocery list counts both, so the function stores what the importer returned.
+  const model = (lines: Array<{ text: string; group: string | null }>) => ({
+    ...MODEL_ANSWER,
+    ingredients: lines,
+  });
+  const repeated = [
+    { text: "1/2 tsp salt", group: null },
+    { text: "2 cups flour", group: null },
+    { text: "1/2 tsp salt", group: null },
+  ];
+
+  it("saves them as returned", async () => {
+    const { rt, store } = runtime({ answers: [model(repeated)] });
+    await call(rt, { kind: "text", input: "Pancakes\n2 cups flour\n1 cup milk\nWhisk. Fry." });
+    expect(store.saved[0]?.recipe.ingredients.map((i) => i.rawText)).toEqual([
+      "1/2 tsp salt",
+      "2 cups flour",
+      "1/2 tsp salt",
+    ]);
+  });
+
+  it("returns them as they are in a draft", async () => {
+    const { rt } = runtime({ answers: [model(repeated)] });
+    const { body } = await call(rt, {
+      kind: "text",
+      input: "Pancakes\n2 cups flour\n1 cup milk\nWhisk. Fry.",
+      save: false,
+    });
+    expect((body.draft as { ingredients: unknown[] }).ingredients).toHaveLength(3);
   });
 });
 

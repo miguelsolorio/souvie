@@ -37,6 +37,7 @@ describe("routes", () => {
 
 describe("recipe entry points in the picker", () => {
   const target = { date: "2026-11-03", slot: "dinner" as const };
+  const ENTRY = "9a2b7c1e-0000-4000-8000-000000000001";
 
   it("opens the picker on a just-added recipe", () => {
     expect(pickRoute({ ...target, added: "r9" })).toBe(
@@ -62,12 +63,45 @@ describe("recipe entry points in the picker", () => {
       target,
     );
     expect(
-      parsePickerReturn({ returnTo: "pick", date: "2026-11-03", slot: "snack", entry: "e1" }),
-    ).toEqual({ date: "2026-11-03", slot: "snack", entry: "e1" });
+      parsePickerReturn({ returnTo: "pick", date: "2026-11-03", slot: "snack", entry: ENTRY }),
+    ).toEqual({ date: "2026-11-03", slot: "snack", entry: ENTRY });
     // An empty entry is no entry.
     expect(
       parsePickerReturn({ returnTo: "pick", date: "2026-11-03", slot: "dinner", entry: "" }),
     ).toEqual(target);
+  });
+
+  it("accepts an entry id in capitals, as some platforms write UUIDs", () => {
+    expect(
+      parsePickerReturn({
+        returnTo: "pick",
+        date: "2026-11-03",
+        slot: "dinner",
+        entry: ENTRY.toUpperCase(),
+      }),
+    ).toEqual({ ...target, entry: ENTRY.toUpperCase() });
+  });
+
+  it("treats an entry that is not a UUID as coming from somewhere else", () => {
+    // A hand-edited or hostile URL must not send the person back to a swap that names an entry
+    // this app never made. It is not repaired into a plain add either: that would be a different
+    // action than the one asked for.
+    const base = { returnTo: "pick", date: "2026-11-03", slot: "dinner" };
+    for (const entry of [
+      "e1",
+      "not-a-uuid",
+      " ",
+      `${ENTRY} `,
+      `${ENTRY}&slot=lunch`,
+      `../${ENTRY}`,
+      "9a2b7c1e-0000-4000-8000-00000000000g",
+      "9a2b7c1e00004000800000000000001",
+      [ENTRY, ENTRY],
+      42,
+      null,
+    ]) {
+      expect(parsePickerReturn({ ...base, entry }), String(entry)).toBeNull();
+    }
   });
 
   it("treats a missing or malformed return target as coming from somewhere else", () => {
@@ -84,8 +118,44 @@ describe("recipe entry points in the picker", () => {
     expect(parsePickerReturn({ ...ok, date: ["2026-11-03", "2026-11-04"] })).toBeNull();
   });
 
+  it("encodes every value it puts in a URL, so a value cannot add a parameter of its own", () => {
+    const hostile = "a&slot=lunch&entry=other#frag? x";
+    const pick = new URL(
+      pickRoute({ ...target, entry: hostile, added: `${hostile}2` }),
+      "https://app.test",
+    );
+    expect([...pick.searchParams.keys()]).toEqual(["date", "slot", "entry", "added"]);
+    expect(pick.searchParams.get("entry")).toBe(hostile);
+    expect(pick.searchParams.get("added")).toBe(`${hostile}2`);
+    expect(pick.hash).toBe("");
+    expect(pickRoute({ ...target, entry: hostile })).not.toMatch(/[ #]|entry=[^&]*[?]/);
+
+    const add = new URL(
+      newRecipeFromPickerRoute({ ...target, entry: hostile }),
+      "https://app.test",
+    );
+    expect([...add.searchParams.keys()]).toEqual(["returnTo", "date", "slot", "entry"]);
+    expect(add.searchParams.get("entry")).toBe(hostile);
+    expect(add.hash).toBe("");
+    // And what comes back out is refused, not trusted.
+    expect(parsePickerReturn(Object.fromEntries(add.searchParams))).toBeNull();
+  });
+
+  it("encodes the id of the recipe just saved", () => {
+    expect(afterRecipeSaved("r9&slot=lunch", target)).toEqual({
+      action: "dismissTo",
+      href: "/plan/pick?date=2026-11-03&slot=dinner&added=r9%26slot%3Dlunch",
+    });
+  });
+
+  it("leaves a real id as it was: UUIDs have nothing to encode", () => {
+    expect(pickRoute({ ...target, entry: ENTRY, added: ENTRY })).toBe(
+      `/plan/pick?date=2026-11-03&slot=dinner&entry=${ENTRY}&added=${ENTRY}`,
+    );
+  });
+
   it("round-trips: what the picker sends is what the add-recipe screen reads", () => {
-    for (const entry of [undefined, "9a2b7c1e-0000-4000-8000-000000000001"]) {
+    for (const entry of [undefined, ENTRY]) {
       const sent = { date: "2026-12-31", slot: "breakfast" as const, entry };
       const url = new URL(newRecipeFromPickerRoute(sent), "https://app.test");
       const params = Object.fromEntries(url.searchParams);

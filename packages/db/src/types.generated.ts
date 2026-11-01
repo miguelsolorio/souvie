@@ -1003,6 +1003,7 @@ export type Database = {
           servings: number | null;
           source_type: Database["public"]["Enums"]["recipes_source_type"];
           source_url: string | null;
+          source_url_normalized: string | null;
           tags: string[];
           title: string;
           updated_at: string;
@@ -1026,6 +1027,7 @@ export type Database = {
           servings?: number | null;
           source_type: Database["public"]["Enums"]["recipes_source_type"];
           source_url?: string | null;
+          source_url_normalized?: string | null;
           tags?: string[];
           title: string;
           updated_at?: string;
@@ -1048,6 +1050,7 @@ export type Database = {
           servings?: number | null;
           source_type?: Database["public"]["Enums"]["recipes_source_type"];
           source_url?: string | null;
+          source_url_normalized?: string | null;
           tags?: string[];
           title?: string;
           updated_at?: string;
@@ -1449,6 +1452,7 @@ export type Database = {
           similarity: number;
         }[];
       };
+      normalize_source_url: { Args: { raw: string }; Returns: string };
       owned_household_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
       record_ingredient_alias_proposal: {
         Args: {

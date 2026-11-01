@@ -5,6 +5,7 @@
 //   importFromText(text, deps)           pasted text, Sonnet
 //   importFromImage(images, deps)        photos of a recipe card, Claude vision
 //   importFromCaption(caption, deps)     share-sheet caption text, Sonnet; never fetches
+//   normalizeSourceUrl, normalizeTitle   "is it the same recipe" (dedupe.ts)
 //
 // Each returns an `ImportResult`: `{ ok: true, recipe, path, warnings }` or
 // `{ ok: false, reason, message }`. The model is optional (`deps.extract`); without it only the
@@ -13,6 +14,7 @@
 export const packageName = "@mp/recipe-import";
 
 export * from "./caption.ts";
+export * from "./dedupe.ts";
 export { hasJsonLdRecipe, looksLikeChallenge, pageImage, readableText } from "./html.ts";
 export { importFromImage } from "./image.ts";
 export * from "./normalize.ts";

@@ -257,6 +257,41 @@ describe("recipe to form and back", () => {
   });
 });
 
+describe("a recipe whose parser split one line into two rows", () => {
+  // "salt and pepper to taste" is two rows with the same position, heading and text.
+  const split: RecipeWithIngredients = {
+    ...RECIPE,
+    ingredients: [
+      line("l1", 0, null, "8 chicken thighs"),
+      line("l2", 1, null, "salt and pepper to taste"),
+      line("l2x", 1, null, "salt and pepper to taste"),
+      line("l3", 2, null, "1 lemon"),
+    ],
+  };
+
+  it("is edited as the lines were written: the split line once, with the first row's id", () => {
+    expect(draftFromRecipe(split).ingredients.map((l) => l.id)).toEqual(["l1", "l2", "l3"]);
+    expect(existingLines(split).map((l) => l.id)).toEqual(["l1", "l2", "l3"]);
+    expect(formFromDraft(draftFromRecipe(split)).ingredients).toBe(
+      "8 chicken thighs\nsalt and pepper to taste\n1 lemon",
+    );
+  });
+
+  it("reads the box back to the same three lines, ids and all", () => {
+    const form = formFromDraft(draftFromRecipe(split));
+    const draft = draftFromForm(form, existingLines(split));
+    expect(draft.ingredients.map((l) => l.id)).toEqual(["l1", "l2", "l3"]);
+  });
+
+  it("still shows a line the person wrote twice, twice", () => {
+    const twice: RecipeWithIngredients = {
+      ...RECIPE,
+      ingredients: [line("l1", 0, null, "1 egg"), line("l2", 1, null, "1 egg")],
+    };
+    expect(draftFromRecipe(twice).ingredients).toHaveLength(2);
+  });
+});
+
 describe("formErrors", () => {
   it("accepts a complete form", () => {
     expect(
@@ -291,5 +326,47 @@ describe("formErrors", () => {
     expect(
       formErrors({ ...emptyForm(), title: "x", ingredients: "# Sauce\n\n#" }).ingredients,
     ).toBeDefined();
+  });
+
+  describe("for the Write tab, which wants whole servings", () => {
+    const base = { ...emptyForm(), title: "Soup", ingredients: "2 cups stock" };
+    const whole = { wholeServings: true };
+
+    it("accepts a whole number, and no servings at all", () => {
+      expect(formErrors({ ...base, servings: "4" }, whole).servings).toBeUndefined();
+      expect(formErrors({ ...base, servings: " 12 " }, whole).servings).toBeUndefined();
+      expect(formErrors(base, whole).servings).toBeUndefined();
+      expect(hasErrors(formErrors({ ...base, servings: "6" }, whole))).toBe(false);
+    });
+
+    it("asks for a whole number when it is anything else", () => {
+      for (const servings of ["1 1/2", "1/2", "4.5", "0", "00", "-2", "lots", "4 people", "1e3"]) {
+        expect(formErrors({ ...base, servings }, whole).servings, servings).toBe(
+          "Use a whole number such as 4.",
+        );
+      }
+    });
+
+    it("still stops at the limit", () => {
+      expect(formErrors({ ...base, servings: "5000" }, whole).servings).toMatch(/too many/);
+    });
+
+    it("still asks for a title and an ingredient", () => {
+      const errors = formErrors({ ...emptyForm(), servings: "4" }, whole);
+      expect(errors.title).toMatch(/title/);
+      expect(errors.ingredients).toMatch(/ingredient/);
+    });
+
+    it("leaves every other form alone: an imported 1 1/2 or 4.5 still saves", () => {
+      for (const servings of ["1 1/2", "4.5", "1/2"]) {
+        expect(formErrors({ ...base, servings }).servings, servings).toBeUndefined();
+        expect(
+          formErrors({ ...base, servings }, { wholeServings: false }).servings,
+        ).toBeUndefined();
+      }
+      expect(formErrors({ ...base, servings: "0" }).servings).toBe(
+        "Use a number such as 4 or 1 1/2.",
+      );
+    });
   });
 });

@@ -42,7 +42,8 @@ jobs:
 
       # Golden sets run from recorded fixtures. A model-path case with no committed recording
       # counts as a failure here (EVAL_REQUIRE_RECORDINGS), so the gate cannot pass on pending cases.
-      # WS15 adds score thresholds for the other sets.
+      # `pnpm eval` (WS15) also fails a score under its threshold or more than two points under the
+      # baseline in packages/evals-report/baseline.json. eval.yml compares with main and comments.
       - name: Evals
         run: pnpm eval
         env:
@@ -255,6 +256,25 @@ jobs:
       # enqueue to needs_review to cart_ready on the real stack, then a clean exit on SIGTERM.
       - name: Worker runs a mock shopping run end to end
         run: services/shopper-worker/scripts/smoke.sh
+
+      # WS15 criterion 10, on the real pgmq: a message archived the way the worker dead-letters one
+      # shows in `dlq:list`, and `dlq:retry --force` puts it back on shopping_run and out of the archive.
+      - name: Dead letter commands list and re-send from pgmq's archive
+        env:
+          WORKER_DATABASE_URL: ${{ env.DB_URL }}
+        run: |
+          set -euo pipefail
+          run_id="5d000000-0000-4000-8000-0000000000d1"
+          msg="$(psql "$DB_URL" -Atc "select pgmq.send('shopping_run', jsonb_build_object('run_id', '$run_id'))")"
+          psql "$DB_URL" -Atc "select pgmq.archive('shopping_run', $msg)" > /dev/null
+          pnpm --filter @mp/shopper-worker dlq:list | tee dlq-list.txt
+          grep -q "msg $msg " dlq-list.txt
+          grep -q "run $run_id" dlq-list.txt
+          pnpm --filter @mp/shopper-worker dlq:retry "$msg" --force | tee dlq-retry.txt
+          grep -q "Put back on shopping_run" dlq-retry.txt
+          test "$(psql "$DB_URL" -Atc "select count(*) from pgmq.q_shopping_run where message ->> 'run_id' = '$run_id'")" -eq 1
+          test "$(psql "$DB_URL" -Atc "select count(*) from pgmq.a_shopping_run where msg_id = $msg")" -eq 0
+          psql "$DB_URL" -Atc "delete from pgmq.q_shopping_run where message ->> 'run_id' = '$run_id'" > /dev/null
 
       # WS11 criteria 2, 3, 4 and 7 on the real stack: enqueue_due_scheduled_runs starts one
       # scheduled run and a second call none, a schedule with no list is skipped with a

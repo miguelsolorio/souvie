@@ -7,6 +7,7 @@ import { describeConfig, readConfig } from "./config.ts";
 import { Heartbeat } from "./heartbeat.ts";
 import { createModelSource } from "./models.ts";
 import { createExpoSend, NotificationStore, Notifier, OutboxDrain } from "./notifications.ts";
+import { mountObservability } from "./observability/index.ts";
 import {
   createPgmqClient,
   errorMessage,
@@ -155,6 +156,15 @@ async function main(): Promise<void> {
     notify: async (householdId, payload) => {
       await notifier.notifyRun(householdId, payload);
     },
+  });
+
+  // Sentry, PostHog and the stall watch (WS15). Each is off without its key.
+  await mountObservability({
+    env: process.env,
+    runs,
+    store: runStore,
+    log,
+    signal: controller.signal,
   });
 
   // WS11: the outbox. SQL writes the pushes it decides on (weekly nudge, failed run, skipped

@@ -24,7 +24,7 @@ const FUNCTIONS_DIR = join(HERE, "..", "..");
 export const MIGRATIONS_DIR = join(FUNCTIONS_DIR, "..", "migrations");
 export const TESTS_DIR = join(FUNCTIONS_DIR, "..", "tests");
 const SUPABASE_STUBS = join(FUNCTIONS_DIR, "suggest", "testing", "supabase-stubs.sql");
-const PLATFORM_STUBS = join(HERE, "platform-stubs.sql");
+export const PLATFORM_STUBS = join(HERE, "platform-stubs.sql");
 const PGTAP_SHIM = join(FUNCTIONS_DIR, "list-build", "testing", "pgtap-shim.sql");
 
 /** The migrations the harness applies, in this order, by name (the timestamp prefix is ignored). */
@@ -47,7 +47,7 @@ export const HARNESS_MIGRATIONS = [
 
 const SKIPPED_STATEMENTS = ["create extension if not exists supabase_vault with schema vault;"];
 
-function migrationSql(name: string): string {
+export function migrationSql(name: string): string {
   const match = readdirSync(MIGRATIONS_DIR).find((file) =>
     new RegExp(`^\\d+_${name}\\.sql$`).test(file),
   );
@@ -69,6 +69,8 @@ export interface RunsTestDb {
 export interface CreateRunsTestDbOptions {
   /** Load the pgTAP shim, for a test that runs supabase/tests files. */
   pgtap?: boolean;
+  /** Migrations after ws09_runs, by name (WS15 loads "ws15_observability"). Applied in order. */
+  extraMigrations?: readonly string[];
 }
 
 export async function createRunsTestDb(options: CreateRunsTestDbOptions = {}): Promise<RunsTestDb> {
@@ -79,7 +81,7 @@ export async function createRunsTestDb(options: CreateRunsTestDbOptions = {}): P
   await db.exec("create extension pg_trgm with schema extensions;");
   await db.exec("create extension pgcrypto with schema extensions;");
   await db.exec('set search_path = "$user", public, extensions;');
-  for (const name of HARNESS_MIGRATIONS) {
+  for (const name of [...HARNESS_MIGRATIONS, ...(options.extraMigrations ?? [])]) {
     try {
       await db.exec(migrationSql(name));
     } catch (err) {

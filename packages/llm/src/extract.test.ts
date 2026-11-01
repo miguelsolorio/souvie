@@ -211,11 +211,19 @@ describe("extract", () => {
     expect(rows).toHaveLength(0);
   });
 
-  it("passes the household to the guard", async () => {
+  it("passes the household and the call to the guard", async () => {
     const { client } = fakeClient([reply({ title: "x", n: 1 })]);
     const check = vi.fn(async () => {});
     await extract(Answer, REQUEST, { client, guard: { check } });
-    expect(check).toHaveBeenCalledWith("0a000000-0000-4000-8000-00000000000a");
+    expect(check).toHaveBeenCalledWith(
+      "0a000000-0000-4000-8000-00000000000a",
+      expect.objectContaining({
+        kind: "extract_recipe",
+        model: "claude-sonnet-5-5",
+        promptVersion: "recipe-extract.v1",
+        estimatedCostUsd: expect.any(Number),
+      }),
+    );
   });
 
   it("reports not_configured when there is neither a client nor a key", async () => {

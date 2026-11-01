@@ -1,0 +1,60 @@
+{
+  "updatedAt": "2026-11-01T06:36:27.443Z",
+  "scores": {
+    "agentReplay/replay_pass_rate": {
+      "value": 100,
+      "passed": 5,
+      "total": 5
+    },
+    "import/pass_rate": {
+      "value": 100,
+      "passed": 50,
+      "total": 50
+    },
+    "lineItems/kroger": {
+      "value": 99,
+      "passed": 99,
+      "total": 100
+    },
+    "lineItems/kroger_candidate_recall": {
+      "value": 98.92,
+      "passed": 99,
+      "total": 100
+    },
+    "lineItems/safeway": {
+      "value": 99,
+      "passed": 99,
+      "total": 100
+    },
+    "lineItems/safeway_candidate_recall": {
+      "value": 98.92,
+      "passed": 99,
+      "total": 100
+    },
+    "parser/ingredient_id": {
+      "value": 100,
+      "passed": 500,
+      "total": 500
+    },
+    "parser/ingredient_id_with_model": {
+      "value": 99.8,
+      "passed": 499,
+      "total": 500
+    },
+    "parser/qty_unit": {
+      "value": 100,
+      "passed": 500,
+      "total": 500
+    },
+    "parser/qty_unit_with_model": {
+      "value": 100,
+      "passed": 500,
+      "total": 500
+    },
+    "suggest/households_clean": {
+      "value": 100,
+      "passed": 10,
+      "total": 10
+    }
+  }
+}

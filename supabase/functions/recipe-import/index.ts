@@ -8,6 +8,7 @@
 // Vitest drives it with fakes; this file only builds the real one.
 
 import {
+  type AiRunRecord,
   createAnthropicClient,
   createDailyCapGuard,
   extract,
@@ -15,6 +16,7 @@ import {
   type MessagesClient,
 } from "../../../packages/llm/src/index.ts";
 import type { ModelExtract } from "../../../packages/recipe-import/src/index.ts";
+import { reportError } from "../_shared/sentry.ts";
 import { createClient } from "./client.ts";
 import { handleRecipeImport, type Runtime } from "./handler.ts";
 import { SupabaseImportStore } from "./store.ts";
@@ -79,17 +81,18 @@ export function runtimeFromEnv(env: Env, deno?: DenoLike): Runtime {
     now: () => new Date(),
     modelFor(householdId) {
       if (!anthropicKey) return undefined;
+      const log = (run: AiRunRecord) => logAiRun(serviceDb.from("ai_runs"), run);
       const guard = createDailyCapGuard({
         capUsd,
+        capFor: (id) => store.householdCapUsd(id),
         spentTodayUsd: (id) => store.spentSince(id, startOfUtcDay(new Date())),
+        sink: log,
+        // A spend that cannot be read refuses the call; Sentry hears about it.
+        report: (error) => reportError(error, { function: "recipe-import", householdId }),
       });
       const model: ModelExtract = async (schema, request) => {
         anthropic ??= await createAnthropicClient({ apiKey: anthropicKey });
-        return extract(
-          schema,
-          { ...request, householdId },
-          { client: anthropic, guard, log: (run) => logAiRun(serviceDb.from("ai_runs"), run) },
-        );
+        return extract(schema, { ...request, householdId }, { client: anthropic, guard, log });
       };
       return model;
     },

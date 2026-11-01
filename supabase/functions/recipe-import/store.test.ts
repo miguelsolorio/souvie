@@ -27,6 +27,14 @@ class FakeDb {
     return new Chain(this, table);
   }
 
+  readonly rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
+  rpcResult: Result = { data: 0, error: null };
+
+  async rpc(fn: string, args: Record<string, unknown>) {
+    this.rpcCalls.push({ fn, args });
+    return this.rpcResult;
+  }
+
   readonly storage = {
     from: (bucket: string) => ({
       download: async (path: string) => {
@@ -445,17 +453,53 @@ describe("downloadImage and spentSince", () => {
     expect(await s.downloadImage("Bearer jwt", `${HOUSEHOLD}/a.jpg`)).toBeNull();
   });
 
-  it("sums the household's model spend since a time", async () => {
+  it("reads the household's model spend since a time through household_ai_spend_since", async () => {
     const { s, service } = store();
-    service.queue("ai_runs", "select", {
-      data: [{ cost_usd: "0.004" }, { cost_usd: 0.01 }, { cost_usd: "0.5" }],
-      error: null,
-    });
+    // numeric comes back from PostgREST as a number or a string
+    service.rpcResult = { data: "0.514", error: null };
     expect(await s.spentSince(HOUSEHOLD, "2026-10-30T00:00:00.000Z")).toBeCloseTo(0.514, 6);
+    expect(service.rpcCalls).toEqual([
+      {
+        fn: "household_ai_spend_since",
+        args: { p_household_id: HOUSEHOLD, p_since: "2026-10-30T00:00:00.000Z" },
+      },
+    ]);
+  });
+
+  it("throws when the spend cannot be read, so the guard refuses the call (cost_unknown)", async () => {
+    const { s, service } = store();
+    service.rpcResult = { data: null, error: { message: "function does not exist" } };
+    await expect(s.spentSince(HOUSEHOLD, "2026-10-30T00:00:00.000Z")).rejects.toThrow(
+      /household_ai_spend_since failed: function does not exist/,
+    );
+  });
+});
+
+describe("householdCapUsd (WS15)", () => {
+  it("reads ai_daily_cap_usd from the household row, by id", async () => {
+    const { s, service } = store();
+    service.queue("households", "select", { data: { ai_daily_cap_usd: "0.01" }, error: null });
+    expect(await s.householdCapUsd(HOUSEHOLD)).toBe(0.01);
     expect(service.calls).toContainEqual({
-      table: "ai_runs",
-      op: "eq",
-      args: ["household_id", HOUSEHOLD],
+      table: "households",
+      op: "select",
+      args: ["ai_daily_cap_usd"],
     });
+    expect(service.calls).toContainEqual({
+      table: "households",
+      op: "eq",
+      args: ["id", HOUSEHOLD],
+    });
+  });
+
+  it("is null for a missing row, and throws on a database error", async () => {
+    const { s, service } = store();
+    service.queue("households", "select", { data: null, error: null });
+    expect(await s.householdCapUsd(HOUSEHOLD)).toBeNull();
+    // A null value is no cap of its own, not a cap of zero (Number(null) is 0).
+    service.queue("households", "select", { data: { ai_daily_cap_usd: null }, error: null });
+    expect(await s.householdCapUsd(HOUSEHOLD)).toBeNull();
+    service.queue("households", "select", { data: null, error: { message: "no such column" } });
+    await expect(s.householdCapUsd(HOUSEHOLD)).rejects.toThrow(/households read failed/);
   });
 });

@@ -20,7 +20,7 @@ import type { RunStore } from "./store.ts";
 export interface ModelSourceOptions {
   toolClient: ToolMessagesClient;
   parseClient: MessagesClient;
-  store: Pick<RunStore, "recordAiRun" | "spentTodayUsd">;
+  store: Pick<RunStore, "recordAiRun" | "spentTodayUsd" | "householdCapUsd">;
   dailyCapUsd: number;
   log: Logger;
 }
@@ -34,10 +34,17 @@ export function createModelSource(options: ModelSourceOptions): ModelSource {
       log.warn("ai_runs insert failed", { error: errorMessage(error) });
     }
   };
+  // The household's own cap (households.ai_daily_cap_usd) decides; AI_DAILY_CAP_USD is the
+  // fallback. A refusal is an ai_runs row (ok false, error cost_cap) before the error is thrown.
   const guard = createDailyCapGuard({
     capUsd: options.dailyCapUsd,
+    capFor: (householdId) => store.householdCapUsd(householdId),
     spentTodayUsd: (householdId) => store.spentTodayUsd(householdId),
+    sink,
     onWarning: (message) => log.warn(message),
+    // A spend that cannot be read refuses the call; the error log reaches Sentry (observability).
+    report: (error) =>
+      log.error("daily cost lookup failed; model call refused", { error: errorMessage(error) }),
   });
   return {
     callModel: (householdId) => (request) =>

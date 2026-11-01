@@ -23,6 +23,7 @@ import {
   estimateCostUsd,
   type TokenUsage,
 } from "../../../packages/llm/src/log.ts";
+import { reportError } from "../_shared/sentry.ts";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -58,6 +59,8 @@ export interface ProxyStore {
   isMember(householdId: string, userId: string): Promise<boolean>;
   /** USD the household spent on model calls since `sinceIso`. */
   spentSince(householdId: string, sinceIso: string): Promise<number>;
+  /** households.ai_daily_cap_usd (WS15); null when unknown, so AI_DAILY_CAP_USD applies. */
+  householdCapUsd?(householdId: string): Promise<number | null>;
   /** USD this household spent in this run so far; null when it cannot be known (see index.ts). */
   runSpentUsd(householdId: string, runId: string): Promise<number | null>;
   /** Writes one ai_runs row. Must not throw. */
@@ -347,8 +350,9 @@ export async function handleLlmProxy(req: Request, runtime: Runtime): Promise<Re
         message: "You are not a member of this household.",
       });
     }
-  } catch {
+  } catch (err) {
     console.error("llm-proxy: membership check failed");
+    reportError(err, { function: "llm-proxy", householdId: request.householdId });
     return fail({ status: 500, error: "internal_error", message: "Try again." });
   }
 
@@ -364,14 +368,30 @@ export async function handleLlmProxy(req: Request, runtime: Runtime): Promise<Re
   // Caps, before any model call.
   const projected = worstCaseCostUsd(request);
   const now = runtime.now();
+  const refused = (): AiRunRecord =>
+    record(request, { inputTokens: 0, outputTokens: 0 }, 0, false, "cost_cap");
   const daily = createDailyCapGuard({
     capUsd: runtime.dailyCapUsd,
+    ...(runtime.store.householdCapUsd
+      ? { capFor: (id: string) => runtime.store.householdCapUsd?.(id) ?? Promise.resolve(null) }
+      : {}),
     spentTodayUsd: async (id) =>
       (await runtime.store.spentSince(id, startOfUtcDay(now))) + projected,
-    onWarning: () => console.warn("llm-proxy: daily spend lookup failed; the cap was not applied"),
+    // The refusal is a row, like every other call (WS15). The projected worst case is not billed,
+    // so the row costs nothing.
+    sink: (row) => runtime.store.logAiRun(row, request.runId),
+    onWarning: (message) => console.warn(`llm-proxy: ${message}`),
+    // A spend that cannot be read refuses the call (503 cost_unknown); Sentry hears about it.
+    report: (error) =>
+      reportError(error, { function: "llm-proxy", householdId: request.householdId }),
   });
   try {
-    await daily.check(request.householdId);
+    await daily.check(request.householdId, {
+      kind: request.kind,
+      model: request.model,
+      promptVersion: request.promptVersion,
+      runId: request.runId,
+    });
   } catch (err) {
     if (err instanceof LlmError && err.code === "cost_cap") {
       return fail({
@@ -379,6 +399,14 @@ export async function handleLlmProxy(req: Request, runtime: Runtime): Promise<Re
         error: "cost_cap",
         message: "The household reached today's model budget.",
         extra: { scope: "daily" },
+      });
+    }
+    // The spend could not be read, so nothing was called. Not the household's doing: try again.
+    if (err instanceof LlmError && err.code === "cost_unknown") {
+      return fail({
+        status: 503,
+        error: "cost_unknown",
+        message: "Today's model spend could not be checked. Try again.",
       });
     }
     throw err;
@@ -393,6 +421,7 @@ export async function handleLlmProxy(req: Request, runtime: Runtime): Promise<Re
     console.warn("llm-proxy: run spend lookup failed; only this call counts toward the run cap");
   }
   if ((spent ?? 0) + projected >= runCap) {
+    await runtime.store.logAiRun(refused(), request.runId);
     return fail({
       status: 402,
       error: "cost_cap",

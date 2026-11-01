@@ -127,7 +127,7 @@ describe("createDailyCapGuard", () => {
     expect(spent).not.toHaveBeenCalled();
   });
 
-  it("lets the call through, with a warning, when the spend lookup fails", async () => {
+  it("refuses the call, with a warning, when the spend lookup fails (the cap fails closed)", async () => {
     const warn = vi.fn();
     const guard = createDailyCapGuard({
       capUsd: 1,
@@ -136,7 +136,7 @@ describe("createDailyCapGuard", () => {
       },
       onWarning: warn,
     });
-    await expect(guard.check("h")).resolves.toBeUndefined();
+    await expect(guard.check("h")).rejects.toMatchObject({ code: "cost_unknown" });
     expect(warn).toHaveBeenCalledWith("daily cost lookup failed: db down");
   });
 });

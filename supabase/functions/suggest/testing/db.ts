@@ -8,7 +8,7 @@
 //     used here is plain and stable across both.
 //   * The platform. Supabase's auth and storage schemas and API roles are stubbed by
 //     supabase-stubs.sql. Migrations that need Vault, pgmq, or pg_cron (WS07's retail migration,
-//     the extensions migration) are not loaded.
+//     the extensions migration) are not loaded, unless a test asks for `observability` (below).
 // The planning tables (WS04: meal_plans, meal_plan_entries, recipe_feedback) and the catalog read
 // policies are the repo's own migrations, loaded below like the rest. Nothing is copied.
 import { readdirSync, readFileSync } from "node:fs";
@@ -18,6 +18,11 @@ import { PGlite } from "@electric-sql/pglite";
 import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
 import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 import { vector } from "@electric-sql/pglite-pgvector";
+import {
+  migrationSql,
+  PLATFORM_STUBS,
+  HARNESS_MIGRATIONS as RUNS_MIGRATIONS,
+} from "../../run-approve/testing/db.ts";
 import type { SqlRunner } from "../candidates.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -56,6 +61,12 @@ export interface TestDb {
 export interface CreateTestDbOptions {
   /** Extra extensions, for example pgTAP when a script runs the pgTAP files. */
   extensions?: Record<string, unknown>;
+  /**
+   * Also apply the migrations the cost cap reads (WS15): the runs chain the run-approve harness
+   * loads (retail, lists, runs, with the platform stand-ins for Vault, pgmq and pg_cron) and then
+   * 20261031190000_ws15_observability.sql, so `households.ai_daily_cap_usd` is the real column.
+   */
+  observability?: boolean;
 }
 
 export async function createTestDb(options: CreateTestDbOptions = {}): Promise<TestDb> {
@@ -63,13 +74,20 @@ export async function createTestDb(options: CreateTestDbOptions = {}): Promise<T
     extensions: { vector, pg_trgm, pgcrypto, ...(options.extensions ?? {}) } as never,
   });
   await db.exec(readFileSync(join(HERE, "supabase-stubs.sql"), "utf8"));
+  if (options.observability) await db.exec(readFileSync(PLATFORM_STUBS, "utf8"));
   await db.exec("create extension vector with schema extensions;");
   await db.exec("create extension pg_trgm with schema extensions;");
   await db.exec("create extension pgcrypto with schema extensions;");
   await db.exec('set search_path = "$user", public, extensions;');
 
-  for (const name of HARNESS_MIGRATIONS) {
-    await db.exec(readFileSync(migrationFile(name), "utf8"));
+  if (options.observability) {
+    for (const name of [...RUNS_MIGRATIONS, "ws15_observability"]) {
+      await db.exec(migrationSql(name));
+    }
+  } else {
+    for (const name of HARNESS_MIGRATIONS) {
+      await db.exec(readFileSync(migrationFile(name), "utf8"));
+    }
   }
 
   const query = async <T = Record<string, unknown>>(

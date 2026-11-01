@@ -58,7 +58,8 @@
           },
           "androidIntentFilters": ["text/*"]
         }
-      ]
+      ],
+      "@sentry/react-native/expo"
     ]
   }
 }

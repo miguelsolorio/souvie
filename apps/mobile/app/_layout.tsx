@@ -1,4 +1,5 @@
 import "../global.css";
+import "../src/observability/init";
 
 import { SupabaseProvider } from "@mp/db";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -10,6 +11,7 @@ import { AuthLifecycle } from "../src/features/auth/AuthLifecycle";
 import { DesktopDeepLinks } from "../src/features/auth/DesktopDeepLinks";
 import { persistOptions, queryClient } from "../src/lib/queryClient";
 import { getSupabase, isSupabaseConfigured } from "../src/lib/supabase";
+import { ObservabilityLifecycle } from "../src/observability/ObservabilityLifecycle";
 
 function NotConfigured() {
   return (
@@ -29,6 +31,7 @@ export default function RootLayout() {
       {isSupabaseConfigured ? (
         <SupabaseProvider client={getSupabase()}>
           <AuthLifecycle />
+          <ObservabilityLifecycle />
           {/* WS13: the page's one main landmark on the web, so no content sits outside one. */}
           <MainLandmark>
             <Stack screenOptions={{ headerShown: false }} />

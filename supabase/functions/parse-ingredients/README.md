@@ -77,6 +77,8 @@ supabase secrets set ANTHROPIC_API_KEY=… --project-ref <ref>
 
 Without it the function still works: lines under 0.8 confidence keep their deterministic guess and `meta.modelAvailable` is false.
 
+**Daily cap (WS15).** Each model call is checked first (`cost-guard.ts`, `createDailyCapGuard` from `@mp/llm`). A recipe's lines are capped with the household's cap (`households.ai_daily_cap_usd`, else `AI_DAILY_CAP_USD`, default 2 USD a day). The `lines` mode has no household, so the signed-in user is capped instead, by what they have spent on household-less calls today (`user_ai_spend_since`, `ai_runs.user_id`), at `AI_DAILY_CAP_USD`. Over the cap the lines still come back from the grammar and the ontology, the model is not called, and a failed `ai_runs` row with `error = 'cost_cap'` records the refusal. If the spend cannot be read, the model is not called either: the guard fails closed (`error = 'cost_unknown'`, reported to Sentry) and the lines come back the same way. Set `AI_DAILY_CAP_USD` as a secret like the model key.
+
 ## Develop and deploy
 
 The container-based commands (`supabase functions serve`) need a container runtime. On the development Mac, deploy with the API bundler, which needs `SUPABASE_ACCESS_TOKEN`:

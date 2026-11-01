@@ -106,6 +106,8 @@ export interface ImportStore {
   downloadImage(authHeader: string, path: string): Promise<DownloadedImage | null>;
   /** Model spend recorded in ai_runs for the household since `sinceIso`, in USD. */
   spentSince(householdId: string, sinceIso: string): Promise<number>;
+  /** households.ai_daily_cap_usd; null when unknown, so the AI_DAILY_CAP_USD fallback applies. */
+  householdCapUsd?(householdId: string): Promise<number | null>;
 }
 
 export class SupabaseImportStore implements ImportStore {
@@ -268,17 +270,28 @@ export class SupabaseImportStore implements ImportStore {
     };
   }
 
+  /** Summed in SQL (WS08's household_ai_spend_since), so PostgREST's row limit cannot undercount. */
   async spentSince(householdId: string, sinceIso: string): Promise<number> {
+    const { data, error } = await this.serviceDb.rpc("household_ai_spend_since", {
+      p_household_id: householdId,
+      p_since: sinceIso,
+    });
+    if (error) throw new Error(`household_ai_spend_since failed: ${error.message}`);
+    const spent = Number(data);
+    return Number.isFinite(spent) ? spent : 0;
+  }
+
+  /** The household's own daily cap (WS15), or null when the row or the column is not there. */
+  async householdCapUsd(householdId: string): Promise<number | null> {
     const { data, error } = await this.serviceDb
-      .from("ai_runs")
-      .select("cost_usd")
-      .eq("household_id", householdId)
-      .gte("created_at", sinceIso)
-      .limit(5000);
-    if (error) throw new Error(`ai_runs read failed: ${error.message}`);
-    return (data ?? []).reduce(
-      (sum, row) => sum + Number((row as { cost_usd: unknown }).cost_usd),
-      0,
-    );
+      .from("households")
+      .select("ai_daily_cap_usd")
+      .eq("id", householdId)
+      .maybeSingle();
+    if (error) throw new Error(`households read failed: ${error.message}`);
+    // Number(null) is 0, which would read as a cap of zero; a missing value is no cap of its own.
+    const raw = (data as { ai_daily_cap_usd?: unknown } | null)?.ai_daily_cap_usd;
+    const cap = raw === null || raw === undefined ? Number.NaN : Number(raw);
+    return Number.isFinite(cap) ? cap : null;
   }
 }

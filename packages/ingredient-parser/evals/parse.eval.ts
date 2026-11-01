@@ -21,6 +21,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { ingredientId, readSeed } from "../../../supabase/seed/load.ts";
+import { recordScore } from "../../evals-report/src/record.ts";
 import {
   type CachedParse,
   cacheKey,
@@ -134,6 +135,23 @@ describe("ingredient parser golden set", () => {
     const scores = await score({ ontology });
     const report = summarize(scores);
     emit(`\n${formatReport("Deterministic path (grammar + lookup, no model)", report)}`);
+    // WS15: the scores `pnpm eval` compares with the baseline.
+    recordScore({
+      suite: "parser",
+      metric: "qty_unit",
+      value: report.qtyUnit * 100,
+      passed: Math.round(report.qtyUnit * report.lines),
+      total: report.lines,
+      threshold: 95,
+    });
+    recordScore({
+      suite: "parser",
+      metric: "ingredient_id",
+      value: report.ingredient * 100,
+      passed: Math.round(report.ingredient * report.lines),
+      total: report.lines,
+      threshold: 90,
+    });
     printFailures("qty/unit mismatches", scores, (s) => s.qtyUnit);
     printFailures("ingredient mismatches", scores, (s) => s.ingredient);
     printFailures("below 0.8 confidence", scores, (s) => s.confident);

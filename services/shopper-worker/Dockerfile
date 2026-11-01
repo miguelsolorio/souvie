@@ -21,6 +21,10 @@ RUN pnpm install --frozen-lockfile --filter "@mp/shopper-worker..."
 
 FROM deps AS run
 ENV NODE_ENV=production
+# The release Sentry tags every event with (WS15): the git SHA the image was built from.
+#   docker build --build-arg GIT_SHA="$(git rev-parse HEAD)" ...
+ARG GIT_SHA=unknown
+ENV GIT_SHA=$GIT_SHA
 WORKDIR /app/services/shopper-worker
 USER node
 # tsx runs the TypeScript sources as the dev script does; SIGTERM reaches node directly, and the

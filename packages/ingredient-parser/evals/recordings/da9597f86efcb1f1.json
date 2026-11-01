@@ -1,0 +1,339 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "ingredient-parse.v1",
+  "recordedAt": "2026-11-01T06:34:02.072Z",
+  "lines": [
+    "1 tablespoon ginger-garlic paste",
+    "1/2 teaspoon Kashmiri chili powder",
+    "1/4 teaspoon asafoetida",
+    "1 tablespoon kasuri methi",
+    "2 cups pho broth",
+    "1 tablespoon gochugaru",
+    "1 tablespoon black vinegar",
+    "1 cup tonkatsu sauce",
+    "1/2 cup crema",
+    "1 box macaroni and cheese",
+    "1 package dry onion soup mix",
+    "1 tablespoon ube extract",
+    "2 tablespoons yuzu juice",
+    "4 ounces nduja",
+    "2 links lap cheong",
+    "1 tablespoon aji amarillo paste",
+    "1 cup freekeh",
+    "1 teaspoon shichimi togarashi",
+    "2 tablespoons furikake",
+    "1 package kataifi dough"
+  ],
+  "answers": [
+    [
+      0,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "tbsp",
+          "ingredient": "ginger-garlic paste",
+          "category": "international",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      1,
+      [
+        {
+          "qty": 0.5,
+          "qty_max": null,
+          "unit": "tsp",
+          "ingredient": "kashmiri chili powder",
+          "category": "spices",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      2,
+      [
+        {
+          "qty": 0.25,
+          "qty_max": null,
+          "unit": "tsp",
+          "ingredient": "asafoetida",
+          "category": "spices",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      3,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "tbsp",
+          "ingredient": "kasuri methi",
+          "category": "spices",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.85
+        }
+      ]
+    ],
+    [
+      4,
+      [
+        {
+          "qty": 2,
+          "qty_max": null,
+          "unit": "cup",
+          "ingredient": "pho broth",
+          "category": "pantry",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      5,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "tbsp",
+          "ingredient": "gochugaru",
+          "category": "spices",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      6,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "tbsp",
+          "ingredient": "black vinegar",
+          "category": "international",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      7,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "cup",
+          "ingredient": "tonkatsu sauce",
+          "category": "international",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      8,
+      [
+        {
+          "qty": 0.5,
+          "qty_max": null,
+          "unit": "cup",
+          "ingredient": "crema",
+          "category": "dairy",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      9,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "box",
+          "ingredient": "macaroni and cheese",
+          "category": "pantry",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      10,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "package",
+          "ingredient": "dry onion soup mix",
+          "category": "pantry",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      11,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "tbsp",
+          "ingredient": "ube extract",
+          "category": "baking",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      12,
+      [
+        {
+          "qty": 2,
+          "qty_max": null,
+          "unit": "tbsp",
+          "ingredient": "yuzu juice",
+          "category": "produce",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      13,
+      [
+        {
+          "qty": 4,
+          "qty_max": null,
+          "unit": "oz",
+          "ingredient": "nduja",
+          "category": "meat",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      14,
+      [
+        {
+          "qty": 2,
+          "qty_max": null,
+          "unit": "link",
+          "ingredient": "lap cheong",
+          "category": "meat",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      15,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "tbsp",
+          "ingredient": "aji amarillo paste",
+          "category": "international",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      16,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "cup",
+          "ingredient": "freekeh",
+          "category": "pantry",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      17,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "tsp",
+          "ingredient": "shichimi togarashi",
+          "category": "spices",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      18,
+      [
+        {
+          "qty": 2,
+          "qty_max": null,
+          "unit": "tbsp",
+          "ingredient": "furikake",
+          "category": "international",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ],
+    [
+      19,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "package",
+          "ingredient": "kataifi dough",
+          "category": "frozen",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.9
+        }
+      ]
+    ]
+  ],
+  "usage": {
+    "model": "claude-haiku-5-5",
+    "promptVersion": "ingredient-parse.v1",
+    "inputTokens": 331,
+    "outputTokens": 1509,
+    "cacheReadTokens": 0,
+    "latencyMs": 6420,
+    "ok": true,
+    "lines": 20
+  }
+}

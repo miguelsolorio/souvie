@@ -2,6 +2,7 @@ import { comingWeekStart, type SuggestPlanResponse } from "@mp/core";
 import { fetchMealPlan, fetchMealPlanEntries, useHousehold, useSupabase } from "@mp/db";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { track } from "../../observability/track";
 import { type RecheckResult, recheckPlans } from "./planRecheck";
 import { SuggestError, suggestCalibration, suggestPlan } from "./suggestApi";
 
@@ -38,7 +39,12 @@ export function useSuggestWeek() {
         ...(input.date ? { date: input.date } : {}),
       });
     },
-    onSuccess: () => {
+    onSuccess: (response, input) => {
+      // A plan made now by the model or the ranking is a created plan; a draft that found the
+      // week's existing plan, and a replace of one that existed, are not.
+      if (input.mode === "draft" && response.composedBy !== "existing") {
+        track.planCreated({ entries: response.entries.length, source: "ai" });
+      }
       // The planner (WS04) keys its queries ['meal-plan', householdId, weekStart].
       void queryClient.invalidateQueries({ queryKey: ["meal-plan", householdId] });
     },

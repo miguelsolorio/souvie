@@ -24,6 +24,7 @@ import {
   normalizeTitle,
   titleSearchPattern,
 } from "../../../packages/recipe-import/src/index.ts";
+import { reportError } from "../_shared/sentry.ts";
 import {
   type DownloadedImage,
   type DuplicateCheck,
@@ -337,6 +338,7 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
         }
       }
       console.error("recipe-import: save failed", err);
+      reportError(err, { function: "recipe-import", householdId });
       await finishFailed("save_failed");
       return fail("save_failed", 500, jobId);
     }
@@ -344,6 +346,7 @@ export async function handleRecipeImport(req: Request, runtime: Runtime): Promis
     return json({ ok: true, jobId, path: result.path, recipeId, warnings: result.warnings });
   } catch (err) {
     console.error("recipe-import failed", err);
+    reportError(err, { function: "recipe-import" });
     return fail("internal_error", 500);
   }
 }

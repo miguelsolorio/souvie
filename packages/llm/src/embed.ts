@@ -14,7 +14,7 @@
 // per HTTP request, failures included. The key is read from `options.apiKey`, else from
 // VOYAGE_API_KEY in the environment (Deno or Node). It is never logged and never part of an error.
 import { LlmError } from "./client.ts";
-import type { AiRunSink, CostGuard } from "./log.ts";
+import { type AiRunSink, CHARS_PER_TOKEN, type CostGuard } from "./log.ts";
 
 export const EMBEDDING_MODEL = "voyage-3";
 export const EMBEDDING_DIMENSIONS = 1024;
@@ -36,6 +36,8 @@ export interface EmbedOptions {
   kind?: string;
   /** ai_runs.household_id, and the household the cost guard checks. */
   householdId?: string | null;
+  /** ai_runs.user_id, and the user the cost guard caps when there is no household. */
+  userId?: string | null;
   /** Receives one record per request. */
   log?: AiRunSink;
   guard?: CostGuard;
@@ -105,7 +107,15 @@ export async function embed(
 
   for (let start = 0; start < texts.length; start += BATCH_SIZE) {
     const batch = texts.slice(start, start + BATCH_SIZE);
-    await options.guard?.check(householdId);
+    await options.guard?.check(householdId, {
+      kind,
+      model: EMBEDDING_MODEL,
+      promptVersion: null,
+      userId: options.userId ?? null,
+      estimatedCostUsd: estimateEmbeddingCostUsd(
+        Math.ceil(batch.reduce((sum, text) => sum + text.length, 0) / CHARS_PER_TOKEN),
+      ),
+    });
 
     let attempt = 0;
     for (;;) {
@@ -126,6 +136,7 @@ export async function embed(
             latencyMs: Math.max(0, now() - started),
             ok,
             error,
+            ...(options.userId !== undefined ? { userId: options.userId } : {}),
           });
         } catch (err) {
           console.warn("ai_runs sink failed", err);

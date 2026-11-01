@@ -233,6 +233,10 @@ function failureReason(error: string | null): string {
   if (!error) return "The shopper stopped. Try again.";
   if (error.startsWith("needs_reauth"))
     return "Your store account needs a new sign-in. Reconnect it, then try again.";
+  // The kill switch (WS15): the worker fails a claimable run with agent_disabled while
+  // shopping_agent_enabled is off. Same words as ShopThisList shows before a run starts.
+  if (error.startsWith("agent_disabled"))
+    return "Shopping is paused right now. Your list is safe. Try again later.";
   if (error.startsWith("stalled")) return "The shopper stopped answering. Try again.";
   if (error.startsWith("connection_")) return "Check your store connection, then try again.";
   return "The shopper could not finish this run. Try again.";

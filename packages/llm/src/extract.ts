@@ -24,7 +24,13 @@ import {
   type MessagesClient,
   type ParsedResponse,
 } from "./client.ts";
-import { type AiRunRecord, type AiRunSink, type CostGuard, estimateCostUsd } from "./log.ts";
+import {
+  type AiRunRecord,
+  type AiRunSink,
+  type CostGuard,
+  estimateCostUsd,
+  estimateInputCostUsd,
+} from "./log.ts";
 
 export type ImageMediaType = "image/jpeg" | "image/png" | "image/webp" | "image/gif";
 
@@ -52,6 +58,8 @@ export interface ExtractRequest<T = unknown> {
   promptVersion?: string;
   /** ai_runs.household_id, and the household the cost guard checks. */
   householdId?: string | null;
+  /** ai_runs.user_id, and the user the cost guard caps when there is no household. */
+  userId?: string | null;
   /**
    * A second check on the parsed value (rules the model's JSON schema cannot express). Return a
    * short problem description to trigger the one retry, or null when the value is acceptable.
@@ -146,7 +154,16 @@ export async function extract<T>(
   let retryNote: string | null = null;
 
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
-    await context.guard?.check(householdId);
+    await context.guard?.check(householdId, {
+      kind: request.kind ?? "extract",
+      model,
+      promptVersion: request.promptVersion ?? null,
+      userId: request.userId ?? null,
+      estimatedCostUsd: estimateInputCostUsd(
+        model,
+        request.system.length + request.user.length + (retryNote?.length ?? 0),
+      ),
+    });
 
     const params: Record<string, unknown> = {
       model,
@@ -199,6 +216,7 @@ export async function extract<T>(
         latencyMs: Math.max(0, now() - started),
         ok,
         error,
+        ...(request.userId !== undefined ? { userId: request.userId } : {}),
       });
     };
 

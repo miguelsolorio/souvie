@@ -5,6 +5,7 @@
 //     -> 200 text/event-stream: the Messages API stream, passed through unchanged
 //     or { ok: false, error, message }: 400 invalid_request, 401 unauthorized, 402 cost_cap
 //        (with scope "daily" or "run"), 403 not_a_member, 413, 429/5xx upstream, 502, 503
+//        (model_unavailable, or cost_unknown when today's spend could not be read: try again)
 //
 // Needs a signed-in member of the household (verify_jwt stays on). The app bundle never holds the
 // Anthropic key: it lives here as a Supabase secret, is sent only to api.anthropic.com, and is never

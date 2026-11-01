@@ -185,15 +185,59 @@ export class SupabaseProposalSink implements ProposalSink {
   }
 }
 
-/** One `ai_runs` row per model call (R3). The table arrives with WS02; until then this logs and moves on. */
+/**
+ * What the daily cap reads (WS15), through the service role: the household's own cap, the
+ * household's spend today, and the spend of one user on calls that have no household.
+ */
+export class SupabaseSpendStore {
+  constructor(private readonly db: SupabaseClient) {}
+
+  async householdCapUsd(householdId: string): Promise<number | null> {
+    const { data, error } = await this.db
+      .from("households")
+      .select("ai_daily_cap_usd")
+      .eq("id", householdId)
+      .maybeSingle();
+    if (error) throw new Error(`households read failed: ${error.message}`);
+    // Number(null) is 0, which would read as a cap of zero; a missing value is no cap of its own.
+    const raw = (data as { ai_daily_cap_usd?: unknown } | null)?.ai_daily_cap_usd;
+    const cap = raw === null || raw === undefined ? Number.NaN : Number(raw);
+    return Number.isFinite(cap) ? cap : null;
+  }
+
+  async householdSpentSince(householdId: string, sinceIso: string): Promise<number> {
+    const { data, error } = await this.db.rpc("household_ai_spend_since", {
+      p_household_id: householdId,
+      p_since: sinceIso,
+    });
+    if (error) throw new Error(`household_ai_spend_since failed: ${error.message}`);
+    return Number(data) || 0;
+  }
+
+  async userSpentSince(userId: string, sinceIso: string): Promise<number> {
+    const { data, error } = await this.db.rpc("user_ai_spend_since", {
+      p_user_id: userId,
+      p_since: sinceIso,
+    });
+    if (error) throw new Error(`user_ai_spend_since failed: ${error.message}`);
+    return Number(data) || 0;
+  }
+}
+
+/**
+ * One `ai_runs` row per model call (R3). `userId` goes with a call that has no household, so the
+ * per-user cap can add it up (WS15); it is left out of the row otherwise.
+ */
 export async function recordAiRun(
   db: SupabaseClient,
   usage: LlmUsage,
   costUsd: number,
   householdId: string | null,
+  userId?: string | null,
 ): Promise<void> {
   const { error } = await db.from("ai_runs").insert({
     household_id: householdId,
+    ...(userId ? { user_id: userId } : {}),
     kind: "parse_ingredients",
     model: usage.model,
     prompt_version: usage.promptVersion,

@@ -4,9 +4,11 @@
 // Run items hold Kroger product data (names, sizes, prices as returned). Kroger's terms end cart
 // display data with the session, so none of these queries is persisted to the device: no
 // `meta: { persist: true }`, and the item queries are dropped as soon as no screen shows them.
+import { RetailerId } from "@mp/core";
 import { useHousehold, useSupabase } from "@mp/db";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { track } from "../../observability/track";
 import {
   type ReviewDraft,
   type RunItem,
@@ -176,6 +178,17 @@ export function useApproveRun(runId: string | undefined) {
         );
       }
       return result;
+    },
+    onSuccess: (_result, args) => {
+      // review_edits: how many lines the person changed before approving. No product or price.
+      const run = queryClient.getQueryData<ShoppingRun | null>(shoppingRunKey(householdId, runId));
+      const retailer = RetailerId.safeParse(run?.retailer);
+      if (retailer.success) {
+        track.runApproved({
+          retailer: retailer.data,
+          review_edits: Object.keys(args.draft).length,
+        });
+      }
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingRunsKey(householdId) }),
   });

@@ -145,6 +145,10 @@ describe("rows and copy", () => {
     );
     expect(failureText("stalled: no heartbeat for 90 seconds")).toMatch(/stopped answering/);
     expect(failureText("stalled: no heartbeat for 90 seconds")).not.toMatch(/store cart/);
+    // A run the kill switch failed shows the paused copy, not the generic failure.
+    expect(
+      failureText("agent_disabled: shopping is switched off right now. Try again later."),
+    ).toBe("Shopping is paused right now. Your list is safe. Try again later.");
   });
 
   it("warns that items may be in the cart when a failed run already added some", () => {

@@ -8,14 +8,24 @@ import * as Crypto from "expo-crypto";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
+import { isDesktopShell, openInSystemBrowser } from "../../lib/desktop";
 import { AuthCallbackError } from "./authMessages";
 import { parseAuthCallback } from "./links";
 
 export type SignInOutcome = "signed-in" | "cancelled" | "redirecting";
 
+/**
+ * Where the desktop app asks Supabase to send the person. The page the desktop window shows lives
+ * at tauri://localhost, an address no browser can open, and the email or provider page opens in
+ * the system browser, so the way back is the souvie:// link the operating system hands to the
+ * app (DesktopDeepLinks.tsx). It is the same address the phone apps use, already in the redirect
+ * allow list.
+ */
+export const DESKTOP_AUTH_REDIRECT = "souvie://callback";
+
 /** Where Supabase sends the person after OAuth or a magic link. Must be in the redirect allow list. */
 export function authRedirectUrl(): string {
-  return Linking.createURL("callback");
+  return isDesktopShell() ? DESKTOP_AUTH_REDIRECT : Linking.createURL("callback");
 }
 
 /** Exchanges the `code` in a redirect URL for a session. */
@@ -37,11 +47,22 @@ async function signInWithOAuth(
 ): Promise<SignInOutcome> {
   const redirectTo = authRedirectUrl();
   const isWeb = Platform.OS === "web";
+  const desktop = isDesktopShell();
   const { data, error } = await client.auth.signInWithOAuth({
     provider,
-    options: { redirectTo, skipBrowserRedirect: !isWeb },
+    // A browser tab is sent to the provider by supabase-js itself. A phone and the desktop app get
+    // the address back and open it themselves.
+    options: { redirectTo, skipBrowserRedirect: !isWeb || desktop },
   });
   if (error) throw error;
+  if (desktop) {
+    // Google refuses to sign anyone in inside an embedded web view, so the provider opens in the
+    // system browser. The way back is the souvie://callback link (DesktopDeepLinks.tsx), which the
+    // callback screen turns into a session.
+    if (!data.url) throw new AuthCallbackError("No sign-in address came back. Try again.");
+    await openInSystemBrowser(data.url);
+    return "redirecting";
+  }
   // On web supabase-js has already sent the page to the provider.
   if (isWeb) return "redirecting";
   if (!data.url) throw new AuthCallbackError("No sign-in address came back. Try again.");

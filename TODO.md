@@ -81,9 +81,10 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] WS12 merged 3b47cae (2026-11-01); migration on hosted, `export-data` redeployed. WS11 in its fix round (PR #29); WS13 (PR #31) and WS15 (PR #30) in review.
 - [x] WS11 merged 248bc01 (2026-11-01); migration on hosted with `--include-all`. WS13 (PR #31) and WS15 (PR #30) in fix rounds.
 - [x] WS13 merged 04fcd1d (2026-11-01); no migration or function. Web deploy waits on Miguel's Cloudflare Pages project. WS15 (PR #30) in its fix round.
+- [x] WS15 merged 403dd29 (2026-11-01); migration on hosted; `suggest`, `recipe-import`, `llm-proxy`, `parse-ingredients` redeployed. `SENTRY_DSN` and the PostHog key stay unset until the accounts exist.
 - [ ] CCR10: `households.weekly_nudge` (orchestrator migration, after WS06 asks for it).
 - [ ] Review each as it finishes. WS10 reviewer runs the Tier 3 checklist and a manual Safeway run on a real account.
-- [ ] Merge all, wave 6 summary.
+- [x] Merge all but WS10, wave 6 summary written (2026-11-01). WS10 follows checkpoint 5; its brief gets a wave 6 as-built addendum before dispatch.
 
 ## 8. Done
 
@@ -110,6 +111,11 @@ Collected from the ledger so one list is enough. Each unblocks something named.
 - [ ] Cloudflare Pages project for `apps/marketing` (WS14 deploy) and later the Tier 3 test page.
 - [ ] Privacy contact address and route for the marketing footer (WS14 deploy-gates round).
 - [ ] Optional: re-pin the repo's git origin in the desktop app (Help → Troubleshooting → Review Pinned Git Origins) so Auto-fix can merge main into PR branches.
+- [ ] Cloudflare Pages project for the web app (WS13): set the GitHub variable `CF_PAGES_PROJECT_WEB`, secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, variables `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`; add `https://<origin>/callback` to the Supabase redirect list. Then the orchestrator runs the sign-in check on the preview URL and records the live URL.
+- [ ] Sentry projects (app, worker, functions) and PostHog project (WS15): `SENTRY_DSN` as a function secret and in `.env.local`, `EXPO_PUBLIC_POSTHOG_KEY`, the flags `tier3_browser_checkout`, `ai_suggestions_v2`, `shopping_agent_enabled` (all on), the four alert rules in `services/shopper-worker/README.md`, EAS secrets and the source map token.
+- [ ] GitHub secret `ANTHROPIC_API_KEY` for the manual live eval job (`eval.yml`, dispatch only).
+- [ ] `extra.eas.projectId` in `app.json` (an Expo account): unblocks Simulator runs of push, review and schedules for WS09, WS11, WS12.
+- [ ] A worker host (Fly.io or Railway) and its `WORKER_DATABASE_URL`: until the worker runs somewhere, the hosted scheduler can enqueue runs and the generators can write outbox rows that nothing drains.
 
 - [x] `pnpm` on this Mac: `corepack enable --install-directory /opt/homebrew/bin pnpm` and `corepack prepare pnpm@9.15.9 --activate` run 2026-10-31, so `pnpm dev` works in a plain shell (README "Getting started" says why).
 

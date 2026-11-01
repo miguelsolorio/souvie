@@ -95,7 +95,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 
 **As built (WS06, 2026-10-30).** `profiles` gained `onboarding_step smallint not null default 0` (the highest screen reached; the app resumes there and an "Edit food preferences" entry revisits screens 2 to 6 without lowering it), `taste_embedding vector(1024)` (Voyage `voyage-3`, rebuilt by `suggest` before each plan) and `costco_member boolean`. A CHECK on `preferences` requires a JSON object under 16 KB whose `allergies` and `diets` come from the enums in `packages/core/src/preferences.ts`; other keys are validated in code. Client INSERT and UPDATE on `profiles` are column-level grants, no table-level grant remains, and `001_rls_identity.sql` asserts the column set. `useProfile` selects `PROFILE_COLUMNS`, which leaves the vector out. The Washington store list is not a table: `supabase/seed/stores_wa.csv` (90 stores, `kroger_location_id` empty) is bundled into the app as a generated module and checked by `node supabase/seed/stores.ts --check`. `recipes.embedding` is filled by the `suggest` function's `backfill` mode for household and catalog recipes alike, null embeddings only. The calibration deck writes `like` and `dislike` rows to `recipe_feedback` under WS04's policy, and `suggest` writes its one-line reason to `meal_plan_entries.why`. The function connects to Postgres as the database owner through `SUPABASE_DB_URL`, so its queries scope by household by hand (docs/05).
 
-- `households` has `created_at`, `updated_at` (trigger), and `deleted_at` (soft delete), plus `zip`, `default_connection_id`, and `created_by` as listed. `default_connection_id` has no foreign key yet; WS07 adds it with `retailer_connections`. `timezone`, `quiet_hours`, `tier3_consent`, and `ai_daily_cap_usd` arrive with WS11, WS10, and WS15. The WS01 brief called the connection column `default_store_connection_id`; the column here follows this document.
+- `households` has `created_at`, `updated_at` (trigger), and `deleted_at` (soft delete), plus `zip`, `default_connection_id`, and `created_by` as listed. `default_connection_id` has no foreign key yet; WS07 adds it with `retailer_connections`. `timezone` and `quiet_hours` (WS11), `tier3_consent` (WS08) and `ai_daily_cap_usd` (WS15) are on main as of 2026-11-01. The WS01 brief called the connection column `default_store_connection_id`; the column here follows this document.
 - `household_members` has `created_at`, which is when the person joined. `role` is the enum `household_members_role`.
 - `household_invites` has `created_by`, `created_at`, `used_by`, and also `used_at` (the brief's name). `expires_at` defaults to 7 days. Tokens are 32 random bytes as hex, so 64 characters.
 - `audit_events` has `created_at`. `kind` is plain text. WS01 writes `member_added`, `member_removed`, and the extra kind `owner_transferred`.
@@ -485,11 +485,14 @@ As built (WS12, 2026-10-31, migration `20261031180000_ws12_orders_history.sql`):
 | model | text |
 | prompt_version | text |
 | run_id | uuid → shopping_runs | Nullable; set by the agent's calls so a per-run cap can sum them. Added 2026-10-31 for WS08's llm-proxy |
+| user_id | uuid → auth.users (nullable, on delete set null) | Set only by `parse-ingredients` for household-less calls so `user_ai_spend_since` can cap them per person; other callers leave it null. No backfill. Added by WS15, 2026-11-01 |
 | input_tokens, output_tokens, cache_read_tokens | int |
 | cost_usd | numeric |
 | latency_ms | int |
 | ok | boolean |
-| error | text |
+| error | text | A refused call writes a row with `ok = false`, `cost_usd = 0` and `error` of `cost_cap` (over the day's cap) or `cost_unknown` (today's spend could not be read; the guard fails closed). The cost views leave `cost_unknown` rows out of call counts. WS15 |
+
+Spend is read through `household_ai_spend_since(household_id, since)` and `user_ai_spend_since(user_id, since)`, both `service_role` only. The per-household cap is `households.ai_daily_cap_usd` (default 2.00; a null falls back to the `AI_DAILY_CAP_USD` secret), and a household-less call is capped per user. The cap day is UTC midnight until a round reads `households.timezone`.
 
 **import_jobs**
 | column | type |
@@ -519,6 +522,7 @@ As built (WS12, 2026-10-31, migration `20261031180000_ws12_orders_history.sql`):
 | `v_most_bought_products` | Product counts from the cart lines of confirmed orders: `(household_id, retailer, store_id, store_name, ingredient_id, product_id, upc, product_name, size, times_bought, units_bought, last_bought_at, pinned)` | WS12 |
 | `v_ai_cost_daily` | `ai_runs` cost per household per day | WS15 |
 | `v_ai_cost_by_prompt` | Cost and latency per prompt version | WS15 |
+| `v_runs_stalled` | Shopping runs with no heartbeat for ten minutes: `(run_id, household_id, status, heartbeat_at, silent_for)`; read by the worker's `StallWatch` and the dev cost screen. WS15 |
 
 ## Retention and retailer-terms constraints
 
@@ -561,6 +565,6 @@ Files are created with `supabase migration new <name>` and carry a timestamp pre
 | 13 | schedules_notifications | scheduled_runs, notification_preferences, notification_outbox, households.timezone and quiet_hours, pg_cron jobs, register_push_token and forget_push_token (push_tokens created by WS09) | WS11 |
 | 14 | ws12_orders_history | orders, `confirm_order`, `history_time_zone`, the three history views | WS12 |
 | 15 | waitlist | waitlist | WS14 |
-| 16 | observability | households.ai_daily_cap_usd, shopping_runs.heartbeat_at, `shopping_run_dlq` queue, cost views | WS15 |
+| 16 | observability | households.ai_daily_cap_usd, ai_runs.user_id, `household_ai_spend_since` and `user_ai_spend_since`, views `v_ai_cost_daily`, `v_ai_cost_by_prompt`, `v_runs_stalled` (heartbeat_at came with WS09; the dead letter is pgmq's archive, so there is no `shopping_run_dlq` queue) | WS15 |
 
 A builder who needs a column on a table it does not own files a contract change request in its completion report. The orchestrator applies the migration on `main`.

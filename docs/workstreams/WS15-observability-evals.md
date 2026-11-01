@@ -143,3 +143,19 @@ WS15-specific:
 7. **CI.** `pnpm eval` already runs on every push and PR in the `checks` job; `eval.yml` adds the baseline compare and the PR comment, with `ANTHROPIC_API_KEY` as a repository secret for the live job (Miguel sets it).
 8. **Docs.** docs/03 §1 and §10 (not §4.1 and §4.10); docs/05 has no "what may be logged" heading: add the logging rules under Privacy and Audit; docs/01 Tooling's Sentry and PostHog rows.
 
+
+## Follow-ups recorded after review (2026-11-01, merged 403dd29)
+
+Non-blocking items from the two review rounds, for a later round or for the workstreams named:
+1. `dlq:retry --new-run` checks only the archived run's own status. A later run on the same list that reached `cart_ready` or `checked_out` does not block a replacement (the replacement is hands-off, so a person still approves it). Refuse when any run on the list is `cart_ready` or `checked_out`.
+2. The spend guard reads `null` and `""` as 0 (`Number(null)`), and the recipe-import, parse-ingredients and llm-proxy stores coerce a bad RPC answer to 0 before the guard sees it. `coalesce(sum(), 0)` cannot return null today. Accept only a number or a non-empty numeric string in the guard and pass raw values through from the stores.
+3. Unpinned behaviours: dropping the `report` hook in suggest or llm-proxy stays green; suggest's fallback to ranking on `cost_unknown` holds (verified by probe: 200, `composedBy: fallback`, zero model calls) but has no test; the advisory lock's concurrency behaviour is pinned only by statement order (PGlite has one connection).
+4. Refused runs (`agent_disabled`) count toward the 20-runs-a-day `enqueue_shopping_run` limit; the kill switch also fails an approved cart mid-run.
+5. `swept_requeued` (self-healed) shares the `run_stalled` tag and fingerprint with `no_worker`, so README alert rule 1 pages for both.
+6. `ARG GIT_SHA=unknown` in the worker Dockerfile makes the release the string "unknown" instead of unset.
+7. The cap day is UTC midnight; switch to `households.timezone` (on main since WS11). Parse-ingredients records spend only in `finish()`, so parallel batches all see the same spend (the cap is advisory under concurrency).
+8. The CI dead-letter step exercises only `--force` on a missing run.
+9. `list-build`, `run-approve`, `retailer-oauth` and `export-data` do not report to Sentry; no web or desktop Sentry (WS13 seam `sentry.ts`); no Expo Router ErrorBoundary; the worker's `run_id` is not written onto `ai_runs` rows; `checkout_completed` has helpers only (WS10 emits it).
+10. WS08's `tier3/__tests__/bridge.test.ts` captcha case has 200 ms of headroom (200 ms debounce against a 400 ms sleep) and flaked once on a loaded runner.
+11. Miguel: Sentry projects and DSNs (`SENTRY_DSN` as a function secret and in `.env.local`), EAS secrets and the source map token; the GitHub secret `ANTHROPIC_API_KEY` for the manual live eval job; a PostHog project key and the flags `tier3_browser_checkout`, `ai_suggestions_v2`, `shopping_agent_enabled`; the four Sentry alert rules written in the worker README.
+12. `eval.yml` is not a required check by decision: a path-filtered workflow that is skipped stays pending and would block merges. `baseline.json` on main already equals the current scores; refresh it with `pnpm eval --update-baseline` only when a score is meant to move.

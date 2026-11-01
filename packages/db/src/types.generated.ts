@@ -1485,20 +1485,29 @@ export type Database = {
         Row: {
           cooked_count: number | null;
           entries: Json | null;
-          household_id: string | null;
-          week_start: string | null;
+          household_id: string;
+          week_start: string;
         };
-        Relationships: [];
+        ComputedFields: never;
+        Relationships: [
+          {
+            foreignKeyName: "meal_plan_entries_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       v_most_bought_products: {
         Row: {
-          household_id: string | null;
+          household_id: string;
           ingredient_id: string | null;
           last_bought_at: string | null;
           pinned: boolean | null;
           product_id: string | null;
           product_name: string | null;
-          retailer: Database["public"]["Enums"]["retailer"] | null;
+          retailer: Database["public"]["Enums"]["retailer"];
           size: string | null;
           store_id: string | null;
           store_name: string | null;
@@ -1506,18 +1515,43 @@ export type Database = {
           units_bought: number | null;
           upc: string | null;
         };
-        Relationships: [];
+        ComputedFields: never;
+        Relationships: [
+          {
+            foreignKeyName: "grocery_list_items_ingredient_id_fkey";
+            columns: ["ingredient_id"];
+            isOneToOne: false;
+            referencedRelation: "ingredients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "orders_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       v_spend_weekly_by_store: {
         Row: {
-          household_id: string | null;
+          household_id: string;
           order_count: number | null;
-          retailer: Database["public"]["Enums"]["retailer"] | null;
+          retailer: Database["public"]["Enums"]["retailer"];
           store_name: string | null;
           total_usd: number | null;
           week_start: string | null;
         };
-        Relationships: [];
+        ComputedFields: never;
+        Relationships: [
+          {
+            foreignKeyName: "orders_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Functions: {
@@ -1827,6 +1861,7 @@ export const Constants = {
       ingredient_parse_cache_source: ["grammar", "llm"],
       meal_plan_entries_slot: ["breakfast", "lunch", "dinner", "snack"],
       meal_plan_entries_status: ["planned", "cooked", "skipped"],
+      orders_status: ["confirmed", "picked_up", "delivered", "cancelled"],
       pantry_items_status: ["have", "low", "out"],
       product_matches_chosen_by: ["agent", "user"],
       push_tokens_platform: ["ios", "android", "web"],

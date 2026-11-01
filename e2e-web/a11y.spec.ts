@@ -1,48 +1,36 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
+import type { Page, TestInfo } from "@playwright/test";
 import { entryId, IDS, itemId } from "./fixtures/world";
 import { openSignedIn, openSignedOut, worldSupabase } from "./support/app";
 import { byTestId } from "./support/helpers";
+import { expect, test } from "./support/test";
+import { PHONE } from "./support/viewports";
 
-// WS13 acceptance criterion 4: an axe-core pass with zero serious violations. "Serious" here
-// means axe's impact levels serious and critical, which is how its own reports rank them.
-// Every screen is checked at the desktop size and, for the three the brief names, with a sheet
-// open too. Moderate and minor findings are attached to the report, not failed on.
+// WS13 acceptance criterion 4: an axe-core pass. Every rule axe runs by default is on, none is
+// switched off, and any violation of any impact (critical, serious, moderate or minor) fails the
+// test. Each screen is checked at the desktop size, the planner and the list also with a sheet
+// open, and the planner once more at a phone's width.
 
-const BLOCKING = new Set(["serious", "critical"]);
-
-// WCAG 2.5.3, label in name. The planner's day headers, "+ Add another" buttons and meal chips
-// have spoken labels ("Monday, November 2. Open the day") that do not contain the words on the
-// button ("Mon", "Nov 2"). The labels are in SlotCell.tsx and WeekGrid.tsx, which WS04c is
-// rewriting for simple mode, so the planner scans leave this one rule out and the fix goes in
-// after that merges. Every other screen is scanned with it on.
-const PLANNER_KNOWN = ["label-content-name-mismatch"];
-
-async function scan(
-  page: Page,
-  name: string,
-  testInfo: import("@playwright/test").TestInfo,
-  skip: string[] = [],
-) {
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"])
-    .disableRules(skip)
-    .analyze();
+async function scan(page: Page, name: string, testInfo: TestInfo) {
+  const results = await new AxeBuilder({ page }).analyze();
   await testInfo.attach(`axe-${name}`, {
     body: JSON.stringify(
-      results.violations.map((v) => ({
-        id: v.id,
-        impact: v.impact,
-        help: v.help,
-        nodes: v.nodes.map((n) => n.target),
-      })),
+      {
+        passes: results.passes.length,
+        incomplete: results.incomplete.map((v) => v.id),
+        violations: results.violations.map((v) => ({
+          id: v.id,
+          impact: v.impact,
+          help: v.help,
+          nodes: v.nodes.map((n) => n.target),
+        })),
+      },
       null,
       2,
     ),
     contentType: "application/json",
   });
-  const blocking = results.violations.filter((v) => BLOCKING.has(v.impact ?? ""));
-  return blocking.map(
+  return results.violations.map(
     (v) =>
       `${v.id} (${v.impact}): ${v.help} -> ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`,
   );
@@ -60,7 +48,7 @@ test.describe("axe-core at 1280 by 800", () => {
     await openSignedIn(page, worldSupabase());
     await page.goto("/plan");
     await expect(byTestId(page, "week-grid")).toBeVisible();
-    expect(await scan(page, "planner", testInfo, PLANNER_KNOWN)).toEqual([]);
+    expect(await scan(page, "planner", testInfo)).toEqual([]);
   });
 
   test("planner with a meal open", async ({ page }, testInfo) => {
@@ -70,7 +58,7 @@ test.describe("axe-core at 1280 by 800", () => {
     await expect(byTestId(page, "entry-sheet")).toBeVisible();
     // The dialog's role and name arrive a moment after the panel; scan once it has them.
     await expect(page.getByRole("dialog", { name: "Veggie chili" })).toBeVisible();
-    expect(await scan(page, "planner-sheet", testInfo, PLANNER_KNOWN)).toEqual([]);
+    expect(await scan(page, "planner-sheet", testInfo)).toEqual([]);
   });
 
   test("grocery list", async ({ page }, testInfo) => {
@@ -94,5 +82,16 @@ test.describe("axe-core at 1280 by 800", () => {
     await page.goto(`/shopping/${IDS.run}`);
     await expect(byTestId(page, "proposed-cart")).toBeVisible();
     expect(await scan(page, "run", testInfo)).toEqual([]);
+  });
+});
+
+test.describe("axe-core at 390 by 844 (the phone)", () => {
+  test.use(PHONE);
+
+  test("planner", async ({ page }, testInfo) => {
+    await openSignedIn(page, worldSupabase());
+    await page.goto("/plan");
+    await expect(byTestId(page, "week-grid")).toBeVisible();
+    expect(await scan(page, "planner-phone", testInfo)).toEqual([]);
   });
 });

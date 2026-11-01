@@ -14,6 +14,10 @@ describe("shareCapability", () => {
     expect(web.VIDEO_LINK_ADVICE).not.toMatch(/share the post/i);
   });
 
+  it('the web hint does not say "on the web", because the desktop app shows it too', () => {
+    expect(web.LINK_TAB_HINT).not.toMatch(/on the web/i);
+  });
+
   it("the phone build needs no hint, because a post can be shared into the app", () => {
     expect(native.LINK_TAB_HINT).toBeNull();
     expect(native.VIDEO_LINK_ADVICE).toMatch(/share the post into this app/i);

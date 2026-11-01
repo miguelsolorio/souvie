@@ -257,7 +257,7 @@ describe("the link tab, before anything is sent", () => {
     // The test renders with the web build's share text (shareCapability.ts, not the .native one).
     const screen = show("");
     expect(screen.has("link-tab-hint")).toBe(true);
-    expect(screen.html).toContain("no share sheet on the web");
+    expect(screen.html).toContain("no share sheet here");
     expect(screen.html).toContain("Paste tab");
   });
 

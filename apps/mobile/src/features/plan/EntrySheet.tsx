@@ -161,7 +161,7 @@ function EntryBody({
           <Pressable
             testID="open-recipe"
             accessibilityRole="link"
-            accessibilityLabel={`Open the recipe for ${entryTitle(entry)}`}
+            accessibilityLabel={`Open recipe for ${entryTitle(entry)}`}
             onPress={() => {
               onClose();
               router.push(recipeRoute(entry.recipe_id));

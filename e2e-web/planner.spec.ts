@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
 import { entryId, WEEK_DAYS } from "./fixtures/world";
 import { openSignedIn, worldSupabase } from "./support/app";
 import { watchConsoleErrors } from "./support/consoleErrors";
 import { byTestId, focusedTestId } from "./support/helpers";
+import { expect, test } from "./support/test";
 import { PHONE } from "./support/viewports";
 
 // WS13 acceptance criterion 3 (the seven-day row and drag-and-drop with a mouse) and the planner

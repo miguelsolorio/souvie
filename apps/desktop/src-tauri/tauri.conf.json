@@ -7,7 +7,7 @@
     "frontendDist": "../../mobile/dist",
     "beforeBuildCommand": "pnpm --filter @mp/mobile export:web",
     "devUrl": "http://localhost:8081",
-    "beforeDevCommand": "BROWSER=none pnpm --filter @mp/mobile exec expo start --web --port 8081"
+    "beforeDevCommand": "pnpm --filter @mp/mobile exec expo start --port 8081"
   },
   "app": {
     "windows": [
@@ -19,7 +19,8 @@
         "minWidth": 800,
         "minHeight": 560,
         "center": true,
-        "resizable": true
+        "resizable": true,
+        "dragDropEnabled": false
       }
     ],
     "security": {

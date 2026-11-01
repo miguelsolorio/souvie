@@ -1,8 +1,13 @@
 name: Desktop app
 
-# The Tauri 2 shell around the web export (apps/desktop). It builds the macOS .app on main, and on
-# any branch or pull request that touches the shell, the web app or the shared UI, because this is
-# where the Rust compiles: the development Mac has no Rust (docs/status.md, WS13). WS13.
+# The Tauri 2 shell around the web export (apps/desktop). This is where the Rust compiles: the
+# development Mac has no Rust (docs/status.md, WS13). WS13.
+#
+# When it runs, to keep a docs-only or web-only change from paying for two long jobs:
+#   pull request   only when the shell, the lockfile or this file changes: the macOS job
+#   main           also when the web app or the shared UI changes, and the Windows job runs
+#   dispatch       by hand: both jobs
+# A branch push does not run it; a pull request that touches the shell does.
 #
 # Signing and notarization are not done here (apps/desktop/README.md says how). The .app this
 # uploads is unsigned. EXPO_PUBLIC_* values come from repository variables when they are set, and
@@ -11,7 +16,7 @@ name: Desktop app
 on:
   workflow_dispatch:
   push:
-    branches: [main, "ws/**"]
+    branches: [main]
     paths:
       - "apps/desktop/**"
       - "apps/mobile/**"
@@ -21,8 +26,6 @@ on:
   pull_request:
     paths:
       - "apps/desktop/**"
-      - "apps/mobile/**"
-      - "packages/ui/**"
       - "pnpm-lock.yaml"
       - ".github/workflows/desktop.yml"
 
@@ -64,9 +67,11 @@ jobs:
           workspaces: apps/desktop/src-tauri -> target
 
       # tauri build runs `pnpm --filter @mp/mobile export:web` first (tauri.conf.json,
-      # beforeBuildCommand), then compiles the shell and writes the .app.
+      # beforeBuildCommand), then compiles the shell and writes the .app. Everything after `--`
+      # goes to cargo: --locked fails the build if Cargo.lock needs changing, so the lock in the
+      # repo is the one that built.
       - name: Build the app
-        run: pnpm --filter @mp/desktop tauri build
+        run: pnpm --filter @mp/desktop exec tauri build -- --locked
 
       # Criterion 7, the part a runner can see: a real .app, with the id and the link scheme the
       # brief and the sign-in flow need, and the web export compiled into the binary.
@@ -129,6 +134,8 @@ jobs:
   # an NSIS installer, since "app" is a macOS bundle type.
   desktop-build-windows:
     name: Windows installer (may fail)
+    # Only on main and by hand. A pull request does not wait on it.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: windows-latest
     continue-on-error: true
     timeout-minutes: 45
@@ -152,7 +159,7 @@ jobs:
           workspaces: apps/desktop/src-tauri -> target
 
       - name: Build the installer
-        run: pnpm --filter @mp/desktop tauri build --bundles nsis
+        run: pnpm --filter @mp/desktop exec tauri build --bundles nsis -- --locked
 
       - name: Upload the installer
         uses: actions/upload-artifact@v7

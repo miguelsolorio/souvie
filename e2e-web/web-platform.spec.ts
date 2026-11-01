@@ -1,9 +1,9 @@
-import { expect, test } from "@playwright/test";
 import { IDS } from "./fixtures/world";
 import { openSignedIn, worldSupabase } from "./support/app";
 import { watchConsoleErrors } from "./support/consoleErrors";
 import { byTestId } from "./support/helpers";
 import { jpegSize, solidPng } from "./support/images";
+import { expect, test } from "./support/test";
 
 // WS13 acceptance criterion 6, and the platform files: a browser has no camera screen, no share
 // sheet and no push. Photo import opens the file picker and runs the same recipe-import pipeline;
@@ -122,7 +122,7 @@ test.describe("what replaces the phone-only parts", () => {
 
     const hint = byTestId(page, "link-tab-hint");
     await expect(hint).toBeVisible();
-    await expect(hint).toContainText("no share sheet on the web");
+    await expect(hint).toContainText("no share sheet here");
     await expect(hint).toContainText("paste");
     await expect(byTestId(page, "import-url-input")).toBeVisible();
   });

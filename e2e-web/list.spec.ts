@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
 import { itemId } from "./fixtures/world";
 import { openSignedIn, worldSupabase } from "./support/app";
 import { watchConsoleErrors } from "./support/consoleErrors";
 import { byTestId, tabOrder } from "./support/helpers";
+import { expect, test } from "./support/test";
 import { PHONE } from "./support/viewports";
 
 // WS13 acceptance criterion 4: at 1280 by 800 the grocery list is two panes, Enter checks an item,

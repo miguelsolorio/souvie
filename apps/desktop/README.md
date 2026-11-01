@@ -83,6 +83,12 @@ Email sign-in links work the same way, and the six digit code in the email works
 everywhere. The other links the app takes (`souvie://join/<token>`, `souvie://oauth/kroger`) open
 their routes too. Anything else is ignored (`src/features/auth/desktopLinks.ts` in `apps/mobile`).
 
+**Local Supabase.** The opener may open `https` addresses only (`opener:allow-open-url` allows
+`https://*` and nothing else). Google sign-in against a Supabase project on a plain
+`http://` address, such as the local stack at `http://127.0.0.1:54321`, is refused: the sign-in
+address never opens. Develop desktop sign-in against the hosted project, or use the six digit
+email code, which needs no browser.
+
 **Supabase setup.** Nothing new: `souvie://callback` is already in the redirect allow list for the
 phone apps. Do not add `tauri://localhost`. It would not work, and it widens the list.
 

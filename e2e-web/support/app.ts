@@ -40,6 +40,7 @@ export function worldSupabase(): FakeSupabase {
     .seed("recipe_feedback", [])
     .seed("pantry_items", [])
     .seed("ingredients", [])
+    .seed("orders", [])
     .seed("push_tokens", [])
     .seed("retailer_connections", []);
   fake.edgeFunction("health", () => ({ ok: true, version: "browser-test" }));

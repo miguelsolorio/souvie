@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { expect, test } from "@playwright/test";
 import { openSignedOut, worldSupabase } from "./support/app";
 import { byTestId } from "./support/helpers";
 import {
@@ -8,6 +7,7 @@ import {
   installTauriStub,
   tauriInvokes,
 } from "./support/tauriStub";
+import { expect, test } from "./support/test";
 
 // The web build inside the desktop shell (WS13). The shell is stood in for (support/tauriStub.ts);
 // the app code and the Tauri plugin packages it loads are the real ones. What this proves: in the

@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
-import { expect, test } from "@playwright/test";
 import { openSignedOut, worldSupabase } from "./support/app";
 import { watchConsoleErrors } from "./support/consoleErrors";
 import { byTestId } from "./support/helpers";
+import { expect, test } from "./support/test";
 
 // WS13 acceptance criterion 5: sign-in with Google (and Apple) completes on the web through the
 // /callback route, here on the local static server. The identity provider is the fake's part:

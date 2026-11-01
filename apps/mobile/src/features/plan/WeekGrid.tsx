@@ -4,6 +4,7 @@ import type { PlanEntry } from "@mp/db";
 import { useRef } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useIsDesktop } from "../../lib/useBreakpoint";
+import { WEB_SPACE } from "../../lib/webSpace";
 import { longDate, SLOT_LABELS, shortDayName, shortMonthDay } from "./format";
 import { GridDesktopInput } from "./GridDesktopInput";
 import { moreMealsOf } from "./mode";
@@ -182,7 +183,11 @@ function DayHeader({
     <Pressable
       testID={`open-day-${date}`}
       accessibilityRole="button"
-      accessibilityLabel={`${longDate(date)}${isToday ? ", today" : ""}. Open the day`}
+      // The label starts with what the button shows (WCAG 2.5.3): "Mon Nov 2" in a column header,
+      // the long date on a day card.
+      accessibilityLabel={`${
+        centered ? `${shortDayName(date)} ${shortMonthDay(date)}` : longDate(date)
+      }${isToday ? ", today" : ""}. Open the day`}
       onPress={() => onOpenDay(date)}
       className={`min-h-11 justify-center rounded-lg px-2 ${
         centered ? (isToday ? "items-center bg-brand" : "items-center bg-neutral-100") : ""
@@ -193,6 +198,7 @@ function DayHeader({
           <Text className={`text-xs font-semibold ${isToday ? "text-white" : "text-neutral-600"}`}>
             {shortDayName(date)}
           </Text>
+          {WEB_SPACE}
           <Text className={`text-sm font-bold ${isToday ? "text-white" : "text-neutral-900"}`}>
             {shortMonthDay(date)}
           </Text>
@@ -200,6 +206,7 @@ function DayHeader({
       ) : (
         <View className="flex-row items-center justify-between">
           <Text className="text-base font-semibold text-neutral-900">{longDate(date)}</Text>
+          {isToday ? WEB_SPACE : null}
           {isToday ? (
             <Text className="rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-white">
               Today

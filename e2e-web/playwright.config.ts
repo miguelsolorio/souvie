@@ -1,5 +1,5 @@
-import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
+import { DIST } from "./support/dist";
 
 // Browser tests for the static web export (WS13). They serve apps/mobile/dist, so build it first.
 // The tests answer the app's Supabase calls themselves (support/fakeSupabase.ts), so the export
@@ -16,12 +16,13 @@ import { defineConfig, devices } from "@playwright/test";
 // Google Chrome that is already installed. CI installs Playwright's own Chromium instead.
 
 const PORT = Number(process.env.E2E_PORT ?? 4173);
-const DIST = resolve(import.meta.dirname, process.env.E2E_DIST ?? "../apps/mobile/dist");
 const channel = process.env.E2E_BROWSER_CHANNEL || undefined;
 
 export default defineConfig({
   testDir: ".",
   testMatch: "*.spec.ts",
+  // Refuses to run against an export that could reach the hosted Supabase project.
+  globalSetup: "./global-setup.ts",
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,

@@ -18,7 +18,12 @@ interface TauriConf {
   productName: string;
   version: string;
   identifier: string;
-  build: { frontendDist: string; beforeBuildCommand: string };
+  build: {
+    frontendDist: string;
+    beforeBuildCommand: string;
+    beforeDevCommand: string;
+    devUrl: string;
+  };
   app: {
     windows: Array<{
       label: string;
@@ -26,6 +31,7 @@ interface TauriConf {
       width: number;
       height: number;
       minWidth: number;
+      dragDropEnabled?: boolean;
     }>;
     security: { csp: string; dangerousDisableAssetCspModification: string[] };
   };
@@ -60,6 +66,21 @@ describe("tauri.conf.json", () => {
     expect(conf.app.windows).toHaveLength(1);
     expect(conf.app.windows[0].title).toBe("Souvie");
     expect(conf.app.windows[0].label).toBe("main");
+  });
+
+  it("leaves a drop to the page, not the shell: the planner's HTML5 drag needs it on Windows", () => {
+    // WebView2's own drop handler, on by default, takes drag events before the page sees them.
+    expect(conf.app.windows[0].dragDropEnabled).toBe(false);
+  });
+
+  it("starts the dev server with a command that runs the same on Windows", () => {
+    const dev = conf.build.beforeDevCommand;
+    // No VAR=value prefix, which only a POSIX shell understands. `expo start` opens no browser
+    // unless asked with --web, so none is needed.
+    expect(dev).not.toMatch(/^\s*[A-Z_]+=/);
+    expect(dev).not.toContain("--web");
+    expect(dev).toContain("expo start");
+    expect(dev).toContain(`--port ${new URL(conf.build.devUrl).port}`);
   });
 
   it("opens at the brief's 1280 by 800 laptop size, and can shrink to the phone layout", () => {
@@ -221,5 +242,40 @@ describe("the desktop package", () => {
 
   it("pins the CLI to the version the plugins were read against", () => {
     expect(desktopPackage.devDependencies["@tauri-apps/cli"]).toMatch(/^2\.\d+\.\d+$/);
+  });
+});
+
+describe("the desktop workflow", () => {
+  const workflow = read(join(HERE, "..", "..", ".github", "workflows", "desktop.yml"));
+  const between = (from: string, to: string) =>
+    workflow.slice(workflow.indexOf(from), workflow.indexOf(to));
+
+  it("does not run for a branch push, and a pull request runs it only for the shell", () => {
+    expect(workflow).toMatch(/push:\n\s+branches: \[main\]/);
+    expect(workflow).not.toContain("ws/**");
+    const pullRequest = between("  pull_request:", "concurrency:");
+    expect(pullRequest).toContain('"apps/desktop/**"');
+    expect(pullRequest).toContain('"pnpm-lock.yaml"');
+    expect(pullRequest).toContain('".github/workflows/desktop.yml"');
+    expect(pullRequest).not.toContain("apps/mobile");
+    expect(pullRequest).not.toContain("packages/ui");
+  });
+
+  it("watches the web app and the shared UI on main only", () => {
+    const push = between("  push:", "  pull_request:");
+    expect(push).toContain('"apps/mobile/**"');
+    expect(push).toContain('"packages/ui/**"');
+  });
+
+  it("builds Windows only on main and by hand", () => {
+    expect(workflow).toContain(
+      "if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')",
+    );
+  });
+
+  it("builds with the committed lock, and fails if cargo would change it", () => {
+    expect(existsSync(join(TAURI, "Cargo.lock"))).toBe(true);
+    expect(workflow).toContain("tauri build -- --locked");
+    expect(workflow).toContain("tauri build --bundles nsis -- --locked");
   });
 });

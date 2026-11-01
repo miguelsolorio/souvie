@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
 import { watchConsoleErrors } from "./support/consoleErrors";
+import { expect, test } from "./support/test";
 import { PHONE } from "./support/viewports";
 
 // WS13 acceptance criteria 2 and 9. The page is the static export served from disk with no

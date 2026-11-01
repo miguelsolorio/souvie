@@ -1,11 +1,10 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
-import { expect, test } from "@playwright/test";
+import { join } from "node:path";
+import { DIST } from "./support/dist";
+import { expect, test } from "./support/test";
 
 // WS13 acceptance criterion 1: the export is plain files. No Node host, no server bundle, so it
 // can sit on Cloudflare Pages and inside the desktop app. These read the folder, not a page.
-
-const DIST = resolve(import.meta.dirname, process.env.E2E_DIST ?? "../apps/mobile/dist");
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

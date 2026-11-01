@@ -189,11 +189,15 @@ At the desktop breakpoint:
 - The grocery list is two panes: store sections on the left, the chosen section's items on the right (`ListTwoPane.tsx`, `panes.ts`).
 - A shopping run is reviewed in a table, one row per line, with the same data and handlers as the phone's cards (`LineItemRow.tsx`).
 
-Phone layouts are unchanged. `e2e-web` checks each one at 390 by 844.
+Phone layouts are unchanged: below 768 the screens, their labels and their behavior are what they were, and `e2e-web` checks each at 390 by 844 (an `origin/main` build and this one give identical screenshots of the planner, a run and sign-in; on the web only, a checked list item's text is one shade darker for contrast). Three things do move on a tablet:
+
+- A Sheet is a centered dialog from 768, not 640. An iPad mini in portrait (744 points wide) now gets a bottom sheet where it got a dialog.
+- The seven-column planner starts at 1024, not 900. A window 900 to 1023 wide shows day cards.
+- On iOS and Android the Sheet's close button is now labeled "Done, close <title>" (it was "Close <title>"), so its spoken name starts with the word on it.
 
 ### Platform files
 
-The split is `X.native.tsx` (iOS and Android) beside an unsuffixed default (web and the desktop app). Never `*.web.*`. WS13 added or extended: `pickRecipePhoto` (a file picker and canvas on the web), `ShareIntentReceiver` and `shareCapability` (no share sheet on the web, so the add screen points at pasting), `PushNotice` (a settings notice where push cannot reach), `desktop` (the shell check, the system browser and deep links), `DesktopDeepLinks` and `GridDesktopInput`. There is no haptics code, so nothing was added for it.
+The split is `X.native.tsx` (iOS and Android) beside an unsuffixed default (web and the desktop app). Never `*.web.*`. WS13 added or extended: `pickRecipePhoto` (a file picker and canvas on the web), `ShareIntentReceiver` and `shareCapability` (no share sheet in a browser or the desktop app, so the add screen points at pasting), `PushNotice` (a settings notice where push cannot reach), `desktop` (the shell check, the system browser and deep links), `DesktopDeepLinks` and `GridDesktopInput`. There is no haptics code, so nothing was added for it.
 
 ### The desktop shell
 
@@ -217,7 +221,9 @@ pnpm --filter @mp/e2e-web e2e:build    # exports with the placeholder values
 pnpm --filter @mp/e2e-web e2e          # set E2E_BROWSER_CHANNEL=chrome to use an installed Chrome
 ```
 
-They cover the sign-in screen and console errors, sign-in through `/callback` with PKCE, the planner (seven columns, drag, arrows, Tab order, focus rings), the grocery list (two panes, Enter and Space, Escape on sheets), the run table, photo import, the share and push fallbacks, the desktop shell's sign-in with the real Tauri plugin packages, and an axe-core scan of each screen. They do not cover a real Supabase project, a real identity provider or the Cloudflare deploy.
+Two locks keep them off the hosted Supabase project. `tauri build` and a plain `expo export` write to the same `apps/mobile/dist` with the repo's `.env.local`, so before any test runs `global-setup.ts` reads the bundle and stops unless it carries the placeholder address and key and no hosted project address or key. Then every spec takes `test` from `support/test.ts`, which aborts any request to a host that is not this computer and fails the test that made it (`guard.spec.ts` proves it, `support/exportGuard.test.ts` covers the first lock in the unit tests).
+
+They cover the sign-in screen and console errors, sign-in through `/callback` with PKCE, the planner (seven columns, drag, arrows, Tab order, focus rings), the grocery list (two panes, Enter and Space, Escape on sheets), the run table, photo import, the share and push fallbacks, the desktop shell's sign-in with the real Tauri plugin packages, and an axe-core scan of each screen with every rule on and no violation of any impact allowed. They do not cover a real Supabase project, a real identity provider or the Cloudflare deploy.
 
 ## Environment variables
 

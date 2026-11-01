@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
 import { IDS } from "./fixtures/world";
 import { openSignedIn, worldSupabase } from "./support/app";
 import { watchConsoleErrors } from "./support/consoleErrors";
 import { byTestId } from "./support/helpers";
+import { expect, test } from "./support/test";
 import { PHONE } from "./support/viewports";
 
 // WS13: the run review screen is a table at the desktop breakpoint and cards on a phone.

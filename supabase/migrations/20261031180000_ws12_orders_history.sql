@@ -60,7 +60,8 @@ create table public.orders (
   confirmed_by uuid default auth.uid() references auth.users (id) on delete set null,
   confirmed_at timestamptz not null default now(),
   notes text,
-  -- Tier 3 confirmation details. Never written by a client.
+  -- Tier 3 confirmation details. Written by the service role, never by a client; members read it
+  -- with the rest of the order.
   raw jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -89,7 +90,7 @@ comment on column public.orders.total_usd is
 comment on column public.orders.confirmed_by is
   'The member who said "I placed it". Null for a Tier 3 order recorded by the worker.';
 comment on column public.orders.raw is
-  'Tier 3 confirmation details (WS10). Service role only.';
+  'Tier 3 confirmation details (WS10). The service role writes it; household members read it, like the rest of the order.';
 
 -- docs/02 §Indexes: history reads a household's orders newest first. The pickup index serves the
 -- reminder job (WS11), which looks for confirmed orders with a window ahead.

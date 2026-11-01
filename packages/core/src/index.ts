@@ -15,4 +15,5 @@ export * from "./preferences.ts";
 export * from "./recipe.ts";
 export * from "./retail.ts";
 export * from "./run.ts";
+export * from "./schedule.ts";
 export * from "./units.ts";

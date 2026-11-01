@@ -468,7 +468,7 @@ describe("the push phase, as the worker wires it", () => {
     expect(ready).toMatchObject({ type: "cart_ready", subtotalUsd: inCart });
     expect(run.cart_snapshot).toMatchObject({
       subtotalUsd: inCart,
-      summary: `Cart ready at Mock QFC Duvall, $${inCart.toFixed(2)}. Review and pay.`,
+      summary: `Your cart at Mock QFC Duvall is ready ($${inCart.toFixed(2)}). Tap to review, then pick a pickup time and pay in the store's app.`,
     });
   });
 });

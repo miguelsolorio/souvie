@@ -48,7 +48,8 @@ Owner-only operations (delete household, remove member, change retailer connecti
 | plan_mode | enum households_plan_mode: simple, full; default simple | Simple shows one dinner a day in the planner; entries in other slots stay and still feed the list; owner-editable through the existing update policy. CCR7, 2026-10-31 |
 | default_connection_id | uuid → retailer_connections | Nullable |
 | created_by | uuid → auth.users | |
-| quiet_hours | jsonb | {start, end} in the household's zone; WS11 |
+| timezone | text | IANA zone name, nullable (null means America/Los_Angeles); quiet hours and the weekly nudge are read in it. Owner-editable; WS11 |
+| quiet_hours | jsonb | {start, end}, "HH:MM" in `timezone`; a push due inside the window waits for its end. Owner-editable; WS11 |
 | tier3_consent | jsonb | {accepted_at, by_user_id, retailers[], copy_version}; WS08 |
 | ai_daily_cap_usd | numeric default 2.00 | Daily model spend cap; WS15 |
 
@@ -94,7 +95,7 @@ Owner-only operations (delete household, remove member, change retailer connecti
 
 **As built (WS06, 2026-10-30).** `profiles` gained `onboarding_step smallint not null default 0` (the highest screen reached; the app resumes there and an "Edit food preferences" entry revisits screens 2 to 6 without lowering it), `taste_embedding vector(1024)` (Voyage `voyage-3`, rebuilt by `suggest` before each plan) and `costco_member boolean`. A CHECK on `preferences` requires a JSON object under 16 KB whose `allergies` and `diets` come from the enums in `packages/core/src/preferences.ts`; other keys are validated in code. Client INSERT and UPDATE on `profiles` are column-level grants, no table-level grant remains, and `001_rls_identity.sql` asserts the column set. `useProfile` selects `PROFILE_COLUMNS`, which leaves the vector out. The Washington store list is not a table: `supabase/seed/stores_wa.csv` (90 stores, `kroger_location_id` empty) is bundled into the app as a generated module and checked by `node supabase/seed/stores.ts --check`. `recipes.embedding` is filled by the `suggest` function's `backfill` mode for household and catalog recipes alike, null embeddings only. The calibration deck writes `like` and `dislike` rows to `recipe_feedback` under WS04's policy, and `suggest` writes its one-line reason to `meal_plan_entries.why`. The function connects to Postgres as the database owner through `SUPABASE_DB_URL`, so its queries scope by household by hand (docs/05).
 
-- `households` has `created_at`, `updated_at` (trigger), and `deleted_at` (soft delete), plus `zip`, `default_connection_id`, and `created_by` as listed. `default_connection_id` has no foreign key yet; WS07 adds it with `retailer_connections`. `quiet_hours`, `tier3_consent`, and `ai_daily_cap_usd` arrive with WS11, WS10, and WS15. The WS01 brief called the connection column `default_store_connection_id`; the column here follows this document.
+- `households` has `created_at`, `updated_at` (trigger), and `deleted_at` (soft delete), plus `zip`, `default_connection_id`, and `created_by` as listed. `default_connection_id` has no foreign key yet; WS07 adds it with `retailer_connections`. `timezone`, `quiet_hours`, `tier3_consent`, and `ai_daily_cap_usd` arrive with WS11, WS10, and WS15. The WS01 brief called the connection column `default_store_connection_id`; the column here follows this document.
 - `household_members` has `created_at`, which is when the person joined. `role` is the enum `household_members_role`.
 - `household_invites` has `created_by`, `created_at`, `used_by`, and also `used_at` (the brief's name). `expires_at` defaults to 7 days. Tokens are 32 random bytes as hex, so 64 characters.
 - `audit_events` has `created_at`. `kind` is plain text. WS01 writes `member_added`, `member_removed`, and the extra kind `owner_transferred`.
@@ -407,10 +408,11 @@ As built (WS07, 2026-10-30): `retailer_connections` and `product_matches` carry 
 | connection_id | uuid → retailer_connections | |
 | policy | jsonb | `core.RunPolicy` |
 | next_run_at | timestamptz | |
-| last_enqueued_for | timestamptz | The `next_run_at` value already enqueued; idempotency guard |
+| last_enqueued_for | timestamptz | The `next_run_at` value already handled (enqueued or skipped); idempotency guard |
 | enabled | boolean | |
+| created_by, created_at, updated_at | | WS11 |
 
-**push_tokens** (created by WS09 exactly as sketched, since its two run pushes need it; WS11 extends it)
+**push_tokens** (created by WS09 exactly as sketched, since its two run pushes need it; WS11 adds the functions that register and forget a device, below)
 | column | type |
 |---|---|
 | user_id | uuid → auth.users |
@@ -441,24 +443,36 @@ As built (WS12, 2026-10-31, migration `20261031180000_ws12_orders_history.sql`):
 - Retailer terms. `orders.total_usd` is the only amount WS12 adds. The views carry totals, counts and names, never a per-product amount, and no table keeps a price for a product outside its run (price trends stay deferred, R21).
 - Export. `export-data` adds `orders`, `shopping_runs` (without `transcript` or `cart_snapshot`), `shopping_run_items` (without `alternatives`) and `meal_plan_entries`, each for the caller's households through RLS.
 
-**notification_preferences** (WS11): per user, per type.
+**notification_preferences** (WS11): per user, per type. A missing row means the type is on. Written through `set_notification_preference(type, enabled)`; clients read their own rows and write none.
 | column | type |
 |---|---|
 | user_id | uuid → auth.users |
-| type | enum notification_type: cart_ready, items_need_review, pickup_reminder, weekly_nudge, import_finished |
+| type | enum notification_type: cart_ready, items_need_review, pickup_reminder, weekly_nudge, import_finished, run_failed, schedule_skipped |
 | enabled | boolean default true |
+| updated_at | timestamptz |
 | pk (user_id, type) | |
 
-**notification_outbox** (WS11): rows written by triggers or jobs; a one-minute pg_cron job drains it through the `send-push` Edge Function.
-| column | type |
-|---|---|
-| id | uuid pk |
-| household_id | uuid → households |
-| type | enum notification_type |
-| payload | jsonb |
-| deliver_after | timestamptz |
-| sent_at | timestamptz |
-| attempts | int |
+**notification_outbox** (WS11): pushes waiting to be sent. Written by SQL (the functions and triggers below) and by the worker (a run push held back by quiet hours); drained by the shopper worker on its own timer, which honours quiet hours and preferences and calls Expo. No client access at all. There is no `send-push` Edge Function and no pg_net.
+| column | type | notes |
+|---|---|---|
+| id | uuid pk | |
+| household_id | uuid → households | |
+| type | enum notification_type | |
+| payload | jsonb | `core.NotificationPayload`: ids and numbers, never an item name |
+| deliver_after | timestamptz | Not before this time; the worker moves a row due in quiet hours to their end, and leases a row for 5 minutes while it sends |
+| sent_at | timestamptz | |
+| attempts | int | Five at most |
+| last_error, created_at, dedupe_key | | `dedupe_key` is unique when set: one nudge per household and week, one failure notice per run |
+
+**As built (WS11, 2026-10-31, migration `20261031170000_ws11_schedules_notifications.sql`).** Where it differs from the sketches above:
+
+- **Enum.** `notification_type` also holds `run_failed` and `schedule_skipped`, the two outbox-only types the orchestrator added to the five in the brief. `needs_review` in a push payload is `items_need_review` in the table (`core.notificationTypeOf`).
+- **Who pushes what.** The worker still pushes `cart_ready` and `needs_review` itself, straight to Expo (WS09), now through the same preference and quiet hours gate; only a push quiet hours hold back lands in the outbox, `urgent` for a review. SQL writes `weekly_nudge` (Thursday 17:00 household time, once a week, only for a household that has planned before and has nothing for next week; `enqueue_weekly_nudges(weekday, time, now)`), `run_failed` (trigger on `shopping_runs.status` becoming `failed`), `schedule_skipped` (the scheduler), `import_finished` (trigger on `import_jobs.status` becoming `done`, only for a job that took 20 seconds or more, since `recipe-import` finishes most inside the request), and `pickup_reminder` (`enqueue_pickup_reminders`, an hour before a confirmed `orders.slot_start`; it reads WS12's table by name at run time and does nothing until the table exists).
+- **The scheduler.** pg_cron runs `enqueue_due_scheduled_runs(p_now)` every 5 minutes (`enqueue-due-scheduled-runs`), the generators every 15 minutes (`notification-generators`) and an outbox prune daily. For each enabled schedule whose `next_run_at` has passed and differs from `last_enqueued_for` (`for update skip locked`, 100 at most) it finds the household's active list of the plan whose `week_start` is the Monday on or after `next_run_at` in the schedule's zone (`scheduled_run_target_week`, the SQL twin of `core.resolveTargetWeekStart`), calls WS09's `enqueue_shopping_run(list, connection, 'scheduled', policy)` with `auto_checkout` forced off (no retailer API pays; unattended checkout is Tier 3 Mode B), and in the same transaction sets `last_enqueued_for` and moves `next_run_at` to the first firing after now. A schedule that cannot start is skipped, never retried, and writes a `schedule_skipped` row with a reason: `no_active_list`, `connection_not_found`, `connection_inactive`, `tier3_unattended` (the worker cannot drive a `browser_session` store), `run_in_progress`, `daily_run_limit`, `invalid_policy`, `missed` (found over 6 hours late) or `internal_error`. A list that already has a `cart_ready`, `checking_out` or `checked_out` run is skipped without a notice, because the store cart is add-only. There is no `no_active_list` run: `shopping_runs.list_id` is not null.
+- **Cron subset.** `cron` is `minute hour * * weekdays` in the schedule's `tz` (`*`, 0 to 7 with 0 and 7 as Sunday, ranges and lists). `scheduled_run_next(cron, tz, after)` and `core.nextRunAt` implement it the same way, including the daylight saving changes (a time the clock skips happens an hour later on the clock; a repeated time is the later one); a test runs both over tens of thousands of instants. A trigger computes `next_run_at` on insert, when `cron` or `tz` change and when a schedule is switched on, so a client cannot set it or `last_enqueued_for`. A household has at most 10 schedules.
+- **RLS.** Members read a household's schedules; owners insert, update and delete them (spending rules are the owner's call, docs/05 §Money, as for `enqueue_shopping_run`'s policy), and each change is logged as an `audit_events` row of kind `policy_changed`. `households.timezone` and `households.quiet_hours` have column-level UPDATE grants for `authenticated` (through the existing owners-only policy) and CHECK constraints (a real zone name; two different `HH:MM` times). `notification_outbox` has RLS on and no policy.
+- **Devices.** `register_push_token(token, platform)` (signed in) stores the token for the caller after deleting it from every other user, so a phone belongs to whoever signed in on it last, keeps at most 20 devices per person and refreshes `updated_at` on every launch. `forget_push_token(token)` needs no session: when a session ends without a sign-out the app can no longer delete its own row, and the token is the capability. `push_tokens`' own client grants are unchanged. A dead token (`DeviceNotRegistered`) is deleted, not disabled.
+- **Query keys.** `['schedules', householdId]`, `['schedules', householdId, scheduleId]`, `['schedule-connections', householdId]`, `['notification-settings', householdId]` and `['notification-preferences', userId]`; none is persisted to the device.
 
 ### Ops
 
@@ -544,7 +558,7 @@ Files are created with `supabase migration new <name>` and carry a timestamp pre
 | 10 | ws06_preferences | profiles.preferences, onboarding_step, taste_embedding, costco_member | WS06 |
 | 11 | runs | shopping_runs, shopping_run_items, push_tokens, pgmq queue `shopping_run` | WS09 |
 | 12 | tier3 | households.tier3_consent, Storage bucket `run-screenshots` | WS08 |
-| 13 | schedules_notifications | scheduled_runs, notification_preferences, notification_outbox, households.quiet_hours, pg_cron jobs (push_tokens created by WS09) | WS11 |
+| 13 | schedules_notifications | scheduled_runs, notification_preferences, notification_outbox, households.timezone and quiet_hours, pg_cron jobs, register_push_token and forget_push_token (push_tokens created by WS09) | WS11 |
 | 14 | ws12_orders_history | orders, `confirm_order`, `history_time_zone`, the three history views | WS12 |
 | 15 | waitlist | waitlist | WS14 |
 | 16 | observability | households.ai_daily_cap_usd, shopping_runs.heartbeat_at, `shopping_run_dlq` queue, cost views | WS15 |

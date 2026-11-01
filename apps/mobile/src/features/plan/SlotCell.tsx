@@ -2,7 +2,7 @@ import type { MealSlot } from "@mp/core";
 import type { PlanEntry } from "@mp/db";
 import { type ReactNode, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { WEB_SPACE } from "../../lib/webSpace";
+import { WebSpace } from "../../lib/webSpace";
 import {
   dayName,
   entryA11yLabel,
@@ -156,15 +156,15 @@ export function EntryChip({
           {slotLabel}
         </Text>
       ) : null}
-      {/* WEB_SPACE keeps the words apart for a check of the label against what is on screen. */}
-      {slotLabel ? WEB_SPACE : null}
+      {/* WebSpace keeps the words apart for a check of the label against what is on screen. */}
+      {slotLabel ? <WebSpace /> : null}
       <Text
         className={`text-sm font-semibold text-neutral-900 ${skipped ? "line-through" : ""}`}
         numberOfLines={2}
       >
         {entryTitle(entry)}
       </Text>
-      {WEB_SPACE}
+      <WebSpace />
       <Text className="text-xs text-neutral-600">
         {[servingsLabel(entry.servings), cooked ? "Cooked" : skipped ? "Skipped" : null]
           .filter(Boolean)

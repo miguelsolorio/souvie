@@ -4,7 +4,7 @@ import type { PlanEntry } from "@mp/db";
 import { useRef } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useIsDesktop } from "../../lib/useBreakpoint";
-import { WEB_SPACE } from "../../lib/webSpace";
+import { WebSpace } from "../../lib/webSpace";
 import { longDate, SLOT_LABELS, shortDayName, shortMonthDay } from "./format";
 import { GridDesktopInput } from "./GridDesktopInput";
 import { moreMealsOf } from "./mode";
@@ -198,7 +198,7 @@ function DayHeader({
           <Text className={`text-xs font-semibold ${isToday ? "text-white" : "text-neutral-600"}`}>
             {shortDayName(date)}
           </Text>
-          {WEB_SPACE}
+          <WebSpace />
           <Text className={`text-sm font-bold ${isToday ? "text-white" : "text-neutral-900"}`}>
             {shortMonthDay(date)}
           </Text>
@@ -206,7 +206,7 @@ function DayHeader({
       ) : (
         <View className="flex-row items-center justify-between">
           <Text className="text-base font-semibold text-neutral-900">{longDate(date)}</Text>
-          {isToday ? WEB_SPACE : null}
+          {isToday ? <WebSpace /> : null}
           {isToday ? (
             <Text className="rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-white">
               Today

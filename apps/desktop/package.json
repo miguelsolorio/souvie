@@ -1,0 +1,14 @@
+{
+  "name": "@mp/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Souvie desktop app: the Expo web export in a Tauri 2 window. See README.md.",
+  "scripts": {
+    "tauri": "tauri",
+    "icons": "tauri icon ../mobile/assets/icon.png --output src-tauri/icons && rm -rf src-tauri/icons/android src-tauri/icons/ios src-tauri/icons/Square*.png src-tauri/icons/StoreLogo.png src-tauri/icons/64x64.png"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.4"
+  }
+}

@@ -16,7 +16,15 @@ Plumbing rules:
 - Request shape for Sonnet 5.5 and Haiku 5.5 (confirmed 2026-10-30): omit `thinking`, which runs adaptive thinking; `thinking: {type: "disabled"}`, `budget_tokens`, and non-default `temperature`, `top_p` or `top_k` return 400. Depth is set with `output_config.effort`. On Sonnet 5.5 a forced `tool_choice` (`any` or `tool`) also returns 400, so agent tools use `auto` with `strict: true` and the prompt names the tool. `@mp/llm` sends `output_config: { effort, format }` and nothing else; the server-side refusal fallback (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`) is opt-in and off by default.
 - Prompts live in `packages/llm/prompts/<name>/<version>.ts` with a registry; every `ai_runs` row records `prompt_version`.
 - Prompt caching for stable blocks: the ingredient ontology excerpt, the household profile, the adapter's product schema.
-- Every call writes an `ai_runs` row (model, tokens, cache reads, cost, latency, ok). `packages/llm` enforces a per-household daily cost cap read from a config table or env; over cap it throws a typed error the UI explains.
+- Every call writes an `ai_runs` row (model, tokens, cache reads, cost, latency, ok). `packages/llm` enforces a daily cost cap before the request goes out; over cap it throws a typed error the UI explains.
+
+**The cost cap, as built (WS15).** `createDailyCapGuard` in `packages/llm/src/log.ts` is called by `extract`, `callWithTools` and `embed` before each request, and by `llm-proxy` before it forwards one.
+
+- The cap is the household's own, `households.ai_daily_cap_usd` (default 2.00, `numeric(8,2)`, 0 switches model calls off). Members can read it; no client can write it (UPDATE on `households` is granted by column). An operator changes it with a service-role statement. When the row or the column cannot be read, the guard falls back to `AI_DAILY_CAP_USD` (default 2) and warns.
+- The guard adds today's UTC spend (`household_ai_spend_since`) to the call's estimated input cost (characters divided by four, at the model's input price) and refuses when the sum reaches the cap. The estimate counts input only (the output is unknown) and ignores the cache discount, so a call can be refused a little early. A call that starts under the cap can still end a few cents over it. The `ai_runs` row the call writes afterwards, with its real usage, is the reconciliation.
+- A call with no household is capped per user: `parse-ingredients` in `lines` mode passes the signed-in user, writes `ai_runs.user_id`, and the guard sums `user_ai_spend_since` (household-less rows only) against `AI_DAILY_CAP_USD`. Over the cap the parser keeps its grammar and ontology results and skips the model; it does not return an error. System jobs with no household and no user are not capped.
+- A refusal is a row: `ai_runs` with `ok = false`, `error = 'cost_cap'`, cost 0, written by the guard (through the caller's sink) before it throws `LlmError("cost_cap")`. The thrown value is a `CostCapError` with `scope` (`household` or `user`), `capUsd` and `spentUsd`. The views leave these rows out of `calls`.
+- The dashboard is SQL: `v_ai_cost_daily(household_id, day, kind, model, cost_usd, calls)` and `v_ai_cost_by_prompt(prompt_version, calls, avg_latency_ms, error_rate)`, both `security_invoker`, so a member sees their households' rows and the service role sees all. `apps/mobile/app/(dev)/ai-costs.tsx` renders them in a development build.
 - The shopping agent uses the Anthropic SDK tool-runner loop directly, not the Agent SDK, so tools, policies, and the state machine stay in our code and are replayable in tests.
 - Expected cost: a week of parsing plus planning for one household lands well under $0.50. A shopping run is typically 10–30 Sonnet turns with cached context, under $0.30.
 
@@ -218,14 +226,36 @@ A chat surface over the same domain services the UI uses: "swap Tuesday for some
 
 ## 10. Evaluation harness (`pnpm eval`, WS15 wires CI; WS02, WS03, WS09 provide sets)
 
-| Set | Location | Threshold |
-|---|---|---|
-| 50 recipe URLs → expected normalized recipes | `packages/recipe-import/evals/` | ≥45 pass (title, servings, ingredient count ±1, instructions non-empty) |
-| 500 ingredient lines → expected parses | `packages/ingredient-parser/evals/` | ≥95% exact on qty and unit; ≥90% on ingredient id |
-| 100 ingredient→product cases per retailer against MockRetailer fixtures | `packages/agent/evals/` | ≥90% pick the expected product or an accepted alternative |
-| Recorded agent runs replayed against MockRetailer | `packages/agent/evals/replays/` | Same final cart; no policy violations |
+`pnpm eval` runs every golden set offline and gates on the result. Each `*.eval.ts` under a package's `evals/` asserts its own threshold and records its score; `packages/evals-report` collects the scores, compares them with `packages/evals-report/baseline.json`, writes `packages/evals-report/report.json`, and prints a Markdown summary. It exits non-zero when a test fails, when any score is under its threshold, when any score is more than 2 points under the baseline, or when a score the baseline knows did not come back.
 
-CI fails a merge when any threshold regresses. Prompt changes must come with eval results in the completion report.
+| Set | Location | Metric and threshold |
+|---|---|---|
+| 50 recipe URLs → expected normalized recipes, from recorded pages and recorded Sonnet answers | `packages/recipe-import/evals/` | `import/pass_rate`: ≥ 45 of 50 pass (title, ingredient count ±1, at least one step) |
+| 500 ingredient lines → expected parses, grammar and lookup only | `packages/ingredient-parser/evals/parse.eval.ts` | `parser/qty_unit` ≥ 95%, `parser/ingredient_id` ≥ 90% |
+| The same 500 lines with Haiku's answers replayed from `evals/recordings/` | `packages/ingredient-parser/evals/parse-recorded.eval.ts` | `parser/qty_unit_with_model` ≥ 95%, `parser/ingredient_id_with_model` ≥ 90% |
+| 100 ingredient→product cases per retailer (`kroger`, `safeway`) against MockRetailer fixtures: 90 plain picks and 10 safety and gap cases, seven of which expect nothing | `packages/agent/evals/line-items/` | `lineItems/kroger`, `lineItems/safeway` ≥ 90% pick the expected product or an accepted alternative; `*_candidate_recall` is reported without a gate |
+| Recorded agent runs replayed against MockRetailer | `packages/agent/evals/` | `agentReplay/replay_pass_rate` = 100%: same proposal, ledger and cart |
+| Hard filters over ten households | `packages/llm/evals/suggest/` | `suggest/households_clean` = 100%: zero violations |
+
+The line-item expectations were written from the 224-product catalog, not from the matcher's output, with at most three accepted names per case. One case, "Apples", fails on purpose: the mock catalog's search stems "apples" to "appl" and "apple" to "apple", so it finds the cider vinegar. The matcher is not at fault; the case records what the mock does, and the score is 99 of 100.
+
+**Offline by default.** No eval calls the network in CI. A model path replays a recording: Sonnet's extraction answers under `packages/recipe-import/evals/fixtures/llm/`, Haiku's parser batches under `packages/ingredient-parser/evals/recordings/`, the agent's turns inside `packages/agent/evals/runs/*.json`. A recording is keyed by a hash of the model, the prompt version and the exact prompt text, so a changed prompt finds no recording instead of replaying an answer to a different question. `EVAL_REQUIRE_RECORDINGS=1` (set in CI) makes a missing recording a failure.
+
+**Re-recording.** Run it locally, with `ANTHROPIC_API_KEY` in that one process, before changing a prompt and again after:
+
+```bash
+pnpm eval --suite parser --live      # re-records Haiku's batches (under a cent)
+pnpm eval --suite import --live      # re-fetches the 50 pages and re-records Sonnet's answers
+pnpm --filter @mp/agent record       # re-records the agent runs (a few cents a scenario)
+```
+
+Read the diff of the recordings, commit them with the prompt change, and put the before and after scores in the completion report. The `Evals` workflow can also do the live run from the Actions tab (Run workflow, live) with the repository secret `ANTHROPIC_API_KEY`, and attaches the new recordings as an artifact.
+
+**The baseline.** `baseline.json` holds the last accepted score of every metric. `eval.yml` compares a pull request with the copy on `main`, so a pull request cannot lower its own baseline. After a change that moves a score on purpose, the orchestrator runs `pnpm eval --update-baseline` on `main` (it writes only after a passing run) and the next pull request compares with that.
+
+**In CI.** The `checks` job runs `pnpm eval` on every push and pull request. `.github/workflows/eval.yml` runs it again on a pull request that touches `packages/{recipe-import,ingredient-parser,retailers,agent,llm,evals-report}` or `supabase/seed`, with `--baseline-ref origin/main --comment`: it posts the summary as one pull request comment (edited on later runs), writes the job summary, and uploads `report.json`. A pull request that only touches `docs/` does not run it.
+
+Prompt changes must come with eval results in the completion report.
 
 ## 11. Safety rules the model never overrides
 

@@ -108,8 +108,8 @@ meal-planner/
 | Mobile distribution | EAS Build and EAS Update (internal distribution only in v1) |
 | Web hosting | Cloudflare Pages for the app's static export and the marketing site (decided in the WS13 and WS14 briefs) |
 | Worker hosting | Fly.io or Railway, one small always-on machine |
-| Errors | Sentry (app and worker) |
-| Analytics and flags | PostHog (`tier3_browser_checkout` flag among others) |
+| Errors | Sentry: `@sentry/react-native` in the app (iOS and Android; the web build has none yet) with the Expo plugin and source maps through EAS, `@sentry/node` in the worker. Events carry the commit SHA as the release and a `household_id` tag, never a user. Edge Functions report with a plain `fetch` to Sentry's envelope endpoint (`supabase/functions/_shared/sentry.ts`), not the Deno SDK: one POST from the catch block that answers 500, scrubbed, tagged with the function and the household. suggest, recipe-import, parse-ingredients and llm-proxy report today (WS15) |
+| Analytics and flags | PostHog: `posthog-react-native` in the app and `posthog-node` in the worker. Seven core-loop events with fixed properties and no PII. The flags `tier3_browser_checkout`, `shopping_agent_enabled` and `ai_suggestions_v2` are kill switches, on unless PostHog says off (`useFlag(name)` in the app, `getFlag(name, householdId)` in the worker) |
 | CI | GitHub Actions: typecheck, lint, test, `supabase db lint`, eval thresholds (WS15), web export (WS13) |
 
 ## Edge Functions
@@ -146,7 +146,8 @@ Storage buckets: `avatars` (WS01), `recipe-images` (WS02), `run-screenshots` (WS
 | `ANTHROPIC_API_KEY` | Edge Functions, worker | Secret |
 | `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET`, `KROGER_REDIRECT_URI` | worker, auth callback | Registered at developer.kroger.com by the human |
 | `EXPO_PUBLIC_POSTHOG_KEY` | app | Public |
-| `SENTRY_DSN` | app, worker | Public-ish; still keep out of docs |
+| `EXPO_PUBLIC_SENTRY_DSN`, `EXPO_PUBLIC_GIT_SHA` | app | Public-ish; the DSN stays out of docs. The SHA is the Sentry release |
+| `SENTRY_DSN`, `GIT_SHA`, `POSTHOG_API_KEY` | worker | Secrets of the worker host. Without them Sentry and PostHog are off |
 
 ## Key flows
 

@@ -136,5 +136,6 @@ Until then, someone who trusts the build can open it with right click, Open, or 
   mount. The shell can hold a WebView; the host is not mounted in it.
 - **Windows and Linux.** `main.rs` compiles for both and the CI Windows job builds it, but nothing
   has been run on them. The deep link scheme registers at install time there.
-- **First `cargo` run.** `Cargo.lock` is not committed yet, because the Mac this was written on
-  has no Rust. The first CI run produces one. Commit it, then add `--locked` to the CI build.
+- **`Cargo.lock`.** Committed, from the first CI build, because the Mac this was written on has no
+  Rust. Cargo keeps to it. After you change a dependency in `Cargo.toml`, build once on a Mac with
+  Rust (or take the artifact from CI) and commit the new lock.

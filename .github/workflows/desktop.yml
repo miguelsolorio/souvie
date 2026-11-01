@@ -115,7 +115,8 @@ jobs:
           path: Souvie-macos-unsigned.zip
           retention-days: 14
 
-      # The first run writes Cargo.lock. Download it, commit it, then add --locked above.
+      # Cargo.lock is committed. When a dependency changes, cargo rewrites it here: take it from
+      # this artifact and commit it.
       - name: Upload Cargo.lock
         uses: actions/upload-artifact@v7
         with:

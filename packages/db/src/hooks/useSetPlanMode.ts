@@ -1,5 +1,11 @@
 import type { PlanMode } from "@mp/core";
-import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  type MutationOptions,
+  type QueryClient,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import type { MpClient } from "../client";
 import { useSupabase } from "../context";
 import { setPlanMode } from "../identity";
 import type { ActiveHousehold } from "./useHousehold";
@@ -50,25 +56,46 @@ export function restoreActiveHouseholds(
   for (const [key, data] of previous) queryClient.setQueryData(key, data);
 }
 
-/**
- * Owner only: change how much the household plans (Just dinners or Every meal). The planner and
- * the settings screen switch at once; if the server refuses (the caller is not an owner, or the
- * phone is offline for good) the household goes back to what it was. Used by household settings
- * and by the first onboarding screen. Entries in hidden slots are never touched.
- */
-export function useSetPlanMode() {
-  const client = useSupabase();
-  const queryClient = useQueryClient();
+interface SetPlanModeContext {
+  /** The household copies as they were before the optimistic change. */
+  previous: PreviousHouseholds;
+}
 
-  return useMutation({
-    mutationFn: ({ householdId, mode }: SetPlanModeInput) => setPlanMode(client, householdId, mode),
+/**
+ * The mutation behind useSetPlanMode, as plain options so tests can run it without React.
+ * The new mode shows at once in every cached copy of the household; if the server refuses (a
+ * member or outsider updates zero rows and gets `not_owner`, or the write fails) the copies go
+ * back to what they were; and once the write has settled either way, the household is marked
+ * stale so the next read asks the server.
+ */
+export function setPlanModeOptions(
+  client: MpClient,
+  queryClient: QueryClient,
+): MutationOptions<void, Error, SetPlanModeInput, SetPlanModeContext> {
+  return {
+    mutationFn: ({ householdId, mode }) => setPlanMode(client, householdId, mode),
+
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: ACTIVE_HOUSEHOLD_KEY });
       return { previous: patchActiveHouseholds(queryClient, input) };
     },
+
     onError: (_error, _input, context) => {
       if (context) restoreActiveHouseholds(queryClient, context.previous);
     },
+
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["household"] }),
-  });
+  };
+}
+
+/**
+ * Owner only: change how much the household plans (Just dinners or Every meal). The planner and
+ * the settings screen switch at once; if the server refuses, the household goes back to what it
+ * was. Used by household settings and by the first onboarding screen. Entries in hidden slots
+ * are never touched. See setPlanModeOptions.
+ */
+export function useSetPlanMode() {
+  const client = useSupabase();
+  const queryClient = useQueryClient();
+  return useMutation(setPlanModeOptions(client, queryClient));
 }

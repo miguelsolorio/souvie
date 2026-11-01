@@ -101,7 +101,7 @@ describe("household settings", () => {
 
   it("explains both modes in one line under the choice", () => {
     expect(show(household()).props("plan-mode-sentence").children).toBe(
-      "Simple plans one dinner a day. Every meal adds breakfast, lunch and snacks.",
+      "Just dinners plans one dinner a day. Every meal adds breakfast, lunch and snacks.",
     );
   });
 

@@ -7,7 +7,7 @@ export const PLAN_MODE_QUESTION = "How much do you want to plan?";
 
 /** The line under the choice in household settings. */
 export const PLAN_MODE_SENTENCE =
-  "Simple plans one dinner a day. Every meal adds breakfast, lunch and snacks.";
+  "Just dinners plans one dinner a day. Every meal adds breakfast, lunch and snacks.";
 
 /** The two choices, in the order they are shown. `simple` is the default and the recommendation. */
 export const PLAN_MODE_CHOICES: readonly {

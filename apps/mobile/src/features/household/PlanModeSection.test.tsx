@@ -44,10 +44,10 @@ describe("for the owner", () => {
     expect(screen.html).toContain("How much do you want to plan?");
     expect(selected(screen)).toEqual(["simple"]);
     expect(screen.props("plan-mode-sentence").children).toBe(
-      "Simple plans one dinner a day. Every meal adds breakfast, lunch and snacks.",
+      "Just dinners plans one dinner a day. Every meal adds breakfast, lunch and snacks.",
     );
     expect(PLAN_MODE_SENTENCE).toBe(
-      "Simple plans one dinner a day. Every meal adds breakfast, lunch and snacks.",
+      "Just dinners plans one dinner a day. Every meal adds breakfast, lunch and snacks.",
     );
     expect(screen.has("plan-mode-owner-only")).toBe(false);
     expect(screen.props("plan-mode-simple").accessibilityState?.disabled).toBe(false);

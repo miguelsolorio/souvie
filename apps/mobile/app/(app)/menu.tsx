@@ -5,6 +5,8 @@ import { Text, View } from "react-native";
 import { Button } from "../../src/components/Button";
 import { LoadingScreen, Screen } from "../../src/components/Screen";
 import { CREATE_HOUSEHOLD_ROUTE } from "../../src/features/auth/routes";
+import { OrderPromptBanner } from "../../src/features/history/OrderPromptBanner";
+import { HISTORY_ROUTE } from "../../src/features/history/routes";
 import { LIST_ROUTE, PANTRY_ROUTE } from "../../src/features/list/routes";
 import { NOTIFICATIONS_ROUTE } from "../../src/features/notifications/routes";
 import { PLAN_ROUTE } from "../../src/features/plan/routes";
@@ -65,6 +67,8 @@ export default function Menu() {
       title={household.data.name}
       subtitle={household.data.role === "owner" ? "You are the owner." : "You are a member."}
     >
+      {/* WS12: two hours after a cart is ready with no order confirmed, ask once more. */}
+      <OrderPromptBanner />
       <View className="gap-3">
         <Button testID="open-plan" label="Weekly plan" onPress={() => router.push(PLAN_ROUTE)} />
         <Button
@@ -84,6 +88,12 @@ export default function Menu() {
           label="Shopping runs"
           variant="secondary"
           onPress={() => router.push(SHOPPING_ROUTE)}
+        />
+        <Button
+          testID="open-history"
+          label="History and spend"
+          variant="secondary"
+          onPress={() => router.push(HISTORY_ROUTE)}
         />
         <Button
           testID="open-schedules"

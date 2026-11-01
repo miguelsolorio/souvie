@@ -1,6 +1,7 @@
 import {
   identityErrorMessage,
   leaveHousehold,
+  planModeOf,
   removeMember,
   renameHousehold,
   useHousehold,
@@ -137,7 +138,12 @@ export default function HouseholdSettingsScreen() {
         ) : null}
       </Section>
 
-      <PlanModeSection householdId={current.id} mode={current.plan_mode} isOwner={isOwner} />
+      {/* A copy saved on the device before the setting existed has no mode: that is Just dinners. */}
+      <PlanModeSection
+        householdId={current.id}
+        mode={planModeOf(current.plan_mode)}
+        isOwner={isOwner}
+      />
 
       <Section title="Food preferences">
         <Text className="text-sm text-neutral-600">

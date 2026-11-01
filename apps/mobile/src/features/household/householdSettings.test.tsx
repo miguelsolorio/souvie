@@ -93,6 +93,12 @@ describe("household settings", () => {
     expect(selected(show(household({ plan_mode: "full" })))).toEqual(["full"]);
   });
 
+  it("shows Just dinners for a copy saved before the setting existed", () => {
+    const { plan_mode: _missing, ...saved } = household();
+    const screen = show(saved as Household);
+    expect(selected(screen)).toEqual(["simple"]);
+  });
+
   it("explains both modes in one line under the choice", () => {
     expect(show(household()).props("plan-mode-sentence").children).toBe(
       "Simple plans one dinner a day. Every meal adds breakfast, lunch and snacks.",

@@ -163,8 +163,9 @@ export function OrderDetail({ orderId }: { orderId: string }) {
                 </Text>
                 {line.size ? <Text className="text-sm text-neutral-500">{line.size}</Text> : null}
                 <Text className="text-sm text-neutral-500">
-                  {line.quantity} ×{" "}
-                  {line.unit_price_usd === null ? "" : formatPrice(line.unit_price_usd)}
+                  {line.unit_price_usd === null
+                    ? `Quantity ${line.quantity}`
+                    : `${line.quantity} × ${formatPrice(line.unit_price_usd)}`}
                 </Text>
               </View>
               {line.line_total_usd === null ? null : (

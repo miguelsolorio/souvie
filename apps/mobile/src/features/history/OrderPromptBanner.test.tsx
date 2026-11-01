@@ -124,7 +124,7 @@ describe("the follow-up banner", () => {
     ).toBeTruthy();
   });
 
-  it("opens the confirmation sheet when the run's details are in", () => {
+  it("enables its 'Yes' button once the run's details are in", () => {
     const screen = renderScreen(<OrderPromptBanner />);
     expect(screen.props("order-banner-yes").accessibilityState?.disabled).toBeFalsy();
   });

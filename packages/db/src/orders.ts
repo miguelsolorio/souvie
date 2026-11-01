@@ -171,7 +171,9 @@ export type OrderWithStore = Order & { store_name: string | null };
 function parseOrder(row: unknown): OrderWithStore {
   const parsed = Order.safeParse(row);
   if (!parsed.success) throw new OrderError("unknown", "an orders row did not match its schema");
-  const run = (row as { shopping_runs?: { store_name?: string | null } | null }).shopping_runs;
+  // The embedded run is one object (the key is unique), or a one-element list if a client says so.
+  const embed = (row as { shopping_runs?: unknown }).shopping_runs;
+  const run = (Array.isArray(embed) ? embed[0] : embed) as { store_name?: string | null } | null;
   return { ...parsed.data, store_name: run?.store_name ?? null };
 }
 

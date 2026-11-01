@@ -291,6 +291,12 @@ describe("row schemas", () => {
     expect(Order.safeParse({ ...order, total_usd: "abc" }).success).toBe(false);
   });
 
+  it("reads an id that is not an RFC 4122 version, since it came from our own database", () => {
+    const odd = "00000000-0000-0000-0000-000000000001";
+    expect(Order.safeParse({ ...order, id: odd, run_id: odd }).success).toBe(true);
+    expect(Order.safeParse({ ...order, id: "not-an-id" }).success).toBe(false);
+  });
+
   it("refuses a retired retailer and an unknown status", () => {
     expect(Order.safeParse({ ...order, retailer: "instacart" }).success).toBe(false);
     expect(Order.safeParse({ ...order, status: "refunded" }).success).toBe(false);

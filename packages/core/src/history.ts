@@ -19,6 +19,10 @@ import {
 } from "./planning.ts";
 import { Modality, RetailerId } from "./retail.ts";
 
+// Ids in the rows below come from our own database, so they are read as guids (any 8-4-4-4-12
+// hex) rather than strict RFC 4122 versions: one seeded row with an unusual id must not blank a
+// screen.
+
 /** Timestamps as PostgREST returns them, for example 2026-10-30T07:12:14.123456+00:00. */
 const Timestamp = z.iso.datetime({ offset: true });
 
@@ -61,9 +65,9 @@ export function countsAsSpend(status: OrderStatus): boolean {
 
 /** An orders row as the app reads it. `raw` (Tier 3 details) is never selected by a client. */
 export const Order = z.object({
-  id: z.uuid(),
-  household_id: z.uuid(),
-  run_id: z.uuid(),
+  id: z.guid(),
+  household_id: z.guid(),
+  run_id: z.guid(),
   retailer: RetailerId,
   retailer_order_id: z.string().nullable(),
   modality: Modality,
@@ -71,7 +75,7 @@ export const Order = z.object({
   slot_end: Timestamp.nullable(),
   total_usd: Numeric.pipe(z.number().min(0).max(HISTORY_LIMITS.orderTotalMax)),
   status: OrderStatus,
-  confirmed_by: z.uuid().nullable(),
+  confirmed_by: z.guid().nullable(),
   confirmed_at: Timestamp,
   notes: z.string().max(HISTORY_LIMITS.notes).nullable(),
   created_at: Timestamp,
@@ -150,17 +154,17 @@ export function parseMoneyInput(text: string): number | null {
 
 /** One cooked meal inside v_meals_cooked_weekly.entries. `title` is null if the recipe is gone. */
 export const CookedMeal = z.object({
-  id: z.uuid(),
+  id: z.guid(),
   date: IsoDate,
   slot: MealSlot,
-  recipe_id: z.uuid(),
+  recipe_id: z.guid(),
   title: z.string().nullable(),
 });
 export type CookedMeal = z.infer<typeof CookedMeal>;
 
 /** A row of v_meals_cooked_weekly: a plan week with at least one cooked meal. */
 export const MealsCookedWeek = z.object({
-  household_id: z.uuid(),
+  household_id: z.guid(),
   week_start: IsoDate,
   cooked_count: z.number().int().min(0),
   entries: z.array(CookedMeal),
@@ -169,7 +173,7 @@ export type MealsCookedWeek = z.infer<typeof MealsCookedWeek>;
 
 /** A row of v_spend_weekly_by_store. `store_name` is null when the run recorded none. */
 export const SpendWeekRow = z.object({
-  household_id: z.uuid(),
+  household_id: z.guid(),
   week_start: IsoDate,
   retailer: RetailerId,
   store_name: z.string().nullable(),
@@ -184,12 +188,12 @@ export type SpendWeekRow = z.infer<typeof SpendWeekRow>;
  * cannot be pinned. A name and size are shown exactly as the household saw them. No amounts.
  */
 export const MostBoughtRow = z.object({
-  household_id: z.uuid(),
+  household_id: z.guid(),
   retailer: RetailerId,
   store_id: z.string().nullable(),
   /** The store's name as the latest run recorded it. */
   store_name: z.string().nullable(),
-  ingredient_id: z.uuid().nullable(),
+  ingredient_id: z.guid().nullable(),
   product_id: z.string(),
   upc: z.string().nullable(),
   product_name: z.string().nullable(),

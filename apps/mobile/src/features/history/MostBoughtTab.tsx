@@ -90,6 +90,8 @@ function ProductRow({
           testID={`pin-${row.product_id}`}
           accessibilityRole="switch"
           accessibilityState={{ checked: row.pinned, disabled: busy }}
+          // react-native-web ignores `accessibilityState.checked`; the aria prop reaches the DOM.
+          aria-checked={row.pinned}
           accessibilityLabel={`${row.pinned ? "Unpin" : "Pin"} ${name}`}
           disabled={busy}
           onPress={onToggle}

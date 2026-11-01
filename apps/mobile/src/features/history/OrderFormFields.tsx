@@ -62,6 +62,7 @@ export function OrderFormFields({
         testID={`${prefix}-window-toggle`}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: state.windowOn }}
+        aria-checked={state.windowOn}
         accessibilityLabel={`Add a ${noun} window`}
         onPress={() => onChange({ windowOn: !state.windowOn })}
         className="min-h-11 flex-row items-center gap-3"

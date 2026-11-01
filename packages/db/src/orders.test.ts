@@ -81,7 +81,7 @@ describe("toOrderError", () => {
   it("has a sentence for every code and words an error for the screen", () => {
     for (const message of Object.values(ORDER_ERROR_MESSAGES)) {
       expect(message.length).toBeGreaterThan(10);
-      expect(message).not.toContain("—");
+      expect(message).not.toContain("\u2014");
     }
     expect(orderErrorMessage(new OrderError("already_confirmed"))).toBe(
       ORDER_ERROR_MESSAGES.already_confirmed,
@@ -238,6 +238,13 @@ describe("fetchOrder and fetchOrderForRun", () => {
     // A run whose store was never recorded still reads as an order, with no store name.
     const unnamed = recordingClient([{ data: orderRow({ shopping_runs: null }) }]);
     expect((await fetchOrderForRun(unnamed.client, HOUSEHOLD, RUN))?.store_name).toBeNull();
+    // The embed is read the same when it arrives as a one-element list.
+    const listed = recordingClient([
+      { data: orderRow({ shopping_runs: [{ store_name: "Mock QFC Redmond" }] }) },
+    ]);
+    expect((await fetchOrderForRun(listed.client, HOUSEHOLD, RUN))?.store_name).toBe(
+      "Mock QFC Redmond",
+    );
     expect(await fetchOrder(recordingClient([{ data: null }]).client, HOUSEHOLD, ORDER)).toBeNull();
   });
 });

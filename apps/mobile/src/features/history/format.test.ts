@@ -81,7 +81,7 @@ describe("labels", () => {
       orderCountLabel(2),
       timesBoughtLabel(2),
     ];
-    for (const text of all) expect(text).not.toContain("—");
+    for (const text of all) expect(text).not.toContain("\u2014");
   });
 });
 

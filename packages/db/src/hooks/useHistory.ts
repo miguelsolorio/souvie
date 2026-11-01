@@ -62,8 +62,8 @@ export function useSpendWeekly(weeks: number = HISTORY_LIMITS.weeks) {
   });
 }
 
-/** The household's top products by times bought. */
-export function useMostBought(limit: number = HISTORY_LIMITS.mostBought) {
+/** The household's top products by times bought (the top 20). */
+export function useMostBought() {
   const client = useSupabase();
   const household = useHousehold();
   const householdId = household.data?.id;
@@ -72,7 +72,7 @@ export function useMostBought(limit: number = HISTORY_LIMITS.mostBought) {
     enabled: Boolean(householdId),
     queryFn: (): Promise<MostBoughtRow[]> => {
       if (!householdId) return Promise.resolve([]);
-      return fetchMostBought(client, householdId, limit);
+      return fetchMostBought(client, householdId, HISTORY_LIMITS.mostBought);
     },
   });
 }

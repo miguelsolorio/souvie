@@ -1,0 +1,611 @@
+{
+  "url": "http://localhost:8790/",
+  "title": "Fixture Pantry test page",
+  "root": {
+    "id": "n15noo9gnyhby2",
+    "role": "document",
+    "name": "Fixture Pantry test page",
+    "bbox": [0, 0, 1024, 768],
+    "children": [
+      {
+        "id": "n135cn091uzlw6b",
+        "role": "banner",
+        "name": "",
+        "bbox": [0, 0, 0, 0],
+        "children": [
+          {
+            "id": "n1xzz9191s6ovn3",
+            "role": "heading",
+            "name": "Fixture Pantry test page",
+            "bbox": [0, 0, 0, 0]
+          },
+          {
+            "id": "na3r12i1abf8zs",
+            "role": "generic",
+            "name": "",
+            "bbox": [0, 0, 0, 0],
+            "children": [
+              {
+                "id": "n8vo4l3rzd9fl",
+                "role": "status",
+                "name": "",
+                "bbox": [0, 0, 0, 0],
+                "text": "Cart: 0 items"
+              },
+              {
+                "id": "nn1kl6w182m7wy",
+                "role": "button",
+                "name": "Sign in",
+                "bbox": [0, 0, 0, 0]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ngsy4w91dof9pb",
+        "role": "region",
+        "name": "Notice",
+        "bbox": [0, 0, 0, 0],
+        "children": [
+          {
+            "id": "nka582k9ip5ya",
+            "role": "text",
+            "name": "A static page for testing the browser host. Not a store. Nothing here can be bought.",
+            "bbox": [0, 0, 0, 0]
+          },
+          {
+            "id": "nix5l1619ab6i0",
+            "role": "img",
+            "name": "Fixture Pantry logo",
+            "bbox": [0, 0, 0, 0]
+          }
+        ]
+      },
+      {
+        "id": "nzocvbl5magxr",
+        "role": "region",
+        "name": "Search",
+        "bbox": [0, 0, 0, 0],
+        "children": [
+          {
+            "id": "nhqxjrz166otgp",
+            "role": "search",
+            "name": "",
+            "bbox": [0, 0, 0, 0],
+            "children": [
+              {
+                "id": "n4e1vpb12lzujx",
+                "role": "form",
+                "name": "",
+                "bbox": [0, 0, 0, 0],
+                "children": [
+                  {
+                    "id": "n1xcd6xc1220nui",
+                    "role": "text",
+                    "name": "Search products",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "nsku0cm16w6p9s",
+                    "role": "searchbox",
+                    "name": "Search products",
+                    "bbox": [0, 0, 0, 0],
+                    "value": ""
+                  },
+                  {
+                    "id": "n1d6pp8b15dfwi5",
+                    "role": "button",
+                    "name": "Search",
+                    "bbox": [0, 0, 0, 0]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "n1pat8c1xoucin",
+            "role": "generic",
+            "name": "",
+            "bbox": [0, 0, 0, 0],
+            "children": [
+              {
+                "id": "nzbpqd31avi9t",
+                "role": "text",
+                "name": "Sort by",
+                "bbox": [0, 0, 0, 0]
+              },
+              {
+                "id": "nm8qgvv116epcl",
+                "role": "combobox",
+                "name": "Sort by",
+                "bbox": [0, 0, 0, 0],
+                "value": "relevance",
+                "children": [
+                  {
+                    "id": "ncy7ku6epkpmo",
+                    "role": "option",
+                    "name": "Relevance",
+                    "bbox": [0, 0, 0, 0],
+                    "value": "relevance",
+                    "checked": true
+                  },
+                  {
+                    "id": "n1pdwryv3uq8gl",
+                    "role": "option",
+                    "name": "Price, low to high",
+                    "bbox": [0, 0, 0, 0],
+                    "value": "price-asc",
+                    "checked": false
+                  },
+                  {
+                    "id": "n1tywzr9uo6cz",
+                    "role": "option",
+                    "name": "Price, high to low",
+                    "bbox": [0, 0, 0, 0],
+                    "value": "price-desc",
+                    "checked": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "n8e6spf14ajsbh",
+        "role": "region",
+        "name": "Results",
+        "bbox": [0, 0, 0, 0],
+        "children": [
+          {
+            "id": "nduwrgwmffb96",
+            "role": "heading",
+            "name": "Results",
+            "bbox": [0, 0, 0, 0]
+          },
+          {
+            "id": "n1lq1nik1hahtlq",
+            "role": "generic",
+            "name": "",
+            "bbox": [0, 0, 0, 0],
+            "children": [
+              {
+                "id": "n7i73b01sucx7m",
+                "role": "article",
+                "name": "",
+                "bbox": [0, 0, 0, 0],
+                "children": [
+                  {
+                    "id": "n1ijld6yz6dn1c",
+                    "role": "heading",
+                    "name": "Fixture Farms Rolled Oats",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1r7ygqv1c2ndmp",
+                    "role": "text",
+                    "name": "42 oz",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "ntl2pks1wk5aku",
+                    "role": "text",
+                    "name": "$4.99",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1i7navl97cnp3",
+                    "role": "text",
+                    "name": "$0.12/oz",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1d5iigpjn442",
+                    "role": "button",
+                    "name": "Add",
+                    "bbox": [0, 0, 0, 0]
+                  }
+                ]
+              },
+              {
+                "id": "n3d2quw1asktea",
+                "role": "article",
+                "name": "",
+                "bbox": [0, 0, 0, 0],
+                "children": [
+                  {
+                    "id": "n1c4wbge9v2mj4",
+                    "role": "heading",
+                    "name": "Fixture Farms Oat Milk",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1gmhl1b1v3vmbl",
+                    "role": "text",
+                    "name": "64 fl oz",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "no58e2uq0pgqo",
+                    "role": "text",
+                    "name": "2 for $5.00",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "nk9yqtwrb6vri",
+                    "role": "button",
+                    "name": "Add",
+                    "bbox": [0, 0, 0, 0]
+                  }
+                ]
+              },
+              {
+                "id": "n1juxxyh744yuv",
+                "role": "article",
+                "name": "",
+                "bbox": [0, 0, 0, 0],
+                "children": [
+                  {
+                    "id": "n1cbg9jb1g4kjsd",
+                    "role": "heading",
+                    "name": "Meadowline Peanut Butter",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n4wa40o73s6c2",
+                    "role": "text",
+                    "name": "16 oz",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "nlc0x2wpxgjme",
+                    "role": "text",
+                    "name": "$0.31/oz",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "nhd5ndc31718i",
+                    "role": "button",
+                    "name": "Add",
+                    "bbox": [0, 0, 0, 0]
+                  }
+                ]
+              },
+              {
+                "id": "n14xdxpfx19jp9",
+                "role": "article",
+                "name": "",
+                "bbox": [0, 0, 0, 0],
+                "children": [
+                  {
+                    "id": "nkzq8yj5k54o1",
+                    "role": "heading",
+                    "name": "Meadowline Brown Rice",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n578te4141vf4y",
+                    "role": "text",
+                    "name": "2 lb",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1u3x8ksojvaqe",
+                    "role": "text",
+                    "name": "Was $6.49 Now $4.99",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1bdba4e6w2f7o",
+                    "role": "button",
+                    "name": "Add",
+                    "bbox": [0, 0, 0, 0]
+                  }
+                ]
+              },
+              {
+                "id": "nlghzir1bpqc3l",
+                "role": "article",
+                "name": "",
+                "bbox": [0, 0, 0, 0],
+                "children": [
+                  {
+                    "id": "n1nf6b7vh5ctgd",
+                    "role": "heading",
+                    "name": "Fixture Farms Black Beans",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1q7pkvl1fo1kcb",
+                    "role": "text",
+                    "name": "15 oz",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1pkqaf2rzs84s",
+                    "role": "text",
+                    "name": "99¢",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1qv23xa1ns8i5w",
+                    "role": "button",
+                    "name": "Add",
+                    "bbox": [0, 0, 0, 0]
+                  }
+                ]
+              },
+              {
+                "id": "nj7ajgp1wqalub",
+                "role": "article",
+                "name": "",
+                "bbox": [0, 0, 0, 0],
+                "children": [
+                  {
+                    "id": "n1l9d73fmmuvwp",
+                    "role": "heading",
+                    "name": "Bananas",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "nuodw5s6elsx2",
+                    "role": "text",
+                    "name": "About 0.4 lb each",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n84reup1g1d7xn",
+                    "role": "text",
+                    "name": "$0.59/lb",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "nd7joqgdouo5i",
+                    "role": "button",
+                    "name": "Add",
+                    "bbox": [0, 0, 0, 0]
+                  }
+                ]
+              },
+              {
+                "id": "nxok7wl1uqkufz",
+                "role": "article",
+                "name": "",
+                "bbox": [0, 0, 0, 0],
+                "children": [
+                  {
+                    "id": "n1lnvg2mtme23s",
+                    "role": "heading",
+                    "name": "Meadowline Large Eggs",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1lrhs7hdpr0az",
+                    "role": "text",
+                    "name": "12 ct",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "nu5a9t7197lhdh",
+                    "role": "text",
+                    "name": "$3.29",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n97b6xr1l1l3tl",
+                    "role": "button",
+                    "name": "Add",
+                    "bbox": [0, 0, 0, 0]
+                  }
+                ]
+              },
+              {
+                "id": "n1shv4vn1l9qx4t",
+                "role": "article",
+                "name": "",
+                "bbox": [0, 0, 0, 0],
+                "children": [
+                  {
+                    "id": "nms35hye5wxc8",
+                    "role": "heading",
+                    "name": "Baby Spinach",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n17dnorr1mx78y1",
+                    "role": "text",
+                    "name": "5 oz",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1ort681dbs2fb",
+                    "role": "text",
+                    "name": "$2.99",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1j5znr3o5moo9",
+                    "role": "button",
+                    "name": "Add",
+                    "bbox": [0, 0, 0, 0]
+                  }
+                ]
+              },
+              {
+                "id": "n13m4hb11m6ic87",
+                "role": "article",
+                "name": "",
+                "bbox": [0, 0, 0, 0],
+                "children": [
+                  {
+                    "id": "n1k9f6fwis8e4y",
+                    "role": "heading",
+                    "name": "Meadowline Sharp Cheddar",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "njxayqi1go45vs",
+                    "role": "text",
+                    "name": "8 oz",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1nogck51l08evj",
+                    "role": "text",
+                    "name": "$3.49",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "nfwmb03qstt6x",
+                    "role": "button",
+                    "name": "Add",
+                    "bbox": [0, 0, 0, 0]
+                  }
+                ]
+              },
+              {
+                "id": "nlhmq10oj7mc6",
+                "role": "article",
+                "name": "",
+                "bbox": [0, 0, 0, 0],
+                "children": [
+                  {
+                    "id": "ntoj4110a7rvb",
+                    "role": "heading",
+                    "name": "Fixture Farms Sandwich Bread",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n9m3k9w1348wd2",
+                    "role": "text",
+                    "name": "20 oz loaf",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1oxme23112odp5",
+                    "role": "text",
+                    "name": "$2.79",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "nqi2dbzi6t8ed",
+                    "role": "button",
+                    "name": "Add",
+                    "bbox": [0, 0, 0, 0]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "n4i0nbm1qj4t3s",
+        "role": "region",
+        "name": "Your cart",
+        "bbox": [0, 0, 0, 0],
+        "children": [
+          {
+            "id": "n1yrsg5c1az1nhm",
+            "role": "heading",
+            "name": "Your cart",
+            "bbox": [0, 0, 0, 0]
+          },
+          {
+            "id": "n1ucbtwzuv80xt",
+            "role": "generic",
+            "name": "",
+            "bbox": [0, 0, 0, 0],
+            "children": [
+              {
+                "id": "n18kshe68ez3v4",
+                "role": "text",
+                "name": "Fixture Farms Rolled Oats",
+                "bbox": [0, 0, 0, 0]
+              },
+              {
+                "id": "nr3vtcydwgt2g",
+                "role": "group",
+                "name": "Quantity",
+                "bbox": [0, 0, 0, 0],
+                "children": [
+                  {
+                    "id": "nk0jov01qy0m7i",
+                    "role": "button",
+                    "name": "Decrease quantity",
+                    "bbox": [0, 0, 0, 0],
+                    "text": "-"
+                  },
+                  {
+                    "id": "n1b2lallrp535b",
+                    "role": "text",
+                    "name": "1",
+                    "bbox": [0, 0, 0, 0]
+                  },
+                  {
+                    "id": "n1rt7ppwsb0yoi",
+                    "role": "button",
+                    "name": "Increase quantity",
+                    "bbox": [0, 0, 0, 0],
+                    "text": "+"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "n2zl47y1litsf8",
+        "role": "region",
+        "name": "Host checks",
+        "bbox": [0, 0, 0, 0],
+        "children": [
+          {
+            "id": "n1b7xr4l1eoonfj",
+            "role": "heading",
+            "name": "Host checks",
+            "bbox": [0, 0, 0, 0]
+          },
+          {
+            "id": "n18hmfey12clfrw",
+            "role": "text",
+            "name": "These add the kinds of screens the agent must hand to the person.",
+            "bbox": [0, 0, 0, 0]
+          },
+          {
+            "id": "n10k3v921nv4ph4",
+            "role": "generic",
+            "name": "",
+            "bbox": [0, 0, 0, 0],
+            "children": [
+              {
+                "id": "n14lsjpp1aeiovb",
+                "role": "button",
+                "name": "Show a verification check",
+                "bbox": [0, 0, 0, 0]
+              },
+              {
+                "id": "n1spkg1el7r400",
+                "role": "button",
+                "name": "Ask for a one-time code",
+                "bbox": [0, 0, 0, 0]
+              }
+            ]
+          },
+          {
+            "id": "ni33rih1okmm8j",
+            "role": "link",
+            "name": "Back to top",
+            "bbox": [0, 0, 0, 0],
+            "href": "http://localhost:8790/#top"
+          }
+        ]
+      }
+    ]
+  },
+  "capturedAt": "2026-10-31T16:36:04.658Z",
+  "truncated": false,
+  "nodeCount": 90
+}

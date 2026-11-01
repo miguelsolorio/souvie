@@ -1,10 +1,16 @@
 import { toAdapterModality } from "@mp/core";
-import { automates, KROGER_CAPABILITIES, type RetailerAdapter } from "@mp/retailers";
+import {
+  automates,
+  isTier3Retailer,
+  KROGER_CAPABILITIES,
+  type RetailerAdapter,
+} from "@mp/retailers";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Button } from "../../components/Button";
 import { ErrorText } from "../../components/Screen";
 import { confirmAction } from "../../lib/confirm";
+import { Tier3ConnectionCard } from "../tier3/Tier3ConnectionCard";
 import { type RetailerConnection, retailerErrorMessage } from "./api";
 import { ConnectKroger } from "./ConnectKroger";
 import { StorePicker } from "./StorePicker";
@@ -36,10 +42,22 @@ export function capabilityLine(capabilities: RetailerAdapter["capabilities"]): s
 }
 
 /**
+ * A retailer connection. Tier 3 stores (Safeway and its banners, Costco: browser sessions) get the
+ * Tier 3 card with its own Disconnect, which also clears this phone's session (WS08); Kroger keeps
+ * the card below.
+ */
+export function ConnectionCard(props: Parameters<typeof KrogerConnectionCard>[0]) {
+  if (isTier3Retailer(props.connection.retailer)) {
+    return <Tier3ConnectionCard connection={props.connection} isHolder={props.isHolder} />;
+  }
+  return <KrogerConnectionCard {...props} />;
+}
+
+/**
  * A Kroger connection: its status, store, and pickup or delivery, with the actions the account
  * holder or a household owner may take. Disconnect deletes the stored key on our side.
  */
-export function ConnectionCard({
+function KrogerConnectionCard({
   connection,
   isHolder,
   isOwner,

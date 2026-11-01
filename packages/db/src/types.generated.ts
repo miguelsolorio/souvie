@@ -352,6 +352,7 @@ export type Database = {
           id: string;
           name: string;
           plan_mode: Database["public"]["Enums"]["households_plan_mode"];
+          tier3_consent: Json | null;
           updated_at: string;
           zip: string | null;
         };
@@ -364,6 +365,7 @@ export type Database = {
           id?: string;
           name: string;
           plan_mode?: Database["public"]["Enums"]["households_plan_mode"];
+          tier3_consent?: Json | null;
           updated_at?: string;
           zip?: string | null;
         };
@@ -375,6 +377,7 @@ export type Database = {
           id?: string;
           name?: string;
           plan_mode?: Database["public"]["Enums"]["households_plan_mode"];
+          tier3_consent?: Json | null;
           updated_at?: string;
           zip?: string | null;
         };
@@ -1409,12 +1412,22 @@ export type Database = {
         Args: { run_id: string };
         Returns: Database["public"]["Enums"]["shopping_runs_status"];
       };
+      connect_browser_session: {
+        Args: { household_id: string; retailer: Database["public"]["Enums"]["retailer"] };
+        Returns: string;
+      };
+      connection_session_key: { Args: { connection_id: string }; Returns: string };
       create_household: { Args: { name: string }; Returns: string };
       create_invite: { Args: { household_id: string }; Returns: string };
       current_household_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
       enqueue_shopping_run: {
         Args: { connection_id: string; list_id: string; policy: Json; trigger: string };
         Returns: string;
+      };
+      expire_run_screenshots: { Args: Record<PropertyKey, never>; Returns: number };
+      household_ai_spend_since: {
+        Args: { p_household_id: string; p_since: string };
+        Returns: number;
       };
       is_household_peer: { Args: { other_user: string }; Returns: boolean };
       leave_household: { Args: { household_id: string }; Returns: undefined };
@@ -1445,6 +1458,10 @@ export type Database = {
           p_raw_text: string;
         };
         Returns: string;
+      };
+      record_tier3_consent: {
+        Args: { copy_version: string; household_id: string; retailers: string[] };
+        Returns: Json;
       };
       redeem_invite: { Args: { token: string }; Returns: string };
       retailer_disconnect: {
@@ -1499,6 +1516,9 @@ export type Database = {
           used: number;
         }[];
       };
+      revoke_browser_connection: { Args: { connection_id: string }; Returns: undefined };
+      run_screenshot_readable: { Args: { object_name: string }; Returns: boolean };
+      run_screenshots_max_age: { Args: Record<PropertyKey, never>; Returns: string };
       section_order_is_valid: { Args: { names: string[] }; Returns: boolean };
       shopping_run_default_policy: { Args: Record<PropertyKey, never>; Returns: Json };
       shopping_run_dispatch: { Args: { run_id: string }; Returns: number };
@@ -1514,6 +1534,10 @@ export type Database = {
         Args: { p_after?: string; p_review_timeout?: string };
         Returns: number;
       };
+      tier3_consent_is_valid: { Args: { c: Json }; Returns: boolean };
+      tier3_consent_version: { Args: Record<PropertyKey, never>; Returns: string };
+      tier3_new_session_key: { Args: { p_connection_id: string }; Returns: string };
+      tier3_retailer_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
     };
     Enums: {
       grocery_list_items_excluded_reason: "pantry" | "manual";

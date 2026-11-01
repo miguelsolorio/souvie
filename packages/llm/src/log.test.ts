@@ -140,3 +140,27 @@ describe("createDailyCapGuard", () => {
     expect(warn).toHaveBeenCalledWith("daily cost lookup failed: db down");
   });
 });
+
+describe("toAiRunRow run_id", () => {
+  const base = {
+    householdId: null,
+    kind: "agent_step",
+    model: "claude-sonnet-5-5",
+    promptVersion: null,
+    inputTokens: 1,
+    outputTokens: 1,
+    cacheReadTokens: 0,
+    costUsd: 0.001,
+    latencyMs: 5,
+    ok: true,
+    error: null,
+  };
+
+  it("leaves run_id out unless the record set it", () => {
+    expect("run_id" in toAiRunRow(base)).toBe(false);
+    expect(toAiRunRow({ ...base, runId: null }).run_id).toBeNull();
+    expect(toAiRunRow({ ...base, runId: "0d000000-0000-4000-8000-00000000000d" }).run_id).toBe(
+      "0d000000-0000-4000-8000-00000000000d",
+    );
+  });
+});

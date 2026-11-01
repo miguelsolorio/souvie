@@ -110,6 +110,22 @@ export const MEAL_SLOTS = ["breakfast", "lunch", "dinner", "snack"] as const;
 export const MealSlot = z.enum(MEAL_SLOTS);
 export type MealSlot = z.infer<typeof MealSlot>;
 
+/**
+ * Postgres enum households_plan_mode (orchestrator, CCR7, 2026-10-31). `simple` plans one dinner a
+ * day and is the default; `full` shows every slot. Entries in slots a mode hides still exist and
+ * still feed the grocery list.
+ */
+export const PLAN_MODES = ["simple", "full"] as const;
+export const PlanMode = z.enum(PLAN_MODES);
+export type PlanMode = z.infer<typeof PlanMode>;
+
+const SIMPLE_MODE_SLOTS: readonly MealSlot[] = ["dinner"];
+
+/** The slots the planner shows for a mode, in the order a day reads. */
+export function slotsForMode(mode: PlanMode): readonly MealSlot[] {
+  return mode === "simple" ? SIMPLE_MODE_SLOTS : MEAL_SLOTS;
+}
+
 /** Postgres enum meal_plan_entries_status. */
 export const MEAL_ENTRY_STATUSES = ["planned", "cooked", "skipped"] as const;
 export const MealEntryStatus = z.enum(MEAL_ENTRY_STATUSES);

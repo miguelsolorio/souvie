@@ -20,6 +20,8 @@ export interface AiRunRecord {
   latencyMs: number;
   ok: boolean;
   error: string | null;
+  /** The shopping run the call belongs to, when any (ai_runs.run_id, 2026-10-31). Omit outside a run. */
+  runId?: string | null;
 }
 
 /** Receives one record per model call, including failed ones. A sink must not throw. */
@@ -38,6 +40,7 @@ export interface AiRunRow {
   latency_ms: number;
   ok: boolean;
   error: string | null;
+  run_id?: string | null;
 }
 
 export function toAiRunRow(record: AiRunRecord): AiRunRow {
@@ -54,6 +57,8 @@ export function toAiRunRow(record: AiRunRecord): AiRunRow {
     ok: record.ok,
     // Error text can echo model output; keep the row small.
     error: record.error ? record.error.slice(0, 500) : null,
+    // Only when the caller set it, so a database without the column is never sent the key.
+    ...(record.runId !== undefined ? { run_id: record.runId } : {}),
   };
 }
 

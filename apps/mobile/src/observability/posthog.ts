@@ -59,13 +59,19 @@ export function setPostHogForTests(next: PostHogClient | null | undefined): void
   client = next;
 }
 
-/** Groups the device's events under the household, or ends the grouping at sign-out. */
-export function setPostHogHousehold(householdId: string | null): void {
-  const posthog = getPostHog();
-  if (!posthog) return;
+/** Groups the device's events under the household. */
+export function setPostHogHousehold(householdId: string): void {
   try {
-    if (householdId) posthog.group("household", householdId);
-    else posthog.reset?.();
+    getPostHog()?.group("household", householdId);
+  } catch {
+    // Analytics never breaks the app.
+  }
+}
+
+/** Sign-out: a new anonymous id and no group, so the next person on this device starts clean. */
+export function resetPostHog(): void {
+  try {
+    getPostHog()?.reset?.();
   } catch {
     // Analytics never breaks the app.
   }

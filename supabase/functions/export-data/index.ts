@@ -28,10 +28,11 @@ function clientFor(token: string) {
 function sourceFor(token: string): ExportSource {
   const client = clientFor(token);
   return {
-    async select(table, eq, order) {
+    async select(table, eq, order, columns) {
       const rows: Row[] = [];
       for (let from = 0; ; from += PAGE_SIZE) {
-        let query = client.from(table).select("*");
+        // The cast keeps supabase-js's result type the same for a column list as for "*".
+        let query = client.from(table).select((columns ? columns.join(",") : "*") as "*");
         for (const [column, value] of Object.entries(eq)) query = query.eq(column, value);
         // Without a total order, Postgres may return rows in a different order per page.
         for (const column of order) query = query.order(column, { ascending: true });

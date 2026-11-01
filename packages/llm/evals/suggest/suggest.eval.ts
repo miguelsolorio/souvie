@@ -6,6 +6,7 @@
 //     SUGGEST_EVAL_REQUIRE_LIVE=1
 import { writeSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { recordScore } from "../../../evals-report/src/record.ts";
 import { formatReport, runSuggestEval } from "./run.ts";
 
 const LIVE = process.env.EVAL_LIVE === "1";
@@ -20,6 +21,18 @@ describe("suggest eval", () => {
     });
     // Straight to stdout, so the report shows under any Vitest reporter.
     writeSync(1, `${formatReport(report)}\n`);
+    // WS15: the score `pnpm eval` compares with the baseline (the threshold is zero violations).
+    const clean = report.households.filter(
+      (h) => h.violations.length + h.disagreements.length + h.expectationFailures.length === 0,
+    ).length;
+    recordScore({
+      suite: "suggest",
+      metric: "households_clean",
+      value: (clean / Math.max(report.households.length, 1)) * 100,
+      passed: clean,
+      total: report.households.length,
+      threshold: 100,
+    });
 
     expect(report.households).toHaveLength(10);
     expect(report.violations).toBe(0);

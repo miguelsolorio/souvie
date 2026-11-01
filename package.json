@@ -15,7 +15,8 @@
     "lint": "biome check . && node apps/marketing/scripts/check-copy.mjs",
     "format": "biome check --write .",
     "test": "vitest run --project unit",
-    "eval": "vitest run --project evals --passWithNoTests",
+    "eval": "pnpm --filter @mp/evals-report run eval",
+    "eval:plain": "vitest run --project evals --passWithNoTests",
     "seed": "node supabase/seed/load.ts && node supabase/seed/catalog/load.ts",
     "seed:catalog": "node supabase/seed/catalog/load.ts",
     "seed:check": "node supabase/seed/load.ts --check && node supabase/seed/catalog/load.ts --check"

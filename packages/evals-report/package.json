@@ -1,0 +1,19 @@
+{
+  "name": "@mp/evals-report",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "pnpm eval: runs every golden set, writes report.json, and gates on thresholds and the main baseline.",
+  "scripts": {
+    "eval": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

@@ -45,7 +45,12 @@ Pass `images` (base64 JPEG, PNG, WebP, or GIF) for vision. Pass `client` to use 
 
 ## Cost and the daily cap
 
-`estimateCostUsd(model, usage)` prices a call from the table in `log.ts` (Haiku $0.10/$0.50, Sonnet $2/$10, Opus $4/$20 per million tokens; cache reads at a fraction of input, cache writes at 1.25x). `createDailyCapGuard({ capUsd, spentTodayUsd })` returns the guard to pass as `context.guard`. The `recipe-import` Edge Function sums today's `ai_runs.cost_usd` for the household and caps it with `AI_DAILY_CAP_USD`.
+`estimateCostUsd(model, usage)` prices a call from the table in `log.ts` (Haiku $0.10/$0.50, Sonnet $2/$10, Opus $4/$20 per million tokens; cache reads at a fraction of input, cache writes at 1.25x). `createDailyCapGuard(options)` returns the guard to pass as `context.guard` (`extract`, `callWithTools`, `embed`) before any request goes out.
+
+- `capUsd` is the fallback cap (`AI_DAILY_CAP_USD`, default 2). `capFor(householdId)` reads the household's own, `households.ai_daily_cap_usd` (WS15); a null or a failing lookup falls back to `capUsd`.
+- `spentTodayUsd(householdId)` is today's UTC spend (`household_ai_spend_since`). `userSpentTodayUsd(userId)` is the same for a user's household-less calls (`user_ai_spend_since`); a call with no household and a `userId` is capped per user.
+- `check(householdId, call)` refuses when spend plus the call's `estimatedCostUsd` (its input at the model's price) reaches the cap. A refusal writes an `ai_runs` row through `sink` (`ok` false, `error` `cost_cap`, cost 0) and throws `CostCapError`, an `LlmError` with code `cost_cap`, `scope`, `capUsd` and `spentUsd`. A failing spend lookup lets the call through with a warning; a call with no household and no user is never capped.
+- The callers: `suggest`, `recipe-import`, `llm-proxy` and the worker's `models.ts` pass their `ai_runs` sink as `sink` and their store's cap lookup as `capFor`; `parse-ingredients` wraps the parser's model client in `cost-guard.ts`.
 
 ## Scripts
 

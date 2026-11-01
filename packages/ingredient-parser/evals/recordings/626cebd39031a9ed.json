@@ -1,0 +1,48 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "ingredient-parse.v1",
+  "recordedAt": "2026-11-01T06:34:04.128Z",
+  "lines": ["1/2 cup teff flour", "1 envelope ranch dressing mix"],
+  "answers": [
+    [
+      0,
+      [
+        {
+          "qty": 0.5,
+          "qty_max": null,
+          "unit": "cup",
+          "ingredient": "teff flour",
+          "category": "baking",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.97
+        }
+      ]
+    ],
+    [
+      1,
+      [
+        {
+          "qty": 1,
+          "qty_max": null,
+          "unit": "packet",
+          "ingredient": "ranch dressing mix",
+          "category": "pantry",
+          "prep": null,
+          "optional": false,
+          "confidence": 0.8
+        }
+      ]
+    ]
+  ],
+  "usage": {
+    "model": "claude-haiku-5-5",
+    "promptVersion": "ingredient-parse.v1",
+    "inputTokens": 48,
+    "outputTokens": 355,
+    "cacheReadTokens": 1731,
+    "latencyMs": 2054,
+    "ok": true,
+    "lines": 2
+  }
+}

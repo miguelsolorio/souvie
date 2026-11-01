@@ -1,0 +1,2 @@
+# Written by every `pnpm eval`; CI uploads it as an artifact.
+report.json

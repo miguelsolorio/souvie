@@ -1,0 +1,145 @@
+name: Evals
+
+# The AI eval gate (WS15, docs/03-ai-design.md §10). `pnpm eval` runs every golden set offline,
+# from recorded pages and recorded model answers, and compares each score with its threshold and
+# with packages/evals-report/baseline.json as it is on main. A score under its threshold, a score
+# more than two points under the baseline, a score that did not come back, or a failing test fails
+# the run. On a pull request the summary is posted as one comment, edited on every later run.
+#
+# ci.yml's `checks` job also runs `pnpm eval`, against the baseline in the checked-out tree. This
+# workflow is the one that compares with main, so a pull request cannot lower its own baseline,
+# and the one that comments and keeps the report. To accept a lower score on purpose, change
+# baseline.json on main first (the orchestrator does this; `pnpm eval --update-baseline`).
+#
+# The live job calls the models. It never runs on a pull request: it runs by hand (Run workflow,
+# live), with ANTHROPIC_API_KEY from the repository secret of the same name (Miguel sets it). It
+# re-records the model answers and re-fetches the recipe pages, then uploads them with the report;
+# commit the recordings from the artifact after reading the diff. A schedule is left out on
+# purpose: several recipe sites refuse GitHub's IP ranges, so a weekly run would fail on those.
+
+on:
+  pull_request:
+    paths:
+      - "packages/recipe-import/**"
+      - "packages/ingredient-parser/**"
+      - "packages/retailers/**"
+      - "packages/agent/**"
+      - "packages/llm/**"
+      - "packages/evals-report/**"
+      - "supabase/seed/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/eval.yml"
+  push:
+    branches: [main, "ws/**"]
+    paths:
+      - "packages/recipe-import/**"
+      - "packages/ingredient-parser/**"
+      - "packages/retailers/**"
+      - "packages/agent/**"
+      - "packages/llm/**"
+      - "packages/evals-report/**"
+      - "supabase/seed/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/eval.yml"
+  workflow_dispatch:
+    inputs:
+      live:
+        description: "Call the models and re-record (needs the ANTHROPIC_API_KEY secret)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: eval-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  evals:
+    name: Evals (offline, gates the merge)
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.live) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      # The whole history of main is not needed, but the baseline file on origin/main is.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Fetch main for the baseline
+        run: git fetch --no-tags origin main:refs/remotes/origin/main
+
+      # Offline by construction: no ANTHROPIC_API_KEY is set, and EVAL_REQUIRE_RECORDINGS makes a
+      # model-path case without a committed recording a failure instead of a pending case.
+      - name: Run the golden sets
+        run: pnpm eval --baseline-ref origin/main --comment
+        env:
+          EVAL_REQUIRE_RECORDINGS: "1"
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: eval-report
+          path: packages/evals-report/report.json
+          if-no-files-found: warn
+
+  live:
+    name: Evals (live models, re-records)
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.live }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Fetch main for the baseline
+        run: git fetch --no-tags origin main:refs/remotes/origin/main
+
+      - name: Run the golden sets with live models
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::notice::The ANTHROPIC_API_KEY repository secret is not set, so there is nothing to run live."
+            exit 0
+          fi
+          pnpm eval --live --baseline-ref origin/main
+
+      - name: Upload the report and the recordings
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: eval-live
+          path: |
+            packages/evals-report/report.json
+            packages/ingredient-parser/evals/recordings/
+            packages/recipe-import/evals/fixtures/llm/
+            packages/agent/evals/runs/
+          if-no-files-found: ignore

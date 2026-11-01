@@ -26,6 +26,7 @@ import {
 } from "@mp/llm";
 import * as cheerio from "cheerio";
 import { describe, expect, it } from "vitest";
+import { recordScore } from "../../evals-report/src/record.ts";
 import {
   type ImportResult,
   importFromCaption,
@@ -283,6 +284,15 @@ describe(`recipe import golden set (${LIVE ? "live" : "offline"})`, () => {
     for (const outcome of outcomes) emit(formatLine(outcome));
     const summary = summarize(outcomes);
     emit(summary.line);
+    // WS15: the score `pnpm eval` compares with the baseline (pending cases are not passes).
+    recordScore({
+      suite: "import",
+      metric: "pass_rate",
+      value: (summary.pass / Math.max(summary.total, 1)) * 100,
+      passed: summary.pass,
+      total: summary.total,
+      threshold: (THRESHOLD / Math.max(cases.length, 1)) * 100,
+    });
     if (summary.pending > 0) {
       emit(
         `NOTE ${summary.pending} case(s) need a recorded Sonnet answer and are not counted as passes. ` +

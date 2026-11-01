@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MockRetailer } from "@mp/retailers/mock";
 import { describe, expect, it } from "vitest";
+import { recordScore } from "../../evals-report/src/record.ts";
 import { type RunFixture, replayRun } from "../src/replay.ts";
 
 const RUNS_DIR = join(dirname(fileURLToPath(import.meta.url)), "runs");
@@ -39,6 +40,15 @@ describe("agent replay eval", () => {
       expect(result.costUsd).toBeLessThan(MAX_RUN_COST_USD);
     }
     const rate = files.length === 0 ? 0 : (passed / files.length) * 100;
+    // WS15: the score `pnpm eval` compares with the baseline. Every recorded run must replay.
+    recordScore({
+      suite: "agentReplay",
+      metric: "replay_pass_rate",
+      value: rate,
+      passed,
+      total: files.length,
+      threshold: 100,
+    });
     console.log(
       [
         "agent replay eval",

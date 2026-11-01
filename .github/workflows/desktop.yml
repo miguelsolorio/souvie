@@ -1,0 +1,170 @@
+name: Desktop app
+
+# The Tauri 2 shell around the web export (apps/desktop). This is where the Rust compiles: the
+# development Mac has no Rust (docs/status.md, WS13). WS13.
+#
+# When it runs, to keep a docs-only or web-only change from paying for two long jobs:
+#   pull request   only when the shell, the lockfile or this file changes: the macOS job
+#   main           also when the web app or the shared UI changes, and the Windows job runs
+#   dispatch       by hand: both jobs
+# A branch push does not run it; a pull request that touches the shell does.
+#
+# Signing and notarization are not done here (apps/desktop/README.md says how). The .app this
+# uploads is unsigned. EXPO_PUBLIC_* values come from repository variables when they are set, and
+# fall back to made-up ones so the build still proves out on a fresh clone.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/desktop/**"
+      - "apps/mobile/**"
+      - "packages/ui/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/desktop.yml"
+  pull_request:
+    paths:
+      - "apps/desktop/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/desktop.yml"
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321' }}
+  EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'fake-anon-key-for-browser-tests' }}
+  EXPO_PUBLIC_POSTHOG_KEY: ${{ vars.EXPO_PUBLIC_POSTHOG_KEY }}
+
+jobs:
+  desktop-build:
+    name: macOS app
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # The deep link and opener plugins need Rust 1.90. Stable is newer.
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+
+      # tauri build runs `pnpm --filter @mp/mobile export:web` first (tauri.conf.json,
+      # beforeBuildCommand), then compiles the shell and writes the .app. Everything after `--`
+      # goes to cargo: --locked fails the build if Cargo.lock needs changing, so the lock in the
+      # repo is the one that built.
+      - name: Build the app
+        run: pnpm --filter @mp/desktop exec tauri build -- --locked
+
+      # Criterion 7, the part a runner can see: a real .app, with the id and the link scheme the
+      # brief and the sign-in flow need, and the web export compiled into the binary.
+      - name: Check the bundle
+        run: |
+          app="apps/desktop/src-tauri/target/release/bundle/macos/Souvie.app"
+          test -d "$app"
+          plist="$app/Contents/Info.plist"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$plist")" = "com.miguelsolorio.souvie.desktop"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$plist")" = "Souvie"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleURLTypes' "$plist" | tee url-types.txt
+          grep -q 'souvie' url-types.txt
+          test -x "$app/Contents/MacOS/souvie-desktop"
+          echo "ok: $(du -sh "$app" | cut -f1)"
+
+      # The pages are inside the binary, so the shell opens with no network and no deploy. Tauri
+      # compresses what it embeds, so this looks for the file names, not their contents. Best
+      # effort: the layout of the binary is Tauri's to change.
+      - name: Check the web export is compiled in
+        continue-on-error: true
+        run: |
+          binary="apps/desktop/src-tauri/target/release/bundle/macos/Souvie.app/Contents/MacOS/souvie-desktop"
+          strings "$binary" | grep -c '_expo/static/js/web' | tee embedded.txt
+          test "$(cat embedded.txt)" -gt 0
+
+      # Best effort: start the app and see that it stays up. A runner has no one logged in at the
+      # screen, so a failure here is reported but does not fail the build.
+      - name: Start the app
+        continue-on-error: true
+        run: |
+          app="apps/desktop/src-tauri/target/release/bundle/macos/Souvie.app"
+          "$app/Contents/MacOS/souvie-desktop" > launch.log 2>&1 &
+          pid=$!
+          sleep 10
+          if kill -0 "$pid" 2>/dev/null; then echo "still running after 10 seconds"; kill "$pid"; else echo "exited early"; cat launch.log; exit 1; fi
+
+      - name: Zip the app
+        run: |
+          ditto -c -k --keepParent \
+            apps/desktop/src-tauri/target/release/bundle/macos/Souvie.app Souvie-macos-unsigned.zip
+
+      - name: Upload the app
+        uses: actions/upload-artifact@v7
+        with:
+          name: souvie-macos-unsigned
+          path: Souvie-macos-unsigned.zip
+          retention-days: 14
+
+      # Cargo.lock is committed. When a dependency changes, cargo rewrites it here: take it from
+      # this artifact and commit it.
+      - name: Upload Cargo.lock
+        uses: actions/upload-artifact@v7
+        with:
+          name: Cargo.lock
+          path: apps/desktop/src-tauri/Cargo.lock
+          retention-days: 14
+          if-no-files-found: warn
+
+  # Windows is allowed to fail until it has been run once on a real machine (the brief). It builds
+  # an NSIS installer, since "app" is a macOS bundle type.
+  desktop-build-windows:
+    name: Windows installer (may fail)
+    # Only on main and by hand. A pull request does not wait on it.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: windows-latest
+    continue-on-error: true
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+
+      - name: Build the installer
+        run: pnpm --filter @mp/desktop exec tauri build --bundles nsis -- --locked
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: souvie-windows-unsigned
+          path: apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+          retention-days: 14
+          if-no-files-found: warn

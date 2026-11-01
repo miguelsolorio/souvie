@@ -1,11 +1,15 @@
 // The pure parts of the primitives, so they can be tested without a renderer. No React, no
 // react-native: this file loads in Node.
+import { BREAKPOINT_TABLET_MIN, breakpointFor } from "../layout";
 
 /** Smallest tap target that works for most thumbs (Apple HIG and Material both say 44 to 48). */
 export const MIN_TARGET = 44;
 
-/** At and above this width a Sheet becomes a centered dialog instead of rising from the bottom. */
-export const SHEET_DIALOG_MIN_WIDTH = 640;
+/**
+ * At and above this width a Sheet becomes a centered dialog instead of rising from the bottom.
+ * It is the tablet breakpoint (../layout.ts), so the Sheet and every screen share one system.
+ */
+export const SHEET_DIALOG_MIN_WIDTH = BREAKPOINT_TABLET_MIN;
 
 export interface StepBounds {
   min: number;
@@ -57,7 +61,7 @@ export function stepperSpeech(value: number, unit: string | undefined, unitPlura
 export type SheetLayout = "sheet" | "dialog";
 
 export function sheetLayout(windowWidth: number): SheetLayout {
-  return windowWidth >= SHEET_DIALOG_MIN_WIDTH ? "dialog" : "sheet";
+  return breakpointFor(windowWidth) === "phone" ? "sheet" : "dialog";
 }
 
 /** The index of the option after a left or right arrow, wrapping at the ends. */

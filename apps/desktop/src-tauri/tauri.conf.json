@@ -1,0 +1,55 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Souvie",
+  "version": "0.1.0",
+  "identifier": "com.miguelsolorio.souvie.desktop",
+  "build": {
+    "frontendDist": "../../mobile/dist",
+    "beforeBuildCommand": "pnpm --filter @mp/mobile export:web",
+    "devUrl": "http://localhost:8081",
+    "beforeDevCommand": "pnpm --filter @mp/mobile exec expo start --port 8081"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Souvie",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 560,
+        "center": true,
+        "resizable": true,
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://*.sentry.io; object-src 'none'; base-uri 'self'; form-action 'self'",
+      "devCsp": null,
+      "dangerousDisableAssetCspModification": ["style-src"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Lifestyle",
+    "shortDescription": "Plan the week, build one grocery list, and shop in one place.",
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    }
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["souvie"]
+      }
+    }
+  }
+}

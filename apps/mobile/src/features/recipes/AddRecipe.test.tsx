@@ -253,6 +253,20 @@ describe("the link tab, before anything is sent", () => {
     expect(screen.props("import-url").disabled).toBe(true);
   });
 
+  it("on the web, says there is no share sheet and points at pasting (WS13)", () => {
+    // The test renders with the web build's share text (shareCapability.ts, not the .native one).
+    const screen = show("");
+    expect(screen.has("link-tab-hint")).toBe(true);
+    expect(screen.html).toContain("no share sheet here");
+    expect(screen.html).toContain("Paste tab");
+  });
+
+  it("on the web, sends a video link to the Paste tab instead of the share sheet", () => {
+    const screen = show("https://www.tiktok.com/@cook/video/1");
+    expect(screen.html).toContain("paste it on the Paste tab");
+    expect(screen.html).not.toContain("Share the post into this app");
+  });
+
   it("keeps the button off while another request is running", () => {
     const screen = renderScreen(
       <LinkTab

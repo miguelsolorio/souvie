@@ -5,7 +5,9 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Text, View } from "react-native";
+import { MainLandmark } from "../src/components/MainLandmark";
 import { AuthLifecycle } from "../src/features/auth/AuthLifecycle";
+import { DesktopDeepLinks } from "../src/features/auth/DesktopDeepLinks";
 import { persistOptions, queryClient } from "../src/lib/queryClient";
 import { getSupabase, isSupabaseConfigured } from "../src/lib/supabase";
 
@@ -27,7 +29,12 @@ export default function RootLayout() {
       {isSupabaseConfigured ? (
         <SupabaseProvider client={getSupabase()}>
           <AuthLifecycle />
-          <Stack screenOptions={{ headerShown: false }} />
+          {/* WS13: the page's one main landmark on the web, so no content sits outside one. */}
+          <MainLandmark>
+            <Stack screenOptions={{ headerShown: false }} />
+          </MainLandmark>
+          {/* WS13: in the desktop app, souvie:// links (sign-in coming back) open their route. */}
+          <DesktopDeepLinks />
         </SupabaseProvider>
       ) : (
         <NotConfigured />

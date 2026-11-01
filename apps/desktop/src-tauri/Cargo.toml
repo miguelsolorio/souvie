@@ -1,0 +1,31 @@
+[package]
+name = "souvie-desktop"
+version = "0.1.0"
+description = "Souvie desktop app: the Expo web export in a native window"
+authors = ["Miguel Solorio"]
+edition = "2021"
+# The deep link and opener plugins need Rust 1.90 (their docs, read 2026-10-31).
+rust-version = "1.90"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+# tauri::generate_context! expands to code that names serde_json.
+serde_json = "1"
+tauri-plugin-deep-link = "2"
+tauri-plugin-opener = "2"
+
+# A second launch (the operating system opening a souvie:// link while the app runs) hands its
+# link to the running instance instead of starting another window. Needed on Windows and Linux;
+# macOS routes the link to the running app on its own.
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+
+[profile.release]
+# The app is the web bundle, not this binary, so favor size and a short build.
+opt-level = "s"
+panic = "abort"
+strip = true

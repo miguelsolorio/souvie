@@ -2,6 +2,7 @@ import type { MealSlot } from "@mp/core";
 import type { PlanEntry } from "@mp/db";
 import { type ReactNode, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { WEB_SPACE } from "../../lib/webSpace";
 import {
   dayName,
   entryA11yLabel,
@@ -56,7 +57,11 @@ export function SlotCell({
         <Pressable
           testID={`add-${date}-${slot}`}
           accessibilityRole="button"
-          accessibilityLabel={`Add a recipe to ${slotTitle(date, slot)}`}
+          // The label starts with the button's visible words ("Add", "Add another"), so voice
+          // control ("click Add another") finds it (WCAG 2.5.3).
+          accessibilityLabel={`${
+            entries.length > 0 ? "Add another recipe to" : "Add a recipe to"
+          } ${slotTitle(date, slot)}`}
           onPress={onAdd}
           className={`min-h-11 flex-row items-center justify-center rounded-xl border border-dashed border-neutral-300 px-3 ${
             entries.length > 0 ? "py-1.5" : "py-2.5"
@@ -151,12 +156,15 @@ export function EntryChip({
           {slotLabel}
         </Text>
       ) : null}
+      {/* WEB_SPACE keeps the words apart for a check of the label against what is on screen. */}
+      {slotLabel ? WEB_SPACE : null}
       <Text
         className={`text-sm font-semibold text-neutral-900 ${skipped ? "line-through" : ""}`}
         numberOfLines={2}
       >
         {entryTitle(entry)}
       </Text>
+      {WEB_SPACE}
       <Text className="text-xs text-neutral-600">
         {[servingsLabel(entry.servings), cooked ? "Cooked" : skipped ? "Skipped" : null]
           .filter(Boolean)

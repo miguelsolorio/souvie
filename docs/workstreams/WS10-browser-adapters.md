@@ -152,4 +152,5 @@ Also from that review, for WS10 to pick up:
 - A `CONSENT_VERSION` bump needs a migration (`tier3_consent_version()`), and Settings hides Connect once a store is connected, so no screen offers re-consent for an already-connected store; add one with the first bump.
 - `finishTier3SignIn` swallows a failed revoke after a failed seal, which can leave an active row with no blob; harmless (restore reports needs-sign-in, Disconnect works) but worth tightening.
 - The Tier 3 connect belongs in onboarding step 7 as well as household settings.
+- From the WS08 confirmation (2026-10-31): the password rule `/password|passcode|pwd|(^|[^a-z])pass([^a-z]|$)/i` misses `passwd`, `passphrase` and camelCase names such as `userPass` and `txtPass`; add `passwd|passphrase` and a camelCase boundary in `bridge.js`, `scrub.ts` and `snapshot.ts` rule 7, with the reviewer's cases as tests. The check that `SECRET_FIELD_HINT` matches the bridge's rule is a substring test; compare the regex sources for equality.
 

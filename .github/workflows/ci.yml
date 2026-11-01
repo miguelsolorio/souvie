@@ -276,6 +276,13 @@ jobs:
           test "$(psql "$DB_URL" -Atc "select count(*) from pgmq.a_shopping_run where msg_id = $msg")" -eq 0
           psql "$DB_URL" -Atc "delete from pgmq.q_shopping_run where message ->> 'run_id' = '$run_id'" > /dev/null
 
+      # WS11 criteria 2, 3, 4 and 7 on the real stack: enqueue_due_scheduled_runs starts one
+      # scheduled run and a second call none, a schedule with no list is skipped with a
+      # schedule_skipped row, the worker plans the scheduled run, and drains the outbox (a row for a
+      # household inside its quiet hours is held, another is sent).
+      - name: Scheduler enqueues a run and the worker drains the outbox
+        run: services/shopper-worker/scripts/smoke-schedules.sh
+
       # WS05 follow-up (2026-10-31). list-build's store, through postgres.js, on this stack's own
       # Postgres: the five-dinner build and a rebuild. The PGlite store tests bind JSON parameters
       # through a model of the driver, and an earlier version of that model let a double-encoded

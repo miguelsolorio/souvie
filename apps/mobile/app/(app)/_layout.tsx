@@ -37,6 +37,10 @@ export default function AppLayout() {
           {/* WS12: history and spend, and one confirmed order. */}
           <Stack.Screen name="history/index" options={{ title: "History" }} />
           <Stack.Screen name="history/orders/[id]" options={{ title: "Order" }} />
+          {/* WS11: weekly shopping schedules, and which pushes you get. */}
+          <Stack.Screen name="schedules/index" options={{ title: "Shopping schedules" }} />
+          <Stack.Screen name="schedules/[id]" options={{ title: "Schedule" }} />
+          <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
           <Stack.Screen name="menu" options={{ title: "Menu" }} />
           <Stack.Screen name="household/create" options={{ title: "Create household" }} />
           <Stack.Screen name="household/settings" options={{ title: "Household" }} />

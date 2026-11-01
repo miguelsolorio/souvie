@@ -165,6 +165,32 @@ describe("rows and copy", () => {
     expect(inCartCount([{ cart_qty: 2 }, { cart_qty: 0 }, { cart_qty: 1 }])).toBe(2);
   });
 
+  it("warns the same way when a run that pushed part of its cart was cancelled (a review that timed out)", () => {
+    const cancelled = {
+      status: "cancelled" as const,
+      approved_at: null,
+      progress: null,
+      error: "review timed out",
+    };
+    expect(progressText(cancelled, { itemsInCart: true })).toBe(
+      "This run was cancelled. Some items may already be in your store cart, so check it first.",
+    );
+    expect(progressText(cancelled, { itemsInCart: false })).toBe("This run was cancelled.");
+    expect(progressText(cancelled)).toBe("This run was cancelled.");
+  });
+
+  it("does not say the store cart is empty when a stopped push left items in it", () => {
+    const review = {
+      status: "needs_review" as const,
+      approved_at: null,
+      progress: null,
+      error: null,
+    };
+    expect(progressText(review)).toMatch(/Nothing is in your store cart yet/);
+    expect(progressText(review, { itemsInCart: true })).toMatch(/already in your store cart/);
+    expect(progressText(review, { itemsInCart: true })).not.toMatch(/Nothing is in/);
+  });
+
   it("lays a Realtime change over the cached run without wiping what it leaves out", () => {
     const held = toRun({
       id: "r",
@@ -211,7 +237,26 @@ describe("rows and copy", () => {
     const id = "5a000000-0000-4000-8000-0000000000aa";
     expect(routeForPush({ type: "cart_ready", runId: id })).toBe(runRoute(id));
     expect(routeForPush({ type: "needs_review", runId: id, count: 2 })).toBe(`/shopping/${id}`);
-    expect(routeForPush({ type: "weekly_nudge", runId: id })).toBeNull();
+    expect(routeForPush({ type: "run_failed", runId: id, scheduled: true })).toBe(
+      `/shopping/${id}`,
+    );
+    expect(routeForPush({ type: "marketing", runId: id })).toBeNull();
     expect(routeForPush({ type: "cart_ready", runId: "../../evil" })).toBeNull();
+    expect(routeForPush(null)).toBeNull();
+  });
+
+  it("sends the other pushes where the person can act on them", () => {
+    const id = "5a000000-0000-4000-8000-0000000000aa";
+    expect(routeForPush({ type: "schedule_skipped", scheduleId: id, reason: "missed" })).toBe(
+      "/schedules",
+    );
+    expect(routeForPush({ type: "weekly_nudge", weekStart: "2026-11-09" })).toBe(
+      "/plan?week=2026-11-09",
+    );
+    expect(routeForPush({ type: "weekly_nudge", weekStart: "../../evil" })).toBe("/plan");
+    expect(routeForPush({ type: "pickup_reminder", runId: id })).toBe(`/shopping/${id}`);
+    expect(routeForPush({ type: "pickup_reminder", runId: null })).toBe("/shopping");
+    expect(routeForPush({ type: "import_finished", recipeId: id })).toBe(`/recipes/${id}`);
+    expect(routeForPush({ type: "import_finished", recipeId: "../x" })).toBe("/recipes");
   });
 });

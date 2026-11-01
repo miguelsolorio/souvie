@@ -6,8 +6,8 @@ import { createAdapterSource } from "./adapters.ts";
 import { describeConfig, readConfig } from "./config.ts";
 import { Heartbeat } from "./heartbeat.ts";
 import { createModelSource } from "./models.ts";
+import { createExpoSend, NotificationStore, Notifier, OutboxDrain } from "./notifications.ts";
 import { mountObservability } from "./observability/index.ts";
-import { sendPush } from "./push.ts";
 import {
   createPgmqClient,
   errorMessage,
@@ -102,8 +102,8 @@ async function main(): Promise<void> {
     ...describeConfig(config),
   });
 
-  // The pool holds a connection per concurrent run, plus the poller and the heartbeat.
-  const sql = await connect(config.databaseUrl, config.concurrency + 3, controller.signal);
+  // The pool holds a connection per concurrent run, plus the poller, the heartbeat and the outbox.
+  const sql = await connect(config.databaseUrl, config.concurrency + 4, controller.signal);
   if (!sql) return;
 
   const runner = runnerOf(sql as unknown as PgClient);
@@ -131,6 +131,13 @@ async function main(): Promise<void> {
   });
   heartbeat.start();
 
+  const notifications = new NotificationStore(runner);
+  const notifier = new Notifier({
+    store: notifications,
+    send: createExpoSend(config.expoPushAccessToken),
+    log,
+  });
+
   const runs = new RunRunner({
     store: runStore,
     adapters: createAdapterSource({
@@ -145,19 +152,9 @@ async function main(): Promise<void> {
     models,
     heartbeat,
     log,
+    // Preferences and quiet hours apply to the run pushes too (notifications.ts).
     notify: async (householdId, payload) => {
-      const tokens = await runStore.pushTokens(householdId);
-      const result = await sendPush(
-        tokens.map((t) => t.token),
-        payload,
-        { accessToken: config.expoPushAccessToken },
-      );
-      await runStore.removeTokens(householdId, result.invalid);
-      log.info("push sent", {
-        type: payload.type,
-        devices: result.sent,
-        errors: result.errors.length,
-      });
+      await notifier.notifyRun(householdId, payload);
     },
   });
 
@@ -169,6 +166,16 @@ async function main(): Promise<void> {
     log,
     signal: controller.signal,
   });
+
+  // WS11: the outbox. SQL writes the pushes it decides on (weekly nudge, failed run, skipped
+  // schedule, slow import, pickup reminder); this sends them when they are due.
+  const outbox = new OutboxDrain({
+    store: notifications,
+    notifier,
+    log,
+    intervalSeconds: config.outboxSeconds,
+  });
+  outbox.start();
 
   try {
     const { abandoned } = await runPoller({
@@ -190,6 +197,8 @@ async function main(): Promise<void> {
     await handBack(abandoned, { store: runStore, queue: queueClient, log });
   } finally {
     heartbeat.stop();
+    // Let a push in flight finish and be marked sent, so it is not sent again after its lease.
+    await outbox.stop();
     await sql.end({ timeout: 2 });
     log.info("stopped");
   }

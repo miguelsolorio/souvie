@@ -13,6 +13,8 @@ export interface WorkerConfig {
   concurrency: number;
   /** WORKER_HEARTBEAT_SECONDS, 5 to 30 (heartbeat.ts MAX_HEARTBEAT_SECONDS), default 30. */
   heartbeatSeconds: number;
+  /** WORKER_OUTBOX_SECONDS, 5 to 300, default 30: how often the notification outbox is drained. */
+  outboxSeconds: number;
   /** WORKER_RETAILER_MODE: live (default) or mock. Never mock when NODE_ENV is production. */
   retailerMode: RetailerMode;
   anthropicApiKey: string | undefined;
@@ -62,6 +64,7 @@ export function readConfig(env: Record<string, string | undefined>): WorkerConfi
       MIN_HEARTBEAT_SECONDS,
       MAX_HEARTBEAT_SECONDS,
     ),
+    outboxSeconds: int(env.WORKER_OUTBOX_SECONDS, 30, 5, 300),
     retailerMode: mode as RetailerMode,
     anthropicApiKey: text(env.ANTHROPIC_API_KEY),
     aiDailyCapUsd: Number.isFinite(cap) && cap >= 0 ? cap : 2,
@@ -78,6 +81,7 @@ export function describeConfig(config: WorkerConfig): Record<string, unknown> {
   return {
     concurrency: config.concurrency,
     heartbeatSeconds: config.heartbeatSeconds,
+    outboxSeconds: config.outboxSeconds,
     retailerMode: config.retailerMode,
     model: config.anthropicApiKey ? "on" : "off (code picks close calls)",
     kroger: config.krogerClientId && config.krogerClientSecret ? "configured" : "not configured",

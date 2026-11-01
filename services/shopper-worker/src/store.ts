@@ -710,31 +710,7 @@ export class RunStore {
     });
   }
 
-  /** Every member's push tokens. */
-  async pushTokens(householdId: string): Promise<{ token: string; platform: string }[]> {
-    return this.inServiceRole((tx) =>
-      tx.query<{ token: string; platform: string }>(
-        `select pt.token, pt.platform::text as platform
-           from public.push_tokens pt
-           join public.household_members m on m.user_id = pt.user_id
-          where m.household_id = $1::uuid`,
-        [householdId],
-      ),
-    );
-  }
-
-  /** Tokens Expo says no longer reach a device. Scoped to the household's members. */
-  async removeTokens(householdId: string, tokens: readonly string[]): Promise<void> {
-    if (tokens.length === 0) return;
-    await this.inServiceRole((tx) =>
-      tx.query(
-        `delete from public.push_tokens pt
-          where pt.token = any($2::text[])
-            and pt.user_id in (select m.user_id from public.household_members m where m.household_id = $1::uuid)`,
-        [householdId, tokens],
-      ),
-    );
-  }
+  // The device tokens, preferences and quiet hours are read in notifications.ts (WS11).
 
   async recordAiRun(row: AiRunRow): Promise<void> {
     await this.inServiceRole((tx) =>

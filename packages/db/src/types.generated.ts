@@ -706,6 +706,79 @@ export type Database = {
           },
         ];
       };
+      orders: {
+        Row: {
+          confirmed_at: string;
+          confirmed_by: string | null;
+          created_at: string;
+          household_id: string;
+          id: string;
+          modality: Database["public"]["Enums"]["retailer_connections_modality"];
+          notes: string | null;
+          raw: Json | null;
+          retailer: Database["public"]["Enums"]["retailer"];
+          retailer_order_id: string | null;
+          run_id: string;
+          slot_end: string | null;
+          slot_start: string | null;
+          status: Database["public"]["Enums"]["orders_status"];
+          total_usd: number;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          confirmed_at?: string;
+          confirmed_by?: string | null;
+          created_at?: string;
+          household_id: string;
+          id?: string;
+          modality: Database["public"]["Enums"]["retailer_connections_modality"];
+          notes?: string | null;
+          raw?: Json | null;
+          retailer: Database["public"]["Enums"]["retailer"];
+          retailer_order_id?: string | null;
+          run_id: string;
+          slot_end?: string | null;
+          slot_start?: string | null;
+          status?: Database["public"]["Enums"]["orders_status"];
+          total_usd: number;
+          updated_at?: string;
+        };
+        Update: {
+          confirmed_at?: string;
+          confirmed_by?: string | null;
+          created_at?: string;
+          household_id?: string;
+          id?: string;
+          modality?: Database["public"]["Enums"]["retailer_connections_modality"];
+          notes?: string | null;
+          raw?: Json | null;
+          retailer?: Database["public"]["Enums"]["retailer"];
+          retailer_order_id?: string | null;
+          run_id?: string;
+          slot_end?: string | null;
+          slot_start?: string | null;
+          status?: Database["public"]["Enums"]["orders_status"];
+          total_usd?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "orders_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "orders_run_id_fkey";
+            columns: ["run_id"];
+            isOneToOne: true;
+            referencedRelation: "shopping_runs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       pantry_items: {
         Row: {
           household_id: string;
@@ -1408,12 +1481,61 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      v_meals_cooked_weekly: {
+        Row: {
+          cooked_count: number | null;
+          entries: Json | null;
+          household_id: string | null;
+          week_start: string | null;
+        };
+        Relationships: [];
+      };
+      v_most_bought_products: {
+        Row: {
+          household_id: string | null;
+          ingredient_id: string | null;
+          last_bought_at: string | null;
+          pinned: boolean | null;
+          product_id: string | null;
+          product_name: string | null;
+          retailer: Database["public"]["Enums"]["retailer"] | null;
+          size: string | null;
+          store_id: string | null;
+          store_name: string | null;
+          times_bought: number | null;
+          units_bought: number | null;
+          upc: string | null;
+        };
+        Relationships: [];
+      };
+      v_spend_weekly_by_store: {
+        Row: {
+          household_id: string | null;
+          order_count: number | null;
+          retailer: Database["public"]["Enums"]["retailer"] | null;
+          store_name: string | null;
+          total_usd: number | null;
+          week_start: string | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       cancel_shopping_run: {
         Args: { run_id: string };
         Returns: Database["public"]["Enums"]["shopping_runs_status"];
+      };
+      confirm_order: {
+        Args: {
+          modality?: Database["public"]["Enums"]["retailer_connections_modality"];
+          notes?: string;
+          retailer_order_id?: string;
+          run_id: string;
+          slot_end?: string;
+          slot_start?: string;
+          total_usd: number;
+        };
+        Returns: string;
       };
       connect_browser_session: {
         Args: { household_id: string; retailer: Database["public"]["Enums"]["retailer"] };
@@ -1428,6 +1550,7 @@ export type Database = {
         Returns: string;
       };
       expire_run_screenshots: { Args: Record<PropertyKey, never>; Returns: number };
+      history_time_zone: { Args: { household_id: string }; Returns: string };
       household_ai_spend_since: {
         Args: { p_household_id: string; p_since: string };
         Returns: number;
@@ -1555,6 +1678,7 @@ export type Database = {
       ingredient_parse_cache_source: "grammar" | "llm";
       meal_plan_entries_slot: "breakfast" | "lunch" | "dinner" | "snack";
       meal_plan_entries_status: "planned" | "cooked" | "skipped";
+      orders_status: "confirmed" | "picked_up" | "delivered" | "cancelled";
       pantry_items_status: "have" | "low" | "out";
       product_matches_chosen_by: "agent" | "user";
       push_tokens_platform: "ios" | "android" | "web";

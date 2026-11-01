@@ -158,7 +158,7 @@ describe("addToCart", () => {
   it("refuses a connection that is not Kroger's", async () => {
     const { adapter } = setup(cartAdd);
     await expect(
-      adapter.addToCart({ ...CONN, retailer: "instacart" }, [
+      adapter.addToCart({ ...CONN, retailer: "safeway" }, [
         { productId: "1", upc: null, quantityDelta: 1 },
       ]),
     ).rejects.toThrow("Not a Kroger connection");

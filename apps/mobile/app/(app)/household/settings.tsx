@@ -1,6 +1,7 @@
 import {
   identityErrorMessage,
   leaveHousehold,
+  planModeOf,
   removeMember,
   renameHousehold,
   useHousehold,
@@ -18,6 +19,7 @@ import { TextField } from "../../../src/components/TextField";
 import { CREATE_HOUSEHOLD_ROUTE, HOME_ROUTE } from "../../../src/features/auth/routes";
 import { InviteSection } from "../../../src/features/household/InviteSection";
 import { MemberRow } from "../../../src/features/household/MemberRow";
+import { PlanModeSection } from "../../../src/features/household/PlanModeSection";
 import { NOTIFICATIONS_ROUTE } from "../../../src/features/notifications/routes";
 import { RecheckNoticeLine } from "../../../src/features/onboarding/components";
 import { KrogerSettingsSection } from "../../../src/features/onboarding/KrogerSettingsSection";
@@ -137,6 +139,13 @@ export default function HouseholdSettingsScreen() {
           />
         ) : null}
       </Section>
+
+      {/* A copy saved on the device before the setting existed has no mode: that is Just dinners. */}
+      <PlanModeSection
+        householdId={current.id}
+        mode={planModeOf(current.plan_mode)}
+        isOwner={isOwner}
+      />
 
       <Section title="Food preferences">
         <Text className="text-sm text-neutral-600">

@@ -49,7 +49,7 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] WS05 follow-up round (jsonb parameters): reviewed and merged as 77e8509 (PR #20); `list-build` redeployed (v3) and the real plan built on the hosted project. Miguel retries.
 - [x] WS04 follow-up round (picker entry points, from Miguel's test 2026-10-31): reviewed and merged as 90279f0 (PR #19).
 - [x] WS02 follow-up round (parse wiring, validation, duplicates): reviewed (one narrow fix round) and merged 2026-10-31 as c4e799f (PR #24); migration applied and `recipe-import` and `parse-ingredients` redeployed. **Miguel:** open each existing recipe and tap "Match ingredients" once.
-- [ ] WS04 simple-mode round (one meal a day, `plan_mode` default simple, asked in onboarding step 1): CCR7 merged as 24e84bd (PR #25) and applied to hosted; builder dispatched 2026-10-31 on `ws/04c-simple-mode`; review, merge.
+- [x] WS04 simple-mode round: reviewed (one narrow fix round) and merged 2026-10-31 as fc5ee8a (PR #27). Follow-ups: the entry sheet's Move slots per mode; optional `Household.plan_mode` in core.
 - [x] WS08: reviewed (one fix round, one narrow second round) and merged 2026-10-31 as 2f571c1 (PR #22); wave 3 summary appended; `pnpm install` run. Miguel: `git pull` in the primary checkout when convenient.
 - [x] **Human decision:** recipe catalog cold start. Miguel chose a starter catalog 2026-10-30; WS16 brief written and dispatched.
 - [x] WS16 (starter catalog, sonnet): reviewed and merged as 4fb32da (PR #13), 2026-10-30.
@@ -71,13 +71,13 @@ How this file relates to the others: `docs/implementation-guide.md` says *how* t
 - [x] Dispatch WS09 (opus). Dispatched 2026-10-31. Expect contract change requests here; apply them on `main` yourself.
 - [x] Review with extra attention to policies-in-code, the write ledger, the allergen check, and the service-role authorization in `run-approve` and the worker. Done 2026-10-31: one fix round, re-review merge.
 - [x] Merge, summary. Merged 2026-10-31 as 8ba30d8 (PR #21); wave 5 summary in `docs/status.md`. The real QFC cart (criterion 13) still needs Miguel's Kroger sign-in and a deployed worker.
-- [ ] Orchestrator contract change: remove `instacart` (CCR9). On PR #26 since 2026-10-31; merge when green and apply migration `20261031150000` to hosted.
+- [x] Orchestrator contract change: remove `instacart` (CCR9). Merged 2026-10-31 as 547f238 (PR #26); migration applied to hosted.
 - [ ] **Human:** deploy the worker to Fly.io or Railway once the account exists, with `WORKER_DATABASE_URL`, `ANTHROPIC_API_KEY`, `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET` and `EXPO_PUSH_ACCESS_TOKEN` as its secrets, and set `extra.eas.projectId` in `app.json`. (`run-approve` is deployed; `llm-proxy` deploys with WS08's merge.)
 
 ## 7. Wave 6: everything that consumes the agent
 
 - [ ] **Human checkpoint 5** gates WS10 only: Miguel accepts the WS08 host demo (recording and screenshot sent 2026-10-31: the agent drives the test page in the real WebView on the iPhone 17 Pro Simulator; consent and disconnect are covered by tests against the real SQL, not yet by a signed-in device run). The other four may start without it.
-- [ ] Dispatch WS10 (opus), WS11, WS12, WS13, WS15 (sonnet) in one message. Five builders at once is the maximum. WS10 needs WS08 and WS09 merged; the other four need WS09 merged. Write each brief's orchestrator corrections first (as-built shapes from WS05, WS08 and WS09).
+- [x] Brief corrections written for all five (2026-10-31). WS11, WS12, WS13, WS15 (sonnet) dispatched 2026-10-31; WS10 (opus) dispatches when checkpoint 5 clears.
 - [ ] Review each as it finishes. WS10 reviewer runs the Tier 3 checklist and a manual Safeway run on a real account.
 - [ ] Merge all, wave 6 summary.
 

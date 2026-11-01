@@ -26,6 +26,7 @@ export * from "./hooks/useRecipeFeedback";
 export * from "./hooks/useRecipes";
 export * from "./hooks/useSchedules";
 export * from "./hooks/useSession";
+export * from "./hooks/useSetPlanMode";
 export * from "./hooks/useToggleItem";
 export * from "./hooks/useUpsertEntry";
 export * from "./identity";

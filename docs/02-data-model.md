@@ -299,7 +299,7 @@ Realtime: `grocery_lists` and `grocery_list_items` are in the `supabase_realtime
 | id | uuid pk | |
 | household_id | uuid → households | |
 | user_id | uuid → auth.users | The member whose retailer account this is |
-| retailer | enum retailer: kroger, safeway, costco | As built by WS07 the enum also holds `instacart`, retired 2026-10-30 and unused; a later migration drops it |
+| retailer | enum retailer: kroger, safeway, costco | The Postgres enum also holds `instacart`, retired 2026-10-30; migration `20261031150000` constrains every row off it (CCR9) and `RetailerId` no longer names it |
 | auth_type | enum retailer_connections_auth_type: oauth, browser_session, none | |
 | vault_secret_id | uuid | Supabase Vault secret holding OAuth tokens (Kroger) or the encryption key for an on-device browser session (WS08). Never a password or session state |
 | store_id | text | Kroger locationId or site-specific store id |

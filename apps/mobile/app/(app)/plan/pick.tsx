@@ -1,4 +1,4 @@
-import { isIsoDate, MealSlot, weekStartFor } from "@mp/core";
+import { isIsoDate, type MealSlot, weekStartFor } from "@mp/core";
 import {
   type RecipeSummary,
   useFavoriteRecipeIds,
@@ -24,7 +24,11 @@ import {
   recipeWithId,
   TAB_EMPTY,
 } from "../../../src/features/plan/pickerSearch";
-import { newRecipeFromPickerRoute, planRoute } from "../../../src/features/plan/routes";
+import {
+  newRecipeFromPickerRoute,
+  planRoute,
+  resolvePickSlot,
+} from "../../../src/features/plan/routes";
 import { ServingsStepper } from "../../../src/features/plan/ServingsStepper";
 import { useDefaultServings, usePlanActions } from "../../../src/features/plan/usePlanActions";
 import { usePlanWeek } from "../../../src/features/plan/usePlanWeek";
@@ -34,7 +38,9 @@ import { RecipeImage } from "../../../src/features/recipes/RecipeImage";
 /**
  * The recipe picker, opened over the planner for `?date=&slot=`. Search the household's recipes,
  * or browse Recent and Favorites. Choosing one asks how many servings, then adds it to the slot.
- * With `&entry=` it swaps that meal's recipe instead and keeps its servings and notes.
+ * With `&entry=` it swaps that meal's recipe instead and keeps its servings and notes. A link with
+ * a date and no slot opens for dinner (see `resolvePickSlot`); the picker never asks for a slot,
+ * and a link that names any slot keeps working in either plan mode.
  *
  * "Add a recipe" is always on screen. It opens the add-recipe screen with this picker's date,
  * slot and swap target as params, and saving there comes back here with `&added=<recipe id>`:
@@ -47,13 +53,13 @@ export default function PickRecipeScreen() {
     entry?: string;
     added?: string;
   }>();
-  const slot = MealSlot.safeParse(params.slot);
+  const slot = resolvePickSlot(params.slot);
   const date = params.date && isIsoDate(params.date) ? params.date : null;
-  if (!date || !slot.success) return <Redirect href={planRoute()} />;
+  if (!date || !slot) return <Redirect href={planRoute()} />;
   return (
     <Picker
       date={date}
-      slot={slot.data}
+      slot={slot}
       entryId={params.entry ?? null}
       addedId={params.added ? params.added : null}
     />
